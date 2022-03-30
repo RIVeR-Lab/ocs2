@@ -15,7 +15,7 @@
 # sys.path.insert(0, os.path.abspath('.'))
 
 # -- Project information -----------------------------------------------------
-
+master_doc = 'index'
 project = 'OCS2'
 copyright = 'Farbod Farshidian'
 author = 'Farbod Farshidian'
