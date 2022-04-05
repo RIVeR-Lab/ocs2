@@ -52,48 +52,55 @@ namespace ocs2 {
  *   A few commonly-used penalty functions have been provided by the toolbox such as Relaxed-Barrier and Squared-Hinge
  *   penalty functions.
  */
-class StateInputSoftConstraint final : public StateInputCost {
- public:
-  /**
-   * Constructor.
-   * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.
-   * @param [in] penaltyPtrArray: An array of pointers to the penalty function on the constraint.
-   */
-  StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr, std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrArray);
+class StateInputSoftConstraint final : public StateInputCost 
+{
+  public:
+    /**
+    * Constructor.
+    * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.
+    * @param [in] penaltyPtrArray: An array of pointers to the penalty function on the constraint.
+    */
+    StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr, std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrArray);
 
-  /**
-   * Constructor.
-   * @note This allows a varying number of constraints and uses the same penalty function for each constraint.
-   * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.
-   * @param [in] penaltyFunction: A pointer to the penalty function on the constraint.
-   */
-  StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr, std::unique_ptr<PenaltyBase> penaltyFunction);
+    /**
+     * Constructor.
+     * @note This allows a varying number of constraints and uses the same penalty function for each constraint.
+     * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.
+     * @param [in] penaltyFunction: A pointer to the penalty function on the constraint.
+     */
+    StateInputSoftConstraint(std::unique_ptr<StateInputConstraint> constraintPtr, std::unique_ptr<PenaltyBase> penaltyFunction);
 
-  ~StateInputSoftConstraint() override = default;
+    ~StateInputSoftConstraint() override = default;
 
-  /** Gets the wrapped constraint. */
-  template <typename Derived = StateInputConstraint>
-  Derived& get() {
-    static_assert(std::is_base_of<StateInputConstraint, Derived>::value, "Template argument must derive from StateInputConstraint");
-    return dynamic_cast<Derived&>(*constraintPtr_);
-  }
+    /** Gets the wrapped constraint. */
+    template <typename Derived = StateInputConstraint>
+    Derived& get() 
+    {
+      static_assert(std::is_base_of<StateInputConstraint, Derived>::value, "Template argument must derive from StateInputConstraint");
+      return dynamic_cast<Derived&>(*constraintPtr_);
+    }
 
-  StateInputSoftConstraint* clone() const override;
+    StateInputSoftConstraint* clone() const override;
 
-  bool isActive(scalar_t time) const override;
+    bool isActive(scalar_t time) const override;
 
-  scalar_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const TargetTrajectories& /* targetTrajectories */,
-                    const PreComputation& preComp) const override;
+    scalar_t getValue(scalar_t time, 
+                      const vector_t& state, 
+                      const vector_t& input, 
+                      const TargetTrajectories& /* targetTrajectories */,
+                      const PreComputation& preComp) const override;
 
-  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                 const TargetTrajectories& /* targetTrajectories */,
-                                                                 const PreComputation& preComp) const override;
+    ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, 
+                                                                   const vector_t& state, 
+                                                                   const vector_t& input,
+                                                                   const TargetTrajectories& /* targetTrajectories */,
+                                                                   const PreComputation& preComp) const override;
 
- private:
-  StateInputSoftConstraint(const StateInputSoftConstraint& other);
+  private:
+    StateInputSoftConstraint(const StateInputSoftConstraint& other);
 
-  std::unique_ptr<StateInputConstraint> constraintPtr_;
-  MultidimensionalPenalty penalty_;
+    std::unique_ptr<StateInputConstraint> constraintPtr_;
+    MultidimensionalPenalty penalty_;
 };
 
 }  // namespace ocs2

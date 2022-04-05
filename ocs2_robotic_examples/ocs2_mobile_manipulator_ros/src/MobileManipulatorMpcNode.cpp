@@ -38,13 +38,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace ocs2;
 using namespace mobile_manipulator;
+using namespace std;
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv) 
+{
   const std::string robotName = "mobile_manipulator";
 
   // Initialize ros node
   ros::init(argc, argv, robotName + "_mpc");
   ros::NodeHandle nodeHandle;
+
   // Get node parameters
   std::string taskFile, libFolder, urdfFile;
   nodeHandle.getParam("/taskFile", taskFile);
@@ -53,18 +56,22 @@ int main(int argc, char** argv) {
   std::cerr << "Loading task file: " << taskFile << std::endl;
   std::cerr << "Loading library folder: " << libFolder << std::endl;
   std::cerr << "Loading urdf file: " << urdfFile << std::endl;
+
   // Robot interface
   MobileManipulatorInterface interface(taskFile, libFolder, urdfFile);
 
   // ROS ReferenceManager
-  std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(
-      new ocs2::RosReferenceManager(robotName, interface.getReferenceManagerPtr()));
+  std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(new ocs2::RosReferenceManager(robotName, interface.getReferenceManagerPtr()));
   rosReferenceManagerPtr->subscribe(nodeHandle);
 
   // MPC
-  ocs2::GaussNewtonDDP_MPC mpc(interface.mpcSettings(), interface.ddpSettings(), interface.getRollout(),
-                               interface.getOptimalControlProblem(), interface.getInitializer());
-  mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
+  ocs2::GaussNewtonDDP_MPC mpc(interface.mpcSettings(), 
+                               interface.ddpSettings(), 
+                               interface.getRollout(),
+                               interface.getOptimalControlProblem(), 
+                               interface.getInitializer());
+
+  mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr); 
 
   // Launch MPC ROS node
   MPC_ROS_Interface mpcNode(mpc, robotName);

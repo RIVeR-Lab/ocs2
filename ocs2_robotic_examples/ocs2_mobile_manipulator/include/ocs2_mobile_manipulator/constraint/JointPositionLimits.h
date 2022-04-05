@@ -27,33 +27,44 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_mobile_manipulator/constraint/JointVelocityLimits.h>
+#pragma once
+
+#include <memory>
+
+#include <ocs2_core/constraint/StateInputConstraint.h>
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-vector_t JointVelocityLimits::getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation&) const 
+class JointPositionLimits final : public StateInputConstraint 
 {
-  return input;
-}
+    public:
+        explicit JointPositionLimits(size_t inputDim) : StateInputConstraint(ConstraintOrder::Linear), inputDim_(inputDim) {}
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-VectorFunctionLinearApproximation JointVelocityLimits::getLinearApproximation(scalar_t time, 
-                                                                              const vector_t& state, 
-                                                                              const vector_t& input,
-                                                                              const PreComputation&) const 
-{
-  VectorFunctionLinearApproximation limits(input.rows(), state.rows(), input.rows());
-  limits.f = input;
-  limits.dfdx.setZero();
-  limits.dfdu.setIdentity();
-  return limits;
-}
+        ~JointPositionLimits() override = default;
+        
+        JointPositionLimits* clone() const override
+        { 
+            return new JointPositionLimits(*this);
+        }
+
+        size_t getNumConstraints(scalar_t time) const override 
+        { 
+            return inputDim_; 
+        }
+        
+        vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation&) const override;
+        
+        VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, 
+                                                                 const vector_t& state, 
+                                                                 const vector_t& input,
+                                                                 const PreComputation&) const override;
+
+    private:
+        JointPositionLimits(const JointPositionLimits& other) = default;
+        
+        const size_t inputDim_;
+};
 
 }  // namespace mobile_manipulator
 }  // namespace ocs2

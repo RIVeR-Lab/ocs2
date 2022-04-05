@@ -47,6 +47,7 @@ int main(int argc, char** argv) {
   // Initialize ros node
   ros::init(argc, argv, robotName + "_mrt");
   ros::NodeHandle nodeHandle;
+
   // Get node parameters
   std::string taskFile, libFolder, urdfFile;
   nodeHandle.getParam("/taskFile", taskFile);
@@ -55,6 +56,7 @@ int main(int argc, char** argv) {
   std::cerr << "Loading task file: " << taskFile << std::endl;
   std::cerr << "Loading library folder: " << libFolder << std::endl;
   std::cerr << "Loading urdf file: " << urdfFile << std::endl;
+  
   // Robot Interface
   mobile_manipulator::MobileManipulatorInterface interface(taskFile, libFolder, urdfFile);
 
@@ -80,7 +82,7 @@ int main(int argc, char** argv) {
   // initial command
   vector_t initTarget(7);
   initTarget.head(3) << 1, 0, 1;
-  initTarget.tail(4) << Eigen::Quaternion<scalar_t>(1, 0, 0, 0).coeffs();
+  initTarget.tail(4) << Eigen::Quaternion<scalar_t>(0, 0, 1, 0).coeffs();
   const vector_t zeroInput = vector_t::Zero(interface.getManipulatorModelInfo().inputDim);
   const TargetTrajectories initTargetTrajectories({initObservation.time}, {initTarget}, {zeroInput});
 

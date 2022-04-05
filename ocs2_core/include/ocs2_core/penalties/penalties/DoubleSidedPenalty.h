@@ -42,38 +42,54 @@ namespace ocs2 {
  *   p_{box}(h) = p(h - l) + p(u - h)
  * \f]
  */
-class DoubleSidedPenalty final : public PenaltyBase {
- public:
-  /**
-   * Constructor
-   * @param [in] lowerBound: The lower bound.
-   * @param [in] upperBound: The upper bound.
-   * @param [in] penalty: The penalty for the two inequality constraint.
-   */
-  DoubleSidedPenalty(scalar_t lowerBound, scalar_t upperBound, std::unique_ptr<PenaltyBase> penalty)
+class DoubleSidedPenalty final : public PenaltyBase 
+{
+  public:
+    /**
+     * Constructor
+     * @param [in] lowerBound: The lower bound.
+     * @param [in] upperBound: The upper bound.
+     * @param [in] penalty: The penalty for the two inequality constraint.
+     */
+    DoubleSidedPenalty(scalar_t lowerBound, 
+                       scalar_t upperBound, 
+                       std::unique_ptr<PenaltyBase> penalty)
       : lowerBound_(lowerBound), upperBound_(upperBound), penaltyPtr_(std::move(penalty)) {}
 
-  ~DoubleSidedPenalty() override = default;
-  DoubleSidedPenalty* clone() const override { return new DoubleSidedPenalty(*this); }
-  std::string name() const override { return "DoubleSidedPenalty"; }
+    ~DoubleSidedPenalty() override = default;
+    
+    DoubleSidedPenalty* clone() const override 
+    { 
+      return new DoubleSidedPenalty(*this); 
+    }
+    
+    std::string name() const override 
+    { 
+      return "DoubleSidedPenalty"; 
+    }
 
-  scalar_t getValue(scalar_t t, scalar_t h) const override {
-    return penaltyPtr_->getValue(t, h - lowerBound_) + penaltyPtr_->getValue(t, upperBound_ - h);
-  }
-  scalar_t getDerivative(scalar_t t, scalar_t h) const override {
-    return penaltyPtr_->getDerivative(t, h - lowerBound_) - penaltyPtr_->getDerivative(t, upperBound_ - h);
-  }
-  scalar_t getSecondDerivative(scalar_t t, scalar_t h) const override {
-    return penaltyPtr_->getSecondDerivative(t, h - lowerBound_) + penaltyPtr_->getSecondDerivative(t, upperBound_ - h);
-  }
+    scalar_t getValue(scalar_t t, scalar_t h) const override 
+    {
+      return penaltyPtr_->getValue(t, h - lowerBound_) + penaltyPtr_->getValue(t, upperBound_ - h);
+    }
 
- private:
-  DoubleSidedPenalty(const DoubleSidedPenalty& other)
+    scalar_t getDerivative(scalar_t t, scalar_t h) const override 
+    {
+      return penaltyPtr_->getDerivative(t, h - lowerBound_) - penaltyPtr_->getDerivative(t, upperBound_ - h);
+    }
+
+    scalar_t getSecondDerivative(scalar_t t, scalar_t h) const override 
+    {
+      return penaltyPtr_->getSecondDerivative(t, h - lowerBound_) + penaltyPtr_->getSecondDerivative(t, upperBound_ - h);
+    }
+
+  private:
+    DoubleSidedPenalty(const DoubleSidedPenalty& other)
       : lowerBound_(other.lowerBound_), upperBound_(other.upperBound_), penaltyPtr_(other.penaltyPtr_->clone()) {}
 
-  const scalar_t lowerBound_;
-  const scalar_t upperBound_;
-  std::unique_ptr<PenaltyBase> penaltyPtr_;
+    const scalar_t lowerBound_;
+    const scalar_t upperBound_;
+    std::unique_ptr<PenaltyBase> penaltyPtr_;
 };
 
 }  // namespace ocs2

@@ -36,37 +36,62 @@ namespace ocs2 {
 namespace {
 
 /** A wrapper class of PenaltyBase to AugmentedPenaltyBase */
-class PenaltyBaseWrapper final : public AugmentedPenaltyBase {
- public:
-  /** Default constructor */
-  PenaltyBaseWrapper(std::unique_ptr<PenaltyBase> penaltyPtr) : penaltyPtr_(std::move(penaltyPtr)) {}
+class PenaltyBaseWrapper final : public AugmentedPenaltyBase 
+{
+  public:
+    /** Default constructor */
+    PenaltyBaseWrapper(std::unique_ptr<PenaltyBase> penaltyPtr) : penaltyPtr_(std::move(penaltyPtr)) {}
 
-  ~PenaltyBaseWrapper() override = default;
-  PenaltyBaseWrapper* clone() const override { return new PenaltyBaseWrapper(*this); }
-  std::string name() const override { return penaltyPtr_->name(); }
+    ~PenaltyBaseWrapper() override = default;
+    
+    PenaltyBaseWrapper* clone() const override 
+    { 
+      return new PenaltyBaseWrapper(*this); 
+    }
+    
+    std::string name() const override 
+    { 
+      return penaltyPtr_->name(); 
+    }
 
-  scalar_t getValue(scalar_t t, scalar_t l, scalar_t h) const override { return penaltyPtr_->getValue(t, h); }
-  scalar_t getDerivative(scalar_t t, scalar_t l, scalar_t h) const override { return penaltyPtr_->getDerivative(t, h); }
-  scalar_t getSecondDerivative(scalar_t t, scalar_t l, scalar_t h) const override { return penaltyPtr_->getSecondDerivative(t, h); }
+    scalar_t getValue(scalar_t t, scalar_t l, scalar_t h) const override 
+    { 
+      return penaltyPtr_->getValue(t, h); 
+    }
+    
+    scalar_t getDerivative(scalar_t t, scalar_t l, scalar_t h) const override 
+    { 
+      return penaltyPtr_->getDerivative(t, h); 
+    }
+    
+    scalar_t getSecondDerivative(scalar_t t, scalar_t l, scalar_t h) const override 
+    { 
+      return penaltyPtr_->getSecondDerivative(t, h); 
+    }
 
-  scalar_t updateMultiplier(scalar_t t, scalar_t l, scalar_t h) const override {
-    throw std::runtime_error("[" + name() + "] This penalty is only applicable to soft constraints!");
-  }
-  scalar_t initializeMultiplier() const override {
-    throw std::runtime_error("[" + name() + "] This penalty is only applicable to soft constraints!");
-  }
+    scalar_t updateMultiplier(scalar_t t, scalar_t l, scalar_t h) const override 
+    {
+      throw std::runtime_error("[" + name() + "] This penalty is only applicable to soft constraints!");
+    }
 
- private:
-  PenaltyBaseWrapper(const PenaltyBaseWrapper& other) : penaltyPtr_(other.penaltyPtr_->clone()) {}
+    scalar_t initializeMultiplier() const override 
+    {
+      throw std::runtime_error("[" + name() + "] This penalty is only applicable to soft constraints!");
+    }
 
-  std::unique_ptr<PenaltyBase> penaltyPtr_;
+  private:
+    PenaltyBaseWrapper(const PenaltyBaseWrapper& other) : penaltyPtr_(other.penaltyPtr_->clone()) {}
+
+    std::unique_ptr<PenaltyBase> penaltyPtr_;
 };
 
-std::unique_ptr<PenaltyBaseWrapper> createWrapper(std::unique_ptr<PenaltyBase> penaltyPtr) {
+std::unique_ptr<PenaltyBaseWrapper> createWrapper(std::unique_ptr<PenaltyBase> penaltyPtr) 
+{
   return std::unique_ptr<PenaltyBaseWrapper>(new PenaltyBaseWrapper(std::move(penaltyPtr)));
 }
 
-scalar_t getMultiplier(const vector_t* l, size_t ind) {
+scalar_t getMultiplier(const vector_t* l, size_t ind) 
+{
   return (l == nullptr) ? 0.0 : (*l)(ind);
 }
 
@@ -77,19 +102,24 @@ scalar_t getMultiplier(const vector_t* l, size_t ind) {
 /******************************************************************************************************/
 template <>
 MultidimensionalPenalty::MultidimensionalPenalty<AugmentedPenaltyBase>(std::vector<std::unique_ptr<AugmentedPenaltyBase>> penaltyPtrArray)
-    : penaltyPtrArray_(std::move(penaltyPtrArray)) {
-  if (penaltyPtrArray_.empty()) {
+    : penaltyPtrArray_(std::move(penaltyPtrArray)) 
+{
+  if (penaltyPtrArray_.empty()) 
+  {
     throw std::runtime_error("[MultidimensionalPenalty::MultidimensionalPenalty] The penalty array cannot be empty!");
   }
 }
 
 template <>
-MultidimensionalPenalty::MultidimensionalPenalty<PenaltyBase>(std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrArray) {
-  for (auto& penaltyPtr : penaltyPtrArray) {
+MultidimensionalPenalty::MultidimensionalPenalty<PenaltyBase>(std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrArray) 
+{
+  for (auto& penaltyPtr : penaltyPtrArray) 
+  {
     penaltyPtrArray_.push_back(createWrapper(std::move(penaltyPtr)));
   }
 
-  if (penaltyPtrArray_.empty()) {
+  if (penaltyPtrArray_.empty()) 
+  {
     throw std::runtime_error("[MultidimensionalPenalty::MultidimensionalPenalty] The penalty array cannot be empty!");
   }
 }
@@ -98,20 +128,24 @@ MultidimensionalPenalty::MultidimensionalPenalty<PenaltyBase>(std::vector<std::u
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <>
-MultidimensionalPenalty::MultidimensionalPenalty<AugmentedPenaltyBase>(std::unique_ptr<AugmentedPenaltyBase> penaltyPtr) {
+MultidimensionalPenalty::MultidimensionalPenalty<AugmentedPenaltyBase>(std::unique_ptr<AugmentedPenaltyBase> penaltyPtr) 
+{
   penaltyPtrArray_.push_back(std::move(penaltyPtr));
 }
 
 template <>
-MultidimensionalPenalty::MultidimensionalPenalty<PenaltyBase>(std::unique_ptr<PenaltyBase> penaltyPtr) {
+MultidimensionalPenalty::MultidimensionalPenalty<PenaltyBase>(std::unique_ptr<PenaltyBase> penaltyPtr) 
+{
   penaltyPtrArray_.push_back(createWrapper(std::move(penaltyPtr)));
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MultidimensionalPenalty::MultidimensionalPenalty(const MultidimensionalPenalty& other) {
-  for (const auto& penalty : other.penaltyPtrArray_) {
+MultidimensionalPenalty::MultidimensionalPenalty(const MultidimensionalPenalty& other) 
+{
+  for (const auto& penalty : other.penaltyPtrArray_) 
+  {
     penaltyPtrArray_.emplace_back(penalty->clone());
   }
 }
@@ -119,12 +153,14 @@ MultidimensionalPenalty::MultidimensionalPenalty(const MultidimensionalPenalty& 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t MultidimensionalPenalty::getValue(scalar_t t, const vector_t& h, const vector_t* l) const {
+scalar_t MultidimensionalPenalty::getValue(scalar_t t, const vector_t& h, const vector_t* l) const 
+{
   const auto numConstraints = h.rows();
   assert(penaltyPtrArray_.size() == 1 || penaltyPtrArray_.size() == numConstraints);
 
   scalar_t penalty = 0;
-  for (size_t i = 0; i < numConstraints; i++) {
+  for (size_t i = 0; i < numConstraints; i++) 
+  {
     const auto& penaltyTerm = (penaltyPtrArray_.size() == 1) ? penaltyPtrArray_[0] : penaltyPtrArray_[i];
     penalty += penaltyTerm->getValue(t, getMultiplier(l, i), h(i));
   }
@@ -137,7 +173,8 @@ scalar_t MultidimensionalPenalty::getValue(scalar_t t, const vector_t& h, const 
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation MultidimensionalPenalty::getQuadraticApproximation(scalar_t t,
                                                                                         const VectorFunctionLinearApproximation& h,
-                                                                                        const vector_t* l) const {
+                                                                                        const vector_t* l) const 
+{
   const auto stateDim = h.dfdx.cols();
   const auto inputDim = h.dfdu.cols();
 
@@ -166,7 +203,8 @@ ScalarFunctionQuadraticApproximation MultidimensionalPenalty::getQuadraticApprox
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation MultidimensionalPenalty::getQuadraticApproximation(scalar_t t,
                                                                                         const VectorFunctionQuadraticApproximation& h,
-                                                                                        const vector_t* l) const {
+                                                                                        const vector_t* l) const 
+{
   const auto stateDim = h.dfdx.cols();
   const auto inputDim = h.dfdu.cols();
   const auto numConstraints = h.f.rows();

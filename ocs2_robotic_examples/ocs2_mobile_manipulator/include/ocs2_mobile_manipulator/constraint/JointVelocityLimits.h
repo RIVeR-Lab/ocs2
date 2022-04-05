@@ -36,20 +36,28 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace mobile_manipulator {
 
-class JointVelocityLimits final : public StateInputConstraint {
- public:
-  explicit JointVelocityLimits(size_t inputDim) : StateInputConstraint(ConstraintOrder::Linear), inputDim_(inputDim) {}
-  ~JointVelocityLimits() override = default;
-  JointVelocityLimits* clone() const override { return new JointVelocityLimits(*this); }
+class JointVelocityLimits final : public StateInputConstraint 
+{
+    public:
+        explicit JointVelocityLimits(size_t inputDim) : StateInputConstraint(ConstraintOrder::Linear), inputDim_(inputDim) {}
+        
+        ~JointVelocityLimits() override = default;
+        
+        JointVelocityLimits* clone() const override { return new JointVelocityLimits(*this); }
 
-  size_t getNumConstraints(scalar_t time) const override { return inputDim_; }
-  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation&) const override;
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                           const PreComputation&) const override;
+        size_t getNumConstraints(scalar_t time) const override { return inputDim_; }
+        
+        vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation&) const override;
+        
+        VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, 
+                                                                 const vector_t& state, 
+                                                                 const vector_t& input,
+                                                                 const PreComputation&) const override;
 
- private:
-  JointVelocityLimits(const JointVelocityLimits& other) = default;
-  const size_t inputDim_;
+    private:
+        JointVelocityLimits(const JointVelocityLimits& other) = default;
+        
+        const size_t inputDim_;
 };
 
 }  // namespace mobile_manipulator

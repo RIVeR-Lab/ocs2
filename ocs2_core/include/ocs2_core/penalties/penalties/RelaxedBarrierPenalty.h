@@ -47,36 +47,45 @@ namespace ocs2 {
  *
  * where \f$ \mu \geq 0 \f$, and \f$ \delta \geq 0 \f$ are user defined parameters.
  */
-class RelaxedBarrierPenalty final : public PenaltyBase {
- public:
-  /**
-   * Configuration object for the relaxed barrier penalty.
-   * mu : scaling factor
-   * delta: relaxation parameter, see class description
-   */
-  struct Config {
-    Config() : Config(1.0, 1e-3) {}
-    Config(scalar_t muParam, scalar_t deltaParam) : mu(muParam), delta(deltaParam) {}
-    scalar_t mu;
-    scalar_t delta;
-  };
+class RelaxedBarrierPenalty final : public PenaltyBase 
+{
+  public:
+    /**
+     * Configuration object for the relaxed barrier penalty.
+     * mu : scaling factor
+     * delta: relaxation parameter, see class description
+    */
+    struct Config 
+    {
+      Config() : Config(1.0, 1e-3) {}
+      Config(scalar_t muParam, scalar_t deltaParam) : mu(muParam), delta(deltaParam) {}
+      scalar_t mu;
+      scalar_t delta;
+    };
 
-  /**
-   * Constructor
-   * @param [in] config: Configuration object containing mu and delta.
-   */
-  explicit RelaxedBarrierPenalty(Config config) : config_(std::move(config)) {}
+    /**
+     * Constructor
+     * @param [in] config: Configuration object containing mu and delta.
+     */
+    explicit RelaxedBarrierPenalty(Config config) : config_(std::move(config)) {}
 
-  ~RelaxedBarrierPenalty() override = default;
-  RelaxedBarrierPenalty* clone() const override { return new RelaxedBarrierPenalty(*this); }
-  std::string name() const override { return "RelaxedBarrierPenalty"; }
+    ~RelaxedBarrierPenalty() override = default;
+    
+    RelaxedBarrierPenalty* clone() const override 
+    { 
+      return new RelaxedBarrierPenalty(*this); 
+    }
+    
+    std::string name() const override { return "RelaxedBarrierPenalty"; }
 
-  scalar_t getValue(scalar_t t, scalar_t h) const override;
-  scalar_t getDerivative(scalar_t t, scalar_t h) const override;
-  scalar_t getSecondDerivative(scalar_t t, scalar_t h) const override;
+    scalar_t getValue(scalar_t t, scalar_t h) const override;
+    
+    scalar_t getDerivative(scalar_t t, scalar_t h) const override;
+    
+    scalar_t getSecondDerivative(scalar_t t, scalar_t h) const override;
 
- private:
-  RelaxedBarrierPenalty(const RelaxedBarrierPenalty& other) = default;
+  private:
+    RelaxedBarrierPenalty(const RelaxedBarrierPenalty& other) = default;
 
   const Config config_;
 };

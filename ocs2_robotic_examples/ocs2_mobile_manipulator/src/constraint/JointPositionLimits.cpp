@@ -27,7 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <ocs2_mobile_manipulator/constraint/JointVelocityLimits.h>
+#include <ocs2_mobile_manipulator/constraint/JointPositionLimits.h>
 
 namespace ocs2 {
 namespace mobile_manipulator {
@@ -35,7 +35,7 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t JointVelocityLimits::getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation&) const 
+vector_t JointPositionLimits::getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation&) const 
 {
   return input;
 }
@@ -43,7 +43,7 @@ vector_t JointVelocityLimits::getValue(scalar_t time, const vector_t& state, con
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation JointVelocityLimits::getLinearApproximation(scalar_t time, 
+VectorFunctionLinearApproximation JointPositionLimits::getLinearApproximation(scalar_t time, 
                                                                               const vector_t& state, 
                                                                               const vector_t& input,
                                                                               const PreComputation&) const 
