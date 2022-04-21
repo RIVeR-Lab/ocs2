@@ -41,7 +41,8 @@ MPC_BASE::MPC_BASE(mpc::Settings mpcSettings) : mpcSettings_(std::move(mpcSettin
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_BASE::reset() {
+void MPC_BASE::reset() 
+{
   initRun_ = true;
   mpcTimer_.reset();
   getSolverPtr()->reset();
@@ -50,18 +51,43 @@ void MPC_BASE::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) {
+bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) 
+{
+  /*
+  std::cout << "" << std::endl;
+  std::cout << "MPC_BASE::run -> currentTime: " << currentTime << std::endl;
+  std::cout << "MPC_BASE::run -> finalTime: " << getSolverPtr() -> getFinalTime() << std::endl;
+  std::cout << "-------------------" << std::endl;
+  std::cout << "MPC_BASE::run -> currentState size: " << currentState.size() << std::endl;
+  std::cout << "MPC_BASE::run -> currentState: " << std::endl;
+  std::cout << "MPC_BASE::run -> position x: " << currentState[0] << std::endl;
+  std::cout << "MPC_BASE::run -> position y: " << currentState[1] << std::endl;
+  std::cout << "MPC_BASE::run -> heading: " << currentState[2] << std::endl;
+  std::cout << "MPC_BASE::run -> joint_head_pan: " << currentState[3] << std::endl;
+  std::cout << "MPC_BASE::run -> joint_head_tilt: " << currentState[4] << std::endl;
+  std::cout << "MPC_BASE::run -> joint_lift: " << currentState[5] << std::endl;
+  std::cout << "MPC_BASE::run -> joint_arm_l3: " << currentState[6] << std::endl;
+  std::cout << "MPC_BASE::run -> joint_arm_l2: " << currentState[7] << std::endl;
+  std::cout << "MPC_BASE::run -> joint_arm_l1: " << currentState[8] << std::endl;
+  std::cout << "MPC_BASE::run -> joint_arm_l0: " << currentState[9] << std::endl;
+  std::cout << "MPC_BASE::run -> joint_wrist_yaw: " << currentState[10] << std::endl;
+  std::cout << "" << std::endl;
+  */
+
+
   // check if the current time exceeds the solver final limit
-  if (!initRun_ && currentTime >= getSolverPtr()->getFinalTime()) {
-    std::cerr << "WARNING: The MPC time-horizon is smaller than the MPC starting time.\n";
-    std::cerr << "currentTime: " << currentTime << "\t Controller finalTime: " << getSolverPtr()->getFinalTime() << '\n';
+  if (!initRun_ && currentTime >= getSolverPtr() -> getFinalTime()) 
+  {
+    std::cerr << "MPC_BASE::run -> WARNING: The MPC time-horizon is smaller than the MPC starting time.\n";
+    std::cerr << "MPC_BASE::run -> currentTime: " << currentTime << "\t Controller finalTime: " << getSolverPtr() -> getFinalTime() << '\n';
     return false;
   }
 
   const scalar_t finalTime = currentTime + mpcSettings_.timeHorizon_;
 
   // display
-  if (mpcSettings_.debugPrint_) {
+  if (mpcSettings_.debugPrint_) 
+  {
     std::cerr << "\n#####################################################";
     std::cerr << "\n#####################################################";
     std::cerr << "\n#####################################################";
@@ -71,14 +97,18 @@ bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) {
     mpcTimer_.startTimer();
   }
 
+  std::cout << "MPC_BASE::run -> BEFORE calculateController" << std::endl;
   // calculate the MPC policy
   calculateController(currentTime, currentState, finalTime);
+
+  std::cout << "MPC_BASE::run -> AFTER calculateController" << std::endl;
 
   // set initRun flag to false
   initRun_ = false;
 
   // display
-  if (mpcSettings_.debugPrint_) {
+  if (mpcSettings_.debugPrint_) 
+  {
     mpcTimer_.endTimer();
     std::cerr << "\n### MPC Benchmarking";
     std::cerr << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";

@@ -40,7 +40,8 @@ namespace ocs2 {
 /**
  * The optimal control problem model data.
  */
-struct ModelData {
+struct ModelData 
+{
   int stateDim = 0;
   int inputDim = 0;
   scalar_t time = 0.0;

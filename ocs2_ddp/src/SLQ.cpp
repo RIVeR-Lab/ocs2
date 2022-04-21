@@ -37,35 +37,43 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SLQ::SLQ(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
+SLQ::SLQ(ddp::Settings ddpSettings, 
+         const RolloutBase& rollout, 
+         const OptimalControlProblem& optimalControlProblem,
          const Initializer& initializer)
-    : GaussNewtonDDP(std::move(ddpSettings), rollout, optimalControlProblem, initializer) {
-  if (settings().algorithm_ != ddp::Algorithm::SLQ) {
-    throw std::runtime_error("[SLQ] In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
-                             "\" while SLQ is instantiated!");
+    : GaussNewtonDDP(std::move(ddpSettings), rollout, optimalControlProblem, initializer) 
+{
+  if (settings().algorithm_ != ddp::Algorithm::SLQ) 
+  {
+    throw std::runtime_error("[SLQ] In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) + "\" while SLQ is instantiated!");
   }
 
   allSsTrajectoryStock_.resize(settings().nThreads_);
   SsNormalizedTimeTrajectoryStock_.resize(settings().nThreads_);
   SsNormalizedEventsPastTheEndIndecesStock_.resize(settings().nThreads_);
+
   // Riccati Solver
   riccatiEquationsPtrStock_.clear();
   riccatiEquationsPtrStock_.reserve(settings().nThreads_);
+  
   riccatiIntegratorPtrStock_.clear();
   riccatiIntegratorPtrStock_.reserve(settings().nThreads_);
 
   const auto integratorType = settings().backwardPassIntegratorType_;
   if (integratorType != IntegratorType::ODE45 && integratorType != IntegratorType::BULIRSCH_STOER &&
-      integratorType != IntegratorType::ODE45_OCS2 && integratorType != IntegratorType::RK4) {
-    throw(std::runtime_error("Unsupported Riccati equation integrator type: " +
-                             integrator_type::toString(settings().backwardPassIntegratorType_)));
+      integratorType != IntegratorType::ODE45_OCS2 && integratorType != IntegratorType::RK4) 
+  {
+    throw(std::runtime_error("Unsupported Riccati equation integrator type: " + integrator_type::toString(settings().backwardPassIntegratorType_)));
   }
 
-  for (size_t i = 0; i < settings().nThreads_; i++) {
+  for (size_t i = 0; i < settings().nThreads_; i++) 
+  {
     bool preComputeRiccatiTerms = settings().preComputeRiccatiTerms_ && (settings().strategy_ == search_strategy::Type::LINE_SEARCH);
     bool isRiskSensitive = !numerics::almost_eq(settings().riskSensitiveCoeff_, 0.0);
+    
     riccatiEquationsPtrStock_.emplace_back(new ContinuousTimeRiccatiEquations(preComputeRiccatiTerms, isRiskSensitive));
     riccatiEquationsPtrStock_.back()->setRiskSensitiveCoefficient(settings().riskSensitiveCoeff_);
+    
     riccatiIntegratorPtrStock_.emplace_back(newIntegrator(integratorType));
   }  // end of i loop
 
@@ -75,7 +83,8 @@ SLQ::SLQ(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalCon
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SLQ::approximateIntermediateLQ(PrimalDataContainer& primalData) {
+void SLQ::approximateIntermediateLQ(PrimalDataContainer& primalData) 
+{
   // create alias
   const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
   const auto& stateTrajectory = primalData.primalSolution.stateTrajectory_;
@@ -93,13 +102,18 @@ void SLQ::approximateIntermediateLQ(PrimalDataContainer& primalData) {
 
     // get next time index is atomic
     size_t timeIndex;
-    while ((timeIndex = nextTimeIndex_++) < timeTrajectory.size()) {
+    while ((timeIndex = nextTimeIndex_++) < timeTrajectory.size()) 
+    {
       // approximate LQ for the given time index
-      ocs2::approximateIntermediateLQ(optimalControlProblemStock_[taskId], timeTrajectory[timeIndex], stateTrajectory[timeIndex],
-                                      inputTrajectory[timeIndex], modelDataTrajectory[timeIndex]);
+      ocs2::approximateIntermediateLQ(optimalControlProblemStock_[taskId], 
+                                      timeTrajectory[timeIndex], 
+                                      stateTrajectory[timeIndex],
+                                      inputTrajectory[timeIndex], 
+                                      modelDataTrajectory[timeIndex]);
 
       // checking the numerical properties
-      if (settings().checkNumericalStability_) {
+      if (settings().checkNumericalStability_) 
+      {
         const auto errSize =
             checkSize(modelDataTrajectory[timeIndex], stateTrajectory[timeIndex].rows(), inputTrajectory[timeIndex].rows());
         if (!errSize.empty()) {

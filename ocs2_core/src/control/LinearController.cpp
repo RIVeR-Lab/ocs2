@@ -37,21 +37,24 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LinearController::LinearController(const LinearController& other) : LinearController(other.timeStamp_, other.biasArray_, other.gainArray_) {
+LinearController::LinearController(const LinearController& other) : LinearController(other.timeStamp_, other.biasArray_, other.gainArray_) 
+{
   deltaBiasArray_ = other.deltaBiasArray_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LinearController::LinearController(LinearController&& other) : ControllerBase(other) {
+LinearController::LinearController(LinearController&& other) : ControllerBase(other) 
+{
   swap(other, *this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LinearController& LinearController::operator=(LinearController rhs) {
+LinearController& LinearController::operator=(LinearController rhs) 
+{
   swap(rhs, *this);
   return *this;
 }
@@ -59,15 +62,18 @@ LinearController& LinearController::operator=(LinearController rhs) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LinearController* LinearController::clone() const {
+LinearController* LinearController::clone() const 
+{
   return new LinearController(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LinearController::setController(const scalar_array_t& controllerTime, const vector_array_t& controllerBias,
-                                     const matrix_array_t& controllerGain) {
+void LinearController::setController(const scalar_array_t& controllerTime, 
+                                     const vector_array_t& controllerBias,
+                                     const matrix_array_t& controllerGain) 
+{
   timeStamp_ = controllerTime;
   biasArray_ = controllerBias;
   gainArray_ = controllerGain;
@@ -76,7 +82,8 @@ void LinearController::setController(const scalar_array_t& controllerTime, const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t LinearController::computeInput(scalar_t t, const vector_t& x) {
+vector_t LinearController::computeInput(scalar_t t, const vector_t& x) 
+{
   const auto indexAlpha = LinearInterpolation::timeSegment(t, timeStamp_);
 
   vector_t uff = LinearInterpolation::interpolate(indexAlpha, biasArray_);
@@ -89,15 +96,18 @@ vector_t LinearController::computeInput(scalar_t t, const vector_t& x) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LinearController::flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const {
+void LinearController::flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const 
+{
   const auto timeSize = timeArray.size();
   const auto dataSize = flatArray2.size();
 
-  if (timeSize != dataSize) {
+  if (timeSize != dataSize) 
+  {
     throw std::runtime_error("timeSize and dataSize must be equal in flatten method.");
   }
 
-  for (size_t i = 0; i < timeSize; i++) {
+  for (size_t i = 0; i < timeSize; i++) 
+  {
     flattenSingle(timeArray[i], *(flatArray2[i]));
   }
 }
@@ -105,7 +115,8 @@ void LinearController::flatten(const scalar_array_t& timeArray, const std::vecto
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LinearController::flattenSingle(scalar_t time, std::vector<float>& flatArray) const {
+void LinearController::flattenSingle(scalar_t time, std::vector<float>& flatArray) const 
+{
   /* Serialized linear controller:
    * data = [
    *   // t0
@@ -138,9 +149,11 @@ void LinearController::flattenSingle(scalar_t time, std::vector<float>& flatArra
   flatArray.clear();
   flatArray.resize(uff.size() + k.size());
 
-  for (int i = 0; i < inputDim; i++) {  // i loops through rows of uff and k
+  for (int i = 0; i < inputDim; i++) 
+  {  // i loops through rows of uff and k
     flatArray[i * (stateDim + 1) + 0] = static_cast<float>(uff(i));
-    for (int j = 0; j < stateDim; j++) {  // j loops through cols of k
+    for (int j = 0; j < stateDim; j++) 
+    {  // j loops through cols of k
       flatArray[i * (stateDim + 1) + j + 1] = static_cast<float>(k(i, j));
     }
   }

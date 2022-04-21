@@ -47,11 +47,21 @@ namespace ocs2 {
 /******************************************************************************************************/
 SelfCollisionConstraintCppAd::SelfCollisionConstraintCppAd(PinocchioInterface pinocchioInterface,
                                                            const PinocchioStateInputMapping<scalar_t>& mapping,
-                                                           PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance,
-                                                           const std::string& modelName, const std::string& modelFolder,
-                                                           bool recompileLibraries, bool verbose)
-    : SelfCollisionConstraintCppAd(std::move(pinocchioInterface), mapping, std::move(pinocchioGeometryInterface), minimumDistance,
-                                   defaultUpdatePinocchioInterface, modelName, modelFolder, recompileLibraries, verbose) {}
+                                                           PinocchioGeometryInterface pinocchioGeometryInterface, 
+                                                           scalar_t minimumDistance,
+                                                           const std::string& modelName, 
+                                                           const std::string& modelFolder,
+                                                           bool recompileLibraries, 
+                                                           bool verbose)
+  : SelfCollisionConstraintCppAd(std::move(pinocchioInterface), 
+                                 mapping, 
+                                 std::move(pinocchioGeometryInterface), 
+                                 minimumDistance,
+                                 defaultUpdatePinocchioInterface, 
+                                 modelName, 
+                                 modelFolder, 
+                                 recompileLibraries, 
+                                 verbose) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/

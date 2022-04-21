@@ -38,9 +38,11 @@ namespace ocs2 {
 /**
  * This class is an interface class for the user defined target trajectories.
  */
-struct TargetTrajectories {
+struct TargetTrajectories 
+{
   explicit TargetTrajectories(size_t size = 0);
-  TargetTrajectories(scalar_array_t desiredTimeTrajectory, vector_array_t desiredStateTrajectory,
+  TargetTrajectories(scalar_array_t desiredTimeTrajectory, 
+                     vector_array_t desiredStateTrajectory,
                      vector_array_t desiredInputTrajectory = vector_array_t());
   void clear();
   bool empty() const { return timeTrajectory.empty() || stateTrajectory.empty(); }
@@ -58,6 +60,7 @@ struct TargetTrajectories {
 };
 
 void swap(TargetTrajectories& lh, TargetTrajectories& rh);
+
 std::ostream& operator<<(std::ostream& out, const TargetTrajectories& targetTrajectories);
 
 }  // namespace ocs2

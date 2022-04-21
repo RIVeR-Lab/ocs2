@@ -43,30 +43,40 @@ namespace ocs2 {
 /**
  * This class is an interface class for forward rollout of the system dynamics.
  */
-class TimeTriggeredRollout : public RolloutBase {
- public:
-  /**
-   * Constructor.
-   *
-   * @param [in] systemDynamics: The system dynamics for forward rollout.
-   * @param [in] rolloutSettings: The rollout settings.
-   */
-  explicit TimeTriggeredRollout(const ControlledSystemBase& systemDynamics, rollout::Settings rolloutSettings = rollout::Settings());
+class TimeTriggeredRollout : public RolloutBase 
+{
+    public:
+        /**
+        * Constructor.
+        *
+        * @param [in] systemDynamics: The system dynamics for forward rollout.
+        * @param [in] rolloutSettings: The rollout settings.
+        */
+        explicit TimeTriggeredRollout(const ControlledSystemBase& systemDynamics, rollout::Settings rolloutSettings = rollout::Settings());
 
-  ~TimeTriggeredRollout() override = default;
-  TimeTriggeredRollout(const TimeTriggeredRollout&) = delete;
-  TimeTriggeredRollout& operator=(const TimeTriggeredRollout&) = delete;
-  TimeTriggeredRollout* clone() const override { return new TimeTriggeredRollout(*systemDynamicsPtr_, this->settings()); }
+        ~TimeTriggeredRollout() override = default;
+        
+        TimeTriggeredRollout(const TimeTriggeredRollout&) = delete;
+        
+        TimeTriggeredRollout& operator=(const TimeTriggeredRollout&) = delete;
+        
+        TimeTriggeredRollout* clone() const override { return new TimeTriggeredRollout(*systemDynamicsPtr_, this->settings()); }
 
-  /** Returns the underlying dynamics. */
-  ControlledSystemBase* systemDynamicsPtr() { return systemDynamicsPtr_.get(); }
+        /** Returns the underlying dynamics. */
+        ControlledSystemBase* systemDynamicsPtr() { return systemDynamicsPtr_.get(); }
 
-  void abortRollout() override { systemEventHandlersPtr_->killIntegration_ = true; }
-  void reactivateRollout() override { systemEventHandlersPtr_->killIntegration_ = false; }
+        void abortRollout() override { systemEventHandlersPtr_->killIntegration_ = true; }
+        void reactivateRollout() override { systemEventHandlersPtr_->killIntegration_ = false; }
 
-  vector_t run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, ControllerBase* controller, ModeSchedule& modeSchedule,
-               scalar_array_t& timeTrajectory, size_array_t& postEventIndices, vector_array_t& stateTrajectory,
-               vector_array_t& inputTrajectory) override;
+        vector_t run(scalar_t initTime, 
+                     const vector_t& initState, 
+                     scalar_t finalTime, 
+                     ControllerBase* controller, 
+                     ModeSchedule& modeSchedule,
+                     scalar_array_t& timeTrajectory, 
+                     size_array_t& postEventIndices, 
+                     vector_array_t& stateTrajectory,
+                     vector_array_t& inputTrajectory) override;
 
  private:
   std::unique_ptr<PreComputation> preCompPtr_;

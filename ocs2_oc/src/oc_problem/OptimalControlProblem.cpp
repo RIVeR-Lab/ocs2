@@ -40,16 +40,19 @@ OptimalControlProblem::OptimalControlProblem()
       stateCostPtr(new StateCostCollection),
       preJumpCostPtr(new StateCostCollection),
       finalCostPtr(new StateCostCollection),
+      
       /* Soft constraints */
       softConstraintPtr(new StateInputCostCollection),
       stateSoftConstraintPtr(new StateCostCollection),
       preJumpSoftConstraintPtr(new StateCostCollection),
       finalSoftConstraintPtr(new StateCostCollection),
+      
       /* Equality constraints */
       equalityConstraintPtr(new StateInputConstraintCollection),
       stateEqualityConstraintPtr(new StateConstraintCollection),
       preJumpEqualityConstraintPtr(new StateConstraintCollection),
       finalEqualityConstraintPtr(new StateConstraintCollection),
+      
       /* Lagrangians */
       equalityLagrangianPtr(new StateInputCostCollection),
       stateEqualityLagrangianPtr(new StateCostCollection),
@@ -59,6 +62,7 @@ OptimalControlProblem::OptimalControlProblem()
       preJumpInequalityLagrangianPtr(new StateCostCollection),
       finalEqualityLagrangianPtr(new StateCostCollection),
       finalInequalityLagrangianPtr(new StateCostCollection),
+      
       /* Misc. */
       preComputationPtr(new PreComputation),
       targetTrajectoriesPtr(nullptr) {}

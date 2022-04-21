@@ -37,27 +37,30 @@ namespace ocs2 {
  * This is the interface class that the solvers use to initialize the state and the input for the time steps that no controller
  * is available. For a trivial implementation of this class, refer to DefaultInitializer class.
  */
-class Initializer {
- public:
-  Initializer() = default;
-  virtual ~Initializer() = default;
-  virtual Initializer* clone() const = 0;
+class Initializer 
+{
+  public:
+    Initializer() = default;
+    
+    virtual ~Initializer() = default;
+    
+    virtual Initializer* clone() const = 0;
 
-  /**
-   * Computes the state and input of the next time step based on the current time and state. Note that it guaranteed that there is
-   * no event times in the interval [time, nextTime), but there might be an event at nextTime (with nextTime = time + timeStep).
-   *
-   * @param [in] time: The current time.
-   * @param [in] state: The current state.
-   * @param [in] nextTime: The next time step.
-   * @param [out] input: The current input.
-   * @param [out] nextState: The next state.
-   */
-  virtual void compute(scalar_t time, const vector_t& state, scalar_t nextTime, vector_t& input, vector_t& nextState) = 0;
+    /**
+     * Computes the state and input of the next time step based on the current time and state. Note that it guaranteed that there is
+     * no event times in the interval [time, nextTime), but there might be an event at nextTime (with nextTime = time + timeStep).
+     *
+     * @param [in] time: The current time.
+     * @param [in] state: The current state.
+     * @param [in] nextTime: The next time step.
+     * @param [out] input: The current input.
+     * @param [out] nextState: The next state.
+     */
+    virtual void compute(scalar_t time, const vector_t& state, scalar_t nextTime, vector_t& input, vector_t& nextState) = 0;
 
- protected:
-  /** Copy constructor */
-  Initializer(const Initializer& rhs) = default;
+  protected:
+    /** Copy constructor */
+    Initializer(const Initializer& rhs) = default;
 };
 
 }  // namespace ocs2

@@ -39,30 +39,33 @@ namespace ocs2 {
 /**
  * A Solver synchronized module is updated once before and once after a problem is solved.
  */
-class SolverSynchronizedModule {
- public:
-  /**
-   * Default destructor
-   */
-  virtual ~SolverSynchronizedModule() = default;
+class SolverSynchronizedModule 
+{
+  public:
+    /**
+     * Default destructor
+     */
+    virtual ~SolverSynchronizedModule() = default;
 
-  /**
-   * Method called right before the solver runs
-   *
-   * @param initTime : start time of the MPC horizon
-   * @param finalTime : Final time of the MPC horizon
-   * @param initState : State at the start of the MPC horizon
-   * @param referenceManager : The ReferenceManager which manages both ModeSchedule and TargetTrajectories.
-   */
-  virtual void preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState,
-                            const ReferenceManagerInterface& referenceManager) = 0;
+    /**
+     * Method called right before the solver runs
+     *
+     * @param initTime : start time of the MPC horizon
+     * @param finalTime : Final time of the MPC horizon
+     * @param initState : State at the start of the MPC horizon
+     * @param referenceManager : The ReferenceManager which manages both ModeSchedule and TargetTrajectories.
+     */
+    virtual void preSolverRun(scalar_t initTime, 
+                              scalar_t finalTime, 
+                              const vector_t& initState,
+                              const ReferenceManagerInterface& referenceManager) = 0;
 
-  /**
-   * Method called right after the solver runs
-   *
-   * @param primalSolution : primalSolution
-   */
-  virtual void postSolverRun(const PrimalSolution& primalSolution) = 0;
+    /**
+     * Method called right after the solver runs
+     *
+     * @param primalSolution : primalSolution
+     */
+    virtual void postSolverRun(const PrimalSolution& primalSolution) = 0;
 };
 
 }  // namespace ocs2

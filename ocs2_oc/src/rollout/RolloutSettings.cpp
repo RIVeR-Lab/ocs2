@@ -37,13 +37,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace rollout {
 
-Settings loadSettings(const std::string& filename, const std::string& fieldName, bool verbose) {
+Settings loadSettings(const std::string& filename, const std::string& fieldName, bool verbose) 
+{
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(filename, pt);
 
   Settings settings;
 
-  if (verbose) {
+  if (verbose) 
+  {
     std::cerr << "\n #### Rollout Settings: ";
     std::cerr << "\n #### =============================================================================\n";
   }

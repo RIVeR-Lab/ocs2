@@ -51,21 +51,29 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
+GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, 
+                               const RolloutBase& rollout, 
+                               const OptimalControlProblem& optimalControlProblem,
                                const Initializer& initializer)
-    : ddpSettings_(std::move(ddpSettings)), threadPool_(std::max(ddpSettings_.nThreads_, size_t(1)) - 1, ddpSettings_.threadPriority_) {
+    : ddpSettings_(std::move(ddpSettings)), threadPool_(std::max(ddpSettings_.nThreads_, size_t(1)) - 1, ddpSettings_.threadPriority_) 
+{
   // check OCP
-  if (!optimalControlProblem.stateEqualityConstraintPtr->empty()) {
+  if (!optimalControlProblem.stateEqualityConstraintPtr->empty()) 
+  {
     throw std::runtime_error(
         "[GaussNewtonDDP] DDP does not support intermediate state-only equality constraints (a.k.a. stateEqualityConstraintPtr), instead "
         "use the Lagrangian method!");
   }
-  if (!optimalControlProblem.preJumpEqualityConstraintPtr->empty()) {
+
+  if (!optimalControlProblem.preJumpEqualityConstraintPtr->empty()) 
+  {
     throw std::runtime_error(
         "[GaussNewtonDDP] DDP does not support prejump equality constraints (a.k.a. preJumpEqualityConstraintPtr), instead use the "
         "Lagrangian method!");
   }
-  if (!optimalControlProblem.finalEqualityConstraintPtr->empty()) {
+
+  if (!optimalControlProblem.finalEqualityConstraintPtr->empty()) 
+  {
     throw std::runtime_error(
         "[GaussNewtonDDP] DDP does not support final equality constraints (a.k.a. finalEqualityConstraintPtr), instead use the Lagrangian "
         "method!");
@@ -77,7 +85,8 @@ GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rol
   optimalControlProblemStock_.reserve(ddpSettings_.nThreads_);
 
   // initialize all subsystems, etc.
-  for (size_t i = 0; i < ddpSettings_.nThreads_; i++) {
+  for (size_t i = 0; i < ddpSettings_.nThreads_; i++) 
+  {
     optimalControlProblemStock_.push_back(optimalControlProblem);
 
     // initialize rollout
@@ -91,7 +100,8 @@ GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rol
   initializeConstraintPenalties();
 
   // search strategy method
-  const auto basicStrategySettings = [&]() {
+  const auto basicStrategySettings = [&]() 
+  {
     search_strategy::Settings s;
     s.displayInfo = ddpSettings_.displayInfo_;
     s.debugPrintRollout = ddpSettings_.debugPrintRollout_;
@@ -99,20 +109,32 @@ GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rol
     s.constraintTolerance = ddpSettings_.constraintTolerance_;
     return s;
   }();
-  auto meritFunc = [this](const PerformanceIndex& p) { return calculateRolloutMerit(p); };
-  switch (ddpSettings_.strategy_) {
-    case search_strategy::Type::LINE_SEARCH: {
+  
+  auto meritFunc = [this](const PerformanceIndex& p) 
+  {
+   return calculateRolloutMerit(p); 
+  };
+
+  switch (ddpSettings_.strategy_) 
+  {
+    case search_strategy::Type::LINE_SEARCH: 
+    {
       std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock;
       std::vector<std::reference_wrapper<OptimalControlProblem>> problemRefStock;
-      for (size_t i = 0; i < ddpSettings_.nThreads_; i++) {
+      
+      for (size_t i = 0; i < ddpSettings_.nThreads_; i++) 
+      {
         rolloutRefStock.emplace_back(*dynamicsForwardRolloutPtrStock_[i]);
         problemRefStock.emplace_back(optimalControlProblemStock_[i]);
       }  // end of i loop
+
       searchStrategyPtr_.reset(new LineSearchStrategy(basicStrategySettings, ddpSettings_.lineSearch_, threadPool_,
                                                       std::move(rolloutRefStock), std::move(problemRefStock), meritFunc));
       break;
     }
-    case search_strategy::Type::LEVENBERG_MARQUARDT: {
+    
+    case search_strategy::Type::LEVENBERG_MARQUARDT: 
+    {
       constexpr size_t threadID = 0;
       searchStrategyPtr_.reset(new LevenbergMarquardtStrategy(basicStrategySettings, ddpSettings_.levenbergMarquardt_,
                                                               *dynamicsForwardRolloutPtrStock_[threadID],
@@ -292,7 +314,8 @@ ScalarFunctionQuadraticApproximation GaussNewtonDDP::getValueFunctionImpl(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ScalarFunctionQuadraticApproximation GaussNewtonDDP::getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) {
+ScalarFunctionQuadraticApproximation GaussNewtonDDP::getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) 
+{
   // perform the LQ approximation of the OC problem
   // note that the cost already includes:
   // - state-input intermediate cost
@@ -605,8 +628,12 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const ScalarFunctio
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::calculateController() {
+void GaussNewtonDDP::calculateController() 
+{
+  std::cout << "GaussNewtonDDP::calculateController -> IN" << std::endl;
   const size_t N = nominalPrimalData_.primalSolution.timeTrajectory_.size();
+
+  std::cout << "GaussNewtonDDP::calculateController -> N: " << N << std::endl;
 
   unoptimizedController_.clear();
   unoptimizedController_.timeStamp_ = nominalPrimalData_.primalSolution.timeTrajectory_;
@@ -615,10 +642,12 @@ void GaussNewtonDDP::calculateController() {
   unoptimizedController_.deltaBiasArray_.resize(N);
 
   nextTimeIndex_ = 0;
-  auto task = [this, N] {
+  auto task = [this, N] 
+  {
     int timeIndex;
     // get next time index (atomic)
-    while ((timeIndex = nextTimeIndex_++) < N) {
+    while ((timeIndex = nextTimeIndex_++) < N) 
+    {
       calculateControllerWorker(timeIndex, nominalPrimalData_, dualData_, unoptimizedController_);
     }
   };
@@ -630,7 +659,8 @@ void GaussNewtonDDP::calculateController() {
       nominalPrimalData_.primalSolution.postEventIndices_.empty() ||
       (nominalPrimalData_.primalSolution.postEventIndices_.back() != nominalPrimalData_.primalSolution.timeTrajectory_.size() - 1);
   // finalTimeIsNotAnEvent && there are at least two time stamps
-  if (finalTimeIsNotAnEvent && unoptimizedController_.size() >= 2) {
+  if (finalTimeIsNotAnEvent && unoptimizedController_.size() >= 2) 
+  {
     const size_t secondToLastIndex = unoptimizedController_.size() - 2u;
     unoptimizedController_.gainArray_.back() = unoptimizedController_.gainArray_[secondToLastIndex];
     unoptimizedController_.biasArray_.back() = unoptimizedController_.biasArray_[secondToLastIndex];
@@ -654,6 +684,7 @@ void GaussNewtonDDP::calculateController() {
       }
     }
   }
+  std::cout << "GaussNewtonDDP::calculateController -> OUT" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -816,8 +847,11 @@ void GaussNewtonDDP::computeProjections(const matrix_t& Hm, const matrix_t& Dm, 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::projectLQ(const ModelData& modelData, const matrix_t& constraintRangeProjector,
-                               const matrix_t& constraintNullProjector, ModelData& projectedModelData) const {
+void GaussNewtonDDP::projectLQ(const ModelData& modelData, 
+                               const matrix_t& constraintRangeProjector,
+                               const matrix_t& constraintNullProjector, 
+                               ModelData& projectedModelData) const 
+{
   // dimensions and time
   projectedModelData.time = modelData.time;
   projectedModelData.stateDim = modelData.stateDim;
@@ -879,7 +913,8 @@ void GaussNewtonDDP::projectLQ(const ModelData& modelData, const matrix_t& const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::initializeConstraintPenalties() {
+void GaussNewtonDDP::initializeConstraintPenalties() 
+{
   assert(ddpSettings_.constraintPenaltyInitialValue_ > 1.0);
   assert(ddpSettings_.constraintPenaltyIncreaseRate_ > 1.0);
 
@@ -1056,8 +1091,11 @@ void GaussNewtonDDP::runIteration(scalar_t lqModelExpectedCost) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime,
-                             const ControllerBase* externalControllerPtr) {
+void GaussNewtonDDP::runImpl(scalar_t initTime, 
+                             const vector_t& initState, 
+                             scalar_t finalTime,
+                             const ControllerBase* externalControllerPtr) 
+{
   if (ddpSettings_.displayInfo_) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
     std::cerr << "\n+++++++++++++ " + ddp::toAlgorithmName(ddpSettings_.algorithm_) + " solver is initialized ++++++++++++++";
@@ -1108,6 +1146,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
   // swap nominal trajectories (time, state, input, ...) to cache before new rollout
   swapDataToCache();
+
   // run DDP initializer and update the member variables
   runInit();
 
@@ -1119,7 +1158,8 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   std::string convergenceInfo;
 
   // DDP main loop
-  while (!isConverged && (totalNumIterations_ - initIteration) < ddpSettings_.maxNumIterations_) {
+  while (!isConverged && (totalNumIterations_ - initIteration) < ddpSettings_.maxNumIterations_) 
+  {
     // display the iteration's input update norm (before caching the old nominals)
     if (ddpSettings_.displayInfo_) {
       std::cerr << "\n###################";

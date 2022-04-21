@@ -28,7 +28,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include "ocs2_oc/synchronized_module/LoopshapingSynchronizedModule.h"
-
 #include "ocs2_oc/oc_data/LoopshapingPrimalSolution.h"
 
 namespace ocs2 {
@@ -39,14 +38,20 @@ LoopshapingSynchronizedModule::LoopshapingSynchronizedModule(
     : loopshapingDefinitionPtr_(std::move(loopshapingDefinitionPtr)),
       synchronizedModulesPtrArray_(std::move(synchronizedModulesPtrArray)) {}
 
-void LoopshapingSynchronizedModule::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState,
-                                                 const ReferenceManagerInterface& referenceManager) {
-  if (!synchronizedModulesPtrArray_.empty()) {
+void LoopshapingSynchronizedModule::preSolverRun(scalar_t initTime, 
+                                                 scalar_t finalTime, 
+                                                 const vector_t& initState,
+                                                 const ReferenceManagerInterface& referenceManager) 
+{
+  std::cout << "LoopshapingSynchronizedModule::preSolverRun -> IN" << std::endl;
+  if (!synchronizedModulesPtrArray_.empty()) 
+  {
     const auto systemState = loopshapingDefinitionPtr_->getSystemState(initState);
     for (auto& module : synchronizedModulesPtrArray_) {
       module->preSolverRun(initTime, finalTime, systemState, referenceManager);
     }
   }
+  std::cout << "LoopshapingSynchronizedModule::preSolverRun -> OUT" << std::endl;
 }
 
 void LoopshapingSynchronizedModule::postSolverRun(const PrimalSolution& primalSolution) {

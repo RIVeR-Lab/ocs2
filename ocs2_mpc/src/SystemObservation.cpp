@@ -34,7 +34,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void swap(SystemObservation& a, SystemObservation& b) noexcept {
+void swap(SystemObservation& a, SystemObservation& b) noexcept 
+{
   std::swap(a.mode, b.mode);
   std::swap(a.time, b.time);
   a.state.swap(b.state);
@@ -44,17 +45,23 @@ void swap(SystemObservation& a, SystemObservation& b) noexcept {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::ostream& operator<<(std::ostream& out, const SystemObservation& observation) {
+std::ostream& operator<<(std::ostream& out, const SystemObservation& observation) 
+{
   out << "Observation: \n";
   out << "\t time:      " << observation.time << '\n';
   out << "\t mode:      " << observation.mode << '\n';
   out << "\t state:    [";
-  for (int i = 0; i < observation.state.size() - 1; i++) {
+  
+  for (int i = 0; i < observation.state.size() - 1; i++) 
+  {
     out << observation.state(i) << ", ";
   }
+  
   out << observation.state(observation.state.size() - 1) << "]\n";
   out << "\t input:    [";
-  for (int i = 0; i < observation.input.size() - 1; i++) {
+  
+  for (int i = 0; i < observation.input.size() - 1; i++) 
+  {
     out << observation.input(i) << ", ";
   }
   out << observation.input(observation.input.size() - 1) << "]";

@@ -89,7 +89,8 @@ class MultidimensionalPenalty final
      * @param [in] h: The constraint linear approximation.
      * @return The penalty cost quadratic approximation.
      */
-    ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const VectorFunctionLinearApproximation& h,
+    ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, 
+                                                                   const VectorFunctionLinearApproximation& h,
                                                                    const vector_t* l = nullptr) const;
 
     /**
@@ -100,7 +101,8 @@ class MultidimensionalPenalty final
      * @param [in] h: The constraint quadratic approximation.
      * @return The penalty cost quadratic approximation.
      */
-    ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, const VectorFunctionQuadraticApproximation& h,
+    ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t t, 
+                                                                   const VectorFunctionQuadraticApproximation& h,
                                                                    const vector_t* l = nullptr) const;
 
     /**

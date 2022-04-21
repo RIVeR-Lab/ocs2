@@ -66,7 +66,7 @@ class PenaltyBaseWrapper final : public AugmentedPenaltyBase
     
     scalar_t getSecondDerivative(scalar_t t, scalar_t l, scalar_t h) const override 
     { 
-      return penaltyPtr_->getSecondDerivative(t, h); 
+      return penaltyPtr_ -> getSecondDerivative(t, h); 
     }
 
     scalar_t updateMultiplier(scalar_t t, scalar_t l, scalar_t h) const override 
@@ -102,7 +102,7 @@ scalar_t getMultiplier(const vector_t* l, size_t ind)
 /******************************************************************************************************/
 template <>
 MultidimensionalPenalty::MultidimensionalPenalty<AugmentedPenaltyBase>(std::vector<std::unique_ptr<AugmentedPenaltyBase>> penaltyPtrArray)
-    : penaltyPtrArray_(std::move(penaltyPtrArray)) 
+  : penaltyPtrArray_(std::move(penaltyPtrArray)) 
 {
   if (penaltyPtrArray_.empty()) 
   {

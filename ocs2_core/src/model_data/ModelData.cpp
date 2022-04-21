@@ -37,7 +37,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::string checkSize(const ModelData& data, int stateDim, int inputDim) {
+std::string checkSize(const ModelData& data, int stateDim, int inputDim) 
+{
   std::stringstream errorDescription;
 
   if (data.stateDim != stateDim) {

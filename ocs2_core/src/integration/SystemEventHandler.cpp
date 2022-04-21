@@ -36,23 +36,27 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::pair<bool, size_t> SystemEventHandler::checkEvent(OdeBase& system, scalar_t time, const vector_t& state) {
+std::pair<bool, size_t> SystemEventHandler::checkEvent(OdeBase& system, scalar_t time, const vector_t& state) 
+{
   return {false, 0};
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemEventHandler::handleEvent(OdeBase& system, scalar_t time, const vector_t& state) {
-  if (killIntegration_) {
+void SystemEventHandler::handleEvent(OdeBase& system, scalar_t time, const vector_t& state) 
+{
+  if (killIntegration_) 
+  {
     throw std::runtime_error("Integration terminated due to an external signal triggered by a program.");
   }
 
   // derived class events
   size_t eventID;
   bool event;
-  std::tie(event, eventID) = this->checkEvent(system, time, state);
-  if (event) {
+  std::tie(event, eventID) = this -> checkEvent(system, time, state);
+  if (event) 
+  {
     throw eventID;
   }
 }

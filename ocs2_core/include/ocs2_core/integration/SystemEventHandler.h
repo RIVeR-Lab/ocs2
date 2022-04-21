@@ -42,7 +42,8 @@ namespace ocs2 {
 /**
  * System event ID. all values are negative.
  */
-enum sys_event_id {
+enum sys_event_id 
+{
   killIntegration = -1,  //!< killIntegration: kill integration due to an external signal.
   maxCall = -2           //!< maximum number of function calls.
 };
@@ -50,43 +51,44 @@ enum sys_event_id {
 /**
  * Event handler class for ode solvers.
  */
-class SystemEventHandler {
- public:
-  /** Default constructor */
-  SystemEventHandler() = default;
+class SystemEventHandler 
+{
+  public:
+    /** Default constructor */
+    SystemEventHandler() = default;
 
-  /** Default destructor */
-  virtual ~SystemEventHandler() = default;
+    /** Default destructor */
+    virtual ~SystemEventHandler() = default;
 
-  /**
-   * Checks whether an event is activated. If true, the method should also return
-   * a "Non-Negative" ID which indicates the a unique ID for the active events.
-   *
-   * @param [in] system: System dynamics
-   * @param [in] time: The current time.
-   * @param [in] state: The current state vector.
-   * @return pair of event flag and eventID
-   */
-  virtual std::pair<bool, size_t> checkEvent(OdeBase& system, scalar_t time, const vector_t& state);
+    /**
+     * Checks whether an event is activated. If true, the method should also return
+     * a "Non-Negative" ID which indicates the a unique ID for the active events.
+     *
+     * @param [in] system: System dynamics
+     * @param [in] time: The current time.
+     * @param [in] state: The current state vector.
+     * @return pair of event flag and eventID
+     */
+    virtual std::pair<bool, size_t> checkEvent(OdeBase& system, scalar_t time, const vector_t& state);
 
-  /**
-   * The operation should be performed if an event is activated.
-   *
-   * @param [in] system: System dynamics
-   * @param [in] time: The current time.
-   * @param [in] state: The current state vector.
-   */
-  void handleEvent(OdeBase& system, scalar_t time, const vector_t& state);
+    /**
+     * The operation should be performed if an event is activated.
+     *
+     * @param [in] system: System dynamics
+     * @param [in] time: The current time.
+     * @param [in] state: The current state vector.
+     */
+    void handleEvent(OdeBase& system, scalar_t time, const vector_t& state);
 
-  /** Resets the class. */
-  virtual void reset() { killIntegration_ = false; };
+    /** Resets the class. */
+    virtual void reset() { killIntegration_ = false; };
 
- private:
-  /** Copy constructor */
-  SystemEventHandler(const SystemEventHandler& rhs) : SystemEventHandler() {}
+  private:
+    /** Copy constructor */
+    SystemEventHandler(const SystemEventHandler& rhs) : SystemEventHandler() {}
 
- public:
-  std::atomic_bool killIntegration_ = {false};
+  public:
+    std::atomic_bool killIntegration_ = {false};
 };
 
 }  // namespace ocs2

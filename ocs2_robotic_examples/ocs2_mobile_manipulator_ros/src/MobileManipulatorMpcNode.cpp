@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/package.h>
 
 #include <ocs2_ddp/GaussNewtonDDP_MPC.h>
+
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 
@@ -71,7 +72,7 @@ int main(int argc, char** argv)
                                interface.getOptimalControlProblem(), 
                                interface.getInitializer());
 
-  mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr); 
+  mpc.getSolverPtr() -> setReferenceManager(rosReferenceManagerPtr); 
 
   // Launch MPC ROS node
   MPC_ROS_Interface mpcNode(mpc, robotName);

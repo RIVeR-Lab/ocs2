@@ -35,15 +35,18 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 ReferenceManager::ReferenceManager(TargetTrajectories initialTargetTrajectories, ModeSchedule initialModeSchedule)
-    : targetTrajectories_(std::move(initialTargetTrajectories)), modeSchedule_(std::move(initialModeSchedule)) {}
+  : targetTrajectories_(std::move(initialTargetTrajectories)), modeSchedule_(std::move(initialModeSchedule)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ReferenceManager::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState) {
+void ReferenceManager::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState) 
+{
+  std::cout << "ReferenceManager::preSolverRun -> IN" << std::endl;
   targetTrajectories_.updateFromBuffer();
   modeSchedule_.updateFromBuffer();
   modifyReferences(initTime, finalTime, initState, targetTrajectories_.get(), modeSchedule_.get());
+  std::cout << "ReferenceManager::preSolverRun -> OUT" << std::endl;
 }
 
 }  // namespace ocs2

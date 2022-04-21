@@ -36,27 +36,32 @@ namespace ocs2 {
 /**
  * This is a default implementation of the Initializer where it sets the input to zero and the next state to the current state.
  */
-class DefaultInitializer final : public Initializer {
- public:
-  /**
-   * Constructor
-   * @param [in] inputDim: The dimension of the input space.
-   */
-  explicit DefaultInitializer(size_t inputDim) : inputDim_(inputDim) {}
+class DefaultInitializer final : public Initializer 
+{
+  public:
+    /**
+    * Constructor
+    * @param [in] inputDim: The dimension of the input space.
+    */
+    explicit DefaultInitializer(size_t inputDim) : inputDim_(inputDim) {}
 
-  ~DefaultInitializer() override = default;
+    ~DefaultInitializer() override = default;
 
-  DefaultInitializer* clone() const override { return new DefaultInitializer(*this); }
+    DefaultInitializer* clone() const override 
+    { 
+      return new DefaultInitializer(*this); 
+    }
 
-  void compute(scalar_t time, const vector_t& state, scalar_t nextTime, vector_t& input, vector_t& nextState) override {
-    input.setZero(inputDim_);
-    nextState = state;
-  }
+    void compute(scalar_t time, const vector_t& state, scalar_t nextTime, vector_t& input, vector_t& nextState) override 
+    {
+      input.setZero(inputDim_);
+      nextState = state;
+    }
 
- protected:
-  DefaultInitializer(const DefaultInitializer& rhs) = default;
+  protected:
+    DefaultInitializer(const DefaultInitializer& rhs) = default;
 
-  size_t inputDim_;
+    size_t inputDim_;
 };
 
 }  // namespace ocs2

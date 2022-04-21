@@ -37,14 +37,15 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 MPC_ROS_Interface::MPC_ROS_Interface(MPC_BASE& mpc, std::string topicPrefix)
-    : mpc_(mpc),
-      topicPrefix_(std::move(topicPrefix)),
-      bufferPrimalSolutionPtr_(new PrimalSolution()),
-      publisherPrimalSolutionPtr_(new PrimalSolution()),
-      bufferCommandPtr_(new CommandData()),
-      publisherCommandPtr_(new CommandData()),
-      bufferPerformanceIndicesPtr_(new PerformanceIndex),
-      publisherPerformanceIndicesPtr_(new PerformanceIndex) {
+  : mpc_(mpc),
+    topicPrefix_(std::move(topicPrefix)),
+    bufferPrimalSolutionPtr_(new PrimalSolution()),
+    publisherPrimalSolutionPtr_(new PrimalSolution()),
+    bufferCommandPtr_(new CommandData()),
+    publisherCommandPtr_(new CommandData()),
+    bufferPerformanceIndicesPtr_(new PerformanceIndex),
+    publisherPerformanceIndicesPtr_(new PerformanceIndex) 
+{
   // start thread for publishing
 #ifdef PUBLISH_THREAD
   publisherWorker_ = std::thread(&MPC_ROS_Interface::publisherWorker, this);
@@ -54,14 +55,16 @@ MPC_ROS_Interface::MPC_ROS_Interface(MPC_BASE& mpc, std::string topicPrefix)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MPC_ROS_Interface::~MPC_ROS_Interface() {
+MPC_ROS_Interface::~MPC_ROS_Interface() 
+{
   shutdownNode();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_ROS_Interface::resetMpcNode(TargetTrajectories&& initTargetTrajectories) {
+void MPC_ROS_Interface::resetMpcNode(TargetTrajectories&& initTargetTrajectories) 
+{
   std::lock_guard<std::mutex> resetLock(resetMutex_);
   mpc_.reset();
   mpc_.getSolverPtr()->getReferenceManager().setTargetTrajectories(std::move(initTargetTrajectories));
@@ -205,13 +208,15 @@ void MPC_ROS_Interface::publisherWorker() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_ROS_Interface::copyToBuffer(const SystemObservation& mpcInitObservation) {
+void MPC_ROS_Interface::copyToBuffer(const SystemObservation& mpcInitObservation) 
+{
   // buffer policy mutex
   std::lock_guard<std::mutex> policyBufferLock(bufferMutex_);
 
   // get solution
   scalar_t finalTime = mpcInitObservation.time + mpc_.settings().solutionTimeWindow_;
-  if (mpc_.settings().solutionTimeWindow_ < 0) {
+  if (mpc_.settings().solutionTimeWindow_ < 0) 
+  {
     finalTime = mpc_.getSolverPtr()->getFinalTime();
   }
   mpc_.getSolverPtr()->getPrimalSolution(finalTime, bufferPrimalSolutionPtr_.get());
@@ -227,10 +232,12 @@ void MPC_ROS_Interface::copyToBuffer(const SystemObservation& mpcInitObservation
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg) {
+void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg) 
+{
   std::lock_guard<std::mutex> resetLock(resetMutex_);
 
-  if (!resetRequestedEver_.load()) {
+  if (!resetRequestedEver_.load()) 
+  {
     ROS_WARN_STREAM("MPC should be reset first. Either call MPC_ROS_Interface::reset() or use the reset service.");
     return;
   }
@@ -242,8 +249,13 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   mpcTimer_.startTimer();
 
   // run MPC
+  std::cout << "" << std::endl;
+  std::cout << "MPC_ROS_Interface::mpcObservationCallback -> BEFORE mpc_.run" << std::endl;
   bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state);
-  if (!controllerIsUpdated) {
+  std::cout << "MPC_ROS_Interface::mpcObservationCallback -> AFTER mpc_.run" << std::endl;
+  std::cout << "" << std::endl;
+  if (!controllerIsUpdated) 
+  {
     return;
   }
   copyToBuffer(currentObservation);
@@ -253,15 +265,22 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
 
   // check MPC delay and solution window compatibility
   scalar_t timeWindow = mpc_.settings().solutionTimeWindow_;
-  if (mpc_.settings().solutionTimeWindow_ < 0) {
+  if (mpc_.settings().solutionTimeWindow_ < 0) 
+  {
     timeWindow = mpc_.getSolverPtr()->getFinalTime() - currentObservation.time;
   }
-  if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) {
+  
+  //std::cout << "MPC_ROS_Interface::mpcObservationCallback -> timeWindow: " << timeWindow << std::endl;
+  //std::cout << "MPC_ROS_Interface::mpcObservationCallback -> comparison: " << 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3 << std::endl;
+
+  if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) 
+  {
     std::cerr << "WARNING: The solution time window might be shorter than the MPC delay!\n";
   }
 
   // display
-  if (mpc_.settings().debugPrint_) {
+  if (mpc_.settings().debugPrint_) 
+  {
     std::cerr << '\n';
     std::cerr << "\n### MPC_ROS Benchmarking";
     std::cerr << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
@@ -276,16 +295,17 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   msgReady_.notify_one();
 
 #else
-  ocs2_msgs::mpc_flattened_controller mpcPolicyMsg =
-      createMpcPolicyMsg(*bufferPrimalSolutionPtr_, *bufferCommandPtr_, *bufferPerformanceIndicesPtr_);
+  ocs2_msgs::mpc_flattened_controller mpcPolicyMsg = createMpcPolicyMsg(*bufferPrimalSolutionPtr_, *bufferCommandPtr_, *bufferPerformanceIndicesPtr_);
   mpcPolicyPublisher_.publish(mpcPolicyMsg);
+
 #endif
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_ROS_Interface::shutdownNode() {
+void MPC_ROS_Interface::shutdownNode() 
+{
 #ifdef PUBLISH_THREAD
   ROS_INFO_STREAM("Shutting down workers ...");
 
@@ -320,12 +340,12 @@ void MPC_ROS_Interface::spin() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) {
+void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) 
+{
   ROS_INFO_STREAM("MPC node is setting up ...");
 
   // Observation subscriber
-  mpcObservationSubscriber_ = nodeHandle.subscribe(topicPrefix_ + "_mpc_observation", 1, &MPC_ROS_Interface::mpcObservationCallback, this,
-                                                   ::ros::TransportHints().tcpNoDelay());
+  mpcObservationSubscriber_ = nodeHandle.subscribe(topicPrefix_ + "_mpc_observation", 1, &MPC_ROS_Interface::mpcObservationCallback, this, ::ros::TransportHints().tcpNoDelay());
 
   // MPC publisher
   mpcPolicyPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_flattened_controller>(topicPrefix_ + "_mpc_policy", 1, true);

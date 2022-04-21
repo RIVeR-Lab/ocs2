@@ -38,24 +38,31 @@ namespace ocs2 {
 
 /** size_t trajectory type. */
 using size_array_t = std::vector<size_t>;
+
 /** Array of size_t trajectory type. */
 using size_array2_t = std::vector<size_array_t>;
 
 /** Scalar type. */
 using scalar_t = double;
+
 /** Scalar trajectory type. */
 using scalar_array_t = std::vector<scalar_t>;
+
 /** Array of scalar trajectory type. */
 using scalar_array2_t = std::vector<scalar_array_t>;
+
 /** Array of arrays of scalar trajectory type. */
 using scalar_array3_t = std::vector<scalar_array2_t>;
 
 /** Dynamic-size vector type. */
 using vector_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, 1>;
+
 /** Dynamic vector's trajectory type. */
 using vector_array_t = std::vector<vector_t>;
+
 /** Array of dynamic vector's trajectory type. */
 using vector_array2_t = std::vector<vector_array_t>;
+
 /** Array of arrays of dynamic vector trajectory type. */
 using vector_array3_t = std::vector<vector_array2_t>;
 
@@ -64,19 +71,25 @@ using row_vector_t = Eigen::Matrix<scalar_t, 1, Eigen::Dynamic>;
 
 /** Dynamic-size matrix type. */
 using matrix_t = Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic>;
+
 /** Dynamic matrix's trajectory type. */
 using matrix_array_t = std::vector<matrix_t>;
+
 /** Array of dynamic matrix's trajectory type. */
 using matrix_array2_t = std::vector<matrix_array_t>;
+
 /** Array of arrays of dynamic matrix trajectory type. */
 using matrix_array3_t = std::vector<matrix_array2_t>;
 
 /** Eigen scalar type. */
 using eigen_scalar_t = Eigen::Matrix<scalar_t, 1, 1>;
+
 /** Eigen scalar trajectory type. */
 using eigen_scalar_array_t = std::vector<eigen_scalar_t>;
+
 /** Array of eigen scalar trajectory type. */
 using eigen_scalar_array2_t = std::vector<eigen_scalar_array_t>;
+
 /** Array of arrays of eigen scalar trajectory type. */
 using eigen_scalar_array3_t = std::vector<eigen_scalar_array2_t>;
 
@@ -173,11 +186,14 @@ inline ScalarFunctionQuadraticApproximation operator*(scalar_t scalar, ScalarFun
  * Defines the linear model of a vector-valued function
  * f(x,u) = dfdx dx + dfdu du + f
  */
-struct VectorFunctionLinearApproximation {
+struct VectorFunctionLinearApproximation 
+{
   /** Derivative w.r.t state */
   matrix_t dfdx;
+
   /** Derivative w.r.t input */
   matrix_t dfdu;
+  
   /** Constant term */
   vector_t f;
 
@@ -232,7 +248,8 @@ std::string checkSize(int vectorDim, int stateDim, int inputDim, const VectorFun
  * Defines quadratic approximation of a vector-valued function
  * f[i](x,u) = 1/2 dx' dfdxx[i] dx + du' dfdux[i] dx + 1/2 du' dfduu[i] du + dfdx[i,:] dx + dfdu[i,:] du + f[i]
  */
-struct VectorFunctionQuadraticApproximation {
+struct VectorFunctionQuadraticApproximation 
+{
   /** Second derivative w.r.t state */
   matrix_array_t dfdxx;
   /** Second derivative w.r.t input (lhs) and state (rhs) */

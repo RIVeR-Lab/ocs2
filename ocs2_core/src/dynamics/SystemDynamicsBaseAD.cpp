@@ -53,17 +53,24 @@ SystemDynamicsBaseAD::SystemDynamicsBaseAD(const SystemDynamicsBaseAD& rhs)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::initialize(size_t stateDim, size_t inputDim, const std::string& modelName, const std::string& modelFolder,
-                                      bool recompileLibraries, bool verbose) {
+void SystemDynamicsBaseAD::initialize(size_t stateDim, 
+                                      size_t inputDim, 
+                                      const std::string& modelName, 
+                                      const std::string& modelFolder,
+                                      bool recompileLibraries, 
+                                      bool verbose) 
+{
   tapedTimeStateInput_.resize(1 + stateDim + inputDim);
   tapedTimeState_.resize(1 + stateDim);
 
-  auto flowMap = [this, stateDim, inputDim](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
+  auto flowMap = [this, stateDim, inputDim](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) 
+  {
     const ad_scalar_t time = x(0);
     const ad_vector_t state = x.segment(1, stateDim);
     const ad_vector_t input = x.tail(inputDim);
     y = this->systemFlowMap(time, state, input, p);
   };
+  
   flowMapADInterfacePtr_.reset(
       new CppAdInterface(flowMap, 1 + stateDim + inputDim, getNumFlowMapParameters(), modelName + "_flow_map", modelFolder));
 

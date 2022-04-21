@@ -44,11 +44,13 @@ TargetTrajectories::TargetTrajectories(size_t size) : timeTrajectory(size), stat
 /***************************************************************************************************** */
 TargetTrajectories::TargetTrajectories(scalar_array_t desiredTimeTrajectory, vector_array_t desiredStateTrajectory,
                                        vector_array_t desiredInputTrajectory)
-    : timeTrajectory(std::move(desiredTimeTrajectory)),
-      stateTrajectory(std::move(desiredStateTrajectory)),
-      inputTrajectory(std::move(desiredInputTrajectory)) {
+  : timeTrajectory(std::move(desiredTimeTrajectory)),
+    stateTrajectory(std::move(desiredStateTrajectory)),
+    inputTrajectory(std::move(desiredInputTrajectory)) 
+{
   assert(stateTrajectory.size() == timeTrajectory.size());
-  if (!inputTrajectory.empty()) {
+  if (!inputTrajectory.empty()) 
+  {
     assert(inputTrajectory.size() == timeTrajectory.size());
   }
 }

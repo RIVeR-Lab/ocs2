@@ -40,69 +40,70 @@ namespace ocs2 {
  * We assume that the penalty function is convex. In general, the penalty is a function of time, Lagrange multiplier, and
  * constraint violation.
  */
-class AugmentedPenaltyBase {
- public:
-  /** Default constructor */
-  AugmentedPenaltyBase() = default;
+class AugmentedPenaltyBase 
+{
+  public:
+    /** Default constructor */
+    AugmentedPenaltyBase() = default;
 
-  /** Default destructor */
-  virtual ~AugmentedPenaltyBase() = default;
+    /** Default destructor */
+    virtual ~AugmentedPenaltyBase() = default;
 
-  /** Clones the class */
-  virtual AugmentedPenaltyBase* clone() const = 0;
+    /** Clones the class */
+    virtual AugmentedPenaltyBase* clone() const = 0;
 
-  /** Get the name of the penalty function. This method is only used during error handling. */
-  virtual std::string name() const = 0;
+    /** Get the name of the penalty function. This method is only used during error handling. */
+    virtual std::string name() const = 0;
 
-  /**
-   * Compute the penalty value at a certain constraint value.
-   *
-   * @param [in] t: The time that the constraint is evaluated.
-   * @param [in] l: The Lagrange multiplier.
-   * @param [in] h: Constraint value.
-   * @return penalty cost.
-   */
-  virtual scalar_t getValue(scalar_t t, scalar_t l, scalar_t h) const = 0;
+    /**
+     * Compute the penalty value at a certain constraint value.
+     *
+     * @param [in] t: The time that the constraint is evaluated.
+     * @param [in] l: The Lagrange multiplier.
+     * @param [in] h: Constraint value.
+     * @return penalty cost.
+     */
+    virtual scalar_t getValue(scalar_t t, scalar_t l, scalar_t h) const = 0;
 
-  /**
-   * Compute the penalty derivative at a certain constraint value.
-   *
-   * @param [in] t: The time that the constraint is evaluated.
-   * @param [in] l: The Lagrange multiplier.
-   * @param [in] h: Constraint value.
-   * @return penalty derivative with respect to constraint value.
-   */
-  virtual scalar_t getDerivative(scalar_t t, scalar_t l, scalar_t h) const = 0;
+    /**
+     * Compute the penalty derivative at a certain constraint value.
+     *
+     * @param [in] t: The time that the constraint is evaluated.
+     * @param [in] l: The Lagrange multiplier.
+     * @param [in] h: Constraint value.
+     * @return penalty derivative with respect to constraint value.
+     */
+    virtual scalar_t getDerivative(scalar_t t, scalar_t l, scalar_t h) const = 0;
 
-  /**
-   * Compute the penalty second derivative at a certain constraint value.
-   *
-   * @param [in] t: The time that the constraint is evaluated.
-   * @param [in] l: The Lagrange multiplier.
-   * @param [in] h: Constraint value.
-   * @return penalty second derivative with respect to constraint value.
-   */
-  virtual scalar_t getSecondDerivative(scalar_t t, scalar_t l, scalar_t h) const = 0;
+    /**
+     * Compute the penalty second derivative at a certain constraint value.
+     *
+     * @param [in] t: The time that the constraint is evaluated.
+     * @param [in] l: The Lagrange multiplier.
+     * @param [in] h: Constraint value.
+     * @return penalty second derivative with respect to constraint value.
+     */
+    virtual scalar_t getSecondDerivative(scalar_t t, scalar_t l, scalar_t h) const = 0;
 
-  /**
-   * Updates the Lagrange multiplier.
-   *
-   * @param [in] t: The time stamp.
-   * @param [in] l: The Lagrange multiplier.
-   * @param [in] h: Constraint values.
-   * @return updated Lagrange multiplier.
-   */
-  virtual scalar_t updateMultiplier(scalar_t t, scalar_t l, scalar_t h) const = 0;
+    /**
+     * Updates the Lagrange multiplier.
+     *
+     * @param [in] t: The time stamp.
+     * @param [in] l: The Lagrange multiplier.
+     * @param [in] h: Constraint values.
+     * @return updated Lagrange multiplier.
+     */
+    virtual scalar_t updateMultiplier(scalar_t t, scalar_t l, scalar_t h) const = 0;
 
-  /**
-   * Initializes the Lagrange multiplier.
-   *
-   * @return initial value of the Lagrange multiplier.
-   */
-  virtual scalar_t initializeMultiplier() const = 0;
+    /**
+     * Initializes the Lagrange multiplier.
+     *
+     * @return initial value of the Lagrange multiplier.
+     */
+    virtual scalar_t initializeMultiplier() const = 0;
 
- protected:
-  AugmentedPenaltyBase(const AugmentedPenaltyBase& other) = default;
+  protected:
+    AugmentedPenaltyBase(const AugmentedPenaltyBase& other) = default;
 };
 
 }  // namespace ocs2

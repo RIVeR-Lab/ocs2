@@ -91,7 +91,8 @@ class SolverBase {
   /**
    * Sets the ReferenceManager which manages both ModeSchedule and TargetTrajectories. This module updates before SynchronizedModules.
    */
-  void setReferenceManager(std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr) {
+  void setReferenceManager(std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr) 
+  {
     if (referenceManagerPtr == nullptr) {
       throw std::runtime_error("[SolverBase] ReferenceManager pointer cannot be a nullptr!");
     }
@@ -101,13 +102,21 @@ class SolverBase {
   /*
    * Gets the ReferenceManager which manages both ModeSchedule and TargetTrajectories.
    */
-  ReferenceManagerInterface& getReferenceManager() { return *referenceManagerPtr_; }
-  const ReferenceManagerInterface& getReferenceManager() const { return *referenceManagerPtr_; }
+  ReferenceManagerInterface& getReferenceManager() 
+  { 
+    return *referenceManagerPtr_; 
+  }
+  
+  const ReferenceManagerInterface& getReferenceManager() const 
+  { 
+    return *referenceManagerPtr_; 
+  }
 
   /**
    * Sets all modules that need to be synchronized with the solver. Each module is updated once before and once after solving the problem
    */
-  void setSynchronizedModules(const std::vector<std::shared_ptr<SolverSynchronizedModule>>& synchronizedModules) {
+  void setSynchronizedModules(const std::vector<std::shared_ptr<SolverSynchronizedModule>>& synchronizedModules) 
+  {
     synchronizedModules_ = synchronizedModules;
   }
 
@@ -115,7 +124,8 @@ class SolverBase {
    * Adds one module to the vector of modules that need to be synchronized with the solver. Each module is updated once before and once
    * after solving the problem
    */
-  void addSynchronizedModule(std::shared_ptr<SolverSynchronizedModule> synchronizedModule) {
+  void addSynchronizedModule(std::shared_ptr<SolverSynchronizedModule> synchronizedModule) 
+  {
     synchronizedModules_.push_back(std::move(synchronizedModule));
   }
 

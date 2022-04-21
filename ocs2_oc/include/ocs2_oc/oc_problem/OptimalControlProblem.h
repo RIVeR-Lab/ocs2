@@ -50,48 +50,64 @@ struct OptimalControlProblem
   /* Cost */
   /** Intermediate cost */
   std::unique_ptr<StateInputCostCollection> costPtr;
+  
   /** Intermediate state-only cost */
   std::unique_ptr<StateCostCollection> stateCostPtr;
+  
   /** Pre-jump cost */
   std::unique_ptr<StateCostCollection> preJumpCostPtr;
+  
   /** Final cost */
   std::unique_ptr<StateCostCollection> finalCostPtr;
 
   /* Soft constraints */
   /** Intermediate soft constraint penalty */
   std::unique_ptr<StateInputCostCollection> softConstraintPtr;
+
   /** Intermediate state-only soft constraint penalty */
   std::unique_ptr<StateCostCollection> stateSoftConstraintPtr;
+  
   /** Pre-jump soft constraint penalty */
   std::unique_ptr<StateCostCollection> preJumpSoftConstraintPtr;
+  
   /** Final soft constraint penalty */
   std::unique_ptr<StateCostCollection> finalSoftConstraintPtr;
 
   /* Constraints */
   /** Intermediate equality constraints, full row rank w.r.t. inputs */
   std::unique_ptr<StateInputConstraintCollection> equalityConstraintPtr;
+
   /** Intermediate state-only equality constraints */
   std::unique_ptr<StateConstraintCollection> stateEqualityConstraintPtr;
+  
   /** Pre-jump equality constraints */
   std::unique_ptr<StateConstraintCollection> preJumpEqualityConstraintPtr;
+  
   /** Final equality constraints */
   std::unique_ptr<StateConstraintCollection> finalEqualityConstraintPtr;
 
   /* Lagrangians */
   /** Lagrangian for intermediate equality constraints */
   std::unique_ptr<StateInputCostCollection> equalityLagrangianPtr;
+
   /** Lagrangian for intermediate state-only equality constraints */
   std::unique_ptr<StateCostCollection> stateEqualityLagrangianPtr;
-  /** Lagrangian for intermediate inequality constraints */
+  
+  /** Lagrangian for intermediate inequality constraints */  
   std::unique_ptr<StateInputCostCollection> inequalityLagrangianPtr;
+  
   /** Lagrangian for intermediate state-only inequality constraints */
   std::unique_ptr<StateCostCollection> stateInequalityLagrangianPtr;
+  
   /** Lagrangian for pre-jump equality constraints */
   std::unique_ptr<StateCostCollection> preJumpEqualityLagrangianPtr;
+  
   /** Lagrangian for pre-jump inequality constraints */
   std::unique_ptr<StateCostCollection> preJumpInequalityLagrangianPtr;
+  
   /** Lagrangian for final equality constraints */
   std::unique_ptr<StateCostCollection> finalEqualityLagrangianPtr;
+  
   /** Lagrangian for final inequality constraints */
   std::unique_ptr<StateCostCollection> finalInequalityLagrangianPtr;
 
