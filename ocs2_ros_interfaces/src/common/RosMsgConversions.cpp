@@ -35,7 +35,8 @@ namespace ros_msg_conversions {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ocs2_msgs::mpc_observation createObservationMsg(const SystemObservation& observation) {
+ocs2_msgs::mpc_observation createObservationMsg(const SystemObservation& observation) 
+{
   ocs2_msgs::mpc_observation observationMsg;
 
   observationMsg.time = observation.time;

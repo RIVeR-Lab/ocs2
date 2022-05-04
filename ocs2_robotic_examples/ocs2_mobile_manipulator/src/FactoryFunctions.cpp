@@ -136,8 +136,11 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, co
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ManipulatorModelInfo createManipulatorModelInfo(const PinocchioInterface& interface, const ManipulatorModelType& type,
-                                                const std::string& baseFrame, const std::string& eeFrame) {
+ManipulatorModelInfo createManipulatorModelInfo(const PinocchioInterface& interface, 
+                                                const ManipulatorModelType& type,
+                                                const std::string& baseFrame, 
+                                                const std::string& eeFrame) 
+{
   const auto& model = interface.getModel();
 
   ManipulatorModelInfo info;

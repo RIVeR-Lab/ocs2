@@ -39,7 +39,8 @@ namespace ocs2 {
 /**
  * This class contains the policy requirements and desired set-point.
  */
-struct CommandData {
+struct CommandData 
+{
   SystemObservation mpcInitObservation_;
   TargetTrajectories mpcTargetTrajectories_;
 };

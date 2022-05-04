@@ -36,7 +36,8 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-Eigen::Matrix<SCALAR, 3, 1> getBasePosition(const Eigen::Matrix<SCALAR, -1, 1>& state, const ManipulatorModelInfo& info) {
+Eigen::Matrix<SCALAR, 3, 1> getBasePosition(const Eigen::Matrix<SCALAR, -1, 1>& state, const ManipulatorModelInfo& info) 
+{
   assert(state.rows() == info.stateDim);
   assert(state.cols() == 1);
   // resolve the position vector based on robot type.

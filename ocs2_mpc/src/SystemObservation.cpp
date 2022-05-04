@@ -34,7 +34,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void swap(SystemObservation& a, SystemObservation& b) noexcept {
+void swap(SystemObservation& a, SystemObservation& b) noexcept 
+{
   std::swap(a.mode, b.mode);
   std::swap(a.time, b.time);
   a.state.swap(b.state);
@@ -44,7 +45,8 @@ void swap(SystemObservation& a, SystemObservation& b) noexcept {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::ostream& operator<<(std::ostream& out, const SystemObservation& observation) {
+std::ostream& operator<<(std::ostream& out, const SystemObservation& observation) 
+{
   out << "Observation: \n";
   out << "\t time:      " << observation.time << '\n';
   out << "\t mode:      " << observation.mode << '\n';

@@ -38,7 +38,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 MRT_ROS_Interface::MRT_ROS_Interface(std::string topicPrefix, ros::TransportHints mrtTransportHints)
-    : topicPrefix_(std::move(topicPrefix)), mrtTransportHints_(mrtTransportHints) {
+  : topicPrefix_(std::move(topicPrefix)), mrtTransportHints_(mrtTransportHints) 
+{
 // Start thread for publishing
 #ifdef PUBLISH_THREAD
   // Close old thread if it is already running
@@ -52,21 +53,24 @@ MRT_ROS_Interface::MRT_ROS_Interface(std::string topicPrefix, ros::TransportHint
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MRT_ROS_Interface::~MRT_ROS_Interface() {
+MRT_ROS_Interface::~MRT_ROS_Interface() 
+{
   shutdownNodes();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::resetMpcNode(const TargetTrajectories& initTargetTrajectories) {
-  this->reset();
+void MRT_ROS_Interface::resetMpcNode(const TargetTrajectories& initTargetTrajectories) 
+{
+  this -> reset();
 
   ocs2_msgs::reset resetSrv;
   resetSrv.request.reset = static_cast<uint8_t>(true);
   resetSrv.request.targetTrajectories = ros_msg_conversions::createTargetTrajectoriesMsg(initTargetTrajectories);
 
-  while (!mpcResetServiceClient_.waitForExistence(ros::Duration(5.0)) && ::ros::ok() && ::ros::master::check()) {
+  while (!mpcResetServiceClient_.waitForExistence(ros::Duration(5.0)) && ::ros::ok() && ::ros::master::check()) 
+  {
     ROS_ERROR_STREAM("Failed to call service to reset MPC, retrying...");
   }
 
@@ -77,7 +81,8 @@ void MRT_ROS_Interface::resetMpcNode(const TargetTrajectories& initTargetTraject
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::setCurrentObservation(const SystemObservation& currentObservation) {
+void MRT_ROS_Interface::setCurrentObservation(const SystemObservation& currentObservation) 
+{
 #ifdef PUBLISH_THREAD
   std::unique_lock<std::mutex> lk(publisherMutex_);
 #endif
@@ -122,21 +127,29 @@ void MRT_ROS_Interface::publisherWorkerThread() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller& msg, CommandData& commandData,
-                                      PrimalSolution& primalSolution, PerformanceIndex& performanceIndices) {
+void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller& msg, 
+                                      CommandData& commandData,
+                                      PrimalSolution& primalSolution, 
+                                      PerformanceIndex& performanceIndices) 
+{
   commandData.mpcInitObservation_ = ros_msg_conversions::readObservationMsg(msg.initObservation);
   commandData.mpcTargetTrajectories_ = ros_msg_conversions::readTargetTrajectoriesMsg(msg.planTargetTrajectories);
   performanceIndices = ros_msg_conversions::readPerformanceIndicesMsg(msg.performanceIndices);
   primalSolution.modeSchedule_ = ros_msg_conversions::readModeScheduleMsg(msg.modeSchedule);
 
   const size_t N = msg.timeTrajectory.size();
-  if (N == 0) {
+  if (N == 0) 
+  {
     throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] controller message is empty!");
   }
-  if (msg.stateTrajectory.size() != N && msg.inputTrajectory.size() != N) {
+  
+  if (msg.stateTrajectory.size() != N && msg.inputTrajectory.size() != N) 
+  {
     throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] state and input trajectories must have same length!");
   }
-  if (msg.data.size() != N) {
+
+  if (msg.data.size() != N) 
+  {
     throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] Data has the wrong length!");
   }
 
@@ -147,18 +160,19 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
   primalSolution.timeTrajectory_.reserve(N);
   primalSolution.stateTrajectory_.reserve(N);
   primalSolution.inputTrajectory_.reserve(N);
-  for (size_t i = 0; i < N; i++) {
+  
+  for (size_t i = 0; i < N; i++) 
+  {
     stateDim[i] = msg.stateTrajectory[i].value.size();
     inputDim[i] = msg.inputTrajectory[i].value.size();
     primalSolution.timeTrajectory_.emplace_back(msg.timeTrajectory[i]);
-    primalSolution.stateTrajectory_.emplace_back(
-        Eigen::Map<const Eigen::VectorXf>(msg.stateTrajectory[i].value.data(), stateDim[i]).cast<scalar_t>());
-    primalSolution.inputTrajectory_.emplace_back(
-        Eigen::Map<const Eigen::VectorXf>(msg.inputTrajectory[i].value.data(), inputDim[i]).cast<scalar_t>());
+    primalSolution.stateTrajectory_.emplace_back(Eigen::Map<const Eigen::VectorXf>(msg.stateTrajectory[i].value.data(), stateDim[i]).cast<scalar_t>());
+    primalSolution.inputTrajectory_.emplace_back(Eigen::Map<const Eigen::VectorXf>(msg.inputTrajectory[i].value.data(), inputDim[i]).cast<scalar_t>());
   }
 
   primalSolution.postEventIndices_.reserve(msg.postEventIndices.size());
-  for (auto ind : msg.postEventIndices) {
+  for (auto ind : msg.postEventIndices) 
+  {
     primalSolution.postEventIndices_.emplace_back(static_cast<size_t>(ind));
   }
 
@@ -187,14 +201,15 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::mpcPolicyCallback(const ocs2_msgs::mpc_flattened_controller::ConstPtr& msg) {
+void MRT_ROS_Interface::mpcPolicyCallback(const ocs2_msgs::mpc_flattened_controller::ConstPtr& msg) 
+{
   // read new policy and command from msg
   std::unique_ptr<CommandData> commandPtr(new CommandData);
   std::unique_ptr<PrimalSolution> primalSolutionPtr(new PrimalSolution);
   std::unique_ptr<PerformanceIndex> performanceIndicesPtr(new PerformanceIndex);
   readPolicyMsg(*msg, *commandPtr, *primalSolutionPtr, *performanceIndicesPtr);
 
-  this->moveToBuffer(std::move(commandPtr), std::move(primalSolutionPtr), std::move(performanceIndicesPtr));
+  this -> moveToBuffer(std::move(commandPtr), std::move(primalSolutionPtr), std::move(performanceIndicesPtr));
 }
 
 /******************************************************************************************************/
@@ -235,15 +250,17 @@ void MRT_ROS_Interface::shutdownPublisher() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::spinMRT() {
+void MRT_ROS_Interface::spinMRT() 
+{
   mrtCallbackQueue_.callOne();
 };
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) {
-  this->reset();
+void MRT_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) 
+{
+  this -> reset();
 
   // display
   ROS_INFO_STREAM("MRT node is setting up ...");
@@ -252,13 +269,11 @@ void MRT_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) {
   mpcObservationPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_observation>(topicPrefix_ + "_mpc_observation", 1);
 
   // policy subscriber
-  auto ops = ros::SubscribeOptions::create<ocs2_msgs::mpc_flattened_controller>(
-      topicPrefix_ + "_mpc_policy",                                                       // topic name
-      1,                                                                                  // queue length
-      boost::bind(&MRT_ROS_Interface::mpcPolicyCallback, this, boost::placeholders::_1),  // callback
-      ros::VoidConstPtr(),                                                                // tracked object
-      &mrtCallbackQueue_                                                                  // pointer to callback queue object
-  );
+  auto ops = ros::SubscribeOptions::create<ocs2_msgs::mpc_flattened_controller>(topicPrefix_ + "_mpc_policy",                                                       // topic name
+                                                                                1,                                                                                  // queue length
+                                                                                boost::bind(&MRT_ROS_Interface::mpcPolicyCallback, this, boost::placeholders::_1),  // callback
+                                                                                ros::VoidConstPtr(),                                                                // tracked object
+                                                                                &mrtCallbackQueue_);                                                                // pointer to callback queue object
   ops.transport_hints = mrtTransportHints_;
   mpcPolicySubscriber_ = nodeHandle.subscribe(ops);
 

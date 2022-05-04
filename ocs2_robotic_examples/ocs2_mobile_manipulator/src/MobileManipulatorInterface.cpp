@@ -95,12 +95,15 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   // read the task file
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile, pt);
+  
   // resolve meta-information about the model
   // read manipulator type
   ManipulatorModelType modelType = mobile_manipulator::loadManipulatorType(taskFile, "model_information.manipulatorModelType");
+  
   // read the joints to make fixed
   std::vector<std::string> removeJointNames;
   loadData::loadStdVector<std::string>(taskFile, "model_information.removeJoints", removeJointNames, false);
+  
   // read the frame names
   std::string baseFrame, eeFrame;
   loadData::loadPtreeValue<std::string>(pt, baseFrame, "model_information.baseFrame", false);
@@ -110,7 +113,9 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   std::cerr << "\n #### =============================================================================\n";
   std::cerr << "\n #### model_information.manipulatorModelType: " << static_cast<int>(modelType);
   std::cerr << "\n #### model_information.removeJoints: ";
-  for (const auto& name : removeJointNames) {
+  
+  for (const auto& name : removeJointNames) 
+  {
     std::cerr << "\"" << name << "\" ";
   }
   std::cerr << "\n #### model_information.baseFrame: \"" << baseFrame << "\"";

@@ -37,14 +37,15 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 MPC_ROS_Interface::MPC_ROS_Interface(MPC_BASE& mpc, std::string topicPrefix)
-    : mpc_(mpc),
-      topicPrefix_(std::move(topicPrefix)),
-      bufferPrimalSolutionPtr_(new PrimalSolution()),
-      publisherPrimalSolutionPtr_(new PrimalSolution()),
-      bufferCommandPtr_(new CommandData()),
-      publisherCommandPtr_(new CommandData()),
-      bufferPerformanceIndicesPtr_(new PerformanceIndex),
-      publisherPerformanceIndicesPtr_(new PerformanceIndex) {
+  : mpc_(mpc),
+    topicPrefix_(std::move(topicPrefix)),
+    bufferPrimalSolutionPtr_(new PrimalSolution()),
+    publisherPrimalSolutionPtr_(new PrimalSolution()),
+    bufferCommandPtr_(new CommandData()),
+    publisherCommandPtr_(new CommandData()),
+    bufferPerformanceIndicesPtr_(new PerformanceIndex),
+    publisherPerformanceIndicesPtr_(new PerformanceIndex) 
+{
   // start thread for publishing
 #ifdef PUBLISH_THREAD
   publisherWorker_ = std::thread(&MPC_ROS_Interface::publisherWorker, this);

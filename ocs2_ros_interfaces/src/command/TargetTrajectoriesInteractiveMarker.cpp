@@ -37,11 +37,14 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TargetTrajectoriesInteractiveMarker::TargetTrajectoriesInteractiveMarker(::ros::NodeHandle& nodeHandle, const std::string& topicPrefix,
+TargetTrajectoriesInteractiveMarker::TargetTrajectoriesInteractiveMarker(::ros::NodeHandle& nodeHandle, 
+                                                                         const std::string& topicPrefix,
                                                                          GaolPoseToTargetTrajectories gaolPoseToTargetTrajectories)
-    : server_("simple_marker"), gaolPoseToTargetTrajectories_(std::move(gaolPoseToTargetTrajectories)) {
+  : server_("simple_marker"), gaolPoseToTargetTrajectories_(std::move(gaolPoseToTargetTrajectories)) 
+{
   // observation subscriber
-  auto observationCallback = [this](const ocs2_msgs::mpc_observation::ConstPtr& msg) {
+  auto observationCallback = [this](const ocs2_msgs::mpc_observation::ConstPtr& msg) 
+  {
     std::lock_guard<std::mutex> lock(latestObservationMutex_);
     latestObservation_ = ros_msg_conversions::readObservationMsg(*msg);
   };

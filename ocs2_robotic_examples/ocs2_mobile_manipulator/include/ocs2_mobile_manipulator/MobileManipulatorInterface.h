@@ -73,11 +73,17 @@ class MobileManipulatorInterface final : public RobotInterface {
 
   const Initializer& getInitializer() const override { return *initializerPtr_; }
 
-  const RolloutBase& getRollout() const { return *rolloutPtr_; }
+  const RolloutBase& getRollout() const 
+  { 
+    return *rolloutPtr_; 
+  }
 
   const PinocchioInterface& getPinocchioInterface() const { return *pinocchioInterfacePtr_; }
 
-  const ManipulatorModelInfo& getManipulatorModelInfo() const { return manipulatorModelInfo_; }
+  const ManipulatorModelInfo& getManipulatorModelInfo() const 
+  { 
+    return manipulatorModelInfo_; 
+  }
 
  private:
   std::unique_ptr<StateInputCost> getQuadraticInputCost(const std::string& taskFile);

@@ -56,94 +56,97 @@ namespace ocs2 {
 /**
  * This class implements MRT (Model Reference Tracking) communication interface using ROS.
  */
-class MRT_ROS_Interface : public MRT_BASE {
- public:
-  /**
-   * Constructor
-   *
-   * @param [in] topicPrefix: The prefix defines the names for: observation's publishing topic "topicPrefix_mpc_observation",
-   * policy's receiving topic "topicPrefix_mpc_policy", and MPC reset service "topicPrefix_mpc_reset".
-   * @param [in] mrtTransportHints: ROS transmission protocol.
-   */
-  explicit MRT_ROS_Interface(std::string topicPrefix = "anonymousRobot",
-                             ::ros::TransportHints mrtTransportHints = ::ros::TransportHints().tcpNoDelay());
+class MRT_ROS_Interface : public MRT_BASE 
+{
+  public:
+    /**
+     * Constructor
+     *
+     * @param [in] topicPrefix: The prefix defines the names for: observation's publishing topic "topicPrefix_mpc_observation",
+     * policy's receiving topic "topicPrefix_mpc_policy", and MPC reset service "topicPrefix_mpc_reset".
+     * @param [in] mrtTransportHints: ROS transmission protocol.
+     */
+    explicit MRT_ROS_Interface(std::string topicPrefix = "anonymousRobot",
+                               ::ros::TransportHints mrtTransportHints = ::ros::TransportHints().tcpNoDelay());
 
-  /**
-   * Destructor
-   */
-  ~MRT_ROS_Interface() override;
+    /**
+     * Destructor
+     */
+    ~MRT_ROS_Interface() override;
 
-  void resetMpcNode(const TargetTrajectories& initTargetTrajectories) override;
+    void resetMpcNode(const TargetTrajectories& initTargetTrajectories) override;
 
-  /**
-   * Shut down the ROS nodes.
-   */
-  void shutdownNodes();
+    /**
+     * Shut down the ROS nodes.
+     */
+    void shutdownNodes();
 
-  /**
-   * Shut down publisher
-   */
-  void shutdownPublisher();
+    /**
+     * Shut down publisher
+     */
+    void shutdownPublisher();
 
-  /**
-   * spin the MRT callback queue
-   */
-  void spinMRT();
+    /**
+     * spin the MRT callback queue
+     */
+    void spinMRT();
 
-  /**
-   * Launches the ROS publishers and subscribers to communicate with the MPC node.
-   * @param nodeHandle
-   */
-  void launchNodes(::ros::NodeHandle& nodeHandle);
+    /**
+     * Launches the ROS publishers and subscribers to communicate with the MPC node.
+     * @param nodeHandle
+     */
+    void launchNodes(::ros::NodeHandle& nodeHandle);
 
-  void setCurrentObservation(const SystemObservation& currentObservation) override;
+    void setCurrentObservation(const SystemObservation& currentObservation) override;
 
- private:
-  /**
-   * Callback method to receive the MPC policy as well as the mode sequence.
-   * It only updates the policy variables with suffix (*Buffer_) variables.
-   *
-   * @param [in] msg: A constant pointer to the message
-   */
-  void mpcPolicyCallback(const ocs2_msgs::mpc_flattened_controller::ConstPtr& msg);
+  private:
+    /**
+     * Callback method to receive the MPC policy as well as the mode sequence.
+     * It only updates the policy variables with suffix (*Buffer_) variables.
+     *
+     * @param [in] msg: A constant pointer to the message
+     */
+    void mpcPolicyCallback(const ocs2_msgs::mpc_flattened_controller::ConstPtr& msg);
 
-  /**
-   * Helper function to read a MPC policy message.
-   *
-   * @param [in] msg: A constant pointer to the message
-   * @param [out] commandData: The MPC command data
-   * @param [out] primalSolution: The MPC policy data
-   * @param [out] performanceIndices: The MPC performance indices data
-   */
-  static void readPolicyMsg(const ocs2_msgs::mpc_flattened_controller& msg, CommandData& commandData, PrimalSolution& primalSolution,
-                            PerformanceIndex& performanceIndices);
+    /**
+     * Helper function to read a MPC policy message.
+     *
+     * @param [in] msg: A constant pointer to the message
+     * @param [out] commandData: The MPC command data
+     * @param [out] primalSolution: The MPC policy data
+     * @param [out] performanceIndices: The MPC performance indices data
+     */
+    static void readPolicyMsg(const ocs2_msgs::mpc_flattened_controller& msg, 
+                              CommandData& commandData, 
+                              PrimalSolution& primalSolution,
+                              PerformanceIndex& performanceIndices);
 
-  /**
-   * A thread function which sends the current state and checks for a new MPC update.
-   */
-  void publisherWorkerThread();
+    /**
+     * A thread function which sends the current state and checks for a new MPC update.
+     */
+    void publisherWorkerThread();
 
- private:
-  std::string topicPrefix_;
+  private:
+    std::string topicPrefix_;
 
-  // Publishers and subscribers
-  ::ros::Publisher mpcObservationPublisher_;
-  ::ros::Subscriber mpcPolicySubscriber_;
-  ::ros::ServiceClient mpcResetServiceClient_;
+    // Publishers and subscribers
+    ::ros::Publisher mpcObservationPublisher_;
+    ::ros::Subscriber mpcPolicySubscriber_;
+    ::ros::ServiceClient mpcResetServiceClient_;
 
-  // ROS messages
-  ocs2_msgs::mpc_observation mpcObservationMsg_;
-  ocs2_msgs::mpc_observation mpcObservationMsgBuffer_;
+    // ROS messages
+    ocs2_msgs::mpc_observation mpcObservationMsg_;
+    ocs2_msgs::mpc_observation mpcObservationMsgBuffer_;
 
-  ::ros::CallbackQueue mrtCallbackQueue_;
-  ::ros::TransportHints mrtTransportHints_;
+    ::ros::CallbackQueue mrtCallbackQueue_;
+    ::ros::TransportHints mrtTransportHints_;
 
-  // Multi-threading for publishers
-  bool terminateThread_;
-  bool readyToPublish_;
-  std::thread publisherWorker_;
-  std::mutex publisherMutex_;
-  std::condition_variable msgReady_;
+    // Multi-threading for publishers
+    bool terminateThread_;
+    bool readyToPublish_;
+    std::thread publisherWorker_;
+    std::mutex publisherMutex_;
+    std::condition_variable msgReady_;
 };
 
 }  // namespace ocs2

@@ -34,13 +34,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/ControllerBase.h>
 #include <ocs2_core/reference/ModeSchedule.h>
+#include <ocs2_core/misc/LinearInterpolation.h>
 
 namespace ocs2 {
 
 /**
  * This class contains the primal problem's solution.
  */
-struct PrimalSolution {
+struct PrimalSolution 
+{
   /** Constructor */
   PrimalSolution() = default;
 
@@ -49,23 +51,28 @@ struct PrimalSolution {
 
   /** Copy constructor */
   PrimalSolution(const PrimalSolution& other)
-      : timeTrajectory_(other.timeTrajectory_),
-        stateTrajectory_(other.stateTrajectory_),
-        inputTrajectory_(other.inputTrajectory_),
-        postEventIndices_(other.postEventIndices_),
-        modeSchedule_(other.modeSchedule_),
-        controllerPtr_(other.controllerPtr_ ? other.controllerPtr_->clone() : nullptr) {}
+    : timeTrajectory_(other.timeTrajectory_),
+      stateTrajectory_(other.stateTrajectory_),
+      inputTrajectory_(other.inputTrajectory_),
+      postEventIndices_(other.postEventIndices_),
+      modeSchedule_(other.modeSchedule_),
+      controllerPtr_(other.controllerPtr_ ? other.controllerPtr_ -> clone() : nullptr) {}
 
   /** Copy Assignment */
-  PrimalSolution& operator=(const PrimalSolution& other) {
+  PrimalSolution& operator=(const PrimalSolution& other) 
+  {
     timeTrajectory_ = other.timeTrajectory_;
     stateTrajectory_ = other.stateTrajectory_;
     inputTrajectory_ = other.inputTrajectory_;
     postEventIndices_ = other.postEventIndices_;
     modeSchedule_ = other.modeSchedule_;
-    if (other.controllerPtr_) {
+    
+    if (other.controllerPtr_) 
+    {
       controllerPtr_.reset(other.controllerPtr_->clone());
-    } else {
+    } 
+    else 
+    {
       controllerPtr_.reset();
     }
     return *this;
@@ -78,7 +85,8 @@ struct PrimalSolution {
   PrimalSolution& operator=(PrimalSolution&& other) noexcept = default;
 
   /** Swap */
-  void swap(PrimalSolution& other) {
+  void swap(PrimalSolution& other) 
+  {
     timeTrajectory_.swap(other.timeTrajectory_);
     stateTrajectory_.swap(other.stateTrajectory_);
     inputTrajectory_.swap(other.inputTrajectory_);
@@ -87,14 +95,41 @@ struct PrimalSolution {
     controllerPtr_.swap(other.controllerPtr_);
   }
 
-  void clear() {
+  void clear() 
+  {
     timeTrajectory_.clear();
     stateTrajectory_.clear();
     inputTrajectory_.clear();
     postEventIndices_.clear();
     modeSchedule_.clear();
-    if (controllerPtr_ != nullptr) {
-      controllerPtr_->clear();
+    
+    if (controllerPtr_ != nullptr) 
+    {
+      controllerPtr_ -> clear();
+    }
+  }
+
+  vector_t getDesiredState(scalar_t time) const
+  {
+    if (this -> stateTrajectory_.empty())
+    {
+      throw std::runtime_error("PrimalSolution::getDesiredState -> Error: stateTrajectory_ is empty!");
+    }
+    else
+    {
+      return LinearInterpolation::interpolate(time, this -> timeTrajectory_, this -> stateTrajectory_);
+    }
+  }
+
+  vector_t getDesiredInput(scalar_t time) const
+  {
+    if (this -> inputTrajectory_.empty())
+    {
+      throw std::runtime_error("PrimalSolution::getDesiredInput -> Error: inputTrajectory_ is empty!");
+    }
+    else
+    {
+      return LinearInterpolation::interpolate(time, this -> timeTrajectory_, this -> inputTrajectory_);
     }
   }
 
