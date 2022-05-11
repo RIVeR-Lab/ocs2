@@ -56,7 +56,9 @@ std::ostream& operator<<(std::ostream& out, const SystemObservation& observation
   }
   out << observation.state(observation.state.size() - 1) << "]\n";
   out << "\t input:    [";
-  for (int i = 0; i < observation.input.size() - 1; i++) {
+  
+  for (int i = 0; i < observation.input.size() - 1; i++) 
+  {
     out << observation.input(i) << ", ";
   }
   out << observation.input(observation.input.size() - 1) << "]";

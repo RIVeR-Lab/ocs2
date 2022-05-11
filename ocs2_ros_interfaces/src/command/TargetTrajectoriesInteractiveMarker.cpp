@@ -39,8 +39,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 TargetTrajectoriesInteractiveMarker::TargetTrajectoriesInteractiveMarker(::ros::NodeHandle& nodeHandle, 
                                                                          const std::string& topicPrefix,
-                                                                         GaolPoseToTargetTrajectories gaolPoseToTargetTrajectories)
-  : server_("simple_marker"), gaolPoseToTargetTrajectories_(std::move(gaolPoseToTargetTrajectories)) 
+                                                                         GoalPoseToTargetTrajectories goalPoseToTargetTrajectories)
+  : server_("simple_marker"), goalPoseToTargetTrajectories_(std::move(goalPoseToTargetTrajectories)) 
 {
   // observation subscriber
   auto observationCallback = [this](const ocs2_msgs::mpc_observation::ConstPtr& msg) 
@@ -71,7 +71,8 @@ TargetTrajectoriesInteractiveMarker::TargetTrajectoriesInteractiveMarker(::ros::
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-visualization_msgs::InteractiveMarker TargetTrajectoriesInteractiveMarker::createInteractiveMarker() const {
+visualization_msgs::InteractiveMarker TargetTrajectoriesInteractiveMarker::createInteractiveMarker() const 
+{
   visualization_msgs::InteractiveMarker interactiveMarker;
   interactiveMarker.header.frame_id = "world";
   interactiveMarker.header.stamp = ros::Time::now();
@@ -81,7 +82,8 @@ visualization_msgs::InteractiveMarker TargetTrajectoriesInteractiveMarker::creat
   interactiveMarker.pose.position.z = 1.0;
 
   // create a grey box marker
-  const auto boxMarker = []() {
+  const auto boxMarker = []() 
+  {
     visualization_msgs::Marker marker;
     marker.type = visualization_msgs::Marker::CUBE;
     marker.scale.x = 0.1;
@@ -147,11 +149,11 @@ visualization_msgs::InteractiveMarker TargetTrajectoriesInteractiveMarker::creat
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void TargetTrajectoriesInteractiveMarker::processFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback) {
+void TargetTrajectoriesInteractiveMarker::processFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback) 
+{
   // Desired state trajectory
   const Eigen::Vector3d position(feedback->pose.position.x, feedback->pose.position.y, feedback->pose.position.z);
-  const Eigen::Quaterniond orientation(feedback->pose.orientation.w, feedback->pose.orientation.x, feedback->pose.orientation.y,
-                                       feedback->pose.orientation.z);
+  const Eigen::Quaterniond orientation(feedback->pose.orientation.w, feedback->pose.orientation.x, feedback->pose.orientation.y, feedback->pose.orientation.z);
 
   // get the latest observation
   SystemObservation observation;
@@ -161,10 +163,10 @@ void TargetTrajectoriesInteractiveMarker::processFeedback(const visualization_ms
   }
 
   // get TargetTrajectories
-  const auto targetTrajectories = gaolPoseToTargetTrajectories_(position, orientation, observation);
+  const auto targetTrajectories = goalPoseToTargetTrajectories_(position, orientation, observation);
 
   // publish TargetTrajectories
-  targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
+  targetTrajectoriesPublisherPtr_ -> publishTargetTrajectories(targetTrajectories);
 }
 
 }  // namespace ocs2

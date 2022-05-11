@@ -44,41 +44,47 @@ namespace ocs2 {
 /**
  * This class lets the user to command robot form interactive marker.
  */
-class TargetTrajectoriesInteractiveMarker final {
- public:
-  using GaolPoseToTargetTrajectories = std::function<TargetTrajectories(
-      const Eigen::Vector3d& position, const Eigen::Quaterniond& orientation, const SystemObservation& observation)>;
+class TargetTrajectoriesInteractiveMarker final 
+{
+  public:
+    using GoalPoseToTargetTrajectories = std::function<TargetTrajectories(const Eigen::Vector3d& position, 
+                                                                          const Eigen::Quaterniond& orientation, 
+                                                                          const SystemObservation& observation)>;
 
-  /**
-   * Constructor
-   *
-   * @param [in] nodeHandle: ROS node handle.
-   * @param [in] topicPrefix: The TargetTrajectories will be published on "topicPrefix_mpc_target" topic. Moreover, the latest
-   * observation is be expected on "topicPrefix_mpc_observation" topic.
-   * @param [in] gaolPoseToTargetTrajectories: A function which transforms the commanded pose to TargetTrajectories.
-   */
-  TargetTrajectoriesInteractiveMarker(::ros::NodeHandle& nodeHandle, const std::string& topicPrefix,
-                                      GaolPoseToTargetTrajectories gaolPoseToTargetTrajectories);
+    /**
+     * Constructor
+     *
+     * @param [in] nodeHandle: ROS node handle.
+     * @param [in] topicPrefix: The TargetTrajectories will be published on "topicPrefix_mpc_target" topic. Moreover, the latest
+     * observation is be expected on "topicPrefix_mpc_observation" topic.
+     * @param [in] goalPoseToTargetTrajectories: A function which transforms the commanded pose to TargetTrajectories.
+     */
+    TargetTrajectoriesInteractiveMarker(::ros::NodeHandle& nodeHandle, 
+                                        const std::string& topicPrefix,
+                                        GoalPoseToTargetTrajectories goalPoseToTargetTrajectories);
 
-  /**
-   * Spins ROS to update the interactive markers.
-   */
-  void publishInteractiveMarker() { ::ros::spin(); }
+    /**
+     * Spins ROS to update the interactive markers.
+     */
+    void publishInteractiveMarker() 
+    { 
+      ::ros::spin(); 
+    }
 
- private:
-  visualization_msgs::InteractiveMarker createInteractiveMarker() const;
-  void processFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
+  private:
+    visualization_msgs::InteractiveMarker createInteractiveMarker() const;
+    void processFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
 
-  interactive_markers::MenuHandler menuHandler_;
-  interactive_markers::InteractiveMarkerServer server_;
+    interactive_markers::MenuHandler menuHandler_;
+    interactive_markers::InteractiveMarkerServer server_;
 
-  GaolPoseToTargetTrajectories gaolPoseToTargetTrajectories_;
+    GoalPoseToTargetTrajectories goalPoseToTargetTrajectories_;
 
-  std::unique_ptr<TargetTrajectoriesRosPublisher> targetTrajectoriesPublisherPtr_;
+    std::unique_ptr<TargetTrajectoriesRosPublisher> targetTrajectoriesPublisherPtr_;
 
-  ::ros::Subscriber observationSubscriber_;
-  mutable std::mutex latestObservationMutex_;
-  SystemObservation latestObservation_;
+    ::ros::Subscriber observationSubscriber_;
+    mutable std::mutex latestObservationMutex_;
+    SystemObservation latestObservation_;
 };
 
 }  // namespace ocs2
