@@ -46,16 +46,21 @@ SolverBase::SolverBase() : referenceManagerPtr_(new ReferenceManager) {}
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
+void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime) 
+{
+  std::cout << "SolverBase::run -> START" << std::endl;
   preRun(initTime, initState, finalTime);
   runImpl(initTime, initState, finalTime);
   postRun();
+  std::cout << "SolverBase::run -> END" << std::endl;
+  std::cout << "" << std::endl;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const ControllerBase* externalControllerPtr) {
+void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const ControllerBase* externalControllerPtr) 
+{
   preRun(initTime, initState, finalTime);
   runImpl(initTime, initState, finalTime, externalControllerPtr);
   postRun();
@@ -64,7 +69,8 @@ void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t fina
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PrimalSolution SolverBase::primalSolution(scalar_t finalTime) const {
+PrimalSolution SolverBase::primalSolution(scalar_t finalTime) const 
+{
   PrimalSolution primalSolution;
   getPrimalSolution(finalTime, &primalSolution);
   return primalSolution;
@@ -81,23 +87,32 @@ void SolverBase::printString(const std::string& text) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SolverBase::preRun(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
-  referenceManagerPtr_->preSolverRun(initTime, finalTime, initState);
+void SolverBase::preRun(scalar_t initTime, const vector_t& initState, scalar_t finalTime) 
+{
+  std::cout << "SolverBase::preRun -> START" << std::endl;
+  referenceManagerPtr_ -> preSolverRun(initTime, finalTime, initState);
 
-  for (auto& module : synchronizedModules_) {
-    module->preSolverRun(initTime, finalTime, initState, *referenceManagerPtr_);
+  for (auto& module : synchronizedModules_) 
+  {
+    module -> preSolverRun(initTime, finalTime, initState, *referenceManagerPtr_);
   }
+  std::cout << "SolverBase::preRun -> END" << std::endl;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SolverBase::postRun() {
-  if (!synchronizedModules_.empty()) {
+void SolverBase::postRun() 
+{
+  if (!synchronizedModules_.empty()) 
+  {
+    std::cout << "SolverBase::postRun -> START" << std::endl;
     const auto solution = primalSolution(getFinalTime());
-    for (auto& module : synchronizedModules_) {
+    for (auto& module : synchronizedModules_) 
+    {
       module->postSolverRun(solution);
     }
+    std::cout << "SolverBase::postRun -> END" << std::endl;
   }
 }
 

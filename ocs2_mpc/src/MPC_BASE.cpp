@@ -50,18 +50,21 @@ void MPC_BASE::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) {
+bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) 
+{
   // check if the current time exceeds the solver final limit
-  if (!initRun_ && currentTime >= getSolverPtr()->getFinalTime()) {
+  if (!initRun_ && currentTime >= getSolverPtr()->getFinalTime()) 
+  {
     std::cerr << "WARNING: The MPC time-horizon is smaller than the MPC starting time.\n";
-    std::cerr << "currentTime: " << currentTime << "\t Controller finalTime: " << getSolverPtr()->getFinalTime() << '\n';
+    std::cerr << "currentTime: " << currentTime << "\t Controller finalTime: " << getSolverPtr() -> getFinalTime() << '\n';
     return false;
   }
 
   const scalar_t finalTime = currentTime + mpcSettings_.timeHorizon_;
 
   // display
-  if (mpcSettings_.debugPrint_) {
+  if (mpcSettings_.debugPrint_) 
+  {
     std::cerr << "\n#####################################################";
     std::cerr << "\n#####################################################";
     std::cerr << "\n#####################################################";
@@ -78,7 +81,8 @@ bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) {
   initRun_ = false;
 
   // display
-  if (mpcSettings_.debugPrint_) {
+  if (mpcSettings_.debugPrint_) 
+  {
     mpcTimer_.endTimer();
     std::cerr << "\n### MPC Benchmarking";
     std::cerr << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";

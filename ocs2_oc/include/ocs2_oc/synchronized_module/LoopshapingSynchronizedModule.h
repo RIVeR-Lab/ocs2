@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <iostream>
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 

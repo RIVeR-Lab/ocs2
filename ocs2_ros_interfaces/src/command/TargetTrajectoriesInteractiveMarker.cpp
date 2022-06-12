@@ -152,8 +152,8 @@ visualization_msgs::InteractiveMarker TargetTrajectoriesInteractiveMarker::creat
 void TargetTrajectoriesInteractiveMarker::processFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback) 
 {
   // Desired state trajectory
-  const Eigen::Vector3d position(feedback->pose.position.x, feedback->pose.position.y, feedback->pose.position.z);
-  const Eigen::Quaterniond orientation(feedback->pose.orientation.w, feedback->pose.orientation.x, feedback->pose.orientation.y, feedback->pose.orientation.z);
+  const Eigen::Vector3d position(feedback -> pose.position.x, feedback -> pose.position.y, feedback -> pose.position.z);
+  const Eigen::Quaterniond orientation(feedback -> pose.orientation.w, feedback -> pose.orientation.x, feedback -> pose.orientation.y, feedback -> pose.orientation.z);
 
   // get the latest observation
   SystemObservation observation;
