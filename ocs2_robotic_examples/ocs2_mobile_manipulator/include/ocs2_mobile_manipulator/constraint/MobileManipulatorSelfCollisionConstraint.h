@@ -40,10 +40,14 @@ namespace mobile_manipulator {
 class MobileManipulatorSelfCollisionConstraint final : public SelfCollisionConstraint {
  public:
   MobileManipulatorSelfCollisionConstraint(const PinocchioStateInputMapping<scalar_t>& mapping,
-                                           PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance)
+                                           PinocchioGeometryInterface pinocchioGeometryInterface, 
+                                           scalar_t minimumDistance)
       : SelfCollisionConstraint(mapping, std::move(pinocchioGeometryInterface), minimumDistance) {}
+  
   ~MobileManipulatorSelfCollisionConstraint() override = default;
+  
   MobileManipulatorSelfCollisionConstraint(const MobileManipulatorSelfCollisionConstraint& other) = default;
+  
   MobileManipulatorSelfCollisionConstraint* clone() const { return new MobileManipulatorSelfCollisionConstraint(*this); }
 
   const PinocchioInterface& getPinocchioInterface(const PreComputation& preComputation) const override {

@@ -1193,6 +1193,8 @@ void GaussNewtonDDP::runImpl(scalar_t initTime,
   // increment iteration counter
   totalNumIterations_++;
 
+  std::cout << "[GaussNewtonDDP::runImpl] totalNumIterations_: " << totalNumIterations_ << std::endl;
+
   // convergence variables of the main loop
   bool isConverged = false;
   std::string convergenceInfo;
