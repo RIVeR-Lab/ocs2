@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/ControllerBase.h>
 #include <ocs2_core/reference/ModeSchedule.h>
+#include <ocs2_core/misc/LinearInterpolation.h>
 
 namespace ocs2 {
 
@@ -95,6 +96,30 @@ struct PrimalSolution {
     modeSchedule_.clear();
     if (controllerPtr_ != nullptr) {
       controllerPtr_->clear();
+    }
+  }
+
+  vector_t getDesiredState(scalar_t time) const
+  {
+    if (this -> stateTrajectory_.empty())
+    {
+      throw std::runtime_error("PrimalSolution::getDesiredState -> Error: stateTrajectory_ is empty!");
+    }
+    else
+    {
+      return LinearInterpolation::interpolate(time, this -> timeTrajectory_, this -> stateTrajectory_);
+    }
+  }
+
+  vector_t getDesiredInput(scalar_t time) const
+  {
+    if (this -> inputTrajectory_.empty())
+    {
+      throw std::runtime_error("PrimalSolution::getDesiredInput -> Error: inputTrajectory_ is empty!");
+    }
+    else
+    {
+      return LinearInterpolation::interpolate(time, this -> timeTrajectory_, this -> inputTrajectory_);
     }
   }
 

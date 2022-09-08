@@ -102,7 +102,20 @@ target_link_libraries(mobile_manipulator_distance_visualization
 )
 target_compile_options(mobile_manipulator_distance_visualization PUBLIC ${FLAGS})
 
-# Dummy node
+# Gazebo MRT node
+add_executable(mobile_manipulator_gazebo_mrt_node
+  src/MobileManipulatorGazeboMRT.cpp
+  src/MobileManipulatorGazeboVisualization.cpp
+)
+add_dependencies(mobile_manipulator_gazebo_mrt_node
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(mobile_manipulator_gazebo_mrt_node
+  ${catkin_LIBRARIES}
+)
+target_compile_options(mobile_manipulator_gazebo_mrt_node PUBLIC ${FLAGS})
+
+# Dummy MRT node
 add_executable(mobile_manipulator_dummy_mrt_node
   src/MobileManipulatorDummyMRT.cpp
   src/MobileManipulatorDummyVisualization.cpp

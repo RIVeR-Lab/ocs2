@@ -3,6 +3,7 @@ project(ocs2_ros_interfaces)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   roscpp
+  tf
   ocs2_msgs
   ocs2_core
   ocs2_ddp
@@ -11,6 +12,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   visualization_msgs
   geometry_msgs
   interactive_markers
+  ocs2_mobile_manipulator
 )
 
 ## Find catkin macros and libraries
@@ -62,6 +64,7 @@ add_library(${PROJECT_NAME}
   src/mpc/MPC_ROS_Interface.cpp
   src/mrt/LoopshapingDummyObserver.cpp
   src/mrt/MRT_ROS_Dummy_Loop.cpp
+  src/mrt/MRT_ROS_Gazebo_Loop.cpp
   src/mrt/MRT_ROS_Interface.cpp
   src/synchronized_module/RosReferenceManager.cpp
   src/synchronized_module/RosAugmentedLagrangianCallbacks.cpp
