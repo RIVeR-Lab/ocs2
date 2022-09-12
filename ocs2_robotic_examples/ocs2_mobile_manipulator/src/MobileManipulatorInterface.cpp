@@ -48,11 +48,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_pinocchio_interface/urdf.h>
 #include <ocs2_self_collision/SelfCollisionConstraint.h>
 #include <ocs2_self_collision/SelfCollisionConstraintCppAd.h>
+#include <ocs2_ext_collision/ExtCollisionConstraint.h>
+#include <ocs2_ext_collision/ExtCollisionConstraintCppAd.h>
 
 #include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
 #include "ocs2_mobile_manipulator/MobileManipulatorPreComputation.h"
 #include "ocs2_mobile_manipulator/constraint/EndEffectorConstraint.h"
 #include "ocs2_mobile_manipulator/constraint/MobileManipulatorSelfCollisionConstraint.h"
+#include "ocs2_mobile_manipulator/constraint/MobileManipulatorExtCollisionConstraint.h"
 #include "ocs2_mobile_manipulator/cost/QuadraticInputCost.h"
 #include "ocs2_mobile_manipulator/dynamics/DefaultManipulatorDynamics.h"
 #include "ocs2_mobile_manipulator/dynamics/FloatingArmManipulatorDynamics.h"
@@ -73,6 +76,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
                                                        const std::string& libraryFolder,
                                                        const std::string& urdfFile) 
 {
+  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START" << std::endl;
+
   // check that task file exists
   boost::filesystem::path taskFilePath(taskFile);
   if (boost::filesystem::exists(taskFilePath)) 
@@ -209,6 +214,22 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
                                                                                      recompileLibraries));
   }
 
+  // external-collision avoidance constraint
+  bool activateExtCollision = true;
+  loadData::loadPtreeValue(pt, activateExtCollision, "extCollision.activate", true);
+  if (activateExtCollision) 
+  {
+    std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] activateExtCollision: " << activateExtCollision << std::endl;
+
+    problem_.stateSoftConstraintPtr -> add("extCollision", getExtCollisionConstraint(*pinocchioInterfacePtr_, 
+                                                                                     taskFile, 
+                                                                                     urdfFile, 
+                                                                                     "selfCollision", 
+                                                                                     usePreComputation,
+                                                                                     libraryFolder, 
+                                                                                     recompileLibraries));
+  }
+
   // Dynamics
   switch (manipulatorModelInfo_.manipulatorModelType) 
   {
@@ -266,6 +287,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 
   // Initialization
   initializerPtr_.reset(new DefaultInitializer(manipulatorModelInfo_.inputDim));
+
+  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -413,6 +436,69 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
   std::unique_ptr<PenaltyBase> penalty(new RelaxedBarrierPenalty({mu, delta}));
 
   std::cout << "[MobileManipulatorInterface::getSelfCollisionConstraint] END" << std::endl;
+
+  return std::unique_ptr<StateCost>(new StateSoftConstraint(std::move(constraint), std::move(penalty)));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint(const PinocchioInterface& pinocchioInterface,
+                                                                                  const std::string& taskFile, 
+                                                                                  const std::string& urdfFile,
+                                                                                  const std::string& prefix, 
+                                                                                  bool usePreComputation,
+                                                                                  const std::string& libraryFolder,
+                                                                                  bool recompileLibraries) 
+{
+  std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] START" << std::endl;
+
+  std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
+  std::vector<std::pair<std::string, std::string>> collisionLinkPairs;
+  scalar_t mu = 1e-2;
+  scalar_t delta = 1e-3;
+  scalar_t minimumDistance = 0.0;
+
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(taskFile, pt);
+  std::cerr << "\n #### ExtCollision Settings: ";
+  std::cerr << "\n #### =============================================================================\n";
+  loadData::loadPtreeValue(pt, mu, prefix + ".mu", true);
+  loadData::loadPtreeValue(pt, delta, prefix + ".delta", true);
+  loadData::loadPtreeValue(pt, minimumDistance, prefix + ".minimumDistance", true);
+  loadData::loadStdVectorOfPair(taskFile, prefix + ".collisionObjectPairs", collisionObjectPairs, true);
+  loadData::loadStdVectorOfPair(taskFile, prefix + ".collisionLinkPairs", collisionLinkPairs, true);
+  std::cerr << " #### =============================================================================\n";
+
+  PinocchioGeometryInterface geometryInterface(pinocchioInterface, collisionLinkPairs, collisionObjectPairs);
+
+  const size_t numCollisionPairs = geometryInterface.getNumCollisionPairs();
+  std::cerr << "ExtCollision: Testing for " << numCollisionPairs << " collision pairs\n";
+
+  std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] numCollisionPairs: " << numCollisionPairs << std::endl;
+
+  std::unique_ptr<StateConstraint> constraint;
+  if (usePreComputation) 
+  {
+    constraint = std::unique_ptr<StateConstraint>(new MobileManipulatorExtCollisionConstraint(MobileManipulatorPinocchioMapping(manipulatorModelInfo_), 
+                                                                                               std::move(geometryInterface), 
+                                                                                               minimumDistance));
+  }
+  else 
+  {
+    constraint = std::unique_ptr<StateConstraint>(new ExtCollisionConstraintCppAd(pinocchioInterface, 
+                                                                                   MobileManipulatorPinocchioMapping(manipulatorModelInfo_), 
+                                                                                   std::move(geometryInterface), 
+                                                                                   minimumDistance,
+                                                                                   "self_collision", 
+                                                                                   libraryFolder, 
+                                                                                   recompileLibraries, 
+                                                                                   false));
+  }
+
+  std::unique_ptr<PenaltyBase> penalty(new RelaxedBarrierPenalty({mu, delta}));
+
+  std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] END" << std::endl;
 
   return std::unique_ptr<StateCost>(new StateSoftConstraint(std::move(constraint), std::move(penalty)));
 }

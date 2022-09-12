@@ -47,61 +47,80 @@ namespace mobile_manipulator {
 /**
  * Mobile Manipulator Robot Interface class
  */
-class MobileManipulatorInterface final : public RobotInterface {
- public:
-  /**
-   * Constructor
-   *
-   * @note Creates directory for generated library into if it does not exist.
-   * @throw Invalid argument error if input task file or urdf file does not exist.
-   *
-   * @param [in] taskFile: The absolute path to the configuration file for the MPC.
-   * @param [in] libraryFolder: The absolute path to the directory to generate CppAD library into.
-   * @param [in] urdfFile: The absolute path to the URDF file for the robot.
-   */
-  MobileManipulatorInterface(const std::string& taskFile, const std::string& libraryFolder, const std::string& urdfFile);
+class MobileManipulatorInterface final : public RobotInterface 
+{
+  public:
+    /**
+     * Constructor
+     *
+     * @note Creates directory for generated library into if it does not exist.
+     * @throw Invalid argument error if input task file or urdf file does not exist.
+     *
+     * @param [in] taskFile: The absolute path to the configuration file for the MPC.
+     * @param [in] libraryFolder: The absolute path to the directory to generate CppAD library into.
+     * @param [in] urdfFile: The absolute path to the URDF file for the robot.
+     */
+    MobileManipulatorInterface(const std::string& taskFile, const std::string& libraryFolder, const std::string& urdfFile);
 
-  const vector_t& getInitialState() { return initialState_; }
+    const vector_t& getInitialState() { return initialState_; }
 
-  ddp::Settings& ddpSettings() { return ddpSettings_; }
+    ddp::Settings& ddpSettings() { return ddpSettings_; }
 
-  mpc::Settings& mpcSettings() { return mpcSettings_; }
+    mpc::Settings& mpcSettings() { return mpcSettings_; }
 
-  const OptimalControlProblem& getOptimalControlProblem() const override { return problem_; }
+    const OptimalControlProblem& getOptimalControlProblem() const override { return problem_; }
 
-  std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override { return referenceManagerPtr_; }
+    std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override { return referenceManagerPtr_; }
 
-  const Initializer& getInitializer() const override { return *initializerPtr_; }
+    const Initializer& getInitializer() const override { return *initializerPtr_; }
 
-  const RolloutBase& getRollout() const { return *rolloutPtr_; }
+    const RolloutBase& getRollout() const { return *rolloutPtr_; }
 
-  const PinocchioInterface& getPinocchioInterface() const { return *pinocchioInterfacePtr_; }
+    const PinocchioInterface& getPinocchioInterface() const { return *pinocchioInterfacePtr_; }
 
-  const ManipulatorModelInfo& getManipulatorModelInfo() const { return manipulatorModelInfo_; }
+    const ManipulatorModelInfo& getManipulatorModelInfo() const { return manipulatorModelInfo_; }
 
- private:
-  std::unique_ptr<StateInputCost> getQuadraticInputCost(const std::string& taskFile);
-  std::unique_ptr<StateCost> getEndEffectorConstraint(const PinocchioInterface& pinocchioInterface, const std::string& taskFile,
-                                                      const std::string& prefix, bool useCaching, const std::string& libraryFolder,
-                                                      bool recompileLibraries);
-  std::unique_ptr<StateCost> getSelfCollisionConstraint(const PinocchioInterface& pinocchioInterface, const std::string& taskFile,
-                                                        const std::string& urdfFile, const std::string& prefix, bool useCaching,
-                                                        const std::string& libraryFolder, bool recompileLibraries);
-  std::unique_ptr<StateInputCost> getJointLimitSoftConstraint(const PinocchioInterface& pinocchioInterface, const std::string& taskFile);
+  private:
+    std::unique_ptr<StateInputCost> getQuadraticInputCost(const std::string& taskFile);
+    
+    std::unique_ptr<StateCost> getEndEffectorConstraint(const PinocchioInterface& pinocchioInterface, 
+                                                        const std::string& taskFile,
+                                                        const std::string& prefix, 
+                                                        bool useCaching, 
+                                                        const std::string& libraryFolder,
+                                                        bool recompileLibraries);
+    
+    std::unique_ptr<StateCost> getSelfCollisionConstraint(const PinocchioInterface& pinocchioInterface, 
+                                                          const std::string& taskFile,
+                                                          const std::string& urdfFile, 
+                                                          const std::string& prefix, 
+                                                          bool useCaching,
+                                                          const std::string& libraryFolder, 
+                                                          bool recompileLibraries);
 
-  ddp::Settings ddpSettings_;
-  mpc::Settings mpcSettings_;
+    std::unique_ptr<StateCost> getExtCollisionConstraint(const PinocchioInterface& pinocchioInterface, 
+                                                          const std::string& taskFile,
+                                                          const std::string& urdfFile, 
+                                                          const std::string& prefix, 
+                                                          bool useCaching,
+                                                          const std::string& libraryFolder, 
+                                                          bool recompileLibraries);
 
-  OptimalControlProblem problem_;
-  std::shared_ptr<ReferenceManager> referenceManagerPtr_;
+    std::unique_ptr<StateInputCost> getJointLimitSoftConstraint(const PinocchioInterface& pinocchioInterface, const std::string& taskFile);
 
-  std::unique_ptr<RolloutBase> rolloutPtr_;
-  std::unique_ptr<Initializer> initializerPtr_;
+    ddp::Settings ddpSettings_;
+    mpc::Settings mpcSettings_;
 
-  std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
-  ManipulatorModelInfo manipulatorModelInfo_;
+    OptimalControlProblem problem_;
+    std::shared_ptr<ReferenceManager> referenceManagerPtr_;
 
-  vector_t initialState_;
+    std::unique_ptr<RolloutBase> rolloutPtr_;
+    std::unique_ptr<Initializer> initializerPtr_;
+
+    std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
+    ManipulatorModelInfo manipulatorModelInfo_;
+
+    vector_t initialState_;
 };
 
 }  // namespace mobile_manipulator
