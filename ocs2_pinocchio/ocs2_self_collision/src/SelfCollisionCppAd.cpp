@@ -45,7 +45,8 @@ namespace ocs2 {
 SelfCollisionCppAd::SelfCollisionCppAd(const PinocchioInterface& pinocchioInterface, PinocchioGeometryInterface pinocchioGeometryInterface,
                                        scalar_t minimumDistance, const std::string& modelName, const std::string& modelFolder,
                                        bool recompileLibraries, bool verbose)
-    : pinocchioGeometryInterface_(std::move(pinocchioGeometryInterface)), minimumDistance_(minimumDistance) {
+    : pinocchioGeometryInterface_(std::move(pinocchioGeometryInterface)), minimumDistance_(minimumDistance) 
+{
   PinocchioInterfaceCppAd pinocchioInterfaceAd = pinocchioInterface.toCppAd();
   setADInterfaces(pinocchioInterfaceAd, modelName, modelFolder);
   if (recompileLibraries) {
@@ -178,23 +179,30 @@ ad_vector_t SelfCollisionCppAd::distanceCalculationAd(PinocchioInterfaceCppAd& p
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SelfCollisionCppAd::setADInterfaces(PinocchioInterfaceCppAd& pinocchioInterfaceAd, const std::string& modelName,
-                                         const std::string& modelFolder) {
+void SelfCollisionCppAd::setADInterfaces(PinocchioInterfaceCppAd& pinocchioInterfaceAd, 
+                                         const std::string& modelName,
+                                         const std::string& modelFolder) 
+{
   const size_t stateDim = pinocchioInterfaceAd.getModel().nq;
   const size_t numDistanceResults = pinocchioGeometryInterface_.getGeometryModel().collisionPairs.size();
 
-  auto stateAndClosestPointsToDistance = [&, this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
+  auto stateAndClosestPointsToDistance = [&, this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) 
+  {
     Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, -1> matrixResult = distanceCalculationAd(pinocchioInterfaceAd, x, p);
     y = Eigen::Map<Eigen::Matrix<ad_scalar_t, -1, 1>>(matrixResult.data(), matrixResult.size());
   };
-  cppAdInterfaceDistanceCalculation_.reset(new CppAdInterface(stateAndClosestPointsToDistance, stateDim,
+
+  cppAdInterfaceDistanceCalculation_.reset(new CppAdInterface(stateAndClosestPointsToDistance, 
+                                                              stateDim,
                                                               numDistanceResults * numberOfParamsPerResult_,
-                                                              modelName + "_distance_intermediate", modelFolder));
+                                                              modelName + "_distance_intermediate", 
+                                                              modelFolder));
 
   auto stateAndClosestPointsToLinkFrame = [&, this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
     Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, -1> matrixResult = computeLinkPointsAd(pinocchioInterfaceAd, x, p);
     y = Eigen::Map<Eigen::Matrix<ad_scalar_t, -1, 1>>(matrixResult.data(), matrixResult.size());
   };
+  
   cppAdInterfaceLinkPoints_.reset(new CppAdInterface(stateAndClosestPointsToLinkFrame, stateDim,
                                                      numDistanceResults * numberOfParamsPerResult_, modelName + "_links_intermediate",
                                                      modelFolder));

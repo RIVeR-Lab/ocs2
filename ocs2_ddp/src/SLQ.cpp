@@ -75,7 +75,9 @@ SLQ::SLQ(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalCon
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDataContainer& primalData) {
+void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDataContainer& primalData) 
+{
+  std::cout << "[SLQ::approximateIntermediateLQ] START" << std::endl;
   // create alias
   const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
   const auto& stateTrajectory = primalData.primalSolution.stateTrajectory_;
@@ -89,21 +91,29 @@ void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalData
 
   nextTimeIndex_ = 0;
   nextTaskId_ = 0;
-  auto task = [&]() {
+  auto task = [&]() 
+  {
     const size_t taskId = nextTaskId_++;  // assign task ID (atomic)
 
     // get next time index is atomic
     size_t timeIndex;
-    while ((timeIndex = nextTimeIndex_++) < timeTrajectory.size()) {
+    while ((timeIndex = nextTimeIndex_++) < timeTrajectory.size()) 
+    {
       // approximate LQ for the given time index
-      ocs2::approximateIntermediateLQ(optimalControlProblemStock_[taskId], timeTrajectory[timeIndex], stateTrajectory[timeIndex],
-                                      inputTrajectory[timeIndex], multiplierTrajectory[timeIndex], modelDataTrajectory[timeIndex]);
+      ocs2::approximateIntermediateLQ(optimalControlProblemStock_[taskId], 
+                                      timeTrajectory[timeIndex], 
+                                      stateTrajectory[timeIndex],
+                                      inputTrajectory[timeIndex], 
+                                      multiplierTrajectory[timeIndex], 
+                                      modelDataTrajectory[timeIndex]);
 
       // checking the numerical properties
-      if (settings().checkNumericalStability_) {
-        const auto errSize =
-            checkSize(modelDataTrajectory[timeIndex], stateTrajectory[timeIndex].rows(), inputTrajectory[timeIndex].rows());
-        if (!errSize.empty()) {
+      if (settings().checkNumericalStability_) 
+      {
+        const auto errSize = checkSize(modelDataTrajectory[timeIndex], stateTrajectory[timeIndex].rows(), inputTrajectory[timeIndex].rows());
+        
+        if (!errSize.empty()) 
+        {
           throw std::runtime_error("[SLQ::approximateIntermediateLQ] Mismatch in dimensions at intermediate time: " +
                                    std::to_string(timeTrajectory[timeIndex]) + "\n" + errSize);
         }
@@ -119,6 +129,8 @@ void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalData
   };
 
   runParallel(task, settings().nThreads_);
+
+  std::cout << "[SLQ::approximateIntermediateLQ] END" << std::endl;
 }
 
 /******************************************************************************************************/

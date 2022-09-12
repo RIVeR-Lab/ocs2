@@ -73,8 +73,10 @@ class GaussNewtonDDP_MPC final : public MPC_BASE {
   const GaussNewtonDDP* getSolverPtr() const override { return ddpPtr_.get(); }
 
  private:
-  void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override {
-    if (settings().coldStart_) {
+  void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override 
+  {
+    if (settings().coldStart_) 
+    {
       ddpPtr_->reset();
     }
     ddpPtr_->run(initTime, initState, finalTime);

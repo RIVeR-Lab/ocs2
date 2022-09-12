@@ -365,6 +365,8 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
                                                                                   const std::string& libraryFolder,
                                                                                   bool recompileLibraries) 
 {
+  std::cout << "[MobileManipulatorInterface::getSelfCollisionConstraint] START" << std::endl;
+
   std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
   std::vector<std::pair<std::string, std::string>> collisionLinkPairs;
   scalar_t mu = 1e-2;
@@ -387,6 +389,8 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
   const size_t numCollisionPairs = geometryInterface.getNumCollisionPairs();
   std::cerr << "SelfCollision: Testing for " << numCollisionPairs << " collision pairs\n";
 
+  std::cout << "[MobileManipulatorInterface::getSelfCollisionConstraint] numCollisionPairs: " << numCollisionPairs << std::endl;
+
   std::unique_ptr<StateConstraint> constraint;
   if (usePreComputation) 
   {
@@ -407,6 +411,8 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
   }
 
   std::unique_ptr<PenaltyBase> penalty(new RelaxedBarrierPenalty({mu, delta}));
+
+  std::cout << "[MobileManipulatorInterface::getSelfCollisionConstraint] END" << std::endl;
 
   return std::unique_ptr<StateCost>(new StateSoftConstraint(std::move(constraint), std::move(penalty)));
 }

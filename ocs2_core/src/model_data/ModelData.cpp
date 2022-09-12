@@ -174,7 +174,8 @@ std::string checkConstraintProperties(const ModelData& data) {
     }
   }
 
-  if (data.stateInputEqConstraint.f.rows() > 0) {
+  if (data.stateInputEqConstraint.f.rows() > 0) 
+  {
     const auto inputDim = data.stateInputEqConstraint.dfdu.cols();
     const auto numConstraints = data.stateInputEqConstraint.f.rows();
 

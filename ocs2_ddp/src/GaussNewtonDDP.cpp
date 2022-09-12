@@ -644,7 +644,9 @@ void GaussNewtonDDP::calculateController() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::approximateOptimalControlProblem() {
+void GaussNewtonDDP::approximateOptimalControlProblem() 
+{
+  std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] START" << std::endl;
   /*
    * compute and augment the LQ approximation of intermediate times
    */
@@ -658,7 +660,11 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
   const size_t NE = nominalPrimalData_.primalSolution.postEventIndices_.size();
   nominalPrimalData_.modelDataEventTimes.clear();
   nominalPrimalData_.modelDataEventTimes.resize(NE);
-  if (NE > 0) {
+  
+  std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] NE: " << NE << std::endl;
+  
+  if (NE > 0) 
+  {
     nextTimeIndex_ = 0;
     nextTaskId_ = 0;
     auto task = [this, NE]() {
@@ -704,7 +710,8 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
   /*
    * compute the Heuristics function at the final time. Also call shiftHessian on the Heuristics 2nd order derivative.
    */
-  if (!nominalPrimalData_.primalSolution.timeTrajectory_.empty()) {
+  if (!nominalPrimalData_.primalSolution.timeTrajectory_.empty()) 
+  {
     ModelData& modelData = nominalPrimalData_.modelDataFinalTime;
     const auto& time = nominalPrimalData_.primalSolution.timeTrajectory_.back();
     const auto& state = nominalPrimalData_.primalSolution.stateTrajectory_.back();
@@ -712,7 +719,8 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
     modelData = ocs2::approximateFinalLQ(optimalControlProblemStock_[0], time, state, multiplier);
 
     // checking the numerical properties
-    if (ddpSettings_.checkNumericalStability_) {
+    if (ddpSettings_.checkNumericalStability_) 
+    {
       const std::string err = checkCostProperties(modelData) + checkConstraintProperties(modelData);
       if (!err.empty()) {
         throw std::runtime_error(
@@ -726,6 +734,7 @@ void GaussNewtonDDP::approximateOptimalControlProblem() {
                                        ddpSettings_.lineSearch_.hessianCorrectionMultiple);
     }
   }
+  std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -784,7 +793,9 @@ void GaussNewtonDDP::computeProjections(const matrix_t& Hm, const matrix_t& Dm, 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::initializeConstraintPenalties() {
+void GaussNewtonDDP::initializeConstraintPenalties() 
+{
+  std::cout << "[GaussNewtonDDP::initializeConstraintPenalties] START" << std::endl;
   assert(ddpSettings_.constraintPenaltyInitialValue_ > 1.0);
   assert(ddpSettings_.constraintPenaltyIncreaseRate_ > 1.0);
 
@@ -792,13 +803,15 @@ void GaussNewtonDDP::initializeConstraintPenalties() {
   constraintPenaltyCoefficients_.penaltyTol = 1.0 / std::pow(constraintPenaltyCoefficients_.penaltyCoeff, 0.1);
 
   // display
-  if (ddpSettings_.displayInfo_) {
+  if (ddpSettings_.displayInfo_) 
+  {
     std::string displayText = "Initial equality Constraints Penalty Parameters:\n";
     displayText += "    Penalty Tolerance: " + std::to_string(constraintPenaltyCoefficients_.penaltyTol);
     displayText += "    Penalty Coefficient: " + std::to_string(constraintPenaltyCoefficients_.penaltyCoeff) + ".\n";
 
     this->printString(displayText);
   }
+  std::cout << "[GaussNewtonDDP::initializeConstraintPenalties] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -977,8 +990,11 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
-  if (ddpSettings_.displayInfo_) {
+void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) 
+{
+  std::cout << "[GaussNewtonDDP::runImpl] START" << std::endl;
+  if (ddpSettings_.displayInfo_) 
+  {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
     std::cerr << "\n+++++++++++++ " + ddp::toAlgorithmName(ddpSettings_.algorithm_) + " solver is initialized ++++++++++++++";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
@@ -987,7 +1003,8 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   }
 
   // set cost desired trajectories
-  for (auto& ocp : optimalControlProblemStock_) {
+  for (auto& ocp : optimalControlProblemStock_) 
+  {
     ocp.targetTrajectoriesPtr = &this->getReferenceManager().getTargetTrajectories();
   }
 
@@ -1000,7 +1017,8 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   initializeConstraintPenalties();  // initialize penalty coefficients
 
   // display
-  if (ddpSettings_.displayInfo_) {
+  if (ddpSettings_.displayInfo_) 
+  {
     std::cerr << "\n###################";
     std::cerr << "\n#### Initial Rollout";
     std::cerr << "\n###################\n";
@@ -1027,7 +1045,8 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   std::string convergenceInfo;
 
   // DDP main loop
-  while (true) {
+  while (true) 
+  {
     if (ddpSettings_.displayInfo_) {
       std::cerr << "\n###################";
       std::cerr << "\n#### Iteration " << (totalNumIterations_ - initIteration);
@@ -1104,6 +1123,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
       std::cerr << "The algorithm has terminated for an unknown reason!" << std::endl;
     }
   }
+  std::cout << "[GaussNewtonDDP::runImpl] END" << std::endl;
 }
 
 }  // namespace ocs2

@@ -38,8 +38,15 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void approximateIntermediateLQ(OptimalControlProblem& problem, const scalar_t time, const vector_t& state, const vector_t& input,
-                               const MultiplierCollection& multipliers, ModelData& modelData) {
+void approximateIntermediateLQ(OptimalControlProblem& problem, 
+                               const scalar_t time, 
+                               const vector_t& state, 
+                               const vector_t& input,
+                               const MultiplierCollection& multipliers, 
+                               ModelData& modelData) 
+{
+  std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ] START" << std::endl;
+
   auto& preComputation = *problem.preComputationPtr;
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Constraint + Request::Dynamics + Request::Approximation;
   preComputation.request(request, time, state, input);
@@ -60,27 +67,45 @@ void approximateIntermediateLQ(OptimalControlProblem& problem, const scalar_t ti
   modelData.stateEqConstraint = problem.stateEqualityConstraintPtr->getLinearApproximation(time, state, preComputation);
   modelData.stateInputEqConstraint = problem.equalityConstraintPtr->getLinearApproximation(time, state, input, preComputation);
 
+  std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ] stateEqualityLagrangianPtr" << std::endl;
+
   // Lagrangians
-  if (!problem.stateEqualityLagrangianPtr->empty()) {
+  if (!problem.stateEqualityLagrangianPtr->empty()) 
+  {
+    std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ] stateEqualityLagrangianPtr" << std::endl;
+
     auto approx = problem.stateEqualityLagrangianPtr->getQuadraticApproximation(time, state, multipliers.stateEq, preComputation);
     modelData.cost.f += approx.f;
     modelData.cost.dfdx += approx.dfdx;
     modelData.cost.dfdxx += approx.dfdxx;
   }
-  if (!problem.stateInequalityLagrangianPtr->empty()) {
+  
+  if (!problem.stateInequalityLagrangianPtr->empty()) 
+  {
+    std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ] stateInequalityLagrangianPtr" << std::endl;
+
     auto approx = problem.stateInequalityLagrangianPtr->getQuadraticApproximation(time, state, multipliers.stateIneq, preComputation);
     modelData.cost.f += approx.f;
     modelData.cost.dfdx += approx.dfdx;
     modelData.cost.dfdxx += approx.dfdxx;
   }
-  if (!problem.equalityLagrangianPtr->empty()) {
+
+  if (!problem.equalityLagrangianPtr->empty()) 
+  {
+    std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ] equalityLagrangianPtr" << std::endl;
+
     modelData.cost +=
         problem.equalityLagrangianPtr->getQuadraticApproximation(time, state, input, multipliers.stateInputEq, preComputation);
   }
-  if (!problem.inequalityLagrangianPtr->empty()) {
+
+  if (!problem.inequalityLagrangianPtr->empty()) 
+  {
+    std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ] inequalityLagrangianPtr" << std::endl;
+
     modelData.cost +=
         problem.inequalityLagrangianPtr->getQuadraticApproximation(time, state, input, multipliers.stateInputIneq, preComputation);
   }
+  std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ] END" << std::endl;
 }
 
 /******************************************************************************************************/
