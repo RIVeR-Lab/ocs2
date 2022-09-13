@@ -111,24 +111,41 @@ void OCS2_Mobile_Manipulator_Visualization::launchVisualizerNode(ros::NodeHandle
   
   // read the joints to make fixed
   loadData::loadStdVector<std::string>(taskFile, "model_information.removeJoints", removeJointNames_, false);
-  
+
+  // create pinocchio interface
+  PinocchioInterface pinocchioInterface(mobile_manipulator::createPinocchioInterface(urdfFile, modelType, removeJointNames_));
+
   // read if self-collision checking active
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile, pt);
   bool activateSelfCollision = true;
   loadData::loadPtreeValue(pt, activateSelfCollision, "selfCollision.activate", true);
-  
-  // create pinocchio interface
-  PinocchioInterface pinocchioInterface(mobile_manipulator::createPinocchioInterface(urdfFile, modelType, removeJointNames_));
-  
+
   // activate markers for self-collision visualization
   if (activateSelfCollision) 
   {
+    std::string prefix = "selfCollision";
     std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
-    loadData::loadStdVectorOfPair(taskFile, "selfCollision.collisionObjectPairs", collisionObjectPairs, true);
-    PinocchioGeometryInterface geomInterface(pinocchioInterface, collisionObjectPairs);
+    std::vector<std::pair<std::string, std::string>> collisionLinkPairs;
+    scalar_t mu = 1e-2;
+    scalar_t delta = 1e-3;
+    scalar_t minimumDistance = 0.0;
+
+    //std::cerr << "\n #### SelfCollision Settings: ";
+    //std::cerr << "\n #### =============================================================================\n";
+    loadData::loadPtreeValue(pt, mu, prefix + ".mu", true);
+    loadData::loadPtreeValue(pt, delta, prefix + ".delta", true);
+    loadData::loadPtreeValue(pt, minimumDistance, prefix + ".minimumDistance", true);
+    loadData::loadStdVectorOfPair(taskFile, prefix + ".collisionObjectPairs", collisionObjectPairs, true);
+    loadData::loadStdVectorOfPair(taskFile, prefix + ".collisionLinkPairs", collisionLinkPairs, true);
+    //std::cerr << " #### =============================================================================\n";
+
+    PinocchioGeometryInterface geometryInterface(pinocchioInterface, collisionLinkPairs, collisionObjectPairs);
+    
+    const size_t numCollisionPairs = geometryInterface.getNumCollisionPairs();
+
     // set geometry visualization markers
-    geometryVisualization_.reset(new GeometryInterfaceVisualization(std::move(pinocchioInterface), geomInterface, nodeHandle));
+    geometryVisualization_.reset(new GeometryInterfaceVisualization(std::move(pinocchioInterface), geometryInterface, nodeHandle));
   }
 }
 

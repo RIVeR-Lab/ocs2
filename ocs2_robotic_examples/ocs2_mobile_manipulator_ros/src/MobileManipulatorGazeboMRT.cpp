@@ -90,7 +90,9 @@ int main(int argc, char** argv)
   mrt.launchNodes(nodeHandle);
 
   // Visualization
+  std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE ocs2_mm_visu" << std::endl;
   std::shared_ptr<OCS2_Mobile_Manipulator_Visualization> ocs2_mm_visu(new OCS2_Mobile_Manipulator_Visualization(nodeHandle, interface));
+  std::cout << "[MobileManipulatorGazeboMRT::main] AFTER ocs2_mm_visu" << std::endl;
 
   // MRT loop
   MRT_ROS_Gazebo_Loop mrt_loop(nodeHandle, 

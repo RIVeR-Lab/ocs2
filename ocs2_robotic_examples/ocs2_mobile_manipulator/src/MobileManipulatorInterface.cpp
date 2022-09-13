@@ -224,7 +224,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
     problem_.stateSoftConstraintPtr -> add("extCollision", getExtCollisionConstraint(*pinocchioInterfacePtr_, 
                                                                                      taskFile, 
                                                                                      urdfFile, 
-                                                                                     "selfCollision", 
+                                                                                     "extCollision", 
                                                                                      usePreComputation,
                                                                                      libraryFolder, 
                                                                                      recompileLibraries));

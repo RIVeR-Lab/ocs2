@@ -118,8 +118,6 @@ void PinocchioGeometryInterface::addCollisionLinkPairs(const PinocchioInterface&
                                                        const std::vector<std::pair<std::string, 
                                                        std::string>>& collisionLinkPairs) 
 {
-  std::cout << "[PinocchioGeometryInterface::addCollisionLinkPairs] START" << std::endl;
-
   for (const auto& linkPair : collisionLinkPairs) 
   {
     bool addedPair = false;
@@ -150,8 +148,6 @@ void PinocchioGeometryInterface::addCollisionLinkPairs(const PinocchioInterface&
                 << "], one or both of the links don't exist in the pinocchio/urdf model\n";
     }
   }
-
-  std::cout << "[PinocchioGeometryInterface::addCollisionLinkPairs] END" << std::endl;
 }
 
 }  // namespace ocs2
