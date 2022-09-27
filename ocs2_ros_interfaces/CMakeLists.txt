@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_ros_interfaces)
 
+## Compile as C++11, supported in ROS Kinetic and newer
+add_compile_options(-std=c++14)
+
 set(CATKIN_PACKAGE_DEPENDENCIES
   roscpp
   tf
@@ -13,6 +16,11 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   geometry_msgs
   interactive_markers
   ocs2_mobile_manipulator
+  voxblox
+  voxblox_ros
+  pcl_msgs
+  pcl_conversions
+  pcl_ros
 )
 
 ## Find catkin macros and libraries
@@ -25,8 +33,10 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 find_package(Boost REQUIRED COMPONENTS filesystem)
 
+find_package(PCL REQUIRED)
+
 # Generate compile_commands.json for clang tools
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+#set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 ###################################
 ## catkin specific configuration ##
@@ -39,8 +49,12 @@ catkin_package(
     ${PROJECT_NAME}
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
+    voxblox
+    voxblox_ros
   DEPENDS
     Boost
+    voxblox
+    voxblox_ros
 )
 
 ###########
@@ -50,9 +64,10 @@ catkin_package(
 ## Specify additional locations of header files
 include_directories(
   include
-  ${EIGEN3_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS} 
+  ${PCL_INCLUDE_DIRS}
 )
 
 add_library(${PROJECT_NAME}
@@ -70,9 +85,11 @@ add_library(${PROJECT_NAME}
   src/synchronized_module/RosAugmentedLagrangianCallbacks.cpp
   src/visualization/VisualizationHelpers.cpp
   src/visualization/VisualizationColors.cpp
+  src/EsdfCachingServer.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
@@ -80,10 +97,12 @@ add_executable(test_custom_callback_queue
   test/test_custom_callback_queue.cpp
 )
 add_dependencies(test_custom_callback_queue
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(test_custom_callback_queue
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(test_custom_callback_queue PRIVATE ${OCS2_CXX_FLAGS})
 
@@ -92,11 +111,13 @@ add_executable(multiplot_remap
   src/multiplot/MultiplotRemap.cpp
 )
 add_dependencies(multiplot_remap
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(multiplot_remap
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(multiplot_remap PRIVATE ${OCS2_CXX_FLAGS})
 
@@ -104,10 +125,12 @@ add_executable(${PROJECT_NAME}_lintTarget
   src/lintTarget.cpp
 )
 add_dependencies(${PROJECT_NAME}_lintTarget
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(${PROJECT_NAME}_lintTarget
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 
 #########################

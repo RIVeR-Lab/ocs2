@@ -37,7 +37,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
-
 #include <ocs2_mobile_manipulator/FactoryFunctions.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
@@ -121,6 +120,7 @@ class MobileManipulatorInterface final : public RobotInterface
     ManipulatorModelInfo manipulatorModelInfo_;
 
     vector_t initialState_;
+
 };
 
 }  // namespace mobile_manipulator

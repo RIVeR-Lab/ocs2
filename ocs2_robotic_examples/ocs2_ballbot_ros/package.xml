@@ -28,5 +28,7 @@
   <depend>ocs2_ballbot</depend>
   <depend>ocs2_robotic_tools</depend>
   <depend>ocs2_robotic_assets</depend>
+  <depend>voxblox</depend>
+  <depend>voxblox_ros</depend>
 
 </package>

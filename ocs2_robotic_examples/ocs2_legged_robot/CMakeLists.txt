@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_legged_robot)
 
 # Generate compile_commands.json for clang tools
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+#set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+add_compile_options(-std=c++14)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
@@ -14,6 +15,8 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_pinocchio_interface
   ocs2_centroidal_model
   ocs2_robotic_assets
+  voxblox
+  voxblox_ros
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -24,6 +27,8 @@ find_package(Boost REQUIRED COMPONENTS
   system
   filesystem
 )
+
+find_package(PCL REQUIRED)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
@@ -45,6 +50,8 @@ catkin_package(
   DEPENDS
     Boost
     pinocchio
+    voxblox
+    voxblox_ros
 )
 
 ###########
@@ -72,6 +79,7 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
 
 link_directories(
@@ -100,11 +108,13 @@ add_library(${PROJECT_NAME}
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   ${pinocchio_LIBRARIES}
+  ${PCL_LIBRARIES}
   dl
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${FLAGS})

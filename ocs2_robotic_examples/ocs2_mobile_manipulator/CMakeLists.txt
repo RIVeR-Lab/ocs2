@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_mobile_manipulator)
 
 # Generate compile_commands.json for clang tools
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+add_compile_options(-std=c++14)
+#set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+#add_definitions(-std=c++14 -g -O3 -ftree-vectorize -march=native)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
@@ -13,6 +15,12 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_pinocchio_interface
   ocs2_self_collision
   ocs2_ext_collision
+  #pcl_msgs 
+  #pcl_conversions 
+  #pcl_ros
+  voxblox
+  voxblox_ros
+  #mobiman_simulation
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -23,6 +31,8 @@ find_package(Boost REQUIRED COMPONENTS
   system
   filesystem
 )
+
+find_package(PCL REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(pinocchio REQUIRED pinocchio)
@@ -44,6 +54,8 @@ catkin_package(
   DEPENDS
     Boost
     pinocchio
+    voxblox
+    voxblox_ros
 )
 
 ###########
@@ -71,6 +83,7 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
 
 link_directories(
@@ -90,12 +103,14 @@ add_library(${PROJECT_NAME}
   src/MobileManipulatorInterface.cpp
 )
 add_dependencies(${PROJECT_NAME}
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   ${pinocchio_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${FLAGS})
 

@@ -56,6 +56,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
 
+//#include <EsdfCachingServer.h>
+
 #define PUBLISH_THREAD
 
 namespace ocs2 {
@@ -164,6 +166,8 @@ class MPC_ROS_Interface {
   std::unique_ptr<PrimalSolution> publisherPrimalSolutionPtr_;
   std::unique_ptr<PerformanceIndex> bufferPerformanceIndicesPtr_;
   std::unique_ptr<PerformanceIndex> publisherPerformanceIndicesPtr_;
+
+  //std::shared_ptr<voxblox::EsdfCachingServer> esdfCachingServer_;
 
   mutable std::mutex bufferMutex_;  // for policy variables with prefix (buffer*)
 

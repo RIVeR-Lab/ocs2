@@ -33,5 +33,10 @@
   <depend>ocs2_self_collision_visualization</depend>
   <depend>ocs2_mobile_manipulator</depend>
   <depend>pinocchio</depend>
+  <depend>voxblox</depend>
+  <depend>voxblox_ros</depend>
+  <depend>pcl_msgs</depend>
+  <depend>pcl_conversions</depend>
+  <depend>pcl_ros</depend>
 
 </package>

@@ -249,6 +249,13 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   // current time, state, input, and subsystem
   const auto currentObservation = ros_msg_conversions::readObservationMsg(*msg);
 
+  /*
+  if (esdfCachingServer_) 
+  {
+    esdfCachingServer_->updateInterpolator();
+  }
+  */
+
   // measure the delay in running MPC
   mpcTimer_.startTimer();
 

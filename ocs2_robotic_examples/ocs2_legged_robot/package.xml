@@ -22,5 +22,7 @@
   <depend>ocs2_pinocchio_interface</depend>
   <depend>ocs2_centroidal_model</depend>
   <depend>pinocchio</depend>
+  <depend>voxblox</depend>
+  <depend>voxblox_ros</depend>
 
 </package>

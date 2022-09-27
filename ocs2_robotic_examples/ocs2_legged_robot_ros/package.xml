@@ -31,6 +31,8 @@
   <depend>ocs2_msgs</depend>
   <depend>ocs2_legged_robot</depend>
   <depend>ocs2_ros_interfaces</depend>
+  <depend>voxblox</depend>
+  <depend>voxblox_ros</depend>
 
   <depend>pinocchio</depend>
 

@@ -20,4 +20,7 @@
   <depend>ocs2_raisim_core</depend>
   <depend>ocs2_raisim_ros</depend>
 
+  <depend>voxblox</depend>
+  <depend>voxblox_ros</depend>
+
 </package>

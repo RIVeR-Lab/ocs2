@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_legged_robot_raisim)
 
 # Generate compile_commands.json for clang tools
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+add_compile_options(-std=c++14)
+add_definitions(-std=c++14 -g -O3 -ftree-vectorize -march=native)
+#set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_legged_robot
@@ -13,6 +15,8 @@ set(CATKIN_PACKAGE_DEPENDENCIES
 
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
+  voxblox
+  voxblox_ros
 )
 
 ###################################

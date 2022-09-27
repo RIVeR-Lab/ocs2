@@ -24,5 +24,7 @@
   <depend>ocs2_double_integrator</depend>
   <depend>ocs2_robotic_tools</depend>
   <depend>ocs2_robotic_assets</depend>
+  <depend>voxblox</depend>
+  <depend>voxblox_ros</depend>
 
 </package>
