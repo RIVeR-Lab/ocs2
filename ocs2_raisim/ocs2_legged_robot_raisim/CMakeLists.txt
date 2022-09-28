@@ -15,8 +15,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
 
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
-  voxblox
-  voxblox_ros
 )
 
 ###################################
@@ -40,6 +38,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
 
 # main library
@@ -56,33 +55,33 @@ target_link_libraries(${PROJECT_NAME}
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 # RaiSim dummy
-add_executable(legged_robot_raisim_dummy
-  src/LeggedRobotRaisimDummyNode.cpp
-)
-add_dependencies(legged_robot_raisim_dummy
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(legged_robot_raisim_dummy
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
-target_compile_options(legged_robot_raisim_dummy PRIVATE ${OCS2_CXX_FLAGS})
+#add_executable(legged_robot_raisim_dummy
+#  src/LeggedRobotRaisimDummyNode.cpp
+#)
+#add_dependencies(legged_robot_raisim_dummy
+#  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+#  ${catkin_EXPORTED_TARGETS}
+#)
+#target_link_libraries(legged_robot_raisim_dummy
+#  ${PROJECT_NAME}
+#  ${catkin_LIBRARIES}
+#)
+#target_compile_options(legged_robot_raisim_dummy PRIVATE ${OCS2_CXX_FLAGS})
 
 #########################
 ###   CLANG TOOLING   ###
 #########################
-find_package(cmake_clang_tools QUIET)
-if(cmake_clang_tools_FOUND)
-  message(STATUS "Run clang tooling for target ocs2_ballbot")
-  add_clang_tooling(
-    TARGETS ${PROJECT_NAME} legged_robot_raisim_dummy
-    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
-    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
-    CT_HEADER_EXCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/generated
-    CF_WERROR
-  )
-endif(cmake_clang_tools_FOUND)
+#find_package(cmake_clang_tools QUIET)
+#if(cmake_clang_tools_FOUND)
+#  message(STATUS "Run clang tooling for target ocs2_ballbot")
+#  add_clang_tooling(
+#    TARGETS ${PROJECT_NAME} legged_robot_raisim_dummy
+#    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+#    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+#    CT_HEADER_EXCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/generated
+#    CF_WERROR
+#  )
+#endif(cmake_clang_tools_FOUND)
 
 #############
 ## Install ##
@@ -98,9 +97,9 @@ install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
-install(TARGETS legged_robot_raisim_dummy
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+#install(TARGETS legged_robot_raisim_dummy
+#  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+#)
 
 install(DIRECTORY config launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}

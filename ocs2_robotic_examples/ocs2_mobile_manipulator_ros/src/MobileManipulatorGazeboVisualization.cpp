@@ -156,16 +156,20 @@ void OCS2_Mobile_Manipulator_Visualization::update(const SystemObservation& obse
                                                    const PrimalSolution& policy,
                                                    const CommandData& command) 
 {
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::update] START" << std::endl;
   const ros::Time timeStamp = ros::Time::now();
 
   //publishObservation(timeStamp, observation);   //NUA EDIT: Commented out.
   //publishTargetTrajectories(timeStamp, command.mpcTargetTrajectories_);
   publishOptimizedTrajectory(timeStamp, policy);
   
+std::cout << "[OCS2_Mobile_Manipulator_Visualization::update] MIDDLE" << std::endl;
+
   if (geometryVisualization_ != nullptr) 
   {
     geometryVisualization_ -> publishDistances(observation.state);
   }
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::update] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -227,36 +231,53 @@ void OCS2_Mobile_Manipulator_Visualization::publishTargetTrajectories(const ros:
 /******************************************************************************************************/
 void OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy) 
 {
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] START" << std::endl;
+
   const scalar_t TRAJECTORYLINEWIDTH = 0.005;
   const std::array<scalar_t, 3> red{0.6350, 0.0780, 0.1840};
   const std::array<scalar_t, 3> blue{0, 0.4470, 0.7410};
   const auto& mpcStateTrajectory = policy.stateTrajectory_;
   visualization_msgs::MarkerArray markerArray;
 
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] TIKO 1" << std::endl;
   // Base trajectory
   std::vector<geometry_msgs::Point> baseTrajectory;
   baseTrajectory.reserve(mpcStateTrajectory.size());
   geometry_msgs::PoseArray poseArray;
   poseArray.poses.reserve(mpcStateTrajectory.size());
 
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] TIKO 2" << std::endl;
   // End effector trajectory
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
 
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] TIKO 3" << std::endl;
   std::vector<geometry_msgs::Point> endEffectorTrajectory;
   endEffectorTrajectory.reserve(mpcStateTrajectory.size());
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const Eigen::VectorXd& state) 
   {
+    std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] TIKO 3.1" << std::endl;
     pinocchio::forwardKinematics(model, data, state);
+    std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] TIKO 3.2" << std::endl;
+
     pinocchio::updateFramePlacements(model, data);
+    std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] TIKO 3.3" << std::endl;
+
     const auto eeIndex = model.getBodyId(modelInfo_.eeFrame);
+    std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] TIKO 3.4" << std::endl;
+
     const vector_t eePosition = data.oMf[eeIndex].translation();
+    std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] TIKO 3.5" << std::endl;
     endEffectorTrajectory.push_back(ros_msg_helpers::getPointMsg(eePosition));
+
+    std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] TIKO 3.6" << std::endl;
   });
 
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] TIKO 4" << std::endl;
   markerArray.markers.emplace_back(ros_msg_helpers::getLineMsg(std::move(endEffectorTrajectory), blue, TRAJECTORYLINEWIDTH));
   markerArray.markers.back().ns = "EE Trajectory";
 
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] TIKO 5" << std::endl;
   // Extract base pose from state
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const vector_t& state) 
   {
@@ -272,15 +293,20 @@ void OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(const ros
     poseArray.poses.push_back(std::move(pose));
   });
 
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] TIKO 6" << std::endl;
   markerArray.markers.emplace_back(ros_msg_helpers::getLineMsg(std::move(baseTrajectory), red, TRAJECTORYLINEWIDTH));
   markerArray.markers.back().ns = "Base Trajectory";
 
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] TIKO 7" << std::endl;
   assignHeader(markerArray.markers.begin(), markerArray.markers.end(), ros_msg_helpers::getHeaderMsg("world", timeStamp));
   assignIncreasingId(markerArray.markers.begin(), markerArray.markers.end());
   poseArray.header = ros_msg_helpers::getHeaderMsg("world", timeStamp);
 
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] TIKO 8" << std::endl;
   stateOptimizedPublisher_.publish(markerArray);
   stateOptimizedPosePublisher_.publish(poseArray);
+
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] END" << std::endl;
 }
 
 }  // namespace mobile_manipulator

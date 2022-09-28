@@ -302,7 +302,7 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
   ros::Rate simRate(mrtDesiredFrequency_);
   while (ros::ok() && ros::master::check()) 
   {
-    //std::cout << "OCS2_MRT_Loop::mrtLoop -> HUGO 0" << std::endl;
+    std::cout << "OCS2_MRT_Loop::mrtLoop -> HUGO 0" << std::endl;
     mrt_.reset();
 
     while (!mrt_.initialPolicyReceived() && ros::ok() && ros::master::check()) 
@@ -331,15 +331,16 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
     mrt_.spinMRT();
     */
 
-    //std::cout << "OCS2_MRT_Loop::mrtLoop -> HUGO 4" << std::endl;
+    std::cout << "OCS2_MRT_Loop::mrtLoop -> HUGO 4" << std::endl;
     // Update the policy if a new on was received
     mrt_.updatePolicy();
     
 
-    //std::cout << "OCS2_MRT_Loop::mrtLoop -> HUGO 5" << std::endl;
+    std::cout << "OCS2_MRT_Loop::mrtLoop -> HUGO 5" << std::endl;
     // Update observers
     for (auto& observer : observers_) 
     {
+      std::cout << "OCS2_MRT_Loop::mrtLoop -> HUGO 5.1" << std::endl;
       observer -> update(currentObservation, mrt_.getPolicy(), mrt_.getCommand());
     }
 
@@ -351,7 +352,7 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
     // Publish observation
     //mrt_.setCurrentObservation(currentObservation);
 
-    //std::cout << "OCS2_MRT_Loop::mrtLoop -> HUGO 6" << std::endl;
+    std::cout << "OCS2_MRT_Loop::mrtLoop -> HUGO 6" << std::endl;
     //std::cout << "OCS2_MRT_Loop::mrtLoop -> publishCommand" << std::endl;
     publishCommand(currentObservation);
 
@@ -359,7 +360,7 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
 
     ros::spinOnce();
     simRate.sleep();
-    //std::cout << "OCS2_MRT_Loop::mrtLoop -> HUGO 7" << std::endl;
+    std::cout << "OCS2_MRT_Loop::mrtLoop -> HUGO 7" << std::endl;
   }
 }
 

@@ -14,8 +14,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   robot_state_publisher
   visualization_msgs
   geometry_msgs
-  voxblox
-  voxblox_ros
   ocs2_ros_interfaces
   ocs2_core
   ocs2_ddp
@@ -27,18 +25,20 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_ext_collision
   ocs2_self_collision_visualization
   ocs2_mobile_manipulator
-  pcl_msgs 
-  pcl_conversions 
-  pcl_ros
+  #voxblox
+  #voxblox_ros
+  #pcl_msgs 
+  #pcl_conversions 
+  #pcl_ros
 )
 
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
-  voxblox
-  voxblox_ros
+  #voxblox
+  #voxblox_ros
 )
 
-find_package(PCL REQUIRED)
+#find_package(PCL REQUIRED)
 
 find_package(Boost REQUIRED COMPONENTS
   system
@@ -62,13 +62,13 @@ catkin_package(
     ocs2_mobile_manipulator_ros
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
-    voxblox
-    voxblox_ros
+    #voxblox
+    #voxblox_ros
   DEPENDS
     Boost
     pinocchio
-    voxblox
-    voxblox_ros
+    #voxblox
+    #voxblox_ros
 )
 
 ###########
@@ -90,7 +90,7 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${pinocchio_INCLUDE_DIRS}
-  ${PCL_INCLUDE_DIRS}
+  #${PCL_INCLUDE_DIRS}
 )
 
 link_directories(
@@ -98,107 +98,107 @@ link_directories(
 )
 
 # MPC node
-#add_executable(mobile_manipulator_mpc_node
-#  src/MobileManipulatorMpcNode.cpp
-#)
-#add_dependencies(mobile_manipulator_mpc_node
-#  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(mobile_manipulator_mpc_node
-#  ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
-#)
-#target_compile_options(mobile_manipulator_mpc_node PUBLIC ${FLAGS})
+add_executable(mobile_manipulator_mpc_node
+  src/MobileManipulatorMpcNode.cpp
+)
+add_dependencies(mobile_manipulator_mpc_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(mobile_manipulator_mpc_node
+  ${catkin_LIBRARIES}
+  #${PCL_LIBRARIES}
+)
+target_compile_options(mobile_manipulator_mpc_node PUBLIC ${FLAGS})
 
 # DistanceVisualization node
-#add_executable(mobile_manipulator_distance_visualization
-#  src/MobileManipulatorDistanceVisualization.cpp
-#)
-#add_dependencies(mobile_manipulator_distance_visualization
-#  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(mobile_manipulator_distance_visualization
-#  ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
-#)
-#target_compile_options(mobile_manipulator_distance_visualization PUBLIC ${FLAGS})
+add_executable(mobile_manipulator_distance_visualization
+  src/MobileManipulatorDistanceVisualization.cpp
+)
+add_dependencies(mobile_manipulator_distance_visualization
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(mobile_manipulator_distance_visualization
+  ${catkin_LIBRARIES}
+  #${PCL_LIBRARIES}
+)
+target_compile_options(mobile_manipulator_distance_visualization PUBLIC ${FLAGS})
 
 # Gazebo MRT node
-#add_executable(mobile_manipulator_gazebo_mrt_node
-#  src/MobileManipulatorGazeboMRT.cpp
-#  src/MobileManipulatorGazeboVisualization.cpp
-#)
-#add_dependencies(mobile_manipulator_gazebo_mrt_node
-#  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(mobile_manipulator_gazebo_mrt_node
-#  ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
-#)
-#target_compile_options(mobile_manipulator_gazebo_mrt_node PUBLIC ${FLAGS})
+add_executable(mobile_manipulator_gazebo_mrt_node
+  src/MobileManipulatorGazeboMRT.cpp
+  src/MobileManipulatorGazeboVisualization.cpp
+)
+add_dependencies(mobile_manipulator_gazebo_mrt_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(mobile_manipulator_gazebo_mrt_node
+  ${catkin_LIBRARIES}
+  #${PCL_LIBRARIES}
+)
+target_compile_options(mobile_manipulator_gazebo_mrt_node PUBLIC ${FLAGS})
 
 # Dummy MRT node
-#add_executable(mobile_manipulator_dummy_mrt_node
-#  src/MobileManipulatorDummyMRT.cpp
-#  src/MobileManipulatorDummyVisualization.cpp
-#)
-#add_dependencies(mobile_manipulator_dummy_mrt_node
-#  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(mobile_manipulator_dummy_mrt_node
-#  ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
-#)
-#target_compile_options(mobile_manipulator_dummy_mrt_node PUBLIC ${FLAGS})
+add_executable(mobile_manipulator_dummy_mrt_node
+  src/MobileManipulatorDummyMRT.cpp
+  src/MobileManipulatorDummyVisualization.cpp
+)
+add_dependencies(mobile_manipulator_dummy_mrt_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(mobile_manipulator_dummy_mrt_node
+  ${catkin_LIBRARIES}
+  #${PCL_LIBRARIES}
+)
+target_compile_options(mobile_manipulator_dummy_mrt_node PUBLIC ${FLAGS})
 
 # Target node
-#add_executable(mobile_manipulator_target
-#  src/MobileManipulatorTarget.cpp
-#)
-#add_dependencies(mobile_manipulator_target
-#  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-#  ${catkin_EXPORTED_TARGETS}
-#)
-#target_link_libraries(mobile_manipulator_target
-#  ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
-#)
-#target_compile_options(mobile_manipulator_target PUBLIC ${FLAGS})
+add_executable(mobile_manipulator_target
+  src/MobileManipulatorTarget.cpp
+)
+add_dependencies(mobile_manipulator_target
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(mobile_manipulator_target
+  ${catkin_LIBRARIES}
+  #${PCL_LIBRARIES}
+)
+target_compile_options(mobile_manipulator_target PUBLIC ${FLAGS})
 
 ####################
 ## Clang tooling ###
 ####################
 
-#find_package(cmake_clang_tools QUIET)
-#if (cmake_clang_tools_FOUND)
-#  message(STATUS "Run clang tooling")
-#  add_clang_tooling(
-#    TARGETS mobile_manipulator_mpc_node mobile_manipulator_dummy_mrt_node
-#    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
-#    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
-#    CF_WERROR
-#  )
-#endif (cmake_clang_tools_FOUND)
+find_package(cmake_clang_tools QUIET)
+if (cmake_clang_tools_FOUND)
+  message(STATUS "Run clang tooling")
+  add_clang_tooling(
+    TARGETS mobile_manipulator_mpc_node mobile_manipulator_dummy_mrt_node
+    SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CF_WERROR
+  )
+endif (cmake_clang_tools_FOUND)
 
 #############
 ## Install ##
 #############
 
-#install(DIRECTORY include/${PROJECT_NAME}/
-#  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#)
-#install(
-#  TARGETS 
-#    mobile_manipulator_mpc_node 
-#    mobile_manipulator_distance_visualization
-#    mobile_manipulator_dummy_mrt_node 
-#    mobile_manipulator_target
-#  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-#)
-#install(DIRECTORY launch rviz
-#  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-#)
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
+install(
+  TARGETS 
+    mobile_manipulator_mpc_node 
+    mobile_manipulator_distance_visualization
+    mobile_manipulator_dummy_mrt_node 
+    mobile_manipulator_target
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+install(DIRECTORY launch rviz
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)

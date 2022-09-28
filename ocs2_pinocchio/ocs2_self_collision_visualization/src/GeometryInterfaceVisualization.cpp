@@ -56,10 +56,14 @@ GeometryInterfaceVisualization::GeometryInterfaceVisualization(PinocchioInterfac
 /******************************************************************************************************/
 void GeometryInterfaceVisualization::publishDistances(const ocs2::vector_t& q) 
 {
+  std::cout << "[GeometryInterfaceVisualization::publishDistances] START" << std::endl;
+
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
   pinocchio::forwardKinematics(model, data, q);
   const auto results = geometryInterface_.computeDistances(pinocchioInterface_);
+
+  std::cout << "[GeometryInterfaceVisualization::publishDistances] KELOGS 1" << std::endl;
 
   visualization_msgs::MarkerArray markerArray;
 
@@ -72,6 +76,7 @@ void GeometryInterfaceVisualization::publishDistances(const ocs2::vector_t& q)
   markerTemplate.pose.orientation = ros_msg_helpers::getOrientationMsg({1, 0, 0, 0});
   markerArray.markers.resize(results.size() * numMarkersPerResult, markerTemplate);
 
+  std::cout << "[GeometryInterfaceVisualization::publishDistances] KELOGS 2" << std::endl;
   //std::cout << "[GeometryInterfaceVisualization::publishDistances] results.size(): " << results.size() << std::endl;
 
   for (size_t i = 0; i < results.size(); ++i) 
@@ -128,7 +133,10 @@ void GeometryInterfaceVisualization::publishDistances(const ocs2::vector_t& q)
     markerArray.markers[numMarkersPerResult * i + 4].scale.z = 0.02;
   }
 
+  std::cout << "[GeometryInterfaceVisualization::publishDistances] KELOGS 3" << std::endl;
+
   markerPublisher_.publish(markerArray);
+  std::cout << "[GeometryInterfaceVisualization::publishDistances] END" << std::endl;
 }
 
 }  // namespace ocs2
