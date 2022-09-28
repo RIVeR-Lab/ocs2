@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_ros_interfaces)
 
+add_compile_options(-std=c++14)
+
 set(CATKIN_PACKAGE_DEPENDENCIES
   roscpp
   tf
@@ -13,6 +15,8 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   geometry_msgs
   interactive_markers
   ocs2_mobile_manipulator
+  voxblox
+  voxblox_ros
 )
 
 ## Find catkin macros and libraries
@@ -21,12 +25,14 @@ find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
+find_package(PCL REQUIRED)
+
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 find_package(Boost REQUIRED COMPONENTS filesystem)
 
 # Generate compile_commands.json for clang tools
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+#set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 ###################################
 ## catkin specific configuration ##
@@ -50,6 +56,7 @@ catkin_package(
 ## Specify additional locations of header files
 include_directories(
   include
+  ${PCL_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
@@ -70,9 +77,11 @@ add_library(${PROJECT_NAME}
   src/synchronized_module/RosAugmentedLagrangianCallbacks.cpp
   src/visualization/VisualizationHelpers.cpp
   src/visualization/VisualizationColors.cpp
+  src/EsdfCachingServer.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
