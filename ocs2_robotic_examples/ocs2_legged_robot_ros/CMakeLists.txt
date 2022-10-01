@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_legged_robot_ros)
 
 # Generate compile_commands.json for clang tools
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+#set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+add_compile_options(-std=c++14)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   roslib
@@ -24,6 +25,8 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_ros_interfaces
   ocs2_legged_robot
 )
+
+find_package(PCL REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
@@ -66,6 +69,7 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
 
 link_directories(
@@ -85,6 +89,7 @@ add_dependencies(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
@@ -100,6 +105,7 @@ add_dependencies(legged_robot_ddp_mpc
 target_link_libraries(legged_robot_ddp_mpc
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(legged_robot_ddp_mpc PRIVATE ${OCS2_CXX_FLAGS})
 
@@ -115,6 +121,7 @@ add_dependencies(legged_robot_sqp_mpc
 target_link_libraries(legged_robot_sqp_mpc
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(legged_robot_sqp_mpc  PRIVATE ${OCS2_CXX_FLAGS})
 
@@ -130,6 +137,7 @@ add_dependencies(legged_robot_dummy
 target_link_libraries(legged_robot_dummy
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(legged_robot_dummy PRIVATE ${OCS2_CXX_FLAGS})
 
@@ -145,6 +153,7 @@ add_dependencies(legged_robot_target
 target_link_libraries(legged_robot_target
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(legged_robot_target PRIVATE ${OCS2_CXX_FLAGS})
 
@@ -160,6 +169,7 @@ add_dependencies(legged_robot_gait_command
 target_link_libraries(legged_robot_gait_command
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(legged_robot_gait_command PRIVATE ${OCS2_CXX_FLAGS})
 

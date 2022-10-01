@@ -33,6 +33,8 @@ namespace voxblox {
 
 void EsdfCachingServer::esdfMapCallback(const voxblox_msgs::Layer& layer_msg) 
 {
+  std::cout << "[EsdfCachingServer::esdfMapCallback] START" << std::endl;
+
   EsdfServer::esdfMapCallback(layer_msg);
   auto start = std::chrono::high_resolution_clock::now();
   esdf_caching_layer_ptr incomingEsdfCached = esdf_caching_layer_ptr(new voxblox::Layer<voxblox::EsdfCachingVoxel>(getEsdfMapPtr()->getEsdfLayer()));
@@ -54,6 +56,8 @@ void EsdfCachingServer::esdfMapCallback(const voxblox_msgs::Layer& layer_msg)
     std::lock_guard<std::mutex> lockGuard(cacheMutex_);
     cachedCachingLayer_ = incomingEsdfCached;
   }
+
+  std::cout << "[EsdfCachingServer::esdfMapCallback] END" << std::endl;
 }
 
 std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> EsdfCachingServer::getInterpolator() 
@@ -64,7 +68,8 @@ std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> EsdfCachingSer
 void EsdfCachingServer::updateInterpolator() 
 {
   std::lock_guard<std::mutex> lockGuard(cacheMutex_);
-  if (cachedCachingLayer_) {
+  if (cachedCachingLayer_) 
+  {
     currentCachingLayer_ = cachedCachingLayer_;
     cachedCachingLayer_ = nullptr;
     *interpolator_ = voxblox::Interpolator<EsdfCachingVoxel>(currentCachingLayer_.get());

@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_ballbot_ros)
 
 # Generate compile_commands.json for clang tools
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+#set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+add_compile_options(-std=c++14)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   tf
@@ -19,6 +20,8 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_ballbot
   ocs2_robotic_assets
 )
+
+find_package(PCL REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
   roslib
@@ -55,6 +58,7 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
 
 # Mpc node
@@ -66,6 +70,7 @@ add_dependencies(ballbot_mpc
 )
 target_link_libraries(ballbot_mpc
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(ballbot_mpc PRIVATE ${OCS2_CXX_FLAGS})
 
@@ -79,6 +84,7 @@ add_dependencies(ballbot_dummy_test
 )
 target_link_libraries(ballbot_dummy_test
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(ballbot_dummy_test PRIVATE ${OCS2_CXX_FLAGS})
 
@@ -92,6 +98,7 @@ add_dependencies(ballbot_target
 target_link_libraries(ballbot_target
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(ballbot_target PRIVATE ${OCS2_CXX_FLAGS})
 
@@ -105,6 +112,7 @@ add_dependencies(ballbot_mpc_mrt
   )
 target_link_libraries(ballbot_mpc_mrt
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
   )
 target_compile_options(ballbot_mpc_mrt  PRIVATE ${OCS2_CXX_FLAGS})
 
@@ -117,6 +125,7 @@ add_dependencies(ballbot_sqp
 )
 target_link_libraries(ballbot_sqp
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(ballbot_sqp  PRIVATE ${OCS2_CXX_FLAGS})
 
@@ -163,4 +172,5 @@ catkin_add_gtest(ballbot_integration_test
 target_link_libraries(ballbot_integration_test
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${PCL_LIBRARIES}
 )

@@ -44,7 +44,8 @@ MPC_ROS_Interface::MPC_ROS_Interface(MPC_BASE& mpc, std::string topicPrefix)
       bufferCommandPtr_(new CommandData()),
       publisherCommandPtr_(new CommandData()),
       bufferPerformanceIndicesPtr_(new PerformanceIndex),
-      publisherPerformanceIndicesPtr_(new PerformanceIndex) {
+      publisherPerformanceIndicesPtr_(new PerformanceIndex) 
+{
   // start thread for publishing
 #ifdef PUBLISH_THREAD
   publisherWorker_ = std::thread(&MPC_ROS_Interface::publisherWorker, this);
@@ -247,6 +248,15 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
 
   // current time, state, input, and subsystem
   const auto currentObservation = ros_msg_conversions::readObservationMsg(*msg);
+
+  /*
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] esdfCachingServer_ START" << std::endl;
+  if (esdfCachingServer_) 
+  {
+    esdfCachingServer_->updateInterpolator();
+  }
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] esdfCachingServer_ END" << std::endl;
+  */
 
   // measure the delay in running MPC
   mpcTimer_.startTimer();

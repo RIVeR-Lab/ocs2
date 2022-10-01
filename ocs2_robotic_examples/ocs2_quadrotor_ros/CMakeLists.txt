@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_quadrotor_ros)
 
 # Generate compile_commands.json for clang tools
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+#set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+add_compile_options(-std=c++14)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   tf
@@ -12,6 +13,8 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_robotic_assets
   ocs2_quadrotor
 )
+
+find_package(PCL REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
   roslib
@@ -45,6 +48,7 @@ catkin_package(
 
 include_directories(
   include
+  ${PCL_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
@@ -59,6 +63,7 @@ add_dependencies(quadrotor_mpc
 )
 target_link_libraries(quadrotor_mpc
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 
 # Dummy node
@@ -71,6 +76,7 @@ add_dependencies(quadrotor_dummy_test
 )
 target_link_libraries(quadrotor_dummy_test
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 
 # Target node
@@ -83,6 +89,7 @@ add_dependencies(quadrotor_target
 target_link_libraries(quadrotor_target
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(quadrotor_target PRIVATE ${OCS2_CXX_FLAGS})
 

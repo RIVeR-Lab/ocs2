@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_mobile_manipulator_ros)
 
 # Generate compile_commands.json for clang tools
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+#set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+add_compile_options(-std=c++14)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   roslib
@@ -24,6 +25,8 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_self_collision_visualization
   ocs2_mobile_manipulator
 )
+
+find_package(PCL REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
@@ -73,6 +76,7 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${pinocchio_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
 
 link_directories(
@@ -88,6 +92,7 @@ add_dependencies(mobile_manipulator_mpc_node
 )
 target_link_libraries(mobile_manipulator_mpc_node
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(mobile_manipulator_mpc_node PUBLIC ${FLAGS})
 
@@ -100,6 +105,7 @@ add_dependencies(mobile_manipulator_distance_visualization
 )
 target_link_libraries(mobile_manipulator_distance_visualization
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(mobile_manipulator_distance_visualization PUBLIC ${FLAGS})
 
@@ -113,6 +119,7 @@ add_dependencies(mobile_manipulator_gazebo_mrt_node
 )
 target_link_libraries(mobile_manipulator_gazebo_mrt_node
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(mobile_manipulator_gazebo_mrt_node PUBLIC ${FLAGS})
 
@@ -126,6 +133,7 @@ add_dependencies(mobile_manipulator_dummy_mrt_node
 )
 target_link_libraries(mobile_manipulator_dummy_mrt_node
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(mobile_manipulator_dummy_mrt_node PUBLIC ${FLAGS})
 
@@ -138,6 +146,7 @@ add_dependencies(mobile_manipulator_target
 )
 target_link_libraries(mobile_manipulator_target
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(mobile_manipulator_target PUBLIC ${FLAGS})
 

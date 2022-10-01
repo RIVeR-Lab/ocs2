@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_cartpole_ros)
 
 # Generate compile_commands.json for clang tools
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+#set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+add_compile_options(-std=c++14)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
@@ -13,6 +14,8 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_cartpole
   ocs2_robotic_assets
 )
+
+find_package(PCL REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
   roslib
@@ -49,6 +52,7 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
 
 # Mpc node
@@ -60,6 +64,7 @@ add_dependencies(cartpole_mpc
 )
 target_link_libraries(cartpole_mpc
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 
 # Dummy node
@@ -72,6 +77,7 @@ add_dependencies(cartpole_dummy_test
 )
 target_link_libraries(cartpole_dummy_test
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 
 

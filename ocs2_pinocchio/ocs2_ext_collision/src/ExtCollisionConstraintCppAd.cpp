@@ -46,12 +46,12 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(PinocchioInterface pinocchioInterface,
-                                                           const PinocchioStateInputMapping<scalar_t>& mapping,
-                                                           PinocchioGeometryInterface pinocchioGeometryInterface, 
-                                                           scalar_t minimumDistance,
-                                                           const std::string& modelName, 
-                                                           const std::string& modelFolder,
-                                                           bool recompileLibraries, bool verbose)
+                                                         const PinocchioStateInputMapping<scalar_t>& mapping,
+                                                         PinocchioGeometryInterface pinocchioGeometryInterface, 
+                                                         scalar_t minimumDistance,
+                                                         const std::string& modelName, 
+                                                         const std::string& modelFolder,
+                                                         bool recompileLibraries, bool verbose)
   : ExtCollisionConstraintCppAd(std::move(pinocchioInterface), 
                                 mapping, 
                                 std::move(pinocchioGeometryInterface), 

@@ -56,10 +56,10 @@ catkin_package(
 ## Specify additional locations of header files
 include_directories(
   include
-  ${PCL_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
 
 add_library(${PROJECT_NAME}
@@ -93,6 +93,7 @@ add_dependencies(test_custom_callback_queue
 )
 target_link_libraries(test_custom_callback_queue
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(test_custom_callback_queue PRIVATE ${OCS2_CXX_FLAGS})
 
@@ -106,6 +107,7 @@ add_dependencies(multiplot_remap
 target_link_libraries(multiplot_remap
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 target_compile_options(multiplot_remap PRIVATE ${OCS2_CXX_FLAGS})
 
@@ -117,6 +119,7 @@ add_dependencies(${PROJECT_NAME}_lintTarget
 )
 target_link_libraries(${PROJECT_NAME}_lintTarget
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 
 #########################

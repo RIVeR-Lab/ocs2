@@ -38,16 +38,22 @@ class EsdfCachingServer : virtual public EsdfServer
 {
   public:
     EsdfCachingServer(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
+
     void esdfMapCallback(const voxblox_msgs::Layer& layer_msg) override;
+
     std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> getInterpolator();
+
     void updateInterpolator();
 
   private:
     using esdf_caching_layer_ptr = std::shared_ptr<voxblox::Layer<voxblox::EsdfCachingVoxel>>;
 
     std::mutex cacheMutex_;
+
     esdf_caching_layer_ptr currentCachingLayer_ = nullptr;
+    
     esdf_caching_layer_ptr cachedCachingLayer_ = nullptr;
+    
     std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> interpolator_ = nullptr;
 };
 } /* namespace voxblox */

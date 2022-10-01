@@ -480,6 +480,8 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
   std::unique_ptr<StateConstraint> constraint;
   if (usePreComputation) 
   {
+    std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] usePreComputation" << std::endl;
+
     constraint = std::unique_ptr<StateConstraint>(new MobileManipulatorExtCollisionConstraint(MobileManipulatorPinocchioMapping(manipulatorModelInfo_), 
                                                                                                std::move(geometryInterface), 
                                                                                                minimumDistance));
