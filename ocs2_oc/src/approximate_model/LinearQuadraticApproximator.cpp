@@ -295,7 +295,9 @@ ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlPr
 /******************************************************************************************************/
 /******************************************************************************************************/
 MetricsCollection computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
-                                             const vector_t& input, const MultiplierCollection& multipliers) {
+                                             const vector_t& input, const MultiplierCollection& multipliers) 
+{
+  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] START" << std::endl;
   auto& preComputation = *problem.preComputationPtr;
 
   MetricsCollection metrics;
@@ -308,11 +310,20 @@ MetricsCollection computeIntermediateMetrics(OptimalControlProblem& problem, con
   metrics.stateInputEqConstraint = problem.equalityConstraintPtr->getValue(time, state, input, preComputation);
 
   // Lagrangians
+  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] stateEqLagrangian" << std::endl;
   metrics.stateEqLagrangian = problem.stateEqualityLagrangianPtr->getValue(time, state, multipliers.stateEq, preComputation);
+
+  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] stateIneqLagrangian" << std::endl;
   metrics.stateIneqLagrangian = problem.stateInequalityLagrangianPtr->getValue(time, state, multipliers.stateIneq, preComputation);
+
+  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] stateInputEqLagrangian" << std::endl;
   metrics.stateInputEqLagrangian = problem.equalityLagrangianPtr->getValue(time, state, input, multipliers.stateInputEq, preComputation);
-  metrics.stateInputIneqLagrangian =
-      problem.inequalityLagrangianPtr->getValue(time, state, input, multipliers.stateInputIneq, preComputation);
+
+  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] stateInputIneqLagrangian" << std::endl;
+  metrics.stateInputIneqLagrangian = problem.inequalityLagrangianPtr->getValue(time, state, input, multipliers.stateInputIneq, preComputation);
+
+
+  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] END" << std::endl;
 
   return metrics;
 }

@@ -62,7 +62,9 @@ void copySegment(const LinearInterpolation::index_alpha_t& indexAlpha0, const Li
 /******************************************************************************************************/
 /******************************************************************************************************/
 void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution& primalSolution, DualSolutionConstRef dualSolution,
-                           ProblemMetrics& problemMetrics) {
+                           ProblemMetrics& problemMetrics) 
+{
+  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] START" << std::endl;
   const auto& tTrajectory = primalSolution.timeTrajectory_;
   const auto& xTrajectory = primalSolution.stateTrajectory_;
   const auto& uTrajectory = primalSolution.inputTrajectory_;
@@ -74,26 +76,40 @@ void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution&
 
   auto nextPostEventIndexItr = postEventIndices.begin();
   const auto request = Request::Cost + Request::Constraint + Request::SoftConstraint;
-  for (size_t k = 0; k < tTrajectory.size(); k++) {
+  
+  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] tTrajectory.size(): " << tTrajectory.size() << std::endl;
+  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] START tTrajectory loop" << std::endl;
+  for (size_t k = 0; k < tTrajectory.size(); k++) 
+  {
     // intermediate time cost and constraints
     problem.preComputationPtr->request(request, tTrajectory[k], xTrajectory[k], uTrajectory[k]);
-    problemMetrics.intermediates.push_back(
-        computeIntermediateMetrics(problem, tTrajectory[k], xTrajectory[k], uTrajectory[k], dualSolution.intermediates[k]));
+
+    std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] START computeIntermediateMetrics" << std::endl;
+    problemMetrics.intermediates.push_back(computeIntermediateMetrics(problem, tTrajectory[k], xTrajectory[k], uTrajectory[k], dualSolution.intermediates[k]));
+    std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END computeIntermediateMetrics" << std::endl;
 
     // event time cost and constraints
-    if (nextPostEventIndexItr != postEventIndices.end() && k + 1 == *nextPostEventIndexItr) {
+    if (nextPostEventIndexItr != postEventIndices.end() && k + 1 == *nextPostEventIndexItr) 
+    {
       const auto m = dualSolution.preJumps[std::distance(postEventIndices.begin(), nextPostEventIndexItr)];
       problem.preComputationPtr->requestPreJump(request, tTrajectory[k], xTrajectory[k]);
+
+      std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] START computePreJumpMetrics" << std::endl;
       problemMetrics.preJumps.push_back(computePreJumpMetrics(problem, tTrajectory[k], xTrajectory[k], m));
+      std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END computePreJumpMetrics" << std::endl;
+
       nextPostEventIndexItr++;
     }
   }
+  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END tTrajectory loop" << std::endl;
 
   // final time cost and constraints
-  if (!tTrajectory.empty()) {
+  if (!tTrajectory.empty()) 
+  {
     problem.preComputationPtr->requestFinal(request, tTrajectory.back(), xTrajectory.back());
     problemMetrics.final = computeFinalMetrics(problem, tTrajectory.back(), xTrajectory.back(), dualSolution.final);
   }
+  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END" << std::endl;
 }
 
 /******************************************************************************************************/

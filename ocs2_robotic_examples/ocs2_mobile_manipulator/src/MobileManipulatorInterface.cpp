@@ -215,8 +215,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   }
 
   // external-collision avoidance constraint
-  bool activateExtCollision = true;
-  loadData::loadPtreeValue(pt, activateExtCollision, "extCollision.activate", true);
+  bool activateExtCollision = false;
+  loadData::loadPtreeValue(pt, activateExtCollision, "extCollision.activate", false);
   if (activateExtCollision) 
   {
     std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] activateExtCollision: " << activateExtCollision << std::endl;

@@ -56,7 +56,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
 
-#include <ocs2_ros_interfaces/EsdfCachingServer.hpp>
+//#include <ocs2_ros_interfaces/EsdfCachingServer.hpp>
 
 #define PUBLISH_THREAD
 
@@ -154,7 +154,7 @@ class MPC_ROS_Interface {
 
   std::shared_ptr<ros::NodeHandle> nodeHandlerPtr_;
 
-  std::shared_ptr<voxblox::EsdfCachingServer> esdfCachingServer_;
+  //std::shared_ptr<voxblox::EsdfCachingServer> esdfCachingServer_;
 
   // Publishers and subscribers
   ::ros::Subscriber mpcObservationSubscriber_;
