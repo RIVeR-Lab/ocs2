@@ -84,9 +84,9 @@ void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution&
     // intermediate time cost and constraints
     problem.preComputationPtr->request(request, tTrajectory[k], xTrajectory[k], uTrajectory[k]);
 
-    std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] START computeIntermediateMetrics" << std::endl;
+    //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] START computeIntermediateMetrics" << std::endl;
     problemMetrics.intermediates.push_back(computeIntermediateMetrics(problem, tTrajectory[k], xTrajectory[k], uTrajectory[k], dualSolution.intermediates[k]));
-    std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END computeIntermediateMetrics" << std::endl;
+    //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END computeIntermediateMetrics" << std::endl;
 
     // event time cost and constraints
     if (nextPostEventIndexItr != postEventIndices.end() && k + 1 == *nextPostEventIndexItr) 
@@ -94,9 +94,9 @@ void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution&
       const auto m = dualSolution.preJumps[std::distance(postEventIndices.begin(), nextPostEventIndexItr)];
       problem.preComputationPtr->requestPreJump(request, tTrajectory[k], xTrajectory[k]);
 
-      std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] START computePreJumpMetrics" << std::endl;
+      //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] START computePreJumpMetrics" << std::endl;
       problemMetrics.preJumps.push_back(computePreJumpMetrics(problem, tTrajectory[k], xTrajectory[k], m));
-      std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END computePreJumpMetrics" << std::endl;
+      //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END computePreJumpMetrics" << std::endl;
 
       nextPostEventIndexItr++;
     }
