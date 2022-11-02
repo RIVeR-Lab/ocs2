@@ -327,12 +327,12 @@ void MPC_ROS_Interface::spin() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) {
+void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) 
+{
   ROS_INFO_STREAM("MPC node is setting up ...");
 
   // Observation subscriber
-  mpcObservationSubscriber_ = nodeHandle.subscribe(topicPrefix_ + "_mpc_observation", 1, &MPC_ROS_Interface::mpcObservationCallback, this,
-                                                   ::ros::TransportHints().tcpNoDelay());
+  mpcObservationSubscriber_ = nodeHandle.subscribe(topicPrefix_ + "_mpc_observation", 1, &MPC_ROS_Interface::mpcObservationCallback, this, ::ros::TransportHints().tcpNoDelay());
 
   // MPC publisher
   mpcPolicyPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_flattened_controller>(topicPrefix_ + "_mpc_policy", 1, true);

@@ -39,12 +39,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace ocs2;
 using namespace mobile_manipulator;
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv) 
+{
   const std::string robotName = "mobile_manipulator";
 
   // Initialize ros node
   ros::init(argc, argv, robotName + "_mpc");
   ros::NodeHandle nodeHandle;
+  
   // Get node parameters
   std::string taskFile, libFolder, urdfFile;
   nodeHandle.getParam("/taskFile", taskFile);
@@ -53,23 +55,51 @@ int main(int argc, char** argv) {
   std::cerr << "Loading task file: " << taskFile << std::endl;
   std::cerr << "Loading library folder: " << libFolder << std::endl;
   std::cerr << "Loading urdf file: " << urdfFile << std::endl;
+  
   // Robot interface
+  auto t0_interface = std::chrono::high_resolution_clock::now();
   MobileManipulatorInterface interface(taskFile, libFolder, urdfFile);
+  auto t1_interface = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[mobile_manipulator_mpc_node::main] duration interface: " << std::chrono::duration_cast<std::chrono::milliseconds>(t1_interface - t0_interface).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   // ROS ReferenceManager
-  std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(
-      new ocs2::RosReferenceManager(robotName, interface.getReferenceManagerPtr()));
-  rosReferenceManagerPtr->subscribe(nodeHandle);
+  auto t0_refmanager = std::chrono::high_resolution_clock::now();
+  std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(new ocs2::RosReferenceManager(robotName, interface.getReferenceManagerPtr()));
+  auto t1_refmanager = std::chrono::high_resolution_clock::now();
 
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[mobile_manipulator_mpc_node::main] duration refmanager: " << std::chrono::duration_cast<std::chrono::milliseconds>(t1_refmanager - t0_refmanager).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+  rosReferenceManagerPtr->subscribe(nodeHandle);
+  
   // MPC
-  ocs2::GaussNewtonDDP_MPC mpc(interface.mpcSettings(), interface.ddpSettings(), interface.getRollout(),
-                               interface.getOptimalControlProblem(), interface.getInitializer());
+  auto t0_mpc = std::chrono::high_resolution_clock::now();
+  ocs2::GaussNewtonDDP_MPC mpc(interface.mpcSettings(), 
+                               interface.ddpSettings(), 
+                               interface.getRollout(),
+                               interface.getOptimalControlProblem(), 
+                               interface.getInitializer());
   mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
+  auto t1_mpc = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[mobile_manipulator_mpc_node::main] duration mpc: " << std::chrono::duration_cast<std::chrono::milliseconds>(t1_mpc - t0_mpc).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   // Launch MPC ROS node
+  auto t0_mpcnode = std::chrono::high_resolution_clock::now();
   MPC_ROS_Interface mpcNode(mpc, robotName);
-  mpcNode.launchNodes(nodeHandle);
+  auto t1_mpcnode = std::chrono::high_resolution_clock::now();
+  
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[mobile_manipulator_mpc_node::main] duration mpcnode: " << std::chrono::duration_cast<std::chrono::milliseconds>(t1_mpcnode - t0_mpcnode).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
+  mpcNode.launchNodes(nodeHandle);
   // Successful exit
   return 0;
 }
