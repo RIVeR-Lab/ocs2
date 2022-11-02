@@ -44,10 +44,17 @@ int main(int argc, char** argv)
   const std::string robotName = "mobile_manipulator";
 
   // Initialize ros node
+  auto t0_initnode = std::chrono::high_resolution_clock::now();
   ros::init(argc, argv, robotName + "_mpc");
   ros::NodeHandle nodeHandle;
+  auto t1_initnode = std::chrono::high_resolution_clock::now();
   
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[mobile_manipulator_mpc_node::main] duration initnode: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_initnode - t0_initnode).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
   // Get node parameters
+  auto t0_getparam = std::chrono::high_resolution_clock::now();
   std::string taskFile, libFolder, urdfFile;
   nodeHandle.getParam("/taskFile", taskFile);
   nodeHandle.getParam("/libFolder", libFolder);
@@ -55,6 +62,11 @@ int main(int argc, char** argv)
   std::cerr << "Loading task file: " << taskFile << std::endl;
   std::cerr << "Loading library folder: " << libFolder << std::endl;
   std::cerr << "Loading urdf file: " << urdfFile << std::endl;
+  auto t1_getparam = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[mobile_manipulator_mpc_node::main] duration getparam: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_getparam - t0_getparam).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
   
   // Robot interface
   auto t0_interface = std::chrono::high_resolution_clock::now();
@@ -62,7 +74,7 @@ int main(int argc, char** argv)
   auto t1_interface = std::chrono::high_resolution_clock::now();
 
   std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
-  std::cout << "[mobile_manipulator_mpc_node::main] duration interface: " << std::chrono::duration_cast<std::chrono::milliseconds>(t1_interface - t0_interface).count() << std::endl;
+  std::cout << "[mobile_manipulator_mpc_node::main] duration interface: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_interface - t0_interface).count() << std::endl;
   std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   // ROS ReferenceManager
@@ -71,7 +83,7 @@ int main(int argc, char** argv)
   auto t1_refmanager = std::chrono::high_resolution_clock::now();
 
   std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
-  std::cout << "[mobile_manipulator_mpc_node::main] duration refmanager: " << std::chrono::duration_cast<std::chrono::milliseconds>(t1_refmanager - t0_refmanager).count() << std::endl;
+  std::cout << "[mobile_manipulator_mpc_node::main] duration refmanager: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_refmanager - t0_refmanager).count() << std::endl;
   std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   rosReferenceManagerPtr->subscribe(nodeHandle);
@@ -87,7 +99,7 @@ int main(int argc, char** argv)
   auto t1_mpc = std::chrono::high_resolution_clock::now();
 
   std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
-  std::cout << "[mobile_manipulator_mpc_node::main] duration mpc: " << std::chrono::duration_cast<std::chrono::milliseconds>(t1_mpc - t0_mpc).count() << std::endl;
+  std::cout << "[mobile_manipulator_mpc_node::main] duration mpc: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_mpc - t0_mpc).count() << std::endl;
   std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   // Launch MPC ROS node
@@ -96,7 +108,7 @@ int main(int argc, char** argv)
   auto t1_mpcnode = std::chrono::high_resolution_clock::now();
   
   std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
-  std::cout << "[mobile_manipulator_mpc_node::main] duration mpcnode: " << std::chrono::duration_cast<std::chrono::milliseconds>(t1_mpcnode - t0_mpcnode).count() << std::endl;
+  std::cout << "[mobile_manipulator_mpc_node::main] duration mpcnode: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_mpcnode - t0_mpcnode).count() << std::endl;
   std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   mpcNode.launchNodes(nodeHandle);

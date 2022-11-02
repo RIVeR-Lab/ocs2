@@ -37,39 +37,70 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SLQ::SLQ(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
+SLQ::SLQ(ddp::Settings ddpSettings, 
+         const RolloutBase& rollout, 
+         const OptimalControlProblem& optimalControlProblem,
          const Initializer& initializer)
-    : GaussNewtonDDP(std::move(ddpSettings), rollout, optimalControlProblem, initializer) {
-  if (settings().algorithm_ != ddp::Algorithm::SLQ) {
+    : GaussNewtonDDP(std::move(ddpSettings), rollout, optimalControlProblem, initializer) 
+{
+  if (settings().algorithm_ != ddp::Algorithm::SLQ) 
+  {
     throw std::runtime_error("[SLQ] In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
                              "\" while SLQ is instantiated!");
   }
 
+  auto t0_slqresize = std::chrono::high_resolution_clock::now();
   allSsTrajectoryStock_.resize(settings().nThreads_);
   SsNormalizedTimeTrajectoryStock_.resize(settings().nThreads_);
   SsNormalizedEventsPastTheEndIndecesStock_.resize(settings().nThreads_);
+  auto t1_slqresize = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[SLQ::SLQ] duration slqresize: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_slqresize - t0_slqresize).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  
   // Riccati Solver
+  auto t0_riccatireserve = std::chrono::high_resolution_clock::now();
   riccatiEquationsPtrStock_.clear();
   riccatiEquationsPtrStock_.reserve(settings().nThreads_);
   riccatiIntegratorPtrStock_.clear();
   riccatiIntegratorPtrStock_.reserve(settings().nThreads_);
+  auto t1_riccatireserve = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[SLQ::SLQ] duration riccatireserve: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_riccatireserve - t0_riccatireserve).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   const auto integratorType = settings().backwardPassIntegratorType_;
   if (integratorType != IntegratorType::ODE45 && integratorType != IntegratorType::BULIRSCH_STOER &&
-      integratorType != IntegratorType::ODE45_OCS2 && integratorType != IntegratorType::RK4) {
+      integratorType != IntegratorType::ODE45_OCS2 && integratorType != IntegratorType::RK4) 
+  {
     throw(std::runtime_error("Unsupported Riccati equation integrator type: " +
                              integrator_type::toString(settings().backwardPassIntegratorType_)));
   }
 
-  for (size_t i = 0; i < settings().nThreads_; i++) {
+  auto t0_riccatiloop = std::chrono::high_resolution_clock::now();
+  for (size_t i = 0; i < settings().nThreads_; i++)
+  {
     bool preComputeRiccatiTerms = settings().preComputeRiccatiTerms_ && (settings().strategy_ == search_strategy::Type::LINE_SEARCH);
     bool isRiskSensitive = !numerics::almost_eq(settings().riskSensitiveCoeff_, 0.0);
     riccatiEquationsPtrStock_.emplace_back(new ContinuousTimeRiccatiEquations(preComputeRiccatiTerms, isRiskSensitive));
     riccatiEquationsPtrStock_.back()->setRiskSensitiveCoefficient(settings().riskSensitiveCoeff_);
     riccatiIntegratorPtrStock_.emplace_back(newIntegrator(integratorType));
   }  // end of i loop
+  auto t1_riccatiloop = std::chrono::high_resolution_clock::now();
 
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[SLQ::SLQ] duration riccatiloop: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_riccatiloop - t0_riccatiloop).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+  auto t0_initParallel = std::chrono::high_resolution_clock::now();
   Eigen::initParallel();
+  auto t1_initParallel = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[SLQ::SLQ] duration initParallel: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_initParallel - t0_initParallel).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 }
 
 /******************************************************************************************************/
