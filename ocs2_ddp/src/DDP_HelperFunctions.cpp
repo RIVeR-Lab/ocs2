@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
 #include <iostream>
+#include <chrono>
 
 #include <ocs2_core/PreComputation.h>
 #include <ocs2_core/integration/TrapezoidalIntegration.h>
@@ -61,8 +62,11 @@ void copySegment(const LinearInterpolation::index_alpha_t& indexAlpha0, const Li
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution& primalSolution, DualSolutionConstRef dualSolution,
-                           ProblemMetrics& problemMetrics) {
+void computeRolloutMetrics(OptimalControlProblem& problem, 
+                           const PrimalSolution& primalSolution, 
+                           DualSolutionConstRef dualSolution,
+                           ProblemMetrics& problemMetrics) 
+{
   const auto& tTrajectory = primalSolution.timeTrajectory_;
   const auto& xTrajectory = primalSolution.stateTrajectory_;
   const auto& uTrajectory = primalSolution.inputTrajectory_;
@@ -74,26 +78,78 @@ void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution&
 
   auto nextPostEventIndexItr = postEventIndices.begin();
   const auto request = Request::Cost + Request::Constraint + Request::SoftConstraint;
-  for (size_t k = 0; k < tTrajectory.size(); k++) {
+  
+  int ctr = 0;
+  auto t0_comprollmetloop = std::chrono::high_resolution_clock::now();
+  for (size_t k = 0; k < tTrajectory.size(); k++) 
+  {
     // intermediate time cost and constraints
+    auto t0_request = std::chrono::high_resolution_clock::now();
     problem.preComputationPtr->request(request, tTrajectory[k], xTrajectory[k], uTrajectory[k]);
-    problemMetrics.intermediates.push_back(
-        computeIntermediateMetrics(problem, tTrajectory[k], xTrajectory[k], uTrajectory[k], dualSolution.intermediates[k]));
+    auto t1_request = std::chrono::high_resolution_clock::now();
+
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+    std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] duration request: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_request - t0_request).count() << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+    auto t0_compintermet = std::chrono::high_resolution_clock::now();
+    problemMetrics.intermediates.push_back(computeIntermediateMetrics(problem, tTrajectory[k], xTrajectory[k], uTrajectory[k], dualSolution.intermediates[k]));
+    auto t1_compintermet = std::chrono::high_resolution_clock::now();
+
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+    std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] duration compintermet: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_compintermet - t0_compintermet).count() << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
     // event time cost and constraints
-    if (nextPostEventIndexItr != postEventIndices.end() && k + 1 == *nextPostEventIndexItr) {
+    if (nextPostEventIndexItr != postEventIndices.end() && k + 1 == *nextPostEventIndexItr) 
+    {
+      auto t0_preJumps = std::chrono::high_resolution_clock::now();
       const auto m = dualSolution.preJumps[std::distance(postEventIndices.begin(), nextPostEventIndexItr)];
+      auto t1_preJumps = std::chrono::high_resolution_clock::now();
+
+      std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+      std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] duration preJumps: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_preJumps - t0_preJumps).count() << std::endl;
+      std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+      auto t0_requestPreJump = std::chrono::high_resolution_clock::now();
       problem.preComputationPtr->requestPreJump(request, tTrajectory[k], xTrajectory[k]);
+      auto t1_requestPreJump = std::chrono::high_resolution_clock::now();
+
+      std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+      std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] duration requestPreJump: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_requestPreJump - t0_requestPreJump).count() << std::endl;
+      std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+      auto t0_computePreJumpMetrics = std::chrono::high_resolution_clock::now();
       problemMetrics.preJumps.push_back(computePreJumpMetrics(problem, tTrajectory[k], xTrajectory[k], m));
+      auto t1_computePreJumpMetrics = std::chrono::high_resolution_clock::now();
+
+      std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+      std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] duration computePreJumpMetrics: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_computePreJumpMetrics - t0_computePreJumpMetrics).count() << std::endl;
+      std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
       nextPostEventIndexItr++;
     }
+    ctr++;
   }
+  auto t1_comprollmetloop = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] duration comprollmetloop: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_comprollmetloop - t0_comprollmetloop).count() << std::endl;
+  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] ctr: " << ctr << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   // final time cost and constraints
-  if (!tTrajectory.empty()) {
+  auto t0_finco = std::chrono::high_resolution_clock::now();
+  if (!tTrajectory.empty()) 
+  {
     problem.preComputationPtr->requestFinal(request, tTrajectory.back(), xTrajectory.back());
     problemMetrics.final = computeFinalMetrics(problem, tTrajectory.back(), xTrajectory.back(), dualSolution.final);
   }
+  auto t1_finco = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] duration finco: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_finco - t0_finco).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 }
 
 /******************************************************************************************************/

@@ -374,33 +374,60 @@ vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangianImpl(scalar_t 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool GaussNewtonDDP::rolloutInitialController(PrimalSolution& inputPrimalSolution, PrimalSolution& outputPrimalSolution) {
-  if (inputPrimalSolution.controllerPtr_->empty()) {
+bool GaussNewtonDDP::rolloutInitialController(PrimalSolution& inputPrimalSolution, PrimalSolution& outputPrimalSolution) 
+{
+  if (inputPrimalSolution.controllerPtr_->empty()) 
+  {
     return false;
   }
 
   // cast to linear the controller
+  auto t0_inputlincont = std::chrono::high_resolution_clock::now();
   auto& inputLinearController = getLinearController(inputPrimalSolution);
+  auto t1_inputlincont = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[GaussNewtonDDP::rolloutInitialController] duration inputlincont: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_inputlincont - t0_inputlincont).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   // adjust in-place the controller
+  auto t0_trajectorySpread = std::chrono::high_resolution_clock::now();
   std::ignore = trajectorySpread(inputPrimalSolution.modeSchedule_, getReferenceManager().getModeSchedule(), inputLinearController);
+  auto t1_trajectorySpread = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[GaussNewtonDDP::rolloutInitialController] duration trajectorySpread: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_trajectorySpread - t0_trajectorySpread).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  
   // after adjustment it might become empty
-  if (inputLinearController.empty()) {
+  if (inputLinearController.empty()) 
+  {
     return false;
   }
 
   const auto finalTime = std::max(initTime_, std::min(inputLinearController.timeStamp_.back(), finalTime_));
 
-  if (initTime_ < finalTime) {
-    if (ddpSettings_.debugPrintRollout_) {
+  if (initTime_ < finalTime) 
+  {
+    if (ddpSettings_.debugPrintRollout_) 
+    {
       std::cerr << "[GaussNewtonDDP::rolloutInitialController] for t = [" << initTime_ << ", " << finalTime_ << "]\n";
       std::cerr << "\twill use controller for t = [" << initTime_ << ", " << finalTime << "]\n";
     }
     outputPrimalSolution.controllerPtr_.swap(inputPrimalSolution.controllerPtr_);
-    std::ignore = rolloutTrajectory(*dynamicsForwardRolloutPtrStock_[0], initTime_, initState_, finalTime, outputPrimalSolution);
-    return true;
 
-  } else {
+    auto t0_rolltraj = std::chrono::high_resolution_clock::now();
+    std::ignore = rolloutTrajectory(*dynamicsForwardRolloutPtrStock_[0], initTime_, initState_, finalTime, outputPrimalSolution);
+    auto t1_rolltraj = std::chrono::high_resolution_clock::now();
+
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+    std::cout << "[GaussNewtonDDP::rolloutInitialController] duration rolltraj: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_rolltraj - t0_rolltraj).count() << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+    return true;
+  } 
+  else 
+  {
     return false;
   }
 }
@@ -829,39 +856,69 @@ void GaussNewtonDDP::updateConstraintPenalties(scalar_t equalityConstraintsSSE) 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool GaussNewtonDDP::initializePrimalSolution() {
-  try {
+bool GaussNewtonDDP::initializePrimalSolution() 
+{
+  try 
+  {
     // clear before starting to fill
     nominalPrimalData_.clear();
 
     // for non-StateTriggeredRollout case, set modeSchedule
+    auto t0_getModeSchedule = std::chrono::high_resolution_clock::now();
     nominalPrimalData_.primalSolution.modeSchedule_ = getReferenceManager().getModeSchedule();
+    auto t1_getModeSchedule = std::chrono::high_resolution_clock::now();
+
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+    std::cout << "[GaussNewtonDDP::initializePrimalSolution] duration getModeSchedule: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_getModeSchedule - t0_getModeSchedule).count() << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
     // try to initialize with controller
+    auto t0_rollout = std::chrono::high_resolution_clock::now();
     bool initialSolutionExists = rolloutInitialController(optimizedPrimalSolution_, nominalPrimalData_.primalSolution);
+    auto t1_rollout = std::chrono::high_resolution_clock::now();
+
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+    std::cout << "[GaussNewtonDDP::initializePrimalSolution] duration rollout: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_rollout - t0_rollout).count() << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
     // if rolloutInitialController failed, try to initialize with PrimalSolution's state-input trajectories
-    if (!initialSolutionExists) {
+    if (!initialSolutionExists) 
+    {
       // display
-      if (ddpSettings_.displayInfo_) {
+      if (ddpSettings_.displayInfo_) 
+      {
         std::cerr << "Initial controller is unavailable. Solver resorts to use PrimalSolution trajectories ...\n";
       }
 
+      auto t0_inittraj = std::chrono::high_resolution_clock::now();
       initialSolutionExists = extractInitialTrajectories(optimizedPrimalSolution_, nominalPrimalData_.primalSolution);
+      auto t1_inittraj = std::chrono::high_resolution_clock::now();
+
+      std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+      std::cout << "[GaussNewtonDDP::initializePrimalSolution] duration inittraj: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_inittraj - t0_inittraj).count() << std::endl;
+      std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
     }
 
     // display
-    if (!initialSolutionExists && ddpSettings_.displayInfo_) {
+    if (!initialSolutionExists && ddpSettings_.displayInfo_) 
+    {
       std::cerr << "Initial PrimalSolution trajectories are unavailable. Solver resorts to use Initializer ...\n";
     }
 
     // finish rollout with Initializer
+    auto t0_rolloutInitializer = std::chrono::high_resolution_clock::now();
     rolloutInitializer(nominalPrimalData_.primalSolution);
+    auto t1_rolloutInitializer = std::chrono::high_resolution_clock::now();
+
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+    std::cout << "[GaussNewtonDDP::initializePrimalSolution] duration rolloutInitializer: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_rolloutInitializer - t0_rolloutInitializer).count() << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
     // true if the rollout is not purely from the Initializer
     return initialSolutionExists;
-
-  } catch (const std::exception& error) {
+  } 
+  catch (const std::exception& error) 
+  {
     const std::string msg = "[GaussNewtonDDP::initializePrimalSolution] the initial rollout is unstable!\n";
     throw std::runtime_error(msg + error.what());
   }
@@ -870,21 +927,43 @@ bool GaussNewtonDDP::initializePrimalSolution() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::initializeDualSolutionAndMetrics() {
+void GaussNewtonDDP::initializeDualSolutionAndMetrics() 
+{
   // adjust dual solution
   totalDualSolutionTimer_.startTimer();
-  if (!optimizedDualSolution_.timeTrajectory.empty()) {
-    const auto status =
-        trajectorySpread(optimizedPrimalSolution_.modeSchedule_, nominalPrimalData_.primalSolution.modeSchedule_, optimizedDualSolution_);
+
+  auto t0_trajectorySpread = std::chrono::high_resolution_clock::now();
+  if (!optimizedDualSolution_.timeTrajectory.empty()) 
+  {
+    const auto status = trajectorySpread(optimizedPrimalSolution_.modeSchedule_, nominalPrimalData_.primalSolution.modeSchedule_, optimizedDualSolution_);
   }
+  auto t1_trajectorySpread = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] duration trajectorySpread: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_trajectorySpread - t0_trajectorySpread).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   // initialize dual solution
-  ocs2::initializeDualSolution(optimalControlProblemStock_[0], nominalPrimalData_.primalSolution, optimizedDualSolution_,
-                               nominalDualData_.dualSolution);
+  auto t0_initdual = std::chrono::high_resolution_clock::now();
+  ocs2::initializeDualSolution(optimalControlProblemStock_[0], nominalPrimalData_.primalSolution, optimizedDualSolution_, nominalDualData_.dualSolution);
+  auto t1_initdual = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] duration initdual: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_initdual - t0_initdual).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  
   totalDualSolutionTimer_.endTimer();
 
-  computeRolloutMetrics(optimalControlProblemStock_[0], nominalPrimalData_.primalSolution, nominalDualData_.dualSolution,
+  auto t0_comproll = std::chrono::high_resolution_clock::now();
+  computeRolloutMetrics(optimalControlProblemStock_[0], 
+                        nominalPrimalData_.primalSolution, 
+                        nominalDualData_.dualSolution,
                         nominalPrimalData_.problemMetrics);
+  auto t1_comproll = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] duration comproll: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_comproll - t0_comproll).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   // update dual
   //  totalDualSolutionTimer_.startTimer();
@@ -893,8 +972,21 @@ void GaussNewtonDDP::initializeDualSolutionAndMetrics() {
   //  totalDualSolutionTimer_.endTimer();
 
   // calculates rollout merit
+  auto t0_comprollperfindex = std::chrono::high_resolution_clock::now();
   performanceIndex_ = computeRolloutPerformanceIndex(nominalPrimalData_.primalSolution.timeTrajectory_, nominalPrimalData_.problemMetrics);
+  auto t1_comprollperfindex = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] duration comprollperfindex: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_comprollperfindex - t0_comprollperfindex).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+  auto t0_comprollmerit = std::chrono::high_resolution_clock::now();
   performanceIndex_.merit = calculateRolloutMerit(performanceIndex_);
+  auto t1_comprollmerit = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] duration comprollmerit: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_comprollmerit - t0_comprollmerit).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -1112,7 +1204,13 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     const auto lqModelExpectedCost = initialSolutionExists ? nominalDualData_.valueFunctionTrajectory.front().f : performanceIndex_.merit;
 
     // nominal --> optimized: based on the current LQ solution updates the optimized primal and dual solutions
+    auto t0_takePrimalDualStep = std::chrono::high_resolution_clock::now();
     takePrimalDualStep(lqModelExpectedCost);
+    auto t1_takePrimalDualStep = std::chrono::high_resolution_clock::now();
+
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+    std::cout << "[GaussNewtonDDP::runImpl] duration takePrimalDualStep: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_takePrimalDualStep - t0_takePrimalDualStep).count() << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
     // iteration info
     ++totalNumIterations_;
