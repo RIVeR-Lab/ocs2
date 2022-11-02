@@ -54,23 +54,88 @@ MobileManipulatorPreComputation* MobileManipulatorPreComputation::clone() const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MobileManipulatorPreComputation::request(RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) {
-  if (!request.containsAny(Request::Cost + Request::Constraint + Request::SoftConstraint)) {
+void MobileManipulatorPreComputation::request(RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) 
+{
+  if (!request.containsAny(Request::Cost + Request::Constraint + Request::SoftConstraint)) 
+  {
     return;
   }
 
+  auto t0_getModel = std::chrono::high_resolution_clock::now();
   const auto& model = pinocchioInterface_.getModel();
-  auto& data = pinocchioInterface_.getData();
-  const auto q = pinocchioMapping_.getPinocchioJointPosition(x);
+  auto t1_getModel = std::chrono::high_resolution_clock::now();
 
-  if (request.contains(Request::Approximation)) {
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[MobileManipulatorPreComputation::MobileManipulatorPreComputation] duration getModel: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_getModel - t0_getModel).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+  auto t0_getData = std::chrono::high_resolution_clock::now();
+  auto& data = pinocchioInterface_.getData();
+  auto t1_getData = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[MobileManipulatorPreComputation::MobileManipulatorPreComputation] duration getData: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_getData - t0_getData).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+  auto t0_getpinmap = std::chrono::high_resolution_clock::now();
+  const auto q = pinocchioMapping_.getPinocchioJointPosition(x);
+  auto t1_getpinmap = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[MobileManipulatorPreComputation::MobileManipulatorPreComputation] duration getpinmap: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_getpinmap - t0_getpinmap).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+  if (request.contains(Request::Approximation)) 
+  {
+    auto t0_forwardKinematics = std::chrono::high_resolution_clock::now();
     pinocchio::forwardKinematics(model, data, q);
+    auto t1_forwardKinematics = std::chrono::high_resolution_clock::now();
+
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+    std::cout << "[MobileManipulatorPreComputation::MobileManipulatorPreComputation] duration forwardKinematics: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_forwardKinematics - t0_forwardKinematics).count() << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+    auto t0_updateFramePlacements = std::chrono::high_resolution_clock::now();
     pinocchio::updateFramePlacements(model, data);
+    auto t1_updateFramePlacements = std::chrono::high_resolution_clock::now();
+
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+    std::cout << "[MobileManipulatorPreComputation::MobileManipulatorPreComputation] duration updateFramePlacements: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_updateFramePlacements - t0_updateFramePlacements).count() << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+    auto t0_computeJointJacobians = std::chrono::high_resolution_clock::now();
     pinocchio::computeJointJacobians(model, data);
+    auto t1_computeJointJacobians = std::chrono::high_resolution_clock::now();
+
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+    std::cout << "[MobileManipulatorPreComputation::MobileManipulatorPreComputation] duration computeJointJacobians: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_computeJointJacobians - t0_computeJointJacobians).count() << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+    auto t0_updateGlobalPlacements = std::chrono::high_resolution_clock::now();
     pinocchio::updateGlobalPlacements(model, data);
-  } else {
+    auto t1_updateGlobalPlacements = std::chrono::high_resolution_clock::now();
+
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+    std::cout << "[MobileManipulatorPreComputation::MobileManipulatorPreComputation] duration updateGlobalPlacements: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_updateGlobalPlacements - t0_updateGlobalPlacements).count() << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  } 
+  else 
+  {
+    auto t0_forwardKinematics = std::chrono::high_resolution_clock::now();
     pinocchio::forwardKinematics(model, data, q);
+    auto t1_forwardKinematics = std::chrono::high_resolution_clock::now();
+
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+    std::cout << "[MobileManipulatorPreComputation::MobileManipulatorPreComputation] duration forwardKinematics: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_forwardKinematics - t0_forwardKinematics).count() << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+    auto t0_updateFramePlacements = std::chrono::high_resolution_clock::now();
     pinocchio::updateFramePlacements(model, data);
+    auto t1_updateFramePlacements = std::chrono::high_resolution_clock::now();
+
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+    std::cout << "[MobileManipulatorPreComputation::MobileManipulatorPreComputation] duration updateFramePlacements: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_updateFramePlacements - t0_updateFramePlacements).count() << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
   }
 }
 

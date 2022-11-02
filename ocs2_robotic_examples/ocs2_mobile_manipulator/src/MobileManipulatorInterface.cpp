@@ -173,6 +173,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   // self-collision avoidance constraint
   bool activateSelfCollision = true;
   loadData::loadPtreeValue(pt, activateSelfCollision, "selfCollision.activate", true);
+  activateSelfCollision = false;
   if (activateSelfCollision) {
     problem_.stateSoftConstraintPtr->add(
         "selfCollision", getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, urdfFile, "selfCollision", usePreComputation,

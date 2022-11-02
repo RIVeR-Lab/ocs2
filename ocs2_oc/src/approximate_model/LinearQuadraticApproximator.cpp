@@ -28,6 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include <iostream>
+#include <chrono>
 
 #include "ocs2_oc/approximate_model/LinearQuadraticApproximator.h"
 
@@ -162,15 +163,49 @@ void approximateFinalLQ(OptimalControlProblem& problem, const scalar_t& time, co
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t computeCost(const OptimalControlProblem& problem, const scalar_t& time, const vector_t& state, const vector_t& input) {
+scalar_t computeCost(const OptimalControlProblem& problem, const scalar_t& time, const vector_t& state, const vector_t& input) 
+{
+  auto t0_settrajprecomp = std::chrono::high_resolution_clock::now();
   const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
   const auto& preComputation = *problem.preComputationPtr;
+  auto t1_settrajprecomp = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[LinearQuadraticApproximator::computeCost] duration set: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_settrajprecomp - t0_settrajprecomp).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   // Compute and sum all costs
+  auto t0_costPtr = std::chrono::high_resolution_clock::now();
   auto cost = problem.costPtr->getValue(time, state, input, targetTrajectories, preComputation);
+  auto t1_costPtr = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[LinearQuadraticApproximator::computeCost] duration costPtr: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_costPtr - t0_costPtr).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+  auto t0_softConstraintPtr = std::chrono::high_resolution_clock::now();
   cost += problem.softConstraintPtr->getValue(time, state, input, targetTrajectories, preComputation);
+  auto t1_softConstraintPtr = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[LinearQuadraticApproximator::computeCost] duration softConstraintPtr: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_softConstraintPtr - t0_softConstraintPtr).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+  auto t0_stateCostPtr = std::chrono::high_resolution_clock::now();
   cost += problem.stateCostPtr->getValue(time, state, targetTrajectories, preComputation);
+  auto t1_stateCostPtr = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[LinearQuadraticApproximator::computeCost] duration stateCostPtr: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_stateCostPtr - t0_stateCostPtr).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+  auto t0_stateSoftConstraintPtr = std::chrono::high_resolution_clock::now();
   cost += problem.stateSoftConstraintPtr->getValue(time, state, targetTrajectories, preComputation);
+  auto t1_stateSoftConstraintPtr = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[LinearQuadraticApproximator::computeCost] duration stateSoftConstraintPtr: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_stateSoftConstraintPtr - t0_stateSoftConstraintPtr).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   return cost;
 }
@@ -269,25 +304,74 @@ ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlPr
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MetricsCollection computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
-                                             const vector_t& input, const MultiplierCollection& multipliers) {
+MetricsCollection computeIntermediateMetrics(OptimalControlProblem& problem, 
+                                             const scalar_t time, 
+                                             const vector_t& state,
+                                             const vector_t& input, 
+                                             const MultiplierCollection& multipliers) 
+{
   auto& preComputation = *problem.preComputationPtr;
 
   MetricsCollection metrics;
 
   // Cost
+  auto t0_computeCost = std::chrono::high_resolution_clock::now();
   metrics.cost = computeCost(problem, time, state, input);
+  auto t1_computeCost = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] duration computeCost: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_computeCost - t0_computeCost).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   // Equality constraints
+  auto t0_stateEqConstraint = std::chrono::high_resolution_clock::now();
   metrics.stateEqConstraint = problem.stateEqualityConstraintPtr->getValue(time, state, preComputation);
+  auto t1_stateEqConstraint = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] duration stateEqConstraint: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_stateEqConstraint - t0_stateEqConstraint).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+  auto t0_stateInputEqConstraint = std::chrono::high_resolution_clock::now();
   metrics.stateInputEqConstraint = problem.equalityConstraintPtr->getValue(time, state, input, preComputation);
+  auto t1_stateInputEqConstraint = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] duration stateInputEqConstraint: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_stateInputEqConstraint - t0_stateInputEqConstraint).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   // Lagrangians
+  auto t0_stateEqLagrangian = std::chrono::high_resolution_clock::now();
   metrics.stateEqLagrangian = problem.stateEqualityLagrangianPtr->getValue(time, state, multipliers.stateEq, preComputation);
+  auto t1_stateEqLagrangian = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] duration stateEqLagrangian: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_stateEqLagrangian - t0_stateEqLagrangian).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+  auto t0_stateIneqLagrangian = std::chrono::high_resolution_clock::now();
   metrics.stateIneqLagrangian = problem.stateInequalityLagrangianPtr->getValue(time, state, multipliers.stateIneq, preComputation);
+  auto t1_stateIneqLagrangian = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] duration stateIneqLagrangian: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_stateIneqLagrangian - t0_stateIneqLagrangian).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+  auto t0_stateInputEqLagrangian = std::chrono::high_resolution_clock::now();
   metrics.stateInputEqLagrangian = problem.equalityLagrangianPtr->getValue(time, state, input, multipliers.stateInputEq, preComputation);
-  metrics.stateInputIneqLagrangian =
-      problem.inequalityLagrangianPtr->getValue(time, state, input, multipliers.stateInputIneq, preComputation);
+  auto t1_stateInputEqLagrangian = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] duration stateInputEqLagrangian: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_stateInputEqLagrangian - t0_stateInputEqLagrangian).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+  auto t0_stateInputIneqLagrangian = std::chrono::high_resolution_clock::now();
+  metrics.stateInputIneqLagrangian = problem.inequalityLagrangianPtr->getValue(time, state, input, multipliers.stateInputIneq, preComputation);
+  auto t1_stateInputIneqLagrangian = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] duration stateInputIneqLagrangian: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_stateInputIneqLagrangian - t0_stateInputIneqLagrangian).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   return metrics;
 }
