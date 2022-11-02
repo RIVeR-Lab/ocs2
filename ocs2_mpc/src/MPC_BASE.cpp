@@ -50,13 +50,21 @@ void MPC_BASE::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) {
+bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) 
+{
+  auto t0_check = std::chrono::high_resolution_clock::now();
   // check if the current time exceeds the solver final limit
-  if (!initRun_ && currentTime >= getSolverPtr()->getFinalTime()) {
+  if (!initRun_ && currentTime >= getSolverPtr()->getFinalTime()) 
+  {
     std::cerr << "WARNING: The MPC time-horizon is smaller than the MPC starting time.\n";
     std::cerr << "currentTime: " << currentTime << "\t Controller finalTime: " << getSolverPtr()->getFinalTime() << '\n';
     return false;
   }
+  auto t1_check = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[MPC_BASE::run] duration check: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_check - t0_check).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   const scalar_t finalTime = currentTime + mpcSettings_.timeHorizon_;
 
@@ -72,13 +80,20 @@ bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) {
   }
 
   // calculate the MPC policy
+  auto t0_calculateController = std::chrono::high_resolution_clock::now();
   calculateController(currentTime, currentState, finalTime);
+  auto t1_calculateController = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[MPC_BASE::run] duration calculateController: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_calculateController - t0_calculateController).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   // set initRun flag to false
   initRun_ = false;
 
   // display
-  if (mpcSettings_.debugPrint_) {
+  if (mpcSettings_.debugPrint_) 
+  {
     mpcTimer_.endTimer();
     std::cerr << "\n### MPC Benchmarking";
     std::cerr << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";

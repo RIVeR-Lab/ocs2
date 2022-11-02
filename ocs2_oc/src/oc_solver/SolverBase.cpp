@@ -46,10 +46,31 @@ SolverBase::SolverBase() : referenceManagerPtr_(new ReferenceManager) {}
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
+void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime) 
+{
+  auto t0_preRun = std::chrono::high_resolution_clock::now();
   preRun(initTime, initState, finalTime);
+  auto t1_preRun = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] duration preRun: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_preRun - t0_preRun).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+  auto t0_runImpl = std::chrono::high_resolution_clock::now();
   runImpl(initTime, initState, finalTime);
+  auto t1_runImpl = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] duration runImpl: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_runImpl - t0_runImpl).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+  auto t0_postRun = std::chrono::high_resolution_clock::now();
   postRun();
+  auto t1_postRun = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] duration postRun: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_postRun - t0_postRun).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 }
 
 /******************************************************************************************************/

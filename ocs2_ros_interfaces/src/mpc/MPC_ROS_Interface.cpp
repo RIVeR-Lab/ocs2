@@ -234,23 +234,40 @@ void MPC_ROS_Interface::copyToBuffer(const SystemObservation& mpcInitObservation
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg) {
+void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg) 
+{
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START" << std::endl;
   std::lock_guard<std::mutex> resetLock(resetMutex_);
 
-  if (!resetRequestedEver_.load()) {
+  if (!resetRequestedEver_.load()) 
+  {
     ROS_WARN_STREAM("MPC should be reset first. Either call MPC_ROS_Interface::reset() or use the reset service.");
     return;
   }
 
+  auto t0_currentObservation = std::chrono::high_resolution_clock::now();
   // current time, state, input, and subsystem
   const auto currentObservation = ros_msg_conversions::readObservationMsg(*msg);
+  auto t1_currentObservation = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] duration currentObservation: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_currentObservation - t0_currentObservation).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   // measure the delay in running MPC
   mpcTimer_.startTimer();
 
   // run MPC
+  auto t0_mpc_ = std::chrono::high_resolution_clock::now();
   bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state);
-  if (!controllerIsUpdated) {
+  auto t1_mpc_ = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] duration mpc_: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_mpc_ - t0_mpc_).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+  if (!controllerIsUpdated) 
+  {
     return;
   }
   copyToBuffer(currentObservation);
@@ -260,10 +277,13 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
 
   // check MPC delay and solution window compatibility
   scalar_t timeWindow = mpc_.settings().solutionTimeWindow_;
-  if (mpc_.settings().solutionTimeWindow_ < 0) {
+  if (mpc_.settings().solutionTimeWindow_ < 0) 
+  {
     timeWindow = mpc_.getSolverPtr()->getFinalTime() - currentObservation.time;
   }
-  if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) {
+  
+  if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) 
+  {
     std::cerr << "WARNING: The solution time window might be shorter than the MPC delay!\n";
   }
 
@@ -287,6 +307,9 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
       createMpcPolicyMsg(*bufferPrimalSolutionPtr_, *bufferCommandPtr_, *bufferPerformanceIndicesPtr_);
   mpcPolicyPublisher_.publish(mpcPolicyMsg);
 #endif
+
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END" << std::endl;
+  std::cout << "" << std::endl;
 }
 
 /******************************************************************************************************/

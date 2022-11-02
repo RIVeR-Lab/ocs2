@@ -79,6 +79,7 @@ SLQ::SLQ(ddp::Settings ddpSettings,
                              integrator_type::toString(settings().backwardPassIntegratorType_)));
   }
 
+  int ctr = 0;
   auto t0_riccatiloop = std::chrono::high_resolution_clock::now();
   for (size_t i = 0; i < settings().nThreads_; i++)
   {
@@ -87,11 +88,13 @@ SLQ::SLQ(ddp::Settings ddpSettings,
     riccatiEquationsPtrStock_.emplace_back(new ContinuousTimeRiccatiEquations(preComputeRiccatiTerms, isRiskSensitive));
     riccatiEquationsPtrStock_.back()->setRiskSensitiveCoefficient(settings().riskSensitiveCoeff_);
     riccatiIntegratorPtrStock_.emplace_back(newIntegrator(integratorType));
+    ctr++;
   }  // end of i loop
   auto t1_riccatiloop = std::chrono::high_resolution_clock::now();
 
   std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
   std::cout << "[SLQ::SLQ] duration riccatiloop: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_riccatiloop - t0_riccatiloop).count() << std::endl;
+  std::cout << "[SLQ::SLQ] ctr: " << ctr << std::endl;
   std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   auto t0_initParallel = std::chrono::high_resolution_clock::now();
