@@ -977,8 +977,10 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
-  if (ddpSettings_.displayInfo_) {
+void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) 
+{
+  if (ddpSettings_.displayInfo_) 
+  {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
     std::cerr << "\n+++++++++++++ " + ddp::toAlgorithmName(ddpSettings_.algorithm_) + " solver is initialized ++++++++++++++";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
@@ -987,9 +989,16 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   }
 
   // set cost desired trajectories
-  for (auto& ocp : optimalControlProblemStock_) {
+  auto t0_gettargettraj = std::chrono::high_resolution_clock::now();
+  for (auto& ocp : optimalControlProblemStock_) 
+  {
     ocp.targetTrajectoriesPtr = &this->getReferenceManager().getTargetTrajectories();
   }
+  auto t1_gettargettraj = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[GaussNewtonDDP::runImpl] duration gettargettraj: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_gettargettraj - t0_gettargettraj).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   // initialize parameters
   initTime_ = initTime;
@@ -997,7 +1006,14 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   finalTime_ = finalTime;
   performanceIndexHistory_.clear();
   const auto initIteration = totalNumIterations_;
+
+  auto t0_initpenal = std::chrono::high_resolution_clock::now();
   initializeConstraintPenalties();  // initialize penalty coefficients
+  auto t1_initpenal = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[GaussNewtonDDP::runImpl] duration initpenal: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_initpenal - t0_initpenal).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   // display
   if (ddpSettings_.displayInfo_) {
@@ -1012,8 +1028,23 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
   // optimized --> nominal: initializes the nominal primal and dual solutions based on the optimized ones
   initializationTimer_.startTimer();
+
+  auto t0_initsolexist = std::chrono::high_resolution_clock::now();
   bool initialSolutionExists = initializePrimalSolution();  // true if the rollout is not purely from the Initializer
+  auto t1_initsolexist = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[GaussNewtonDDP::runImpl] duration initsolexist: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_initsolexist - t0_initsolexist).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+  auto t0_initdualsol = std::chrono::high_resolution_clock::now();
   initializeDualSolutionAndMetrics();
+  auto t1_initdualsol = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[GaussNewtonDDP::runImpl] duration initdualsol: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_initdualsol - t0_initdualsol).count() << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
   performanceIndexHistory_.push_back(performanceIndex_);
   initializationTimer_.endTimer();
 
@@ -1027,8 +1058,12 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   std::string convergenceInfo;
 
   // DDP main loop
-  while (true) {
-    if (ddpSettings_.displayInfo_) {
+  auto t0_ddploop = std::chrono::high_resolution_clock::now();
+  int ctr = 0;
+  while (true) 
+  {
+    if (ddpSettings_.displayInfo_) 
+    {
       std::cerr << "\n###################";
       std::cerr << "\n#### Iteration " << (totalNumIterations_ - initIteration);
       std::cerr << "\n###################\n";
@@ -1036,18 +1071,42 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
     // nominal --> nominal: constructs the LQ problem around the nominal trajectories
     linearQuadraticApproximationTimer_.startTimer();
+
+    auto t0_approxocp = std::chrono::high_resolution_clock::now();
     approximateOptimalControlProblem();
+    auto t1_approxocp = std::chrono::high_resolution_clock::now();
+
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+    std::cout << "[GaussNewtonDDP::runImpl] duration approxocp: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_approxocp - t0_approxocp).count() << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
     linearQuadraticApproximationTimer_.endTimer();
 
     // nominal --> nominal: solves the LQ problem
     backwardPassTimer_.startTimer();
+
+    auto t0_solvericatti = std::chrono::high_resolution_clock::now();
     avgTimeStepBP_ = solveSequentialRiccatiEquations(nominalPrimalData_.modelDataFinalTime.cost);
+    auto t1_solvericatti = std::chrono::high_resolution_clock::now();
+
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+    std::cout << "[GaussNewtonDDP::runImpl] duration solvericatti: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_solvericatti - t0_solvericatti).count() << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
     backwardPassTimer_.endTimer();
 
     // calculate controller and store the result in unoptimizedController_
     computeControllerTimer_.startTimer();
+
+    auto t0_calculateController = std::chrono::high_resolution_clock::now();
     calculateController();
+    auto t1_calculateController = std::chrono::high_resolution_clock::now();
+
     computeControllerTimer_.endTimer();
+
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+    std::cout << "[GaussNewtonDDP::runImpl] duration calculateController: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_calculateController - t0_calculateController).count() << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
     // the expected cost/merit calculated by the Riccati solution is not reliable
     const auto lqModelExpectedCost = initialSolutionExists ? nominalDualData_.valueFunctionTrajectory.front().f : performanceIndex_.merit;
@@ -1060,7 +1119,8 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     performanceIndexHistory_.push_back(performanceIndex_);
 
     // display
-    if (ddpSettings_.displayInfo_) {
+    if (ddpSettings_.displayInfo_) 
+    {
       printRolloutInfo();
     }
 
@@ -1069,10 +1129,12 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
         !initialSolutionExists, *std::prev(performanceIndexHistory_.end(), 2), performanceIndexHistory_.back());
     initialSolutionExists = true;
 
-    if (isConverged || (totalNumIterations_ - initIteration) == ddpSettings_.maxNumIterations_) {
+    if (isConverged || (totalNumIterations_ - initIteration) == ddpSettings_.maxNumIterations_) 
+    {
       break;
-
-    } else {
+    } 
+    else 
+    {
       // update the constraint penalty coefficients
       updateConstraintPenalties(performanceIndex_.equalityConstraintsSSE);
 
@@ -1083,10 +1145,21 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
       optimizedPrimalSolution_.swap(nominalPrimalData_.primalSolution);
       optimizedProblemMetrics_.swap(nominalPrimalData_.problemMetrics);
     }
+    ctr++;
   }  // end of while loop
+  auto t1_ddploop = std::chrono::high_resolution_clock::now();
+
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  std::cout << "[GaussNewtonDDP::runImpl] duration ddploop: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_ddploop - t0_ddploop).count() << std::endl;
+  std::cout << "[GaussNewtonDDP::runImpl] ctr: " << ctr << std::endl;
+  std::cout << "[GaussNewtonDDP::runImpl] isConverged: " << isConverged << std::endl;
+  std::cout << "[GaussNewtonDDP::runImpl] maxNumIterations_: " << ddpSettings_.maxNumIterations_ << std::endl;
+  std::cout << "[GaussNewtonDDP::runImpl] iter: " << (totalNumIterations_ - initIteration) << std::endl;
+  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
 
   // display
-  if (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_) {
+  if (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_) 
+  {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
     std::cerr << "\n++++++++++++++ " + ddp::toAlgorithmName(ddpSettings_.algorithm_) + " solver has terminated +++++++++++++";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
@@ -1095,12 +1168,17 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
     printRolloutInfo();
 
-    if (isConverged) {
+    if (isConverged) 
+    {
       std::cerr << convergenceInfo << std::endl;
-    } else if (totalNumIterations_ - initIteration == ddpSettings_.maxNumIterations_) {
+    }
+    else if (totalNumIterations_ - initIteration == ddpSettings_.maxNumIterations_) 
+    {
       std::cerr << "The algorithm has terminated as: \n";
       std::cerr << "    * The maximum number of iterations (i.e., " << ddpSettings_.maxNumIterations_ << ") has reached." << std::endl;
-    } else {
+    } 
+    else 
+    {
       std::cerr << "The algorithm has terminated for an unknown reason!" << std::endl;
     }
   }
