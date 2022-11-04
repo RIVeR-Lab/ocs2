@@ -142,14 +142,25 @@ void computeRolloutMetrics(OptimalControlProblem& problem,
   auto t0_finco = std::chrono::high_resolution_clock::now();
   if (!tTrajectory.empty()) 
   {
+    auto t0_reqfin = std::chrono::high_resolution_clock::now();
     problem.preComputationPtr->requestFinal(request, tTrajectory.back(), xTrajectory.back());
-    problemMetrics.final = computeFinalMetrics(problem, tTrajectory.back(), xTrajectory.back(), dualSolution.final);
-  }
-  auto t1_finco = std::chrono::high_resolution_clock::now();
+    auto t1_reqfin = std::chrono::high_resolution_clock::now();
 
-  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
-  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] duration finco: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_finco - t0_finco).count() << std::endl;
-  std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+    std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] duration reqfin: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_reqfin - t0_reqfin).count() << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+
+    auto t0_cofinme = std::chrono::high_resolution_clock::now();
+    problemMetrics.final = computeFinalMetrics(problem, tTrajectory.back(), xTrajectory.back(), dualSolution.final);
+    auto t1_cofinme = std::chrono::high_resolution_clock::now();
+
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+    std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] duration cofinme: " << std::chrono::duration_cast<std::chrono::microseconds>(t1_cofinme - t0_cofinme).count() << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++" << std::endl;
+  }
+  
+
+ 
 }
 
 /******************************************************************************************************/

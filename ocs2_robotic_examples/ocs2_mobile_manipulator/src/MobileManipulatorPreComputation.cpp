@@ -142,8 +142,10 @@ void MobileManipulatorPreComputation::request(RequestSet request, scalar_t t, co
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MobileManipulatorPreComputation::requestFinal(RequestSet request, scalar_t t, const vector_t& x) {
-  if (!request.containsAny(Request::Cost + Request::Constraint + Request::SoftConstraint)) {
+void MobileManipulatorPreComputation::requestFinal(RequestSet request, scalar_t t, const vector_t& x) 
+{
+  if (!request.containsAny(Request::Cost + Request::Constraint + Request::SoftConstraint)) 
+  {
     return;
   }
 

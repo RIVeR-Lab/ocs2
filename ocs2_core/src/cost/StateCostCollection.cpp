@@ -56,7 +56,7 @@ scalar_t StateCostCollection::getValue(scalar_t time,
   // accumulate cost terms
   for (const auto& costTerm : this->terms_) 
   {
-    if (costTerm -> isActive(time)) 
+    if (costTerm->isActive(time)) 
     {
       cost += costTerm->getValue(time, state, targetTrajectories, preComp);
     }
