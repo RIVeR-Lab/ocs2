@@ -22,5 +22,8 @@
   <depend>ocs2_self_collision</depend>
   <depend>ocs2_ext_collision</depend>
   <depend>pinocchio</depend>
+  <!--depend>voxblox</depend>
+  <depend>ocs2_ros_interfaces</depend>
+  <depend>voxblox_ros</depend-->
 
 </package>

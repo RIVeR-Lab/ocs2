@@ -97,7 +97,9 @@ int main(int argc, char** argv)
   // MRT loop
   MRT_ROS_Gazebo_Loop mrt_loop(nodeHandle, 
                                mrt, 
-                               interface.getManipulatorModelInfo(), 
+                               interface.getManipulatorModelInfo().stateDim, 
+                               interface.getManipulatorModelInfo().inputDim, 
+                               interface.getManipulatorModelInfo().dofNames, 
                                interface.mpcSettings().mrtDesiredFrequency_, 
                                interface.mpcSettings().mpcDesiredFrequency_);
   mrt_loop.subscribeObservers({ocs2_mm_visu});

@@ -26,7 +26,7 @@
   <depend>visualization_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>interactive_markers</depend>
-  <depend>ocs2_mobile_manipulator</depend>
+  <!--depend>ocs2_mobile_manipulator</depend-->
   <depend>voxblox</depend>
   <depend>voxblox_ros</depend>
   

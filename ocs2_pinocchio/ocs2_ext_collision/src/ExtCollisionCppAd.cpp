@@ -107,9 +107,9 @@ std::pair<vector_t, matrix_t> ExtCollisionCppAd::getLinearApproximation(const Pi
     pointsInWorldFrame[i * numberOfParamsPerResult_ + 6] = distanceArray[i].min_distance >= 0 ? 1.0 : -1.0;
   }
 
-  const auto pointsInLinkFrame = cppAdInterfaceLinkPoints_->getFunctionValue(q, pointsInWorldFrame);
-  const auto f = cppAdInterfaceDistanceCalculation_->getFunctionValue(q, pointsInLinkFrame);
-  const auto dfdq = cppAdInterfaceDistanceCalculation_->getJacobian(q, pointsInLinkFrame);
+  const auto pointsInLinkFrame = cppAdInterfaceLinkPoints_ -> getFunctionValue(q, pointsInWorldFrame);
+  const auto f = cppAdInterfaceDistanceCalculation_ -> getFunctionValue(q, pointsInLinkFrame);
+  const auto dfdq = cppAdInterfaceDistanceCalculation_ -> getJacobian(q, pointsInLinkFrame);
 
   return std::make_pair(f, dfdq);
 }

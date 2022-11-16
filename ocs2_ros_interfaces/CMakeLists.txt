@@ -14,7 +14,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   visualization_msgs
   geometry_msgs
   interactive_markers
-  ocs2_mobile_manipulator
+  #ocs2_mobile_manipulator
   voxblox
   voxblox_ros
 )

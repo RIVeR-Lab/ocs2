@@ -44,80 +44,80 @@ namespace ocs2 {
  *
  * See also ExtCollisionConstraint, which uses analytical computation and caching.
  */
-class ExtCollisionConstraintCppAd final : public StateConstraint {
- public:
-  using update_pinocchio_interface_callback =
-      std::function<void(const vector_t& state, PinocchioInterfaceTpl<scalar_t>& pinocchioInterface)>;
+class ExtCollisionConstraintCppAd final : public StateConstraint 
+{
+  public:
+    using update_pinocchio_interface_callback = std::function<void(const vector_t& state, PinocchioInterfaceTpl<scalar_t>& pinocchioInterface)>;
 
-  /**
-   * Constructor
-   *
-   * @param [in] pinocchioInterface: Pinocchio interface of the robot model.
-   * @param [in] mapping: The pinocchio mapping from pinocchio states to ocs2 states.
-   * @param [in] pinocchioGeometryInterface: Pinocchio geometry interface of the robot model.
-   * @param [in] minimumDistance: The minimum allowed distance between collision pairs.
-   * @param [in] modelName: Name of the generated model library.
-   * @param [in] modelFolder: Folder to save the model library files to.
-   * @param [in] recompileLibraries: If true, the model library will be newly compiled. If false, an existing library will be loaded if
-   *                                 available.
-   * @param [in] verbose: If true, print information. Otherwise, no information is printed.
-   */
-  ExtCollisionConstraintCppAd(PinocchioInterface pinocchioInterface, 
-                              const PinocchioStateInputMapping<scalar_t>& mapping,
-                              PinocchioGeometryInterface pinocchioGeometryInterface, 
-                              scalar_t minimumDistance,
-                              const std::string& modelName, 
-                              const std::string& modelFolder = "/tmp/ocs2", 
-                              bool recompileLibraries = true,
-                              bool verbose = true);
+    /**
+     * Constructor
+     *
+     * @param [in] pinocchioInterface: Pinocchio interface of the robot model.
+     * @param [in] mapping: The pinocchio mapping from pinocchio states to ocs2 states.
+     * @param [in] pinocchioGeometryInterface: Pinocchio geometry interface of the robot model.
+     * @param [in] minimumDistance: The minimum allowed distance between collision pairs.
+     * @param [in] modelName: Name of the generated model library.
+     * @param [in] modelFolder: Folder to save the model library files to.
+     * @param [in] recompileLibraries: If true, the model library will be newly compiled. If false, an existing library will be loaded if
+     *                                 available.
+     * @param [in] verbose: If true, print information. Otherwise, no information is printed.
+     */
+    ExtCollisionConstraintCppAd(PinocchioInterface pinocchioInterface, 
+                                const PinocchioStateInputMapping<scalar_t>& mapping,
+                                PinocchioGeometryInterface pinocchioGeometryInterface, 
+                                scalar_t minimumDistance,
+                                const std::string& modelName, 
+                                const std::string& modelFolder = "/tmp/ocs2", 
+                                bool recompileLibraries = true,
+                                bool verbose = true);
 
-  /**
-   * Constructor
-   *
-   * @param [in] pinocchioInterface: Pinocchio interface of the robot model.
-   * @param [in] mapping: The pinocchio mapping from pinocchio states to ocs2 states.
-   * @param [in] pinocchioGeometryInterface: Pinocchio geometry interface of the robot model.
-   * @param [in] minimumDistance: The minimum allowed distance between collision pairs.
-   * @param [in] updateCallback: In the cases that PinocchioStateInputMapping requires some additional update calls on PinocchioInterface,
-   *                             use this callback (no need to call pinocchio::forwardKinematics).
-   * @param [in] modelName: Name of the generated model library.
-   * @param [in] modelFolder: Folder to save the model library files to.
-   * @param [in] recompileLibraries: If true, the model library will be newly compiled. If false, an existing library will be loaded if
-   *                                 available.
-   * @param [in] verbose: If true, print information. Otherwise, no information is printed.
-   */
-  ExtCollisionConstraintCppAd(PinocchioInterface pinocchioInterface, 
-                              const PinocchioStateInputMapping<scalar_t>& mapping,
-                              PinocchioGeometryInterface pinocchioGeometryInterface, 
-                              scalar_t minimumDistance,
-                              update_pinocchio_interface_callback updateCallback, 
-                              const std::string& modelName,
-                              const std::string& modelFolder = "/tmp/ocs2", 
-                              bool recompileLibraries = true, 
-                              bool verbose = true);
+    /**
+     * Constructor
+     *
+     * @param [in] pinocchioInterface: Pinocchio interface of the robot model.
+     * @param [in] mapping: The pinocchio mapping from pinocchio states to ocs2 states.
+     * @param [in] pinocchioGeometryInterface: Pinocchio geometry interface of the robot model.
+     * @param [in] minimumDistance: The minimum allowed distance between collision pairs.
+     * @param [in] updateCallback: In the cases that PinocchioStateInputMapping requires some additional update calls on PinocchioInterface,
+     *                             use this callback (no need to call pinocchio::forwardKinematics).
+     * @param [in] modelName: Name of the generated model library.
+     * @param [in] modelFolder: Folder to save the model library files to.
+     * @param [in] recompileLibraries: If true, the model library will be newly compiled. If false, an existing library will be loaded if
+     *                                 available.
+     * @param [in] verbose: If true, print information. Otherwise, no information is printed.
+     */
+    ExtCollisionConstraintCppAd(PinocchioInterface pinocchioInterface, 
+                                const PinocchioStateInputMapping<scalar_t>& mapping,
+                                PinocchioGeometryInterface pinocchioGeometryInterface, 
+                                scalar_t minimumDistance,
+                                update_pinocchio_interface_callback updateCallback, 
+                                const std::string& modelName,
+                                const std::string& modelFolder = "/tmp/ocs2", 
+                                bool recompileLibraries = true, 
+                                bool verbose = true);
 
-  ~ExtCollisionConstraintCppAd() override = default;
+    ~ExtCollisionConstraintCppAd() override = default;
 
-  ExtCollisionConstraintCppAd* clone() const override 
-  { 
-    return new ExtCollisionConstraintCppAd(*this); 
-  }
+    ExtCollisionConstraintCppAd* clone() const override 
+    { 
+      return new ExtCollisionConstraintCppAd(*this); 
+    }
 
-  size_t getNumConstraints(scalar_t time) const override;
+    size_t getNumConstraints(scalar_t time) const override;
 
-  /** Get the extrenal-collision distance values */
-  vector_t getValue(scalar_t time, const vector_t& state, const PreComputation&) const override;
+    /** Get the extrenal-collision distance values */
+    vector_t getValue(scalar_t time, const vector_t& state, const PreComputation&) const override;
 
-  /** Get the external collision distance approximation */
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const PreComputation&) const override;
+    /** Get the external collision distance approximation */
+    VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const PreComputation&) const override;
 
- private:
-  ExtCollisionConstraintCppAd(const ExtCollisionConstraintCppAd& rhs);
+  private:
+    ExtCollisionConstraintCppAd(const ExtCollisionConstraintCppAd& rhs);
 
-  mutable PinocchioInterface pinocchioInterface_;
-  ExtCollisionCppAd extCollision_;
-  std::unique_ptr<PinocchioStateInputMapping<scalar_t>> mappingPtr_;
-  update_pinocchio_interface_callback updateCallback_;
+    mutable PinocchioInterface pinocchioInterface_;
+    ExtCollisionCppAd extCollision_;
+    std::unique_ptr<PinocchioStateInputMapping<scalar_t>> mappingPtr_;
+    update_pinocchio_interface_callback updateCallback_;
 };
 
 }  // namespace ocs2

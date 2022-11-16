@@ -52,10 +52,12 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(MRT_ROS_Interface& mrt,
 
 MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                                          MRT_ROS_Interface& mrt,
-                                         mobile_manipulator::ManipulatorModelInfo manipulatorModelInfo,
+                                         size_t stateDim,
+                                         size_t inputDim,
+                                         std::vector<std::string> dofNames,
                                          scalar_t mrtDesiredFrequency,
                                          scalar_t mpcDesiredFrequency)
-  : mrt_(mrt), manipulatorModelInfo_(manipulatorModelInfo), mrtDesiredFrequency_(mrtDesiredFrequency), mpcDesiredFrequency_(mpcDesiredFrequency)
+  : mrt_(mrt), stateDim_(stateDim), inputDim_(inputDim), dofNames_(dofNames), mrtDesiredFrequency_(mrtDesiredFrequency), mpcDesiredFrequency_(mpcDesiredFrequency)
 {
   
   std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] mrtDesiredFrequency_: " << mrtDesiredFrequency_ << std::endl;
@@ -370,11 +372,11 @@ void MRT_ROS_Gazebo_Loop::setStateIndexMap()
 {
   boost::shared_ptr<control_msgs::JointTrajectoryControllerState const> current_jointTrajectoryControllerStatePtrMsg = ros::topic::waitForMessage<control_msgs::JointTrajectoryControllerState>("/arm_controller/state");
   
-  int n_joints = manipulatorModelInfo_.dofNames.size();
+  int n_joints = dofNames_.size();
   stateIndexMap.clear();
   int c;
 
-  if (manipulatorModelInfo_.dofNames.size() != current_jointTrajectoryControllerStatePtrMsg -> joint_names.size())
+  if (dofNames_.size() != current_jointTrajectoryControllerStatePtrMsg -> joint_names.size())
   {
     throw std::runtime_error("[MRT_ROS_Gazebo_Loop::setStateIndexMap] Error: State dimension mismatch!");
   }
@@ -382,22 +384,21 @@ void MRT_ROS_Gazebo_Loop::setStateIndexMap()
   for (int i = 0; i < n_joints; ++i)
   {
     //std::cout << "[MRT_ROS_Gazebo_Loop::setStateIndexMap] jointTrajectoryControllerStatePtrMsg " << i << ": " << current_jointTrajectoryControllerStatePtrMsg -> joint_names[i] << std::endl;
-    //std::cout << "[MRT_ROS_Gazebo_Loop::setStateIndexMap] manipulatorModelInfo_ " << i << ": " << manipulatorModelInfo_.dofNames[i] << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::setStateIndexMap] dofNames_ " << i << ": " << dofNames_[i] << std::endl;
     //std::cout << "" << std::endl;
 
     c = 0;
-    while (current_jointTrajectoryControllerStatePtrMsg -> joint_names[c] != manipulatorModelInfo_.dofNames[i] && c < n_joints)
+    while (current_jointTrajectoryControllerStatePtrMsg -> joint_names[c] != dofNames_[i] && c < n_joints)
     {
       c++;
     }
 
-    if (current_jointTrajectoryControllerStatePtrMsg -> joint_names[c] == manipulatorModelInfo_.dofNames[i])
+    if (current_jointTrajectoryControllerStatePtrMsg -> joint_names[c] == dofNames_[i])
     {
       stateIndexMap.push_back(c);
     }
   }
 
-  //std::cout << "manipulatorModelInfo_ -> jointTrajectoryControllerStatePtrMsg" << std::endl;
   //for (int i = 0; i < stateIndexMap.size(); ++i)
   //{
   //  std::cout << i << " -> " << stateIndexMap[i] << std::endl;
@@ -483,7 +484,7 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
 
   if (initFlag)
   {
-    currentObservation.input.setZero(manipulatorModelInfo_.inputDim);
+    currentObservation.input.setZero(inputDim_);
   }
   else
   {
@@ -491,8 +492,8 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
     currentObservation.input = primalSolution.getDesiredInput(time_);
   }
 
-  currentObservation.state.setZero(manipulatorModelInfo_.stateDim);
-  //currentObservation.input.setZero(manipulatorModelInfo_.inputDim);
+  currentObservation.state.setZero(stateDim_);
+  //currentObservation.input.setZero(inputDim_);
   
   //std::cout << "OCS2_MRT_Loop::getCurrentObservation -> time_: " << time_ << std::endl;
 
@@ -523,7 +524,7 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
   for (int i = 0; i < current_jointTrajectoryControllerStateMsg.joint_names.size(); ++i)
   {
     //std::cout << "armJointTrajectoryMsg " << i << " -> " << current_jointTrajectoryControllerStateMsg.joint_names[stateIndexMap[i]] << std::endl; //stateIndexMap[i]
-    //std::cout << "manipulatorModelInfo_ " << i << " -> " << manipulatorModelInfo_.dofNames[i] << std::endl;
+    //std::cout << "dofNames_ " << i << " -> " << dofNames_[i] << std::endl;
     //std::cout << "----------------" << std::endl;
 
     currentObservation.state[i+3] = current_jointTrajectoryControllerStateMsg.actual.positions[stateIndexMap[i]];
@@ -577,7 +578,7 @@ void MRT_ROS_Gazebo_Loop::publishCommand(SystemObservation& currentObservation)
   baseTwistMsg.angular.z = currentInput[1];
 
   // Set arm command
-  int n_joints = manipulatorModelInfo_.dofNames.size();
+  int n_joints = dofNames_.size();
   //armJointTrajectoryMsg.header.frame_id = "world";
 
   armJointTrajectoryMsg.joint_names.resize(n_joints);
@@ -589,8 +590,8 @@ void MRT_ROS_Gazebo_Loop::publishCommand(SystemObservation& currentObservation)
 
   for (int i = 0; i < n_joints; ++i)
   {
-    armJointTrajectoryMsg.joint_names[i] = manipulatorModelInfo_.dofNames[i];
-    //std::cout << "OCS2_MRT_Loop::publishCommand -> dofNames " << i << ":" << manipulatorModelInfo_.dofNames[i] << std::endl;
+    armJointTrajectoryMsg.joint_names[i] = dofNames_[i];
+    //std::cout << "OCS2_MRT_Loop::publishCommand -> dofNames " << i << ":" << dofNames_[i] << std::endl;
     jtp.positions[i] = nextState[i+3];
   }
   

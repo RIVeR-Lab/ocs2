@@ -2,14 +2,19 @@ cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_ext_collision)
 
 # Generate compile_commands.json for clang tools
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+#set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+add_compile_options(-std=c++14)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_robotic_tools
   ocs2_pinocchio_interface
   ocs2_self_collision
+  voxblox
+  voxblox_ros
 )
+
+find_package(PCL REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
@@ -52,6 +57,7 @@ set(FLAGS
 
 include_directories(
   include
+  ${PCL_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${pinocchio_INCLUDE_DIRS}
@@ -68,11 +74,14 @@ add_library(${PROJECT_NAME}
   src/ExtCollisionCppAd.cpp
   src/ExtCollisionConstraint.cpp
   src/ExtCollisionConstraintCppAd.cpp
+  src/PointsOnRobot.cpp
+  src/KinematicsInterface.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(${PROJECT_NAME}
+  ${PCL_LIBRARIES}
   ${catkin_LIBRARIES}
   ${pinocchio_LIBRARIES}
 )

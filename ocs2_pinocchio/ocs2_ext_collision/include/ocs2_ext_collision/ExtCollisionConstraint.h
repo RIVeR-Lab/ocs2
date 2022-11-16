@@ -31,11 +31,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
+#include <voxblox/interpolator/interpolator.h>
+
 #include <ocs2_core/constraint/StateConstraint.h>
 #include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
 #include <ocs2_ext_collision/ExtCollision.h>
+#include <ocs2_ext_collision/PointsOnRobot.h>
 
 namespace ocs2 {
+
+using typename voxblox::EsdfCachingVoxel;
+using voxblox::Interpolator;
 
 /**
  *  This class provides a variant of the Extrenal-collision constraints, which allows for caching. Therefore It is the user's
@@ -86,6 +92,9 @@ class ExtCollisionConstraint : public StateConstraint
     ExtCollision extCollision_;
     
     std::unique_ptr<PinocchioStateInputMapping<scalar_t>> mappingPtr_;
+
+    std::shared_ptr<const ocs2_ext_collision::PointsOnRobot> pointsOnRobot;
+    std::shared_ptr<Interpolator<EsdfCachingVoxel>> interpolator;
 };
 
 }  // namespace ocs2

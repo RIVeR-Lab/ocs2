@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_mobile_manipulator)
 
+#add_compile_options(-std=c++14)
+
 # Generate compile_commands.json for clang tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -13,7 +15,12 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_pinocchio_interface
   ocs2_self_collision
   ocs2_ext_collision
+  #ocs2_ros_interfaces
+  #voxblox
+  #voxblox_ros
 )
+
+#find_package(PCL REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
@@ -68,6 +75,7 @@ configure_file (
 # Add directories for all targets
 include_directories(
   include
+  #${PCL_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
@@ -93,6 +101,7 @@ add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(${PROJECT_NAME}
+  #${PCL_LIBRARIES}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   ${pinocchio_LIBRARIES}
@@ -143,6 +152,7 @@ macro(add_ocs2_test APP_NAME APP_SRC)
     ${PROJECT_BINARY_DIR}/include
   )
   target_link_libraries(${APP_NAME}
+    #${PCL_LIBRARIES}
     gtest_main
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}

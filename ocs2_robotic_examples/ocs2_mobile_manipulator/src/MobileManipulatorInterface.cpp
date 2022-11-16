@@ -27,44 +27,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include <string>
-
-#include <pinocchio/fwd.hpp>  // forward declarations must be included first.
-
-#include <pinocchio/multibody/joint/joint-composite.hpp>
-#include <pinocchio/multibody/model.hpp>
-
 #include "ocs2_mobile_manipulator/MobileManipulatorInterface.h"
-
-#include <ocs2_core/initialization/DefaultInitializer.h>
-#include <ocs2_core/misc/LoadData.h>
 #include <ocs2_core/misc/LoadStdVectorOfPair.h>
-#include <ocs2_core/penalties/Penalties.h>
-#include <ocs2_core/soft_constraint/StateInputSoftBoxConstraint.h>
-#include <ocs2_core/soft_constraint/StateSoftConstraint.h>
-#include <ocs2_oc/synchronized_module/ReferenceManager.h>
-#include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
-#include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
-#include <ocs2_pinocchio_interface/urdf.h>
-#include <ocs2_self_collision/SelfCollisionConstraint.h>
-#include <ocs2_self_collision/SelfCollisionConstraintCppAd.h>
-#include <ocs2_ext_collision/ExtCollisionConstraint.h>
-#include <ocs2_ext_collision/ExtCollisionConstraintCppAd.h>
-
-#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
-#include "ocs2_mobile_manipulator/MobileManipulatorPreComputation.h"
-#include "ocs2_mobile_manipulator/constraint/EndEffectorConstraint.h"
-#include "ocs2_mobile_manipulator/constraint/MobileManipulatorSelfCollisionConstraint.h"
-#include "ocs2_mobile_manipulator/constraint/MobileManipulatorExtCollisionConstraint.h"
-#include "ocs2_mobile_manipulator/cost/QuadraticInputCost.h"
-#include "ocs2_mobile_manipulator/dynamics/DefaultManipulatorDynamics.h"
-#include "ocs2_mobile_manipulator/dynamics/FloatingArmManipulatorDynamics.h"
-#include "ocs2_mobile_manipulator/dynamics/FullyActuatedFloatingArmManipulatorDynamics.h"
-#include "ocs2_mobile_manipulator/dynamics/WheelBasedMobileManipulatorDynamics.h"
-
-// Boost
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
 
 namespace ocs2 {
 namespace mobile_manipulator {
@@ -466,38 +430,58 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
   loadData::loadPtreeValue(pt, mu, prefix + ".mu", true);
   loadData::loadPtreeValue(pt, delta, prefix + ".delta", true);
   loadData::loadPtreeValue(pt, minimumDistance, prefix + ".minimumDistance", true);
-  loadData::loadStdVectorOfPair(taskFile, prefix + ".collisionObjectPairs", collisionObjectPairs, true);
-  loadData::loadStdVectorOfPair(taskFile, prefix + ".collisionLinkPairs", collisionLinkPairs, true);
+  
+  /*
+  XmlRpc::XmlRpcValue collisionPoints;
+  pNh.getParam("collision_points", collisionPoints);
+  if (collisionPoints.getType() != XmlRpc::XmlRpcValue::TypeArray) 
+  {
+    ROS_WARN("collision_points parameter is not of type array.");
+  }
+
+  for (int i = 0; i < collisionPoints.size(); i++) 
+  {
+    if (collisionPoints.getType() != XmlRpc::XmlRpcValue::TypeArray) 
+    {
+      ROS_WARN_STREAM("collision_points[" << i << "] parameter is not of type array.");
+    }
+
+    for (int j = 0; j < collisionPoints[i].size(); j++) 
+    {
+      if (collisionPoints[j].getType() != XmlRpc::XmlRpcValue::TypeArray) 
+      {
+        ROS_WARN_STREAM("collision_points[" << i << "][" << j << "] parameter is not of type array.");
+        return voxbloxCostConfig;
+      }
+
+      if (collisionPoints[i][j].size() != 2) 
+      {
+        ROS_WARN_STREAM("collision_points[" << i << "][" << j << "] does not have 2 elements.");
+        return voxbloxCostConfig;
+      }
+
+      double segmentId = collisionPoints[i][j][0];
+      double radius = collisionPoints[i][j][1];
+      pointsAndRadii[i].push_back(pair_t(segmentId, radius));
+      ROS_INFO_STREAM("segment=" << i << ". relative pos on segment:" << segmentId << ". radius:" << radius);
+    }
+  }
+  */
+  
+  //loadData::loadStdVectorOfPair(taskFile, prefix + ".collisionObjectPairs", collisionObjectPairs, true);
+  //loadData::loadStdVectorOfPair(taskFile, prefix + ".collisionLinkPairs", collisionLinkPairs, true);
   std::cerr << " #### =============================================================================\n";
 
   PinocchioGeometryInterface geometryInterface(pinocchioInterface, collisionLinkPairs, collisionObjectPairs);
 
-  const size_t numCollisionPairs = geometryInterface.getNumCollisionPairs();
-  std::cerr << "ExtCollision: Testing for " << numCollisionPairs << " collision pairs\n";
-
-  std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] numCollisionPairs: " << numCollisionPairs << std::endl;
+  //const size_t numCollisionPairs = geometryInterface.getNumCollisionPairs();
+  //std::cerr << "ExtCollision: Testing for " << numCollisionPairs << " collision pairs\n";
+  //std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] numCollisionPairs: " << numCollisionPairs << std::endl;
 
   std::unique_ptr<StateConstraint> constraint;
-  if (usePreComputation) 
-  {
-    std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] usePreComputation" << std::endl;
-
-    constraint = std::unique_ptr<StateConstraint>(new MobileManipulatorExtCollisionConstraint(MobileManipulatorPinocchioMapping(manipulatorModelInfo_), 
-                                                                                               std::move(geometryInterface), 
-                                                                                               minimumDistance));
-  }
-  else 
-  {
-    constraint = std::unique_ptr<StateConstraint>(new ExtCollisionConstraintCppAd(pinocchioInterface, 
-                                                                                   MobileManipulatorPinocchioMapping(manipulatorModelInfo_), 
-                                                                                   std::move(geometryInterface), 
-                                                                                   minimumDistance,
-                                                                                   "self_collision", 
-                                                                                   libraryFolder, 
-                                                                                   recompileLibraries, 
-                                                                                   false));
-  }
-
+  constraint = std::unique_ptr<StateConstraint>(new MobileManipulatorExtCollisionConstraint(MobileManipulatorPinocchioMapping(manipulatorModelInfo_), 
+                                                                                            std::move(geometryInterface), 
+                                                                                            minimumDistance));
   std::unique_ptr<PenaltyBase> penalty(new RelaxedBarrierPenalty({mu, delta}));
 
   std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] END" << std::endl;

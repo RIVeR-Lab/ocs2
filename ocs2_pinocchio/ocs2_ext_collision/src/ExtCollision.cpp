@@ -88,6 +88,7 @@ std::pair<vector_t, matrix_t> ExtCollision::getLinearApproximation(const Pinocch
     const vector3_t pt1Offset = distanceArray[i].nearest_points[0] - joint1Position;
     matrix_t joint1Jacobian = matrix_t::Zero(6, model.nv);
     pinocchio::getJointJacobian(model, data, joint1, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, joint1Jacobian);
+    
     // Jacobians from pinocchio are given as
     // [ position jacobian ]
     // [ rotation jacobian ]
@@ -103,6 +104,7 @@ std::pair<vector_t, matrix_t> ExtCollision::getLinearApproximation(const Pinocch
     // To get the (approximate) jacobian of the distance, get the difference between the two nearest point jacobians, then multiply by the
     // vector from point to point
     const matrix_t differenceJacobian = pt2Jacobian - pt1Jacobian;
+    
     // TODO(perry): is there a way to calculate a correct jacobian for the case of distanceVector = 0?
     const vector3_t distanceVector = distanceArray[i].min_distance > 0
                                          ? (distanceArray[i].nearest_points[1] - distanceArray[i].nearest_points[0]).normalized()

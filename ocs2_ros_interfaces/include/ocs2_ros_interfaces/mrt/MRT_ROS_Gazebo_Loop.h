@@ -40,7 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ros_interfaces/mrt/DummyObserver.h"
 #include "ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h"
-#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
+//#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
 
 namespace ocs2 {
 
@@ -65,7 +65,9 @@ class MRT_ROS_Gazebo_Loop
 
     MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                         MRT_ROS_Interface& mrt,
-                        mobile_manipulator::ManipulatorModelInfo manipulatorModelInfo,
+                        size_t stateDim,
+                        size_t inputDim,
+                        std::vector<std::string> dofNames,
                         scalar_t mrtDesiredFrequency,
                         scalar_t mpcDesiredFrequency = -1);
 
@@ -157,7 +159,10 @@ class MRT_ROS_Gazebo_Loop
 
     std::vector<std::shared_ptr<DummyObserver>> observers_;
 
-    mobile_manipulator::ManipulatorModelInfo manipulatorModelInfo_;
+    size_t stateDim_;
+    size_t inputDim_;
+    std::vector<std::string> dofNames_;
+    //mobile_manipulator::ManipulatorModelInfo manipulatorModelInfo_;
 
     std::vector<int> stateIndexMap;
 
