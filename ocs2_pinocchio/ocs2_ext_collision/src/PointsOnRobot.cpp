@@ -34,45 +34,63 @@
 
 ocs2_ext_collision::PointsOnRobot::PointsOnRobot(const PointsOnRobot& rhs)
   : points_(rhs.points_),
-    radii_(rhs.radii_),
-    cppAdInterface_(new ocs2::CppAdInterface(*rhs.cppAdInterface_)),
-    kinematics_(rhs.kinematics_) {}
+    radii_(rhs.radii_) {}
+    //cppAdInterface_(new ocs2::CppAdInterface(*rhs.cppAdInterface_)),
+    //kinematics_(rhs.kinematics_) {}
 
-ocs2_ext_collision::PointsOnRobot::PointsOnRobot(const PointsOnRobotConfig& config) : points_(), radii_(), kinematics_(config.kinematics) {
-  const auto& pointsAndRadii = config.pointsAndRadii;
+ocs2_ext_collision::PointsOnRobot::PointsOnRobot(const ocs2_ext_collision::PointsOnRobot::points_radii_t& points_radii)
+  : points_(), radii_()
+{
+  const auto& pointsAndRadii = points_radii;
 
   int numPoints = 0;
-  for (const auto& segments : pointsAndRadii) {
+  for (const auto& segments : pointsAndRadii) 
+  {
     std::vector<double> pointsOnSegment;
-    for (const auto& pointRadius : segments) {
+    for (const auto& pointRadius : segments) 
+    {
       pointsOnSegment.push_back(pointRadius.first);
       numPoints++;
     }
     points_.push_back(pointsOnSegment);
   }
+
   int idx = 0;
   radii_ = Eigen::VectorXd(numPoints);
-  for (const auto& segments : pointsAndRadii) {
-    for (const auto& pointRadius : segments) {
+  for (const auto& segments : pointsAndRadii) 
+  {
+    for (const auto& pointRadius : segments) 
+    {
       radii_(idx++) = pointRadius.second;
     }
   }
 }
-void ocs2_ext_collision::PointsOnRobot::initialize(const std::string& modelName, const std::string& modelFolder, bool recompileLibraries, bool verbose) {
+
+void ocs2_ext_collision::PointsOnRobot::initialize(const std::string& modelName, const std::string& modelFolder, bool recompileLibraries, bool verbose) 
+{
   setADInterfaces(modelName, modelFolder);
-  if (recompileLibraries) {
+
+  if (recompileLibraries) 
+  {
     createModels(verbose);
-  } else {
+  } 
+  else 
+  {
     loadModelsIfAvailable(verbose);
   }
 }
-Eigen::VectorXd ocs2_ext_collision::PointsOnRobot::getPoints(const Eigen::VectorXd& state) const {
+
+Eigen::VectorXd ocs2_ext_collision::PointsOnRobot::getPoints(const Eigen::VectorXd& state) const 
+{
   return cppAdInterface_->getFunctionValue(state);
 }
+
 Eigen::MatrixXd ocs2_ext_collision::PointsOnRobot::getJacobian(const Eigen::VectorXd& state) const {
   return cppAdInterface_->getJacobian(state);
 }
-visualization_msgs::MarkerArray ocs2_ext_collision::PointsOnRobot::getVisualization(const Eigen::VectorXd& state) const {
+
+visualization_msgs::MarkerArray ocs2_ext_collision::PointsOnRobot::getVisualization(const Eigen::VectorXd& state) const 
+{
   visualization_msgs::MarkerArray markerArray;
   markerArray.markers.resize(radii_.size());
 
@@ -107,18 +125,21 @@ visualization_msgs::MarkerArray ocs2_ext_collision::PointsOnRobot::getVisualizat
   return markerArray;
 }
 
-void ocs2_ext_collision::PointsOnRobot::setADInterfaces(const std::string& modelName, const std::string& modelFolder) {
+void ocs2_ext_collision::PointsOnRobot::setADInterfaces(const std::string& modelName, const std::string& modelFolder) 
+{
   using ad_interface = ocs2::CppAdInterface;
   using ad_dynamic_vector_t = ad_interface::ad_vector_t;
   using ad_scalar_t = ad_interface::ad_scalar_t;
 
   int numPoints = 0;
-  for (int i = 0; i < points_.size(); i++) {
+  for (int i = 0; i < points_.size(); i++) 
+  {
     numPoints += points_[i].size();
   }
   assert(numPoints == radii_.size());
 
-  auto state2MultiplePointsAd = [&, this](const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y) {
+  auto state2MultiplePointsAd = [&, this](const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y) 
+  {
     Eigen::Matrix<ad_scalar_t, 3, -1> matrixResult = kinematics_->computeState2MultiplePointsOnRobot(x, points_);
     y = Eigen::Map<Eigen::Matrix<ad_scalar_t, -1, 1>>(matrixResult.data(), matrixResult.size());
   };
@@ -128,11 +149,19 @@ void ocs2_ext_collision::PointsOnRobot::setADInterfaces(const std::string& model
                                                  modelFolder));
 }
 
+void SelfCollisionCppAd::setADInterfaces(PinocchioInterfaceCppAd& pinocchioInterfaceAd, 
+                                         const std::string& modelName,
+                                         const std::string& modelFolder)
+{
+  
+}
+
 void ocs2_ext_collision::PointsOnRobot::createModels(bool verbose) {
   cppAdInterface_->createModels(ocs2::CppAdInterface::ApproximationOrder::First, verbose);
 }
 
-void ocs2_ext_collision::PointsOnRobot::loadModelsIfAvailable(bool verbose) {
+void ocs2_ext_collision::PointsOnRobot::loadModelsIfAvailable(bool verbose) 
+{
   cppAdInterface_->loadModelsIfAvailable(ocs2::CppAdInterface::ApproximationOrder::First, verbose);
 }
 Eigen::VectorXd ocs2_ext_collision::PointsOnRobot::getRadii() const {

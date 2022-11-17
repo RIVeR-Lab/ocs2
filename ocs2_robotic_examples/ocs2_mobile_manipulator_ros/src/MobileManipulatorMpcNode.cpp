@@ -58,6 +58,50 @@ int main(int argc, char** argv)
   std::cerr << "Loading library folder: " << libFolder << std::endl;
   std::cerr << "Loading urdf file: " << urdfFile << std::endl;
   
+  ocs2_ext_collision::PointsOnRobot::points_radii_t pointsAndRadii(8);
+  if (nodeHandle.hasParam("/voxblox_node/collision_points")) 
+  {
+    using pair_t = std::pair<double, double>;
+    XmlRpc::XmlRpcValue collisionPoints;
+    nodeHandle.getParam("/voxblox_node/collision_points", collisionPoints);
+
+    if (collisionPoints.getType() != XmlRpc::XmlRpcValue::TypeArray) 
+    {
+      ROS_WARN("[MobileManipulatorMpcNode::main] collision_points parameter is not of type array.");
+    }
+    
+    std::cout << "[MobileManipulatorMpcNode::main] pointsAndRadii:" << std::endl;
+    for (int i = 0; i < collisionPoints.size(); i++) 
+    {
+      if (collisionPoints.getType() != XmlRpc::XmlRpcValue::TypeArray) 
+      {
+        ROS_WARN_STREAM("[MobileManipulatorMpcNode::main] collision_points[" << i << "] parameter is not of type array.");
+      }
+
+      for (int j = 0; j < collisionPoints[i].size(); j++) 
+      {
+        if (collisionPoints[j].getType() != XmlRpc::XmlRpcValue::TypeArray) 
+        {
+          ROS_WARN_STREAM("[MobileManipulatorMpcNode::main] collision_points[" << i << "][" << j << "] parameter is not of type array.");
+        }
+
+        if (collisionPoints[i][j].size() != 2) 
+        {
+          ROS_WARN_STREAM("[MobileManipulatorMpcNode::main] collision_points[" << i << "][" << j << "] does not have 2 elements.");
+        }
+
+        double segmentId = collisionPoints[i][j][0];
+        double radius = collisionPoints[i][j][1];
+        pointsAndRadii[i].push_back(pair_t(segmentId, radius));
+        ROS_INFO_STREAM("[MobileManipulatorMpcNode::main] segment=" << i << ". relative pos on segment:" << segmentId << ". radius:" << radius);
+      }
+    }
+  }
+  else
+  {
+    std::cout << "[MobileManipulatorMpcNode::main] ERROR: collision_points is not defined!" << std::endl;
+  }
+
   // Robot interface
   MobileManipulatorInterface interface(taskFile, libFolder, urdfFile);
 
@@ -75,9 +119,11 @@ int main(int argc, char** argv)
 
   // Launch MPC ROS node
   MPC_ROS_Interface mpcNode(mpc, robotName);
+  mpcNode.resetPointsOnRobot(pointsAndRadii);
   mpcNode.launchNodes(nodeHandle);
 
   std::cout << "[MobileManipulatorMpcNode::main] END" << std::endl;
+  
   // Successful exit
   return 0;
 }

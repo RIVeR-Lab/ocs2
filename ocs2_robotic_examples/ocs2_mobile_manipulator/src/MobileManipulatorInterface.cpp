@@ -431,43 +431,6 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
   loadData::loadPtreeValue(pt, delta, prefix + ".delta", true);
   loadData::loadPtreeValue(pt, minimumDistance, prefix + ".minimumDistance", true);
   
-  /*
-  XmlRpc::XmlRpcValue collisionPoints;
-  pNh.getParam("collision_points", collisionPoints);
-  if (collisionPoints.getType() != XmlRpc::XmlRpcValue::TypeArray) 
-  {
-    ROS_WARN("collision_points parameter is not of type array.");
-  }
-
-  for (int i = 0; i < collisionPoints.size(); i++) 
-  {
-    if (collisionPoints.getType() != XmlRpc::XmlRpcValue::TypeArray) 
-    {
-      ROS_WARN_STREAM("collision_points[" << i << "] parameter is not of type array.");
-    }
-
-    for (int j = 0; j < collisionPoints[i].size(); j++) 
-    {
-      if (collisionPoints[j].getType() != XmlRpc::XmlRpcValue::TypeArray) 
-      {
-        ROS_WARN_STREAM("collision_points[" << i << "][" << j << "] parameter is not of type array.");
-        return voxbloxCostConfig;
-      }
-
-      if (collisionPoints[i][j].size() != 2) 
-      {
-        ROS_WARN_STREAM("collision_points[" << i << "][" << j << "] does not have 2 elements.");
-        return voxbloxCostConfig;
-      }
-
-      double segmentId = collisionPoints[i][j][0];
-      double radius = collisionPoints[i][j][1];
-      pointsAndRadii[i].push_back(pair_t(segmentId, radius));
-      ROS_INFO_STREAM("segment=" << i << ". relative pos on segment:" << segmentId << ". radius:" << radius);
-    }
-  }
-  */
-  
   //loadData::loadStdVectorOfPair(taskFile, prefix + ".collisionObjectPairs", collisionObjectPairs, true);
   //loadData::loadStdVectorOfPair(taskFile, prefix + ".collisionLinkPairs", collisionLinkPairs, true);
   std::cerr << " #### =============================================================================\n";

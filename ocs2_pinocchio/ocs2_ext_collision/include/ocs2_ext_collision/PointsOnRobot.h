@@ -36,6 +36,7 @@
 #include <visualization_msgs/MarkerArray.h>
 
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
+#include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_ext_collision/KinematicsInterface.hpp>
 #include "ocs2_ext_collision/Definitions.h"
 
@@ -47,44 +48,56 @@
 
 namespace ocs2_ext_collision {
 
-struct PointsOnRobotConfig {
+/*
+struct PointsOnRobotConfig 
+{
   using points_radii_t = std::vector<std::vector<std::pair<double, double>>>;
   points_radii_t pointsAndRadii;
   std::shared_ptr<const KinematicsInterface<CppAD::AD<CppAD::cg::CG<double>>>> kinematics;
 };
+*/
 
-class PointsOnRobot {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+class PointsOnRobot 
+{
+  public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using points_radii_t = std::vector<std::vector<std::pair<double, double>>>;
+    using points_radii_t = std::vector<std::vector<std::pair<double, double>>>;
 
-  explicit PointsOnRobot(const PointsOnRobotConfig& config);
+    explicit PointsOnRobot(const points_radii_t& points_radii);
 
-  PointsOnRobot(const PointsOnRobot& rhs);
+    PointsOnRobot(const PointsOnRobot& rhs);
 
-  void initialize(const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
-                  bool verbose = true);
+    void initialize(const std::string& modelName, 
+                    const std::string& modelFolder = "/tmp/ocs2", 
+                    bool recompileLibraries = true,
+                    bool verbose = true);
 
-  Eigen::VectorXd getPoints(const Eigen::VectorXd& state) const;
+    Eigen::VectorXd getPoints(const Eigen::VectorXd& state) const;
 
-  Eigen::MatrixXd getJacobian(const Eigen::VectorXd& state) const;
+    Eigen::MatrixXd getJacobian(const Eigen::VectorXd& state) const;
 
-  Eigen::VectorXd getRadii() const;
+    Eigen::VectorXd getRadii() const;
 
-  int numOfPoints() const;
+    int numOfPoints() const;
 
-  visualization_msgs::MarkerArray getVisualization(const Eigen::VectorXd& state) const;
+    visualization_msgs::MarkerArray getVisualization(const Eigen::VectorXd& state) const;
 
- private:
-  void setADInterfaces(const std::string& modelName, const std::string& modelFolder);
-  void createModels(bool verbose);
-  void loadModelsIfAvailable(bool verbose);
+  private:
+    void setADInterfaces(const std::string& modelName, const std::string& modelFolder);
 
-  std::shared_ptr<ocs2::CppAdInterface> cppAdInterface_;
-  std::shared_ptr<const KinematicsInterface<CppAD::AD<CppAD::cg::CG<double>>>> kinematics_;
+    void setADInterfaces(PinocchioInterfaceCppAd& pinocchioInterfaceAd, 
+                         const std::string& modelName,
+                         const std::string& modelFolder);
 
-  std::vector<std::vector<double>> points_;
-  Eigen::VectorXd radii_;
+    void createModels(bool verbose);
+    
+    void loadModelsIfAvailable(bool verbose);
+
+    std::shared_ptr<ocs2::CppAdInterface> cppAdInterface_;
+    std::shared_ptr<const KinematicsInterface<CppAD::AD<CppAD::cg::CG<double>>>> kinematics_;
+
+    std::vector<std::vector<double>> points_;
+    Eigen::VectorXd radii_;
 };
 }  // namespace ocs2_ext_collision

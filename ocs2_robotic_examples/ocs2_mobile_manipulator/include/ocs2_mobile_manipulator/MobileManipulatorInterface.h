@@ -58,6 +58,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
+#include <ocs2_ros_interfaces/EsdfCachingServer.hpp>
 
 #include <ocs2_self_collision/SelfCollisionConstraint.h>
 #include <ocs2_self_collision/SelfCollisionConstraintCppAd.h>
@@ -146,7 +147,6 @@ class MobileManipulatorInterface final : public RobotInterface
       return manipulatorModelInfo_; 
     }
 
-    /*
     std::shared_ptr<ocs2_ext_collision::PointsOnRobot> getPointsOnRobotPtr() 
     { 
       return pointsOnRobotPtr_;
@@ -156,7 +156,29 @@ class MobileManipulatorInterface final : public RobotInterface
     { 
       return esdfCachingServerPtr_;
     }
-    */
+
+    void setPointsOnRobotPtr(std::shared_ptr<ocs2_ext_collision::PointsOnRobot> newPointsOnRobotPtr) 
+    { 
+      pointsOnRobotPtr_ = newPointsOnRobotPtr;
+    }
+
+    void resetPointsOnRobot(ocs2_ext_collision::PointsOnRobot::points_radii_t& newPointsAndRadii)
+    {
+      pointsOnRobotPtr_.reset(new ocs2_ext_collision::PointsOnRobot(newPointsAndRadii));
+
+      if (pointsOnRobotPtr_->numOfPoints() > 0) 
+      {
+        esdfCachingServerPtr_.reset(new voxblox::EsdfCachingServer(ros::NodeHandle(), ros::NodeHandle("~")));
+        esdfCachingServerPtr_->getInterpolator();
+
+        pointsOnRobotPtr_->initialize("points_on_robot");
+      } 
+      else 
+      {
+        // if there are no points defined for collision checking, set this pointer to null to disable the visualization
+        pointsOnRobotPtr_ = nullptr;
+      }
+    }
 
   private:
     std::unique_ptr<StateInputCost> getQuadraticInputCost(const std::string& taskFile);
@@ -200,8 +222,8 @@ class MobileManipulatorInterface final : public RobotInterface
 
     vector_t initialState_;
 
-    //std::shared_ptr<ocs2_ext_collision::PointsOnRobot> pointsOnRobotPtr_;
-    //std::shared_ptr<voxblox::EsdfCachingServer> esdfCachingServerPtr_;
+    std::shared_ptr<ocs2_ext_collision::PointsOnRobot> pointsOnRobotPtr_;
+    std::shared_ptr<voxblox::EsdfCachingServer> esdfCachingServerPtr_;
 };
 
 }  // namespace mobile_manipulator
