@@ -31,8 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
-
-#include "ocs2_self_collision/PinocchioGeometryInterface.h"
+#include "ocs2_ext_collision/ExtCollisionPinocchioGeometryInterface.h"
+#include <ocs2_ext_collision/PointsOnRobot.h>
 
 namespace ocs2 {
 
@@ -46,7 +46,7 @@ class ExtCollisionCppAd
      * Constructor
      *
      * @param [in] pinocchioInterface: pinocchio interface of the robot model
-     * @param [in] pinocchioGeometryInterface: pinocchio geometry interface of the robot model
+     * @param [in] extCollisionPinocchioGeometryInterface: pinocchio geometry interface of the robot model
      * @param [in] minimumDistance: minimum allowed distance between each collision pair
      * @param [in] modelName : name of the generate model library
      * @param [in] modelFolder : folder to save the model library files to
@@ -55,12 +55,13 @@ class ExtCollisionCppAd
      * @param [in] verbose : print information.
      */
     ExtCollisionCppAd(const PinocchioInterface& pinocchioInterface, 
-                       PinocchioGeometryInterface pinocchioGeometryInterface,
-                       scalar_t minimumDistance, 
-                       const std::string& modelName, 
-                       const std::string& modelFolder = "/tmp/ocs2",
-                       bool recompileLibraries = true, 
-                       bool verbose = true);
+                      ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface,
+                      std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
+                      scalar_t minimumDistance, 
+                      const std::string& modelName, 
+                      const std::string& modelFolder = "/tmp/ocs2",
+                      bool recompileLibraries = true, 
+                      bool verbose = true);
 
     /** Default destructor */
     ~ExtCollisionCppAd() = default;
@@ -71,12 +72,12 @@ class ExtCollisionCppAd
     /** Get the number of collision pairs */
     size_t getNumCollisionPairs() const 
     { 
-      return pinocchioGeometryInterface_.getNumCollisionPairs(); 
+      return extCollisionPinocchioGeometryInterface_.getNumCollisionPairs(); 
     }
 
     /**
      * Evaluate the distance violation
-     * Computes the distance results of all collision pairs through PinocchioGeometryInterface
+     * Computes the distance results of all collision pairs through ExtCollisionPinocchioGeometryInterface
      * and the violation compared with the specified minimum distance.
      *
      * @note Requires updated forwardKinematics() on pinocchioInterface.
@@ -121,7 +122,7 @@ class ExtCollisionCppAd
     std::unique_ptr<CppAdInterface> cppAdInterfaceDistanceCalculation_;
     std::unique_ptr<CppAdInterface> cppAdInterfaceLinkPoints_;
 
-    PinocchioGeometryInterface pinocchioGeometryInterface_;
+    ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface_;
     scalar_t minimumDistance_;
 };
 

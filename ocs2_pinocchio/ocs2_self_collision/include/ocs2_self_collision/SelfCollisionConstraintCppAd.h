@@ -82,10 +82,15 @@ class SelfCollisionConstraintCppAd final : public StateConstraint {
    *                                 available.
    * @param [in] verbose: If true, print information. Otherwise, no information is printed.
    */
-  SelfCollisionConstraintCppAd(PinocchioInterface pinocchioInterface, const PinocchioStateInputMapping<scalar_t>& mapping,
-                               PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance,
-                               update_pinocchio_interface_callback updateCallback, const std::string& modelName,
-                               const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true, bool verbose = true);
+  SelfCollisionConstraintCppAd(PinocchioInterface pinocchioInterface, 
+                               const PinocchioStateInputMapping<scalar_t>& mapping,
+                               PinocchioGeometryInterface pinocchioGeometryInterface, 
+                               scalar_t minimumDistance,
+                               update_pinocchio_interface_callback updateCallback, 
+                               const std::string& modelName,
+                               const std::string& modelFolder = "/tmp/ocs2", 
+                               bool recompileLibraries = true, 
+                               bool verbose = true);
 
   ~SelfCollisionConstraintCppAd() override = default;
   SelfCollisionConstraintCppAd* clone() const override { return new SelfCollisionConstraintCppAd(*this); }

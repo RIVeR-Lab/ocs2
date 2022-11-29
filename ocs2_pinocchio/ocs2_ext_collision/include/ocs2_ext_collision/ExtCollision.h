@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
-#include <ocs2_self_collision/PinocchioGeometryInterface.h>
+#include <ocs2_ext_collision/ExtCollisionPinocchioGeometryInterface.h>
 
 namespace ocs2 {
 
@@ -41,17 +41,20 @@ class ExtCollision {
   /**
    * Constructor
    *
-   * @param [in] pinocchioGeometryInterface: pinocchio geometry interface of the robot model
+   * @param [in] extCollisionPinocchioGeometryInterface: pinocchio geometry interface of the robot model
    * @parma [in] minimumDistance: minimum allowed distance between each collision pair
    */
-  ExtCollision(PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance);
+  ExtCollision(ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, scalar_t minimumDistance);
 
   /** Get the number of collision pairs */
-  size_t getNumCollisionPairs() const { return pinocchioGeometryInterface_.getNumCollisionPairs(); }
+  size_t getNumCollisionPairs() const 
+  { 
+    return extCollisionPinocchioGeometryInterface_.getNumCollisionPairs(); 
+  }
 
   /**
    * Evaluate the distance violation
-   * This method computes the distance results of all collision pairs through PinocchioGeometryInterface
+   * This method computes the distance results of all collision pairs through ExtCollisionPinocchioGeometryInterface
    * and compare each of them with the specified minimum distance.
    *
    * @note Requires updated forwardKinematics() on pinocchioInterface.
@@ -68,13 +71,13 @@ class ExtCollision {
    * @note Requires updated forwardKinematics(), updateGlobalPlacements() and computeJointJacobians() on pinocchioInterface.
    *
    * @param [in] pinocchioInterface: pinocchio interface of the robot model
-   * @param [in] pinocchioGeometryInterface: pinocchio geometry interface of the robot model
+   * @param [in] extCollisionPinocchioGeometryInterface: pinocchio geometry interface of the robot model
    * @return: The pair of the distance violation and the first derivative of the distance against q
    */
   std::pair<vector_t, matrix_t> getLinearApproximation(const PinocchioInterface& pinocchioInterface) const;
 
  private:
-  PinocchioGeometryInterface pinocchioGeometryInterface_;
+  ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface_;
   scalar_t minimumDistance_;
 };
 

@@ -36,10 +36,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 ExtCollisionConstraint::ExtCollisionConstraint(const PinocchioStateInputMapping<scalar_t>& mapping,
-                                               PinocchioGeometryInterface pinocchioGeometryInterface, 
+                                               ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
                                                scalar_t minimumDistance)
   : StateConstraint(ConstraintOrder::Linear),
-    extCollision_(std::move(pinocchioGeometryInterface), minimumDistance),
+    extCollision_(std::move(extCollisionPinocchioGeometryInterface), minimumDistance),
     mappingPtr_(mapping.clone()) {}
 
 /******************************************************************************************************/

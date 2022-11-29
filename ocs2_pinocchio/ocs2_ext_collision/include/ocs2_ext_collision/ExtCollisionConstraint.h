@@ -54,11 +54,11 @@ class ExtCollisionConstraint : public StateConstraint
      * Constructor
      *
      * @param [in] mapping: The pinocchio mapping from pinocchio states to ocs2 states.
-     * @param [in] pinocchioGeometryInterface: Pinocchio geometry interface of the robot model.
+     * @param [in] extCollisionPinocchioGeometryInterface: Pinocchio geometry interface of the robot model.
      * @param [in] minimumDistance: The minimum allowed distance between collision pairs.
      */
     ExtCollisionConstraint(const PinocchioStateInputMapping<scalar_t>& mapping, 
-                          PinocchioGeometryInterface pinocchioGeometryInterface,
+                          ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface,
                           scalar_t minimumDistance);
 
     ~ExtCollisionConstraint() override = default;
@@ -93,7 +93,7 @@ class ExtCollisionConstraint : public StateConstraint
     
     std::unique_ptr<PinocchioStateInputMapping<scalar_t>> mappingPtr_;
 
-    std::shared_ptr<const ocs2_ext_collision::PointsOnRobot> pointsOnRobot;
+    std::shared_ptr<const PointsOnRobot> pointsOnRobot;
     std::shared_ptr<Interpolator<EsdfCachingVoxel>> interpolator;
 };
 

@@ -41,9 +41,9 @@ class MobileManipulatorExtCollisionConstraint final : public ExtCollisionConstra
 {
   public:
     MobileManipulatorExtCollisionConstraint(const PinocchioStateInputMapping<scalar_t>& mapping,
-                                            PinocchioGeometryInterface pinocchioGeometryInterface, 
+                                            ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
                                             scalar_t minimumDistance)
-      : ExtCollisionConstraint(mapping, std::move(pinocchioGeometryInterface), minimumDistance) {}
+      : ExtCollisionConstraint(mapping, std::move(extCollisionPinocchioGeometryInterface), minimumDistance) {}
     
     ~MobileManipulatorExtCollisionConstraint() override = default;
     

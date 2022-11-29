@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/constraint/StateConstraint.h>
 #include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
 #include <ocs2_ext_collision/ExtCollisionCppAd.h>
+#include <ocs2_ext_collision/PointsOnRobot.h>
 
 namespace ocs2 {
 
@@ -54,7 +55,7 @@ class ExtCollisionConstraintCppAd final : public StateConstraint
      *
      * @param [in] pinocchioInterface: Pinocchio interface of the robot model.
      * @param [in] mapping: The pinocchio mapping from pinocchio states to ocs2 states.
-     * @param [in] pinocchioGeometryInterface: Pinocchio geometry interface of the robot model.
+     * @param [in] extCollisionPinocchioGeometryInterface: Pinocchio geometry interface of the robot model.
      * @param [in] minimumDistance: The minimum allowed distance between collision pairs.
      * @param [in] modelName: Name of the generated model library.
      * @param [in] modelFolder: Folder to save the model library files to.
@@ -64,7 +65,8 @@ class ExtCollisionConstraintCppAd final : public StateConstraint
      */
     ExtCollisionConstraintCppAd(PinocchioInterface pinocchioInterface, 
                                 const PinocchioStateInputMapping<scalar_t>& mapping,
-                                PinocchioGeometryInterface pinocchioGeometryInterface, 
+                                ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
+                                std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
                                 scalar_t minimumDistance,
                                 const std::string& modelName, 
                                 const std::string& modelFolder = "/tmp/ocs2", 
@@ -76,7 +78,7 @@ class ExtCollisionConstraintCppAd final : public StateConstraint
      *
      * @param [in] pinocchioInterface: Pinocchio interface of the robot model.
      * @param [in] mapping: The pinocchio mapping from pinocchio states to ocs2 states.
-     * @param [in] pinocchioGeometryInterface: Pinocchio geometry interface of the robot model.
+     * @param [in] extCollisionPinocchioGeometryInterface: Pinocchio geometry interface of the robot model.
      * @param [in] minimumDistance: The minimum allowed distance between collision pairs.
      * @param [in] updateCallback: In the cases that PinocchioStateInputMapping requires some additional update calls on PinocchioInterface,
      *                             use this callback (no need to call pinocchio::forwardKinematics).
@@ -88,7 +90,8 @@ class ExtCollisionConstraintCppAd final : public StateConstraint
      */
     ExtCollisionConstraintCppAd(PinocchioInterface pinocchioInterface, 
                                 const PinocchioStateInputMapping<scalar_t>& mapping,
-                                PinocchioGeometryInterface pinocchioGeometryInterface, 
+                                ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
+                                std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
                                 scalar_t minimumDistance,
                                 update_pinocchio_interface_callback updateCallback, 
                                 const std::string& modelName,

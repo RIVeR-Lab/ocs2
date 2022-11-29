@@ -38,7 +38,8 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFile, 
                                                        const std::string& libraryFolder,
-                                                       const std::string& urdfFile) 
+                                                       const std::string& urdfFile,
+                                                       PointsOnRobot::points_radii_t pointsAndRadii) 
 {
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START" << std::endl;
 
@@ -185,7 +186,34 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   {
     std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] activateExtCollision: " << activateExtCollision << std::endl;
 
-    problem_.stateSoftConstraintPtr -> add("extCollision", getExtCollisionConstraint(*pinocchioInterfacePtr_, 
+    pointsOnRobotPtr_.reset(new PointsOnRobot(pointsAndRadii));
+
+    if (pointsOnRobotPtr_->numOfPoints() > 0) 
+    {
+      std::cout << "[MobileManipulatorInterface::resetPointsOnRobot] pointsOnRobotPtr_ TRUE" << std::endl;
+
+      esdfCachingServerPtr_.reset(new voxblox::EsdfCachingServer(ros::NodeHandle(), ros::NodeHandle("~")));
+      esdfCachingServerPtr_->getInterpolator();
+
+      /*
+      ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface(*pinocchioInterfacePtr_);
+
+      pointsOnRobotPtr_->initialize(*pinocchioInterfacePtr_, 
+                                    std::move(extCollisionPinocchioGeometryInterface), 
+                                    "points_on_robot", 
+                                    libraryFolder, 
+                                    recompileLibraries, 
+                                    false);
+      */
+    } 
+    else 
+    {
+      std::cout << "[MobileManipulatorInterface::resetPointsOnRobot] pointsOnRobotPtr_ FALSE" << std::endl;
+      // if there are no points defined for collision checking, set this pointer to null to disable the visualization
+      pointsOnRobotPtr_ = nullptr;
+    }
+
+    problem_.stateSoftConstraintPtr -> add("extCollision", getExtCollisionConstraint(*pinocchioInterfacePtr_,
                                                                                      taskFile, 
                                                                                      urdfFile, 
                                                                                      "extCollision", 
@@ -408,12 +436,12 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint(const PinocchioInterface& pinocchioInterface,
-                                                                                  const std::string& taskFile, 
-                                                                                  const std::string& urdfFile,
-                                                                                  const std::string& prefix, 
-                                                                                  bool usePreComputation,
-                                                                                  const std::string& libraryFolder,
-                                                                                  bool recompileLibraries) 
+                                                                                 const std::string& taskFile, 
+                                                                                 const std::string& urdfFile,
+                                                                                 const std::string& prefix, 
+                                                                                 bool usePreComputation,
+                                                                                 const std::string& libraryFolder,
+                                                                                 bool recompileLibraries) 
 {
   std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] START" << std::endl;
 
@@ -435,16 +463,29 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
   //loadData::loadStdVectorOfPair(taskFile, prefix + ".collisionLinkPairs", collisionLinkPairs, true);
   std::cerr << " #### =============================================================================\n";
 
-  PinocchioGeometryInterface geometryInterface(pinocchioInterface, collisionLinkPairs, collisionObjectPairs);
+  ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface(pinocchioInterface, collisionLinkPairs, collisionObjectPairs);
 
   //const size_t numCollisionPairs = geometryInterface.getNumCollisionPairs();
   //std::cerr << "ExtCollision: Testing for " << numCollisionPairs << " collision pairs\n";
   //std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] numCollisionPairs: " << numCollisionPairs << std::endl;
 
   std::unique_ptr<StateConstraint> constraint;
+  /*
   constraint = std::unique_ptr<StateConstraint>(new MobileManipulatorExtCollisionConstraint(MobileManipulatorPinocchioMapping(manipulatorModelInfo_), 
-                                                                                            std::move(geometryInterface), 
+                                                                                            std::move(extCollisionPinocchioGeometryInterface), 
                                                                                             minimumDistance));
+  */
+
+  constraint = std::unique_ptr<StateConstraint>(new ExtCollisionConstraintCppAd(pinocchioInterface, 
+                                                                                MobileManipulatorPinocchioMapping(manipulatorModelInfo_), 
+                                                                                std::move(extCollisionPinocchioGeometryInterface), 
+                                                                                pointsOnRobotPtr_,
+                                                                                minimumDistance,
+                                                                                "ext_collision", 
+                                                                                libraryFolder, 
+                                                                                recompileLibraries, 
+                                                                                false));
+  
   std::unique_ptr<PenaltyBase> penalty(new RelaxedBarrierPenalty({mu, delta}));
 
   std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] END" << std::endl;

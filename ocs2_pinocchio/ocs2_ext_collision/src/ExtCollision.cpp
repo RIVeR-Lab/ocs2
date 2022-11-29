@@ -42,14 +42,15 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ExtCollision::ExtCollision(PinocchioGeometryInterface pinocchioGeometryInterface, scalar_t minimumDistance)
-    : pinocchioGeometryInterface_(std::move(pinocchioGeometryInterface)), minimumDistance_(minimumDistance) {}
+ExtCollision::ExtCollision(ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, scalar_t minimumDistance)
+  : extCollisionPinocchioGeometryInterface_(std::move(extCollisionPinocchioGeometryInterface)), minimumDistance_(minimumDistance) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t ExtCollision::getValue(const PinocchioInterface& pinocchioInterface) const {
-  const std::vector<hpp::fcl::DistanceResult> distanceArray = pinocchioGeometryInterface_.computeDistances(pinocchioInterface);
+vector_t ExtCollision::getValue(const PinocchioInterface& pinocchioInterface) const 
+{
+  const std::vector<hpp::fcl::DistanceResult> distanceArray = extCollisionPinocchioGeometryInterface_.computeDistances(pinocchioInterface);
 
   vector_t violations = vector_t::Zero(distanceArray.size());
   for (size_t i = 0; i < distanceArray.size(); ++i) {
@@ -64,12 +65,12 @@ vector_t ExtCollision::getValue(const PinocchioInterface& pinocchioInterface) co
 /******************************************************************************************************/
 std::pair<vector_t, matrix_t> ExtCollision::getLinearApproximation(const PinocchioInterface& pinocchioInterface) const 
 {
-  const std::vector<hpp::fcl::DistanceResult> distanceArray = pinocchioGeometryInterface_.computeDistances(pinocchioInterface);
+  const std::vector<hpp::fcl::DistanceResult> distanceArray = extCollisionPinocchioGeometryInterface_.computeDistances(pinocchioInterface);
 
   const auto& model = pinocchioInterface.getModel();
   const auto& data = pinocchioInterface.getData();
 
-  const auto& geometryModel = pinocchioGeometryInterface_.getGeometryModel();
+  const auto& geometryModel = extCollisionPinocchioGeometryInterface_.getGeometryModel();
 
   vector_t f(distanceArray.size());
   matrix_t dfdq(distanceArray.size(), model.nq);

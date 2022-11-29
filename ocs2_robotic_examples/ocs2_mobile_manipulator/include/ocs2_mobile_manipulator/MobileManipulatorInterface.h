@@ -100,7 +100,10 @@ class MobileManipulatorInterface final : public RobotInterface
      * @param [in] libraryFolder: The absolute path to the directory to generate CppAD library into.
      * @param [in] urdfFile: The absolute path to the URDF file for the robot.
      */
-    MobileManipulatorInterface(const std::string& taskFile, const std::string& libraryFolder, const std::string& urdfFile);
+    MobileManipulatorInterface(const std::string& taskFile, 
+                               const std::string& libraryFolder, 
+                               const std::string& urdfFile,
+                               PointsOnRobot::points_radii_t pointsAndRadii = std::vector<std::vector<std::pair<double, double>>>());
 
     const vector_t& getInitialState()
     { 
@@ -147,7 +150,7 @@ class MobileManipulatorInterface final : public RobotInterface
       return manipulatorModelInfo_; 
     }
 
-    std::shared_ptr<ocs2_ext_collision::PointsOnRobot> getPointsOnRobotPtr() 
+    std::shared_ptr<PointsOnRobot> getPointsOnRobotPtr() 
     { 
       return pointsOnRobotPtr_;
     }
@@ -157,27 +160,9 @@ class MobileManipulatorInterface final : public RobotInterface
       return esdfCachingServerPtr_;
     }
 
-    void setPointsOnRobotPtr(std::shared_ptr<ocs2_ext_collision::PointsOnRobot> newPointsOnRobotPtr) 
+    void setPointsOnRobotPtr(std::shared_ptr<PointsOnRobot> newPointsOnRobotPtr) 
     { 
       pointsOnRobotPtr_ = newPointsOnRobotPtr;
-    }
-
-    void resetPointsOnRobot(ocs2_ext_collision::PointsOnRobot::points_radii_t& newPointsAndRadii)
-    {
-      pointsOnRobotPtr_.reset(new ocs2_ext_collision::PointsOnRobot(newPointsAndRadii));
-
-      if (pointsOnRobotPtr_->numOfPoints() > 0) 
-      {
-        esdfCachingServerPtr_.reset(new voxblox::EsdfCachingServer(ros::NodeHandle(), ros::NodeHandle("~")));
-        esdfCachingServerPtr_->getInterpolator();
-
-        pointsOnRobotPtr_->initialize("points_on_robot");
-      } 
-      else 
-      {
-        // if there are no points defined for collision checking, set this pointer to null to disable the visualization
-        pointsOnRobotPtr_ = nullptr;
-      }
     }
 
   private:
@@ -198,13 +183,13 @@ class MobileManipulatorInterface final : public RobotInterface
                                                           const std::string& libraryFolder, 
                                                           bool recompileLibraries);
 
-    std::unique_ptr<StateCost> getExtCollisionConstraint(const PinocchioInterface& pinocchioInterface, 
-                                                          const std::string& taskFile,
-                                                          const std::string& urdfFile, 
-                                                          const std::string& prefix, 
-                                                          bool useCaching,
-                                                          const std::string& libraryFolder, 
-                                                          bool recompileLibraries);
+    std::unique_ptr<StateCost> getExtCollisionConstraint(const PinocchioInterface& pinocchioInterface,
+                                                         const std::string& taskFile,
+                                                         const std::string& urdfFile, 
+                                                         const std::string& prefix, 
+                                                         bool useCaching,
+                                                         const std::string& libraryFolder, 
+                                                         bool recompileLibraries);
 
     std::unique_ptr<StateInputCost> getJointLimitSoftConstraint(const PinocchioInterface& pinocchioInterface, const std::string& taskFile);
 
@@ -222,7 +207,7 @@ class MobileManipulatorInterface final : public RobotInterface
 
     vector_t initialState_;
 
-    std::shared_ptr<ocs2_ext_collision::PointsOnRobot> pointsOnRobotPtr_;
+    std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_;
     std::shared_ptr<voxblox::EsdfCachingServer> esdfCachingServerPtr_;
 };
 

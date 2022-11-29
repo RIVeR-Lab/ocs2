@@ -35,18 +35,20 @@
 
 #include <visualization_msgs/MarkerArray.h>
 
+#include <pinocchio/multibody/geometry.hpp>
+
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
-#include <ocs2_ext_collision/KinematicsInterface.hpp>
+#include "ocs2_ext_collision/ExtCollisionPinocchioGeometryInterface.h"
+//#include <ocs2_ext_collision/KinematicsInterface.hpp>
 #include "ocs2_ext_collision/Definitions.h"
 
-
 //namespace ocs2 {
-//template <typename SCALAR_T>
+//template <typename ad_scalar_t>
 //class CppAdInterface;
 //}
 
-namespace ocs2_ext_collision {
+//namespace ocs2_ext_collision {
 
 /*
 struct PointsOnRobotConfig 
@@ -59,6 +61,10 @@ struct PointsOnRobotConfig
 
 class PointsOnRobot 
 {
+  using ad_interface = ocs2::CppAdInterface;
+  using ad_dynamic_vector_t = ad_interface::ad_vector_t;
+  using ad_scalar_t = ad_interface::ad_scalar_t;
+
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -68,10 +74,12 @@ class PointsOnRobot
 
     PointsOnRobot(const PointsOnRobot& rhs);
 
-    void initialize(const std::string& modelName, 
-                    const std::string& modelFolder = "/tmp/ocs2", 
-                    bool recompileLibraries = true,
-                    bool verbose = true);
+    void initialize(const ocs2::PinocchioInterface& pinocchioInterface, 
+                    ocs2::ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
+                    const std::string& modelName, 
+                    const std::string& modelFolder, 
+                    bool recompileLibraries, 
+                    bool verbose);
 
     Eigen::VectorXd getPoints(const Eigen::VectorXd& state) const;
 
@@ -83,10 +91,19 @@ class PointsOnRobot
 
     visualization_msgs::MarkerArray getVisualization(const Eigen::VectorXd& state) const;
 
-  private:
-    void setADInterfaces(const std::string& modelName, const std::string& modelFolder);
+    //void computeState2MultiplePointsOnRobot(const Eigen::Matrix<ad_scalar_t, -1, 1>& state,
+    Eigen::Matrix<ad_scalar_t, 3, -1> computeState2MultiplePointsOnRobot(const Eigen::Matrix<ad_scalar_t, -1, 1>& state,
+                                                                   const std::vector<std::vector<double>>& points) const;
+    
+    //void computeArmState2MultiplePointsOnRobot(const Eigen::Matrix<ad_scalar_t, 6, 1>& state,
+    Eigen::Matrix<ad_scalar_t, 3, -1> computeArmState2MultiplePointsOnRobot(const Eigen::Matrix<ad_scalar_t, 6, 1>& state, 
+                                                                      const std::vector<std::vector<double>>& points,
+                                                                      const Eigen::Matrix4d& transformBase_X_ArmBase, 
+                                                                      const Eigen::Matrix4d& transformToolMount_X_Endeffector,
+                                                                      const Eigen::Matrix<ad_scalar_t, 4, 4>& transformWorld_X_Base) const;
 
-    void setADInterfaces(PinocchioInterfaceCppAd& pinocchioInterfaceAd, 
+  private:
+    void setADInterfaces(ocs2::PinocchioInterfaceCppAd& pinocchioInterfaceAd, 
                          const std::string& modelName,
                          const std::string& modelFolder);
 
@@ -95,9 +112,9 @@ class PointsOnRobot
     void loadModelsIfAvailable(bool verbose);
 
     std::shared_ptr<ocs2::CppAdInterface> cppAdInterface_;
-    std::shared_ptr<const KinematicsInterface<CppAD::AD<CppAD::cg::CG<double>>>> kinematics_;
+    //std::shared_ptr<const ocs2_ext_collision::KinematicsInterface<CppAD::AD<CppAD::cg::CG<double>>>> kinematics_;
 
     std::vector<std::vector<double>> points_;
     Eigen::VectorXd radii_;
 };
-}  // namespace ocs2_ext_collision
+//}  // namespace ocs2_ext_collision

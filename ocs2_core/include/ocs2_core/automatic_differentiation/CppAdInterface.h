@@ -66,7 +66,10 @@ class CppAdInterface {
    * @param folderName : Folder to save library files to, either absolute of relative
    * @param compileFlags : Compilation flags for the model library.
    */
-  CppAdInterface(ad_parameterized_function_t adFunction, size_t variableDim, size_t parameterDim, std::string modelName,
+  CppAdInterface(ad_parameterized_function_t adFunction, 
+                 size_t variableDim, 
+                 size_t parameterDim, 
+                 std::string modelName,
                  std::string folderName = "/tmp/ocs2",
                  std::vector<std::string> compileFlags = {"-O3", "-g", "-march=native", "-mtune=native", "-ffast-math"});
 
@@ -79,7 +82,10 @@ class CppAdInterface {
    * @param folderName : Folder to save library files to, either absolute of relative
    * @param compileFlags : Compilation flags for the model library.
    */
-  CppAdInterface(ad_function_t adFunction, size_t variableDim, std::string modelName, std::string folderName = "/tmp/ocs2",
+  CppAdInterface(ad_function_t adFunction, 
+                 size_t variableDim, 
+                 std::string modelName, 
+                 std::string folderName = "/tmp/ocs2",
                  std::vector<std::string> compileFlags = {"-O3", "-g", "-march=native", "-mtune=native", "-ffast-math"});
 
   ~CppAdInterface() = default;

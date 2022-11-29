@@ -58,7 +58,7 @@ int main(int argc, char** argv)
   std::cerr << "Loading library folder: " << libFolder << std::endl;
   std::cerr << "Loading urdf file: " << urdfFile << std::endl;
   
-  ocs2_ext_collision::PointsOnRobot::points_radii_t pointsAndRadii(8);
+  PointsOnRobot::points_radii_t pointsAndRadii(8);
   if (nodeHandle.hasParam("/voxblox_node/collision_points")) 
   {
     using pair_t = std::pair<double, double>;
@@ -103,7 +103,13 @@ int main(int argc, char** argv)
   }
 
   // Robot interface
-  MobileManipulatorInterface interface(taskFile, libFolder, urdfFile);
+  std::cout << "" << std::endl;
+  std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] START INIT MobileManipulatorInterface" << std::endl;
+  MobileManipulatorInterface interface(taskFile, libFolder, urdfFile, pointsAndRadii);
+  std::cout << "[MobileManipulatorMpcNode::main] END INIT MobileManipulatorInterface" << std::endl;
+  std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+  std::cout << "" << std::endl;
 
   // ROS ReferenceManager
   std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(new ocs2::RosReferenceManager(robotName, interface.getReferenceManagerPtr()));
@@ -117,13 +123,21 @@ int main(int argc, char** argv)
                                interface.getInitializer());
   mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
 
+  std::cout << "[MobileManipulatorMpcNode::main] AFTER MPC INIT" << std::endl;
+
+  while(1)
+  {
+    ;
+  }
+
   // Launch MPC ROS node
   MPC_ROS_Interface mpcNode(mpc, robotName);
-  mpcNode.resetPointsOnRobot(pointsAndRadii);
-  mpcNode.launchNodes(nodeHandle);
+  //mpcNode.launchNodes(nodeHandle);
 
   std::cout << "[MobileManipulatorMpcNode::main] END" << std::endl;
   
+  
+
   // Successful exit
   return 0;
 }

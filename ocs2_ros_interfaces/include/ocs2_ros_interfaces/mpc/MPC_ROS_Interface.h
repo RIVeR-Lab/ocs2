@@ -65,124 +65,125 @@ namespace ocs2 {
 /**
  * This class implements MPC communication interface using ROS.
  */
-class MPC_ROS_Interface {
- public:
-  /**
-   * Constructor.
-   *
-   * @param [in] mpc: The underlying MPC class to be used.
-   * @param [in] topicPrefix: The robot's name.
-   */
-  explicit MPC_ROS_Interface(MPC_BASE& mpc, std::string topicPrefix = "anonymousRobot");
+class MPC_ROS_Interface 
+{
+  public:
+    /**
+     * Constructor.
+     *
+     * @param [in] mpc: The underlying MPC class to be used.
+     * @param [in] topicPrefix: The robot's name.
+     */
+    explicit MPC_ROS_Interface(MPC_BASE& mpc, std::string topicPrefix = "anonymousRobot");
 
-  /**
-   * Destructor.
-   */
-  virtual ~MPC_ROS_Interface();
+    /**
+     * Destructor.
+     */
+    virtual ~MPC_ROS_Interface();
 
-  /**
-   * Resets the class to its instantiation state.
-   *
-   * @param [in] initTargetTrajectories: The initial desired cost trajectories.
-   */
-  void resetMpcNode(TargetTrajectories&& initTargetTrajectories);
+    /**
+     * Resets the class to its instantiation state.
+     *
+     * @param [in] initTargetTrajectories: The initial desired cost trajectories.
+     */
+    void resetMpcNode(TargetTrajectories&& initTargetTrajectories);
 
-  /**
-   * Shutdowns the ROS node.
-   */
-  void shutdownNode();
+    /**
+     * Shutdowns the ROS node.
+     */
+    void shutdownNode();
 
-  /**
-   * Spins ROS.
-   */
-  void spin();
+    /**
+     * Spins ROS.
+     */
+    void spin();
 
-  /**
-   * This is the main routine which launches all the nodes required for MPC to run which includes:
-   * (1) The MPC policy publisher (either feedback or feedforward policy).
-   * (2) The observation subscriber which gets the current measured state to invoke the MPC run routine.
-   */
-  void launchNodes(ros::NodeHandle& nodeHandle);
+    /**
+     * This is the main routine which launches all the nodes required for MPC to run which includes:
+     * (1) The MPC policy publisher (either feedback or feedforward policy).
+     * (2) The observation subscriber which gets the current measured state to invoke the MPC run routine.
+     */
+    void launchNodes(ros::NodeHandle& nodeHandle);
 
- protected:
-  /**
-   * Callback to reset MPC.
-   *
-   * @param req: Service request.
-   * @param res: Service response.
-   */
-  bool resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_msgs::reset::Response& res);
+  protected:
+    /**
+     * Callback to reset MPC.
+     *
+     * @param req: Service request.
+     * @param res: Service response.
+     */
+    bool resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_msgs::reset::Response& res);
 
-  /**
-   * Creates MPC Policy message.
-   *
-   * @param [in] primalSolution: The policy data of the MPC.
-   * @param [in] commandData: The command data of the MPC.
-   * @param [in] performanceIndices: The performance indices data of the solver.
-   * @return MPC policy message.
-   */
-  static ocs2_msgs::mpc_flattened_controller createMpcPolicyMsg(const PrimalSolution& primalSolution, const CommandData& commandData,
-                                                                const PerformanceIndex& performanceIndices);
+    /**
+     * Creates MPC Policy message.
+     *
+     * @param [in] primalSolution: The policy data of the MPC.
+     * @param [in] commandData: The command data of the MPC.
+     * @param [in] performanceIndices: The performance indices data of the solver.
+     * @return MPC policy message.
+     */
+    static ocs2_msgs::mpc_flattened_controller createMpcPolicyMsg(const PrimalSolution& primalSolution, const CommandData& commandData,
+                                                                  const PerformanceIndex& performanceIndices);
 
-  /**
-   * Handles ROS publishing thread.
-   */
-  void publisherWorker();
+    /**
+     * Handles ROS publishing thread.
+     */
+    void publisherWorker();
 
-  /**
-   * Updates the buffer variables from the MPC object. This method is automatically called by advanceMpc()
-   *
-   * @param [in] mpcInitObservation: The observation used to run the MPC.
-   */
-  void copyToBuffer(const SystemObservation& mpcInitObservation);
+    /**
+     * Updates the buffer variables from the MPC object. This method is automatically called by advanceMpc()
+     *
+     * @param [in] mpcInitObservation: The observation used to run the MPC.
+     */
+    void copyToBuffer(const SystemObservation& mpcInitObservation);
 
-  /**
-   * The callback method which receives the current observation, invokes the MPC algorithm,
-   * and finally publishes the optimized policy.
-   *
-   * @param [in] msg: The observation message.
-   */
-  void mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg);
+    /**
+     * The callback method which receives the current observation, invokes the MPC algorithm,
+     * and finally publishes the optimized policy.
+     *
+     * @param [in] msg: The observation message.
+     */
+    void mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg);
 
- protected:
-  /*
-   * Variables
-   */
-  MPC_BASE& mpc_;
+  protected:
+    /*
+    * Variables
+    */
+    MPC_BASE& mpc_;
 
-  std::string topicPrefix_;
+    std::string topicPrefix_;
 
-  std::shared_ptr<ros::NodeHandle> nodeHandlerPtr_;
+    std::shared_ptr<ros::NodeHandle> nodeHandlerPtr_;
 
-  std::shared_ptr<voxblox::EsdfCachingServer> esdfCachingServer_;
+    std::shared_ptr<voxblox::EsdfCachingServer> esdfCachingServer_;
 
-  // Publishers and subscribers
-  ::ros::Subscriber mpcObservationSubscriber_;
-  ::ros::Subscriber mpcTargetTrajectoriesSubscriber_;
-  ::ros::Publisher mpcPolicyPublisher_;
-  ::ros::ServiceServer mpcResetServiceServer_;
+    // Publishers and subscribers
+    ::ros::Subscriber mpcObservationSubscriber_;
+    ::ros::Subscriber mpcTargetTrajectoriesSubscriber_;
+    ::ros::Publisher mpcPolicyPublisher_;
+    ::ros::ServiceServer mpcResetServiceServer_;
 
-  std::unique_ptr<CommandData> bufferCommandPtr_;
-  std::unique_ptr<CommandData> publisherCommandPtr_;
-  std::unique_ptr<PrimalSolution> bufferPrimalSolutionPtr_;
-  std::unique_ptr<PrimalSolution> publisherPrimalSolutionPtr_;
-  std::unique_ptr<PerformanceIndex> bufferPerformanceIndicesPtr_;
-  std::unique_ptr<PerformanceIndex> publisherPerformanceIndicesPtr_;
+    std::unique_ptr<CommandData> bufferCommandPtr_;
+    std::unique_ptr<CommandData> publisherCommandPtr_;
+    std::unique_ptr<PrimalSolution> bufferPrimalSolutionPtr_;
+    std::unique_ptr<PrimalSolution> publisherPrimalSolutionPtr_;
+    std::unique_ptr<PerformanceIndex> bufferPerformanceIndicesPtr_;
+    std::unique_ptr<PerformanceIndex> publisherPerformanceIndicesPtr_;
 
-  mutable std::mutex bufferMutex_;  // for policy variables with prefix (buffer*)
+    mutable std::mutex bufferMutex_;  // for policy variables with prefix (buffer*)
 
-  // multi-threading for publishers
-  std::atomic_bool terminateThread_{false};
-  std::atomic_bool readyToPublish_{false};
-  std::thread publisherWorker_;
-  std::mutex publisherMutex_;
-  std::condition_variable msgReady_;
+    // multi-threading for publishers
+    std::atomic_bool terminateThread_{false};
+    std::atomic_bool readyToPublish_{false};
+    std::thread publisherWorker_;
+    std::mutex publisherMutex_;
+    std::condition_variable msgReady_;
 
-  benchmark::RepeatedTimer mpcTimer_;
+    benchmark::RepeatedTimer mpcTimer_;
 
-  // MPC reset
-  std::mutex resetMutex_;
-  std::atomic_bool resetRequestedEver_{false};
+    // MPC reset
+    std::mutex resetMutex_;
+    std::atomic_bool resetRequestedEver_{false};
 };
 
 }  // namespace ocs2

@@ -42,17 +42,25 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SelfCollisionCppAd::SelfCollisionCppAd(const PinocchioInterface& pinocchioInterface, PinocchioGeometryInterface pinocchioGeometryInterface,
-                                       scalar_t minimumDistance, const std::string& modelName, const std::string& modelFolder,
-                                       bool recompileLibraries, bool verbose)
-    : pinocchioGeometryInterface_(std::move(pinocchioGeometryInterface)), minimumDistance_(minimumDistance) 
+SelfCollisionCppAd::SelfCollisionCppAd(const PinocchioInterface& pinocchioInterface, 
+                                       PinocchioGeometryInterface pinocchioGeometryInterface,
+                                       scalar_t minimumDistance, 
+                                       const std::string& modelName, 
+                                       const std::string& modelFolder,
+                                       bool recompileLibraries, 
+                                       bool verbose)
+  : pinocchioGeometryInterface_(std::move(pinocchioGeometryInterface)), minimumDistance_(minimumDistance) 
 {
   PinocchioInterfaceCppAd pinocchioInterfaceAd = pinocchioInterface.toCppAd();
   setADInterfaces(pinocchioInterfaceAd, modelName, modelFolder);
-  if (recompileLibraries) {
+  
+  if (recompileLibraries)
+  {
     cppAdInterfaceDistanceCalculation_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
     cppAdInterfaceLinkPoints_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
-  } else {
+  }
+  else 
+  {
     cppAdInterfaceDistanceCalculation_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
     cppAdInterfaceLinkPoints_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
   }

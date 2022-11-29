@@ -9,7 +9,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_robotic_tools
   ocs2_pinocchio_interface
-  ocs2_self_collision
+  #ocs2_self_collision
   voxblox
   voxblox_ros
 )
@@ -74,6 +74,7 @@ add_library(${PROJECT_NAME}
   src/ExtCollisionCppAd.cpp
   src/ExtCollisionConstraint.cpp
   src/ExtCollisionConstraintCppAd.cpp
+  src/ExtCollisionPinocchioGeometryInterface.cpp
   src/PointsOnRobot.cpp
   src/KinematicsInterface.cpp
 )
