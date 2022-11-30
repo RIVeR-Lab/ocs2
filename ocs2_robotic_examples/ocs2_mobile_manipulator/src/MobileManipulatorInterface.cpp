@@ -182,12 +182,16 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   // external-collision avoidance constraint
   bool activateExtCollision = false;
   loadData::loadPtreeValue(pt, activateExtCollision, "extCollision.activate", false);
+
+  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] activateExtCollision: " << activateExtCollision << std::endl;
+
   if (activateExtCollision) 
   {
     std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] activateExtCollision: " << activateExtCollision << std::endl;
 
     pointsOnRobotPtr_.reset(new PointsOnRobot(pointsAndRadii));
 
+    /*
     if (pointsOnRobotPtr_->numOfPoints() > 0) 
     {
       std::cout << "[MobileManipulatorInterface::resetPointsOnRobot] pointsOnRobotPtr_ TRUE" << std::endl;
@@ -204,7 +208,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
                                     libraryFolder, 
                                     recompileLibraries, 
                                     false);
-      */
+      * /
     } 
     else 
     {
@@ -220,6 +224,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
                                                                                      usePreComputation,
                                                                                      libraryFolder, 
                                                                                      recompileLibraries));
+    */
   }
 
   // Dynamics
@@ -463,7 +468,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
   //loadData::loadStdVectorOfPair(taskFile, prefix + ".collisionLinkPairs", collisionLinkPairs, true);
   std::cerr << " #### =============================================================================\n";
 
-  ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface(pinocchioInterface, collisionLinkPairs, collisionObjectPairs);
+  ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface(pinocchioInterface);
 
   //const size_t numCollisionPairs = geometryInterface.getNumCollisionPairs();
   //std::cerr << "ExtCollision: Testing for " << numCollisionPairs << " collision pairs\n";

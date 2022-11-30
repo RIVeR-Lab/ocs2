@@ -202,6 +202,24 @@ void ExtCollisionCppAd::setADInterfaces(PinocchioInterfaceCppAd& pinocchioInterf
                                         const std::string& modelName,
                                         const std::string& modelFolder) 
 {
+  std::cout << "[ExtCollisionCppAd::setADInterfaces] START" << std::endl;
+  using ad_interface = ocs2::CppAdInterface;
+  using ad_dynamic_vector_t = ad_interface::ad_vector_t;
+  //using ad_scalar_t = ad_interface::ad_scalar_t;
+
+  const size_t stateDim = pinocchioInterfaceAd.getModel().nq;
+
+  auto state2MultiplePointsAd = [&, this](const ad_dynamic_vector_t& x, ad_dynamic_vector_t& y) 
+  {
+    Eigen::Matrix<ad_scalar_t, 3, -1> matrixResult = computeState2MultiplePointsOnRobot(x, points_);
+    y = Eigen::Map<Eigen::Matrix<ad_scalar_t, -1, 1>>(matrixResult.data(), matrixResult.size());
+  };
+  cppAdInterface_.reset(new ocs2::CppAdInterface(state2MultiplePointsAd, 
+                                                 stateDim, 
+                                                 modelName + "_intermediate", 
+                                                 modelFolder));
+
+  /*
   const size_t stateDim = pinocchioInterfaceAd.getModel().nq;
   const size_t numDistanceResults = extCollisionPinocchioGeometryInterface_.getGeometryModel().collisionPairs.size();
 
@@ -227,6 +245,173 @@ void ExtCollisionCppAd::setADInterfaces(PinocchioInterfaceCppAd& pinocchioInterf
                                                      numDistanceResults * numberOfParamsPerResult_, 
                                                      modelName + "_links_intermediate",
                                                      modelFolder));
+  */
+  std::cout << "[ExtCollisionCppAd::setADInterfaces] END" << std::endl;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+Eigen::Matrix<ad_scalar_t, 3, -1> ExtCollisionCppAd::computeState2MultiplePointsOnRobot(const Eigen::Matrix<ad_scalar_t, -1, 1>& state,  
+                                                                                        const std::vector<std::vector<double>>& points) const 
+{
+  std::cout << "[ExtCollisionCppAd::computeState2MultiplePointsOnRobot] START" << std::endl;
+
+  std::cout << "state size: " << state.size() << std::endl;
+
+
+  int dim = 0;
+  for (int i = 0; i < points.size(); i++) 
+  {
+    for (int j = 0; j < points[i].size(); j++) 
+    {
+      dim++;
+    }
+  }
+
+  if (dim == 0) 
+  {
+    return Eigen::Matrix<ad_scalar_t, 3, -1>(3, 0);
+  }
+
+  Eigen::Quaternion<ad_scalar_t> baseOrientation;
+  baseOrientation.coeffs() = state.template head<7>().template head<4>();
+  const Eigen::Matrix<ad_scalar_t, 3, 1>& basePosition = state.template head<7>().template tail<3>();
+  const Eigen::Matrix<ad_scalar_t, 6, 1>& armState = state.template tail<6>();
+
+  Eigen::Matrix<ad_scalar_t, 4, 4> worldXFrBase = Eigen::Matrix<ad_scalar_t, 4, 4>::Identity();
+  worldXFrBase.template topLeftCorner<3, 3>() = baseOrientation.toRotationMatrix();
+  worldXFrBase.template topRightCorner<3, 1>() = basePosition;
+
+  Eigen::Matrix4d transformBase_X_ArmMount;
+  Eigen::Matrix4d transformToolMount_X_Endeffector;
+
+  std::cout << "[ExtCollisionCppAd::computeState2MultiplePointsOnRobot] END" << std::endl;
+
+  return computeArmState2MultiplePointsOnRobot(armState, 
+                                               points, 
+                                               transformBase_X_ArmMount, 
+                                               transformToolMount_X_Endeffector,
+                                               worldXFrBase);
+}
+
+Eigen::Matrix<ad_scalar_t, 3, -1> ExtCollisionCppAd::computeArmState2MultiplePointsOnRobot(const Eigen::Matrix<ad_scalar_t, 6, 1>& state,  
+                                                                                                              const std::vector<std::vector<double>>& points,
+                                                                                                              const Eigen::Matrix4d& transformBase_X_ArmBase, 
+                                                                                                              const Eigen::Matrix4d& transformToolMount_X_Endeffector,
+                                                                                                              const Eigen::Matrix<ad_scalar_t, 4, 4>& transformWorld_X_Base) const
+{
+  std::cout << "[ExtCollisionCppAd::computeArmState2MultiplePointsOnRobot] START" << std::endl;
+
+  int dim = 0;
+  for (int i = 0; i < points.size(); i++) 
+  {
+    for (int j = 0; j < points[i].size(); j++) 
+    {
+      dim++;
+    }
+  }
+
+  if (dim == 0) 
+  {
+    return Eigen::Matrix<ad_scalar_t, 3, -1>(3, 0);
+  }
+
+  Eigen::Matrix<ad_scalar_t, 3, -1> result(3, dim);
+  int resultIndex = 0;
+  int linkIndex;
+
+  Eigen::Matrix<ad_scalar_t, 4, 4> transformWorld_X_Endeffector = transformWorld_X_Base;
+
+  /*
+  typedef typename iit::rbd::tpl::TraitSelector<ad_scalar_t>::Trait trait_t;
+  typename iit::mabi::tpl::HomogeneousTransforms<trait_t>::Type_fr_arm_mount_X_fr_SHOULDER armMountXFrShoulderXFrShoulder;
+  typename iit::mabi::tpl::HomogeneousTransforms<trait_t>::Type_fr_SHOULDER_X_fr_ARM shoulderXFrArm;
+  typename iit::mabi::tpl::HomogeneousTransforms<trait_t>::Type_fr_ARM_X_fr_ELBOW armXFrElbow;
+  typename iit::mabi::tpl::HomogeneousTransforms<trait_t>::Type_fr_ELBOW_X_fr_FOREARM elbowXFrForearm;
+  typename iit::mabi::tpl::HomogeneousTransforms<trait_t>::Type_fr_FOREARM_X_fr_WRIST_1 forearmXFrWrist1;
+  typename iit::mabi::tpl::HomogeneousTransforms<trait_t>::Type_fr_WRIST_1_X_fr_WRIST_2 wrist1XFrWrist2;
+  */
+
+  Eigen::Matrix<ad_scalar_t, 4, 4> nextStep = transformBase_X_ArmBase.cast<ad_scalar_t>();
+  for (int i = 0; i < points[linkIndex].size(); i++) 
+  {
+    Eigen::Matrix<ad_scalar_t, 4, 1> directionVector = nextStep.col(3);
+    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t)points[linkIndex][i];
+    result.col(resultIndex++) = (transformWorld_X_Endeffector * directionVector).template head<3>();
+  }
+  linkIndex++;
+  transformWorld_X_Endeffector = transformWorld_X_Endeffector * nextStep;
+
+
+/*
+  nextStep = armMountXFrShoulderXFrShoulder.update(state);
+  for (int i = 0; i < points[linkIndex].size(); i++) {
+    Eigen::Matrix<ad_scalar_t, 4, 1> directionVector = nextStep.col(3);
+    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t)points[linkIndex][i];
+    result.col(resultIndex++) = (transformWorld_X_Endeffector * directionVector).template head<3>();
+  }
+  linkIndex++;
+  transformWorld_X_Endeffector = transformWorld_X_Endeffector * nextStep;
+
+  nextStep = shoulderXFrArm.update(state);
+  for (int i = 0; i < points[linkIndex].size(); i++) {
+    Eigen::Matrix<ad_scalar_t, 4, 1> directionVector = nextStep.col(3);
+    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t)points[linkIndex][i];
+    result.col(resultIndex++) = (transformWorld_X_Endeffector * directionVector).template head<3>();
+  }
+  linkIndex++;
+  transformWorld_X_Endeffector = transformWorld_X_Endeffector * nextStep;
+
+  nextStep = armXFrElbow.update(state);
+  for (int i = 0; i < points[linkIndex].size(); i++) {
+    Eigen::Matrix<ad_scalar_t, 4, 1> directionVector = nextStep.col(3);
+    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t)points[linkIndex][i];
+    result.col(resultIndex++) = (transformWorld_X_Endeffector * directionVector).template head<3>();
+  }
+  linkIndex++;
+  transformWorld_X_Endeffector = transformWorld_X_Endeffector * nextStep;
+
+  nextStep = elbowXFrForearm.update(state);
+  for (int i = 0; i < points[linkIndex].size(); i++) {
+    Eigen::Matrix<ad_scalar_t, 4, 1> directionVector = nextStep.col(3);
+    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t)points[linkIndex][i];
+    result.col(resultIndex++) = (transformWorld_X_Endeffector * directionVector).template head<3>();
+  }
+  linkIndex++;
+  transformWorld_X_Endeffector = transformWorld_X_Endeffector * nextStep;
+
+  nextStep = forearmXFrWrist1.update(state);
+  for (int i = 0; i < points[linkIndex].size(); i++) {
+    Eigen::Matrix<ad_scalar_t, 4, 1> directionVector = nextStep.col(3);
+    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t)points[linkIndex][i];
+    result.col(resultIndex++) = (transformWorld_X_Endeffector * directionVector).template head<3>();
+  }
+  linkIndex++;
+  transformWorld_X_Endeffector = transformWorld_X_Endeffector * nextStep;
+
+  nextStep = wrist1XFrWrist2.update(state);
+  for (int i = 0; i < points[linkIndex].size(); i++) {
+    Eigen::Matrix<ad_scalar_t, 4, 1> directionVector = nextStep.col(3);
+    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t)points[linkIndex][i];
+    result.col(resultIndex++) = (transformWorld_X_Endeffector * directionVector).template head<3>();
+  }
+  linkIndex++;
+  transformWorld_X_Endeffector = transformWorld_X_Endeffector * nextStep;
+
+  nextStep = transformToolMount_X_Endeffector.cast<ad_scalar_t>();
+  for (int i = 0; i < points[linkIndex].size(); i++) {
+    Eigen::Matrix<ad_scalar_t, 4, 1> directionVector = nextStep.col(3);
+    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t)points[linkIndex][i];
+    result.col(resultIndex++) = (transformWorld_X_Endeffector * directionVector).template head<3>();
+  }
+  linkIndex++;
+  transformWorld_X_Endeffector = transformWorld_X_Endeffector * nextStep;
+  */
+
+  std::cout << "[ExtCollisionCppAd::computeArmState2MultiplePointsOnRobot] END" << std::endl;
+
+  return result;
 }
 
 } /* namespace ocs2 */

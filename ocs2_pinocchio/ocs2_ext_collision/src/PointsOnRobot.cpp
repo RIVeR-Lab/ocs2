@@ -38,6 +38,8 @@ PointsOnRobot::PointsOnRobot(const PointsOnRobot& rhs)
 PointsOnRobot::PointsOnRobot(const PointsOnRobot::points_radii_t& points_radii)
   : points_(), radii_()
 {
+  std::cout << "[PointsOnRobot::PointsOnRobot] START" << std::endl;
+
   const auto& pointsAndRadii = points_radii;
 
   int numPoints = 0;
@@ -61,6 +63,8 @@ PointsOnRobot::PointsOnRobot(const PointsOnRobot::points_radii_t& points_radii)
       radii_(idx++) = pointRadius.second;
     }
   }
+
+  std::cout << "[PointsOnRobot::PointsOnRobot] END" << std::endl;
 }
 
 void PointsOnRobot::initialize(const ocs2::PinocchioInterface& pinocchioInterface, 

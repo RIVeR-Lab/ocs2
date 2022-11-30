@@ -42,6 +42,10 @@ class ExtCollisionCppAd
     using vector3_t = Eigen::Matrix<ad_scalar_t, 3, 1>;
     using quaternion_t = Eigen::Quaternion<ad_scalar_t>;
 
+    using ad_interface = ocs2::CppAdInterface;
+    using ad_dynamic_vector_t = ad_interface::ad_vector_t;
+    //using ad_scalar_t = ad_interface::ad_scalar_t;
+
     /**
      * Constructor
      *
@@ -116,14 +120,25 @@ class ExtCollisionCppAd
                                       const ad_vector_t& state,
                                       const ad_vector_t& points) const;
 
+    Eigen::Matrix<ad_scalar_t, 3, -1> computeState2MultiplePointsOnRobot(const Eigen::Matrix<ad_scalar_t, -1, 1>& state,  
+                                                                         const std::vector<std::vector<double>>& points) const;
+
+    Eigen::Matrix<ad_scalar_t, 3, -1> computeArmState2MultiplePointsOnRobot(const Eigen::Matrix<ad_scalar_t, 6, 1>& state,  
+                                                                            const std::vector<std::vector<double>>& points,
+                                                                            const Eigen::Matrix4d& transformBase_X_ArmBase, 
+                                                                            const Eigen::Matrix4d& transformToolMount_X_Endeffector,
+                                                                            const Eigen::Matrix<ad_scalar_t, 4, 4>& transformWorld_X_Base) const;
+
     // Number of params per result = 3 + 3 + 1 (nearest point 1, nearest point 2, sign indicator)
     const size_t numberOfParamsPerResult_ = 7;
 
+    std::shared_ptr<ocs2::CppAdInterface> cppAdInterface_;
     std::unique_ptr<CppAdInterface> cppAdInterfaceDistanceCalculation_;
     std::unique_ptr<CppAdInterface> cppAdInterfaceLinkPoints_;
 
     ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface_;
     scalar_t minimumDistance_;
+    std::vector<std::vector<double>> points_;
 };
 
 } /* namespace ocs2 */
