@@ -36,41 +36,24 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CppAdInterface::CppAdInterface(ad_parameterized_function_t adFunction, 
-                               size_t variableDim, 
-                               size_t parameterDim, 
-                               std::string modelName,
-                               std::string folderName, 
-                               std::vector<std::string> compileFlags)
+CppAdInterface::CppAdInterface(ad_parameterized_function_t adFunction, size_t variableDim, size_t parameterDim, std::string modelName,
+                               std::string folderName, std::vector<std::string> compileFlags)
     : adFunction_(std::move(adFunction)),
       variableDim_(variableDim),
       parameterDim_(parameterDim),
       modelName_(std::move(modelName)),
       folderName_(std::move(folderName)),
-      compileFlags_(std::move(compileFlags)) 
-{
+      compileFlags_(std::move(compileFlags)) {
   setFolderNames();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CppAdInterface::CppAdInterface(ad_function_t adFunction, 
-                               size_t variableDim, 
-                               std::string modelName, 
-                               std::string folderName,
+CppAdInterface::CppAdInterface(ad_function_t adFunction, size_t variableDim, std::string modelName, std::string folderName,
                                std::vector<std::string> compileFlags)
-  : CppAdInterface([adFunction](const ad_vector_t& x, 
-                                const ad_vector_t& p, 
-                                ad_vector_t& y) 
-                    { 
-                      adFunction(x, y); 
-                    }, 
-                   variableDim, 
-                   0,
-                   std::move(modelName), 
-                   std::move(folderName), 
-                   std::move(compileFlags)){};
+    : CppAdInterface([adFunction](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) { adFunction(x, y); }, variableDim, 0,
+                     std::move(modelName), std::move(folderName), std::move(compileFlags)){};
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -85,13 +68,9 @@ CppAdInterface::CppAdInterface(const CppAdInterface& rhs)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CppAdInterface::createModels(ApproximationOrder approximationOrder, bool verbose) 
-{
-  std::cout << "[CppAdInterface::createModels] START" << std::endl;
-
+void CppAdInterface::createModels(ApproximationOrder approximationOrder, bool verbose) {
   createFolderStructure();
 
-  /*
   // set and declare independent variables and start tape recording
   ad_vector_t xp(variableDim_ + parameterDim_);
   xp.setOnes();  // Ones are better than zero, to prevent devision by zero in taping
@@ -138,9 +117,6 @@ void CppAdInterface::createModels(ApproximationOrder approximationOrder, bool ve
   }
   boost::filesystem::rename(libraryName_ + tmpName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION,
                             libraryName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION);
-  */
-
-  std::cout << "[CppAdInterface::createModels] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -333,14 +309,9 @@ bool CppAdInterface::isLibraryAvailable() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CppAdInterface::createFolderStructure() const 
-{
-  std::cout << "[CppAdInterface::createFolderStructure] START" << std::endl;
-  //std::cout << "[CppAdInterface::createFolderStructure] libraryFolder_: "  << libraryFolder_ << std::endl;
-  //std::cout << "[CppAdInterface::createFolderStructure] tmpFolder_: " << tmpFolder_  << std::endl;
-  //boost::filesystem::create_directories(libraryFolder_);
-  //boost::filesystem::create_directories(tmpFolder_);
-  std::cout << "[CppAdInterface::createFolderStructure] END" << std::endl;
+void CppAdInterface::createFolderStructure() const {
+  boost::filesystem::create_directories(libraryFolder_);
+  boost::filesystem::create_directories(tmpFolder_);
 }
 
 /******************************************************************************************************/

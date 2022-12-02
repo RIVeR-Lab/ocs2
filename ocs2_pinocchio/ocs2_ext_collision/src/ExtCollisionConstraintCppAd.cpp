@@ -52,7 +52,8 @@ ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(PinocchioInterface pino
                                                          scalar_t minimumDistance,
                                                          const std::string& modelName, 
                                                          const std::string& modelFolder,
-                                                         bool recompileLibraries, bool verbose)
+                                                         bool recompileLibraries, 
+                                                         bool verbose)
   : ExtCollisionConstraintCppAd(std::move(pinocchioInterface), 
                                 mapping, 
                                 std::move(extCollisionPinocchioGeometryInterface), 
@@ -68,15 +69,15 @@ ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(PinocchioInterface pino
 /******************************************************************************************************/
 /******************************************************************************************************/
 ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(PinocchioInterface pinocchioInterface,
-                                                           const PinocchioStateInputMapping<scalar_t>& mapping,
-                                                           ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
-                                                           std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
-                                                           scalar_t minimumDistance,
-                                                           update_pinocchio_interface_callback updateCallback, 
-                                                           const std::string& modelName,
-                                                           const std::string& modelFolder, 
-                                                           bool recompileLibraries, 
-                                                           bool verbose)
+                                                         const PinocchioStateInputMapping<scalar_t>& mapping,
+                                                         ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
+                                                         std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
+                                                         scalar_t minimumDistance,
+                                                         update_pinocchio_interface_callback updateCallback, 
+                                                         const std::string& modelName,
+                                                         const std::string& modelFolder, 
+                                                         bool recompileLibraries, 
+                                                         bool verbose)
   : StateConstraint(ConstraintOrder::Linear),
     pinocchioInterface_(std::move(pinocchioInterface)),
     extCollision_(pinocchioInterface_, 
@@ -90,7 +91,11 @@ ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(PinocchioInterface pino
     mappingPtr_(mapping.clone()),
     updateCallback_(std::move(updateCallback)) 
 {
+  std::cout << "[ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd] START" << std::endl;
+
   mappingPtr_->setPinocchioInterface(pinocchioInterface_);
+
+  std::cout << "[ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -102,7 +107,7 @@ ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(const ExtCollisionConst
       extCollision_(rhs.extCollision_),
       mappingPtr_(rhs.mappingPtr_->clone()),
       updateCallback_(rhs.updateCallback_) {
-  mappingPtr_->setPinocchioInterface(pinocchioInterface_);
+      mappingPtr_->setPinocchioInterface(pinocchioInterface_);
 }
 
 /******************************************************************************************************/

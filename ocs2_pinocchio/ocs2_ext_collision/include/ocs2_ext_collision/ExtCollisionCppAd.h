@@ -111,14 +111,17 @@ class ExtCollisionCppAd
     // From the current state of the robot, and the closest points in world frame, compute the positions of the points in link frame
     // In this case : size of state = stateDim, size of points = 3*2*number of collision pairs + 1 (for sign indicator)
     // Returns a vector that is of length |3*2*number of collision pairs + 1 (for sign indicator)|
+    /*
     ad_vector_t computeLinkPointsAd(PinocchioInterfaceCppAd& pinocchioInterfaceAd, const ad_vector_t& state, const ad_vector_t& points) const;
-    
+    */
     // From the current state of the robot, and the closest points in link frames, calculate the distances wrt state
     // In this case : size of state = stateDim, size of points = 3*2*number of collision pairs + 1 (for sign indicator)
     // Returns a vector that is of length |collisionPairs|
+    /*
     ad_vector_t distanceCalculationAd(PinocchioInterfaceCppAd& pinocchioInterfaceAd, 
                                       const ad_vector_t& state,
                                       const ad_vector_t& points) const;
+    */
 
     Eigen::Matrix<ad_scalar_t, 3, -1> computeState2MultiplePointsOnRobot(const Eigen::Matrix<ad_scalar_t, -1, 1>& state,  
                                                                          const std::vector<std::vector<double>>& points) const;
@@ -133,8 +136,8 @@ class ExtCollisionCppAd
     const size_t numberOfParamsPerResult_ = 7;
 
     std::shared_ptr<ocs2::CppAdInterface> cppAdInterface_;
-    std::unique_ptr<CppAdInterface> cppAdInterfaceDistanceCalculation_;
-    std::unique_ptr<CppAdInterface> cppAdInterfaceLinkPoints_;
+    //std::unique_ptr<CppAdInterface> cppAdInterfaceDistanceCalculation_;
+    //std::unique_ptr<CppAdInterface> cppAdInterfaceLinkPoints_;
 
     ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface_;
     scalar_t minimumDistance_;

@@ -52,9 +52,24 @@ ExtCollisionCppAd::ExtCollisionCppAd(const PinocchioInterface& pinocchioInterfac
                                      bool verbose)
   : extCollisionPinocchioGeometryInterface_(std::move(extCollisionPinocchioGeometryInterface)), minimumDistance_(minimumDistance) 
 {
+  std::cout << "[ExtCollisionCppAd::ExtCollisionCppAd] START" << std::endl;
+
   PinocchioInterfaceCppAd pinocchioInterfaceAd = pinocchioInterface.toCppAd();
+
   setADInterfaces(pinocchioInterfaceAd, modelName, modelFolder);
   
+  std::cout << "[ExtCollisionCppAd::ExtCollisionCppAd] recompileLibraries: " << recompileLibraries << std::endl;
+
+  if (recompileLibraries) 
+  {
+    cppAdInterface_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
+  } 
+  else 
+  {
+    cppAdInterface_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
+  }
+
+  /*
   if (recompileLibraries) 
   {
     cppAdInterfaceDistanceCalculation_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
@@ -65,6 +80,9 @@ ExtCollisionCppAd::ExtCollisionCppAd(const PinocchioInterface& pinocchioInterfac
     cppAdInterfaceDistanceCalculation_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
     cppAdInterfaceLinkPoints_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
   }
+  */
+
+  std::cout << "[ExtCollisionCppAd::ExtCollisionCppAd] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -72,9 +90,11 @@ ExtCollisionCppAd::ExtCollisionCppAd(const PinocchioInterface& pinocchioInterfac
 /******************************************************************************************************/
 ExtCollisionCppAd::ExtCollisionCppAd(const ExtCollisionCppAd& rhs)
   : minimumDistance_(rhs.minimumDistance_),
+    points_(rhs.points_),
     extCollisionPinocchioGeometryInterface_(rhs.extCollisionPinocchioGeometryInterface_),
-    cppAdInterfaceDistanceCalculation_(new CppAdInterface(*rhs.cppAdInterfaceDistanceCalculation_)),
-    cppAdInterfaceLinkPoints_(new CppAdInterface(*rhs.cppAdInterfaceLinkPoints_)) {}
+    cppAdInterface_(new CppAdInterface(*rhs.cppAdInterface_)){}
+    //cppAdInterfaceDistanceCalculation_(new CppAdInterface(*rhs.cppAdInterfaceDistanceCalculation_)),
+    //cppAdInterfaceLinkPoints_(new CppAdInterface(*rhs.cppAdInterfaceLinkPoints_)) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -98,6 +118,7 @@ vector_t ExtCollisionCppAd::getValue(const PinocchioInterface& pinocchioInterfac
 std::pair<vector_t, matrix_t> ExtCollisionCppAd::getLinearApproximation(const PinocchioInterface& pinocchioInterface,
                                                                         const vector_t& q) const 
 {
+  /*
   const std::vector<hpp::fcl::DistanceResult> distanceArray = extCollisionPinocchioGeometryInterface_.computeDistances(pinocchioInterface);
 
   vector_t pointsInWorldFrame(distanceArray.size() * numberOfParamsPerResult_);
@@ -107,10 +128,14 @@ std::pair<vector_t, matrix_t> ExtCollisionCppAd::getLinearApproximation(const Pi
     pointsInWorldFrame.segment<3>(i * numberOfParamsPerResult_ + 3) = distanceArray[i].nearest_points[1];
     pointsInWorldFrame[i * numberOfParamsPerResult_ + 6] = distanceArray[i].min_distance >= 0 ? 1.0 : -1.0;
   }
+  */
 
-  const auto pointsInLinkFrame = cppAdInterfaceLinkPoints_ -> getFunctionValue(q, pointsInWorldFrame);
-  const auto f = cppAdInterfaceDistanceCalculation_ -> getFunctionValue(q, pointsInLinkFrame);
-  const auto dfdq = cppAdInterfaceDistanceCalculation_ -> getJacobian(q, pointsInLinkFrame);
+  const auto f = cppAdInterface_ -> getFunctionValue(q);
+  const auto dfdq = cppAdInterface_ -> getJacobian(q);
+
+  //const auto pointsInLinkFrame = cppAdInterfaceLinkPoints_ -> getFunctionValue(q, pointsInWorldFrame);
+  //const auto f = cppAdInterfaceDistanceCalculation_ -> getFunctionValue(q, pointsInLinkFrame);
+  //const auto dfdq = cppAdInterfaceDistanceCalculation_ -> getJacobian(q, pointsInLinkFrame);
 
   return std::make_pair(f, dfdq);
 }
@@ -118,6 +143,7 @@ std::pair<vector_t, matrix_t> ExtCollisionCppAd::getLinearApproximation(const Pi
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+/*
 ad_vector_t ExtCollisionCppAd::computeLinkPointsAd(PinocchioInterfaceCppAd& pinocchioInterfaceAd, 
                                                    const ad_vector_t& state,
                                                    const ad_vector_t& points) const 
@@ -158,10 +184,12 @@ ad_vector_t ExtCollisionCppAd::computeLinkPointsAd(PinocchioInterfaceCppAd& pino
   }
   return pointsInLinkFrames;
 }
+*/
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+/*
 ad_vector_t ExtCollisionCppAd::distanceCalculationAd(PinocchioInterfaceCppAd& pinocchioInterfaceAd, 
                                                      const ad_vector_t& state,
                                                      const ad_vector_t& points) const 
@@ -194,6 +222,7 @@ ad_vector_t ExtCollisionCppAd::distanceCalculationAd(PinocchioInterfaceCppAd& pi
   }
   return results;
 }
+*/
 
 /******************************************************************************************************/
 /******************************************************************************************************/

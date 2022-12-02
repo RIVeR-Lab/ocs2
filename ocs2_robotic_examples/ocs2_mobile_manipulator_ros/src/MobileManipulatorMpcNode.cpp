@@ -122,22 +122,14 @@ int main(int argc, char** argv)
                                interface.getOptimalControlProblem(), 
                                interface.getInitializer());
   mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
-
-  std::cout << "[MobileManipulatorMpcNode::main] AFTER MPC INIT" << std::endl;
-
-  while(1)
-  {
-    ;
-  }
+  //while(1){;}
 
   // Launch MPC ROS node
   MPC_ROS_Interface mpcNode(mpc, robotName);
-  //mpcNode.launchNodes(nodeHandle);
+  mpcNode.launchNodes(nodeHandle);
 
   std::cout << "[MobileManipulatorMpcNode::main] END" << std::endl;
   
-  
-
   // Successful exit
   return 0;
 }
