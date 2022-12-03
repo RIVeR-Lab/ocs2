@@ -50,7 +50,7 @@ ExtCollisionCppAd::ExtCollisionCppAd(const PinocchioInterface& pinocchioInterfac
                                      const std::string& modelFolder,
                                      bool recompileLibraries, 
                                      bool verbose)
-  : extCollisionPinocchioGeometryInterface_(std::move(extCollisionPinocchioGeometryInterface)), minimumDistance_(minimumDistance) 
+  : extCollisionPinocchioGeometryInterface_(std::move(extCollisionPinocchioGeometryInterface)), pointsOnRobotPtr_(pointsOnRobotPtr) 
 {
   std::cout << "[ExtCollisionCppAd::ExtCollisionCppAd] START" << std::endl;
 

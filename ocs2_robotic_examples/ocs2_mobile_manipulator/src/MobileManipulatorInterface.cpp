@@ -188,14 +188,19 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
     std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] activateExtCollision: " << activateExtCollision << std::endl;
 
     pointsOnRobotPtr_.reset(new PointsOnRobot(pointsAndRadii));
-
     
     if (pointsOnRobotPtr_->numOfPoints() > 0) 
     {
       std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] pointsOnRobotPtr_ TRUE" << std::endl;
 
       esdfCachingServerPtr_.reset(new voxblox::EsdfCachingServer(ros::NodeHandle(), ros::NodeHandle("~")));
-      esdfCachingServerPtr_->getInterpolator();
+      //esdfCachingServerPtr_->getInterpolator();
+
+      pointsOnRobotPtr_->initialize(*pinocchioInterfacePtr_,
+                                    "points_on_robot",
+                                    libraryFolder,
+                                    recompileLibraries,
+                                    verbose);
     } 
     else 
     {

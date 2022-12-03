@@ -39,25 +39,9 @@
 
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
-#include "ocs2_ext_collision/ExtCollisionPinocchioGeometryInterface.h"
+//#include "ocs2_ext_collision/ExtCollisionPinocchioGeometryInterface.h"
 //#include <ocs2_ext_collision/KinematicsInterface.hpp>
 #include "ocs2_ext_collision/Definitions.h"
-
-//namespace ocs2 {
-//template <typename ad_scalar_t>
-//class CppAdInterface;
-//}
-
-//namespace ocs2_ext_collision {
-
-/*
-struct PointsOnRobotConfig 
-{
-  using points_radii_t = std::vector<std::vector<std::pair<double, double>>>;
-  points_radii_t pointsAndRadii;
-  std::shared_ptr<const KinematicsInterface<CppAD::AD<CppAD::cg::CG<double>>>> kinematics;
-};
-*/
 
 class PointsOnRobot 
 {
@@ -74,8 +58,7 @@ class PointsOnRobot
 
     PointsOnRobot(const PointsOnRobot& rhs);
 
-    void initialize(const ocs2::PinocchioInterface& pinocchioInterface, 
-                    ocs2::ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
+    void initialize(const ocs2::PinocchioInterface& pinocchioInterface,
                     const std::string& modelName, 
                     const std::string& modelFolder, 
                     bool recompileLibraries, 
@@ -91,11 +74,9 @@ class PointsOnRobot
 
     visualization_msgs::MarkerArray getVisualization(const Eigen::VectorXd& state) const;
 
-    //void computeState2MultiplePointsOnRobot(const Eigen::Matrix<ad_scalar_t, -1, 1>& state,
     Eigen::Matrix<ad_scalar_t, 3, -1> computeState2MultiplePointsOnRobot(const Eigen::Matrix<ad_scalar_t, -1, 1>& state,
-                                                                   const std::vector<std::vector<double>>& points) const;
+                                                                         const std::vector<std::vector<double>>& points) const;
     
-    //void computeArmState2MultiplePointsOnRobot(const Eigen::Matrix<ad_scalar_t, 6, 1>& state,
     Eigen::Matrix<ad_scalar_t, 3, -1> computeArmState2MultiplePointsOnRobot(const Eigen::Matrix<ad_scalar_t, 6, 1>& state, 
                                                                       const std::vector<std::vector<double>>& points,
                                                                       const Eigen::Matrix4d& transformBase_X_ArmBase, 
@@ -117,4 +98,3 @@ class PointsOnRobot
     std::vector<std::vector<double>> points_;
     Eigen::VectorXd radii_;
 };
-//}  // namespace ocs2_ext_collision

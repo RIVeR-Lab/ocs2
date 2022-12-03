@@ -73,6 +73,18 @@ class ExtCollisionCppAd
     /** Copy constructor */
     ExtCollisionCppAd(const ExtCollisionCppAd& rhs);
 
+    /** NUA TODO: Description! */
+    std::shared_ptr<PointsOnRobot> getPointsOnRobotPtr() 
+    { 
+      return pointsOnRobotPtr_;
+    }
+
+    /** NUA TODO: Description! */
+    void setPointsOnRobotPtr(std::shared_ptr<PointsOnRobot> newPointsOnRobotPtr) 
+    { 
+      pointsOnRobotPtr_ = newPointsOnRobotPtr;
+    }
+
     /** Get the number of collision pairs */
     size_t getNumCollisionPairs() const 
     { 
@@ -140,6 +152,8 @@ class ExtCollisionCppAd
     //std::unique_ptr<CppAdInterface> cppAdInterfaceLinkPoints_;
 
     ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface_;
+    std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_;
+    std::shared_ptr<Interpolator<EsdfCachingVoxel>> interpolator_;
     scalar_t minimumDistance_;
     std::vector<std::vector<double>> points_;
 };

@@ -31,8 +31,8 @@
 
 PointsOnRobot::PointsOnRobot(const PointsOnRobot& rhs)
   : points_(rhs.points_),
-    radii_(rhs.radii_) {}
-    //cppAdInterface_(new ocs2::CppAdInterface(*rhs.cppAdInterface_)),
+    radii_(rhs.radii_),
+    cppAdInterface_(new ocs2::CppAdInterface(*rhs.cppAdInterface_)) {}
     //kinematics_(rhs.kinematics_) {}
 
 PointsOnRobot::PointsOnRobot(const PointsOnRobot::points_radii_t& points_radii)
@@ -67,8 +67,7 @@ PointsOnRobot::PointsOnRobot(const PointsOnRobot::points_radii_t& points_radii)
   std::cout << "[PointsOnRobot::PointsOnRobot] END" << std::endl;
 }
 
-void PointsOnRobot::initialize(const ocs2::PinocchioInterface& pinocchioInterface, 
-                               ocs2::ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
+void PointsOnRobot::initialize(const ocs2::PinocchioInterface& pinocchioInterface,
                                const std::string& modelName, 
                                const std::string& modelFolder, 
                                bool recompileLibraries, 
@@ -113,7 +112,8 @@ visualization_msgs::MarkerArray PointsOnRobot::getVisualization(const Eigen::Vec
 
   Eigen::VectorXd points = getPoints(state);
 
-  for (int i = 0; i < markerArray.markers.size(); i++) {
+  for (int i = 0; i < markerArray.markers.size(); i++) 
+  {
     auto& marker = markerArray.markers[i];
     marker.type = visualization_msgs::Marker::Type::SPHERE;
     marker.id = i;
@@ -244,9 +244,8 @@ int PointsOnRobot::numOfPoints() const
   return radii_.size();
 }
 
-//void PointsOnRobot::computeState2MultiplePointsOnRobot(const Eigen::Matrix<ad_scalar_t, -1, 1>& state,
 Eigen::Matrix<PointsOnRobot::ad_scalar_t, 3, -1> PointsOnRobot::computeState2MultiplePointsOnRobot(const Eigen::Matrix<ad_scalar_t, -1, 1>& state,  
-                                                                                 const std::vector<std::vector<double>>& points) const 
+                                                                                                   const std::vector<std::vector<double>>& points) const 
 {
   if (state.size() != 13) 
   {
@@ -285,21 +284,18 @@ Eigen::Matrix<PointsOnRobot::ad_scalar_t, 3, -1> PointsOnRobot::computeState2Mul
   Eigen::Matrix4d transformBase_X_ArmMount;
   Eigen::Matrix4d transformToolMount_X_Endeffector;
 
-  /*
   return computeArmState2MultiplePointsOnRobot(armState, 
                                                points, 
                                                transformBase_X_ArmMount, 
                                                transformToolMount_X_Endeffector,
                                                worldXFrBase);
-  */
 }
 
-//void PointsOnRobot::computeArmState2MultiplePointsOnRobot(const Eigen::Matrix<ad_scalar_t, 6, 1>& state,
 Eigen::Matrix<PointsOnRobot::ad_scalar_t, 3, -1> PointsOnRobot::computeArmState2MultiplePointsOnRobot(const Eigen::Matrix<ad_scalar_t, 6, 1>& state,  
-                                                                     const std::vector<std::vector<double>>& points,
-                                                                     const Eigen::Matrix4d& transformBase_X_ArmBase, 
-                                                                     const Eigen::Matrix4d& transformToolMount_X_Endeffector,
-                                                                     const Eigen::Matrix<ad_scalar_t, 4, 4>& transformWorld_X_Base) const 
+                                                                                                      const std::vector<std::vector<double>>& points,
+                                                                                                      const Eigen::Matrix4d& transformBase_X_ArmBase, 
+                                                                                                      const Eigen::Matrix4d& transformToolMount_X_Endeffector,
+                                                                                                      const Eigen::Matrix<ad_scalar_t, 4, 4>& transformWorld_X_Base) const 
 {
   assert(points.size() == 8);
 
