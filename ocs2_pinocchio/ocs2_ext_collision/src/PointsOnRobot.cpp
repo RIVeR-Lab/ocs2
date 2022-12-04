@@ -73,10 +73,6 @@ void PointsOnRobot::initialize(const ocs2::PinocchioInterface& pinocchioInterfac
                                bool recompileLibraries, 
                                bool verbose)
 {
-  std::cout << "[PointsOnRobot::initialize] START" << std::endl;
-  std::cout << "[PointsOnRobot::initialize] modelName: " << modelName << std::endl;
-  std::cout << "[PointsOnRobot::initialize] modelFolder: " << modelFolder << std::endl;
-
   ocs2::PinocchioInterfaceCppAd pinocchioInterfaceAd = pinocchioInterface.toCppAd();
 
   setADInterfaces(pinocchioInterfaceAd, modelName, modelFolder);
@@ -91,8 +87,6 @@ void PointsOnRobot::initialize(const ocs2::PinocchioInterface& pinocchioInterfac
     std::cout << "[PointsOnRobot::initialize] recompileLibraries FALSE " << std::endl;
     loadModelsIfAvailable(verbose);
   }
-
-  std::cout << "[PointsOnRobot::initialize] END" << std::endl;
 }
 
 Eigen::VectorXd PointsOnRobot::getPoints(const Eigen::VectorXd& state) const 
@@ -176,14 +170,12 @@ void PointsOnRobot::setADInterfaces(ocs2::PinocchioInterfaceCppAd& pinocchioInte
   using ad_dynamic_vector_t = ad_interface::ad_vector_t;
   using ad_scalar_t = ad_interface::ad_scalar_t;
 
-  /*
   int numPoints = 0;
   for (int i = 0; i < points_.size(); i++) 
   {
     numPoints += points_[i].size();
   }
   assert(numPoints == radii_.size());
-  */
 
   const size_t stateDim = pinocchioInterfaceAd.getModel().nq;
 
@@ -192,6 +184,7 @@ void PointsOnRobot::setADInterfaces(ocs2::PinocchioInterfaceCppAd& pinocchioInte
     Eigen::Matrix<ad_scalar_t, 3, -1> matrixResult = computeState2MultiplePointsOnRobot(x, points_);
     y = Eigen::Map<Eigen::Matrix<ad_scalar_t, -1, 1>>(matrixResult.data(), matrixResult.size());
   };
+
   cppAdInterface_.reset(new ocs2::CppAdInterface(state2MultiplePointsAd, 
                                                  stateDim, 
                                                  modelName + "_intermediate", 
@@ -247,6 +240,7 @@ int PointsOnRobot::numOfPoints() const
 Eigen::Matrix<PointsOnRobot::ad_scalar_t, 3, -1> PointsOnRobot::computeState2MultiplePointsOnRobot(const Eigen::Matrix<ad_scalar_t, -1, 1>& state,  
                                                                                                    const std::vector<std::vector<double>>& points) const 
 {
+  /*
   if (state.size() != 13) 
   {
     std::stringstream ss;
@@ -255,6 +249,7 @@ Eigen::Matrix<PointsOnRobot::ad_scalar_t, 3, -1> PointsOnRobot::computeState2Mul
     std::cerr << std::endl << errorMessage << std::endl << std::endl;
     throw std::runtime_error(ss.str());
   }
+  */
 
   int dim = 0;
   for (int i = 0; i < points.size(); i++) 
@@ -305,6 +300,7 @@ Eigen::Matrix<PointsOnRobot::ad_scalar_t, 3, -1> PointsOnRobot::computeArmState2
       dim++;
     }
   }
+
   //if (dim == 0) {
   //  return Eigen::Matrix<ad_scalar_t, 3, -1>(3, 0);
   //}

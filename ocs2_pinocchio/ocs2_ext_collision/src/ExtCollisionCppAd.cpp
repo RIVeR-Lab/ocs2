@@ -325,10 +325,10 @@ Eigen::Matrix<ad_scalar_t, 3, -1> ExtCollisionCppAd::computeState2MultiplePoints
 }
 
 Eigen::Matrix<ad_scalar_t, 3, -1> ExtCollisionCppAd::computeArmState2MultiplePointsOnRobot(const Eigen::Matrix<ad_scalar_t, 6, 1>& state,  
-                                                                                                              const std::vector<std::vector<double>>& points,
-                                                                                                              const Eigen::Matrix4d& transformBase_X_ArmBase, 
-                                                                                                              const Eigen::Matrix4d& transformToolMount_X_Endeffector,
-                                                                                                              const Eigen::Matrix<ad_scalar_t, 4, 4>& transformWorld_X_Base) const
+                                                                                           const std::vector<std::vector<double>>& points,
+                                                                                           const Eigen::Matrix4d& transformBase_X_ArmBase, 
+                                                                                           const Eigen::Matrix4d& transformToolMount_X_Endeffector,
+                                                                                           const Eigen::Matrix<ad_scalar_t, 4, 4>& transformWorld_X_Base) const
 {
   std::cout << "[ExtCollisionCppAd::computeArmState2MultiplePointsOnRobot] START" << std::endl;
 
@@ -373,7 +373,7 @@ Eigen::Matrix<ad_scalar_t, 3, -1> ExtCollisionCppAd::computeArmState2MultiplePoi
   transformWorld_X_Endeffector = transformWorld_X_Endeffector * nextStep;
 
 
-/*
+  /*
   nextStep = armMountXFrShoulderXFrShoulder.update(state);
   for (int i = 0; i < points[linkIndex].size(); i++) {
     Eigen::Matrix<ad_scalar_t, 4, 1> directionVector = nextStep.col(3);

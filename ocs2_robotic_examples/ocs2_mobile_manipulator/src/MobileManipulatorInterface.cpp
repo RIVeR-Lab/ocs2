@@ -200,7 +200,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
                                     "points_on_robot",
                                     libraryFolder,
                                     recompileLibraries,
-                                    verbose);
+                                    false);
     } 
     else 
     {
@@ -208,6 +208,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
       // if there are no points defined for collision checking, set this pointer to null to disable the visualization
       pointsOnRobotPtr_ = nullptr;
     }
+
+    
 
     problem_.stateSoftConstraintPtr -> add("extCollision", getExtCollisionConstraint(*pinocchioInterfacePtr_,
                                                                                      taskFile, 
