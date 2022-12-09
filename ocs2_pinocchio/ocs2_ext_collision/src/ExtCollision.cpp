@@ -42,20 +42,49 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ExtCollision::ExtCollision(ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, scalar_t minimumDistance)
-  : extCollisionPinocchioGeometryInterface_(std::move(extCollisionPinocchioGeometryInterface)), minimumDistance_(minimumDistance) {}
+ExtCollision::ExtCollision(ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
+                           std::shared_ptr<PointsOnRobot> pointsOnRobotPtr)
+  : extCollisionPinocchioGeometryInterface_(std::move(extCollisionPinocchioGeometryInterface)), 
+    pointsOnRobotPtr_(pointsOnRobotPtr) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t ExtCollision::getValue(const PinocchioInterface& pinocchioInterface) const 
+vector_t ExtCollision::getValue(const PinocchioInterface& pinocchioInterface, const vector_t& state) const 
 {
-  const std::vector<hpp::fcl::DistanceResult> distanceArray = extCollisionPinocchioGeometryInterface_.computeDistances(pinocchioInterface);
+  std::cout << "[ExtCollision::getValue] START" << std::endl;
 
+  Eigen::VectorXd points = pointsOnRobotPtr_->getPoints(state);
+
+  std::cout << "[ExtCollision::getValue] state" << std::endl;
+  for (size_t i = 0; i < state.rows(); i++)
+  {
+    for (size_t j = 0; j < state.cols(); j++)
+    {
+      std::cout << i << ": " << state(i,j) << std::endl;
+    } 
+  }
+
+  std::cout << "[ExtCollision::getValue] points" << std::endl;
+  for (size_t i = 0; i < points.rows(); i++)
+  {
+    for (size_t j = 0; j < points.cols(); j++)
+    {
+      std::cout << i << ": " << points(i,j) << std::endl;
+    } 
+  }
+
+  const std::vector<hpp::fcl::DistanceResult> distanceArray = extCollisionPinocchioGeometryInterface_.computeDistances(pinocchioInterface);
   vector_t violations = vector_t::Zero(distanceArray.size());
+
+  /*
   for (size_t i = 0; i < distanceArray.size(); ++i) {
     violations[i] = distanceArray[i].min_distance - minimumDistance_;
   }
+  */
+
+  std::cout << "[ExtCollision::getValue] END" << std::endl;
+  std::cout << "" << std::endl;
 
   return violations;
 }
@@ -65,6 +94,8 @@ vector_t ExtCollision::getValue(const PinocchioInterface& pinocchioInterface) co
 /******************************************************************************************************/
 std::pair<vector_t, matrix_t> ExtCollision::getLinearApproximation(const PinocchioInterface& pinocchioInterface) const 
 {
+  std::cout << "[ExtCollision::getLinearApproximation] START" << std::endl;
+
   const std::vector<hpp::fcl::DistanceResult> distanceArray = extCollisionPinocchioGeometryInterface_.computeDistances(pinocchioInterface);
 
   const auto& model = pinocchioInterface.getModel();
@@ -74,6 +105,8 @@ std::pair<vector_t, matrix_t> ExtCollision::getLinearApproximation(const Pinocch
 
   vector_t f(distanceArray.size());
   matrix_t dfdq(distanceArray.size(), model.nq);
+
+  /*
   for (size_t i = 0; i < distanceArray.size(); ++i) 
   {
     // Distance violation
@@ -112,8 +145,19 @@ std::pair<vector_t, matrix_t> ExtCollision::getLinearApproximation(const Pinocch
                                          : (distanceArray[i].nearest_points[0] - distanceArray[i].nearest_points[1]).normalized();
     dfdq.row(i).noalias() = distanceVector.transpose() * differenceJacobian;
   }  // end of i loop
+  */
+
+  std::cout << "[ExtCollision::getLinearApproximation] END" << std::endl;
 
   return {f, dfdq};
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+size_t ExtCollision::getNumPointsOnRobot() const
+{
+  return pointsOnRobotPtr_->numOfPoints();
 }
 
 }  // namespace ocs2

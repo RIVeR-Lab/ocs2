@@ -82,10 +82,16 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   std::vector<std::string> removeJointNames;
   loadData::loadStdVector<std::string>(taskFile, "model_information.removeJoints", removeJointNames, false);
   
+  // read the link names of joints
+  std::vector<std::string> dofParentLinkNames;
+  loadData::loadStdVector<std::string>(taskFile, "model_information.dofParentLinkNames", dofParentLinkNames, false);
+
   // read the frame names
-  std::string baseFrame, eeFrame;
+  std::string baseFrame, armBaseFrame, eeFrame, toolFrame;
   loadData::loadPtreeValue<std::string>(pt, baseFrame, "model_information.baseFrame", false);
+  loadData::loadPtreeValue<std::string>(pt, armBaseFrame, "model_information.armBaseFrame", false);
   loadData::loadPtreeValue<std::string>(pt, eeFrame, "model_information.eeFrame", false);
+  loadData::loadPtreeValue<std::string>(pt, toolFrame, "model_information.toolFrame", false);
 
   std::cerr << "\n #### Model Information:";
   std::cerr << "\n #### =============================================================================\n";
@@ -95,8 +101,15 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   {
     std::cerr << "\"" << name << "\" ";
   }
+  std::cerr << "\n #### model_information.dofParentLinkNames: ";
+  for (const auto& name : dofParentLinkNames) 
+  {
+    std::cerr << "\"" << name << "\" ";
+  }
   std::cerr << "\n #### model_information.baseFrame: \"" << baseFrame << "\"";
-  std::cerr << "\n #### model_information.eeFrame: \"" << eeFrame << "\"" << std::endl;
+  std::cerr << "\n #### model_information.armBaseFrame: \"" << armBaseFrame << "\"";
+  std::cerr << "\n #### model_information.eeFrame: \"" << eeFrame << "\"";
+  std::cerr << "\n #### model_information.toolFrame: \"" << toolFrame << "\"" << std::endl;
   std::cerr << " #### =============================================================================" << std::endl;
 
   // create pinocchio interface
@@ -104,7 +117,13 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   std::cerr << *pinocchioInterfacePtr_;
 
   // ManipulatorModelInfo
-  manipulatorModelInfo_ = mobile_manipulator::createManipulatorModelInfo(*pinocchioInterfacePtr_, modelType, baseFrame, eeFrame);
+  manipulatorModelInfo_ = mobile_manipulator::createManipulatorModelInfo(*pinocchioInterfacePtr_, 
+                                                                         modelType, 
+                                                                         baseFrame, 
+                                                                         armBaseFrame, 
+                                                                         eeFrame, 
+                                                                         toolFrame,
+                                                                         dofParentLinkNames);
 
   bool usePreComputation = true;
   bool recompileLibraries = true;
@@ -131,7 +150,6 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   vector_t initialArmState = vector_t::Zero(armStateDim);
   loadData::loadEigenMatrix(taskFile, "initialState.arm", initialArmState);
   initialState_.tail(armStateDim) = initialArmState;
-
   std::cerr << "Initial State:   " << initialState_.transpose() << std::endl;
 
   // DDP-MPC settings
@@ -197,10 +215,16 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
       //esdfCachingServerPtr_->getInterpolator();
 
       pointsOnRobotPtr_->initialize(*pinocchioInterfacePtr_,
+                                    MobileManipulatorPinocchioMappingCppAd(manipulatorModelInfo_),
                                     "points_on_robot",
                                     libraryFolder,
                                     recompileLibraries,
-                                    false);
+                                    false,
+                                    manipulatorModelInfo_.baseFrame,
+                                    manipulatorModelInfo_.armBaseFrame,
+                                    manipulatorModelInfo_.eeFrame,
+                                    manipulatorModelInfo_.toolFrame,
+                                    manipulatorModelInfo_.dofParentLinkNames);
     } 
     else 
     {
@@ -208,8 +232,6 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
       // if there are no points defined for collision checking, set this pointer to null to disable the visualization
       pointsOnRobotPtr_ = nullptr;
     }
-
-    
 
     problem_.stateSoftConstraintPtr -> add("extCollision", getExtCollisionConstraint(*pinocchioInterfacePtr_,
                                                                                      taskFile, 
@@ -329,7 +351,6 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
 {
   scalar_t muPosition = 1.0;
   scalar_t muOrientation = 1.0;
-  const std::string name = "WRIST_2";
 
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile, pt);
@@ -465,15 +486,27 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
   ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface(pinocchioInterface);
 
   std::unique_ptr<StateConstraint> constraint;
-  constraint = std::unique_ptr<StateConstraint>(new ExtCollisionConstraintCppAd(pinocchioInterface, 
-                                                                                MobileManipulatorPinocchioMapping(manipulatorModelInfo_), 
-                                                                                std::move(extCollisionPinocchioGeometryInterface), 
-                                                                                pointsOnRobotPtr_,
-                                                                                minimumDistance,
-                                                                                "ext_collision", 
-                                                                                libraryFolder, 
-                                                                                recompileLibraries, 
-                                                                                false));
+  if (usePreComputation) 
+  {
+    std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] PRECOMPUTED!" << std::endl;
+
+    constraint = std::unique_ptr<StateConstraint>(new MobileManipulatorExtCollisionConstraint(MobileManipulatorPinocchioMapping(manipulatorModelInfo_), 
+                                                                                              std::move(extCollisionPinocchioGeometryInterface), 
+                                                                                              pointsOnRobotPtr_));
+  }
+  else
+  {
+    std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] CPPAD!" << std::endl;
+
+    constraint = std::unique_ptr<StateConstraint>(new ExtCollisionConstraintCppAd(pinocchioInterface, 
+                                                                                  MobileManipulatorPinocchioMapping(manipulatorModelInfo_), 
+                                                                                  std::move(extCollisionPinocchioGeometryInterface), 
+                                                                                  pointsOnRobotPtr_,
+                                                                                  "ext_collision", 
+                                                                                  libraryFolder, 
+                                                                                  recompileLibraries, 
+                                                                                  false));
+  }
 
   std::unique_ptr<PenaltyBase> penalty(new RelaxedBarrierPenalty({mu, delta}));
 

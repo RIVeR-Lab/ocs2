@@ -64,7 +64,6 @@ void copySegment(const LinearInterpolation::index_alpha_t& indexAlpha0, const Li
 void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution& primalSolution, DualSolutionConstRef dualSolution,
                            ProblemMetrics& problemMetrics) 
 {
-  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] START" << std::endl;
   const auto& tTrajectory = primalSolution.timeTrajectory_;
   const auto& xTrajectory = primalSolution.stateTrajectory_;
   const auto& uTrajectory = primalSolution.inputTrajectory_;
@@ -77,8 +76,6 @@ void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution&
   auto nextPostEventIndexItr = postEventIndices.begin();
   const auto request = Request::Cost + Request::Constraint + Request::SoftConstraint;
   
-  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] tTrajectory.size(): " << tTrajectory.size() << std::endl;
-  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] START tTrajectory loop" << std::endl;
   for (size_t k = 0; k < tTrajectory.size(); k++) 
   {
     // intermediate time cost and constraints
@@ -101,7 +98,6 @@ void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution&
       nextPostEventIndexItr++;
     }
   }
-  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END tTrajectory loop" << std::endl;
 
   // final time cost and constraints
   if (!tTrajectory.empty()) 
@@ -109,7 +105,6 @@ void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution&
     problem.preComputationPtr->requestFinal(request, tTrajectory.back(), xTrajectory.back());
     problemMetrics.final = computeFinalMetrics(problem, tTrajectory.back(), xTrajectory.back(), dualSolution.final);
   }
-  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END" << std::endl;
 }
 
 /******************************************************************************************************/

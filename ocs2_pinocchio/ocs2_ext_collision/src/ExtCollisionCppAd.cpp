@@ -45,7 +45,6 @@ namespace ocs2 {
 ExtCollisionCppAd::ExtCollisionCppAd(const PinocchioInterface& pinocchioInterface, 
                                      ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface,
                                      std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
-                                     scalar_t minimumDistance, 
                                      const std::string& modelName, 
                                      const std::string& modelFolder,
                                      bool recompileLibraries, 
@@ -89,8 +88,7 @@ ExtCollisionCppAd::ExtCollisionCppAd(const PinocchioInterface& pinocchioInterfac
 /******************************************************************************************************/
 /******************************************************************************************************/
 ExtCollisionCppAd::ExtCollisionCppAd(const ExtCollisionCppAd& rhs)
-  : minimumDistance_(rhs.minimumDistance_),
-    points_(rhs.points_),
+  : points_(rhs.points_),
     extCollisionPinocchioGeometryInterface_(rhs.extCollisionPinocchioGeometryInterface_),
     cppAdInterface_(new CppAdInterface(*rhs.cppAdInterface_)){}
     //cppAdInterfaceDistanceCalculation_(new CppAdInterface(*rhs.cppAdInterfaceDistanceCalculation_)),
@@ -101,13 +99,18 @@ ExtCollisionCppAd::ExtCollisionCppAd(const ExtCollisionCppAd& rhs)
 /******************************************************************************************************/
 vector_t ExtCollisionCppAd::getValue(const PinocchioInterface& pinocchioInterface) const 
 {
+  //pointsOnRobotPtr_->getPoints
+
   const std::vector<hpp::fcl::DistanceResult> distanceArray = extCollisionPinocchioGeometryInterface_.computeDistances(pinocchioInterface);
 
   vector_t violations = vector_t::Zero(distanceArray.size());
+
+  /*
   for (size_t i = 0; i < distanceArray.size(); ++i) 
   {
     violations[i] = distanceArray[i].min_distance - minimumDistance_;
   }
+  */
 
   return violations;
 }

@@ -31,54 +31,53 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_ext_collision/ExtCollisionPinocchioGeometryInterface.h>
+#include <ocs2_ext_collision/PointsOnRobot.h>
 
 namespace ocs2 {
 
 class ExtCollision {
- public:
-  using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
+  public:
+    using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
 
-  /**
-   * Constructor
-   *
-   * @param [in] extCollisionPinocchioGeometryInterface: pinocchio geometry interface of the robot model
-   * @parma [in] minimumDistance: minimum allowed distance between each collision pair
-   */
-  ExtCollision(ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, scalar_t minimumDistance);
+    /**
+     * Constructor
+     *
+     * @param [in] extCollisionPinocchioGeometryInterface: pinocchio geometry interface of the robot model
+     */
+    ExtCollision(ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, std::shared_ptr<PointsOnRobot> pointsOnRobotPtr);
 
-  /** Get the number of collision pairs */
-  size_t getNumCollisionPairs() const 
-  { 
-    return extCollisionPinocchioGeometryInterface_.getNumCollisionPairs(); 
-  }
+    /**
+     * TODO: Add desription!
+     *
+     * @note Requires updated forwardKinematics() on pinocchioInterface.
+     *
+     * @param [in] pinocchioInterface: pinocchio interface of the robot model
+     * @return: The differences between the distance of each collision pair and the minimum distance
+     */
+    vector_t getValue(const PinocchioInterface& pinocchioInterface, const vector_t& state) const;
 
-  /**
-   * Evaluate the distance violation
-   * This method computes the distance results of all collision pairs through ExtCollisionPinocchioGeometryInterface
-   * and compare each of them with the specified minimum distance.
-   *
-   * @note Requires updated forwardKinematics() on pinocchioInterface.
-   *
-   * @param [in] pinocchioInterface: pinocchio interface of the robot model
-   * @return: The differences between the distance of each collision pair and the minimum distance
-   */
-  vector_t getValue(const PinocchioInterface& pinocchioInterface) const;
+    /**
+     * TODO: Add desription!
+     *
+     * @note Requires updated forwardKinematics(), updateGlobalPlacements() and computeJointJacobians() on pinocchioInterface.
+     *
+     * @param [in] pinocchioInterface: pinocchio interface of the robot model
+     * @param [in] extCollisionPinocchioGeometryInterface: pinocchio geometry interface of the robot model
+     * @return: The pair of the distance violation and the first derivative of the distance against q
+     */
+    std::pair<vector_t, matrix_t> getLinearApproximation(const PinocchioInterface& pinocchioInterface) const;
 
-  /**
-   * Evaluate the linear approximation of the distance function
-   * This method analytically computes the first derivative of distance against the pinocchio generalized coordinates
-   *
-   * @note Requires updated forwardKinematics(), updateGlobalPlacements() and computeJointJacobians() on pinocchioInterface.
-   *
-   * @param [in] pinocchioInterface: pinocchio interface of the robot model
-   * @param [in] extCollisionPinocchioGeometryInterface: pinocchio geometry interface of the robot model
-   * @return: The pair of the distance violation and the first derivative of the distance against q
-   */
-  std::pair<vector_t, matrix_t> getLinearApproximation(const PinocchioInterface& pinocchioInterface) const;
+    /**
+     * TODO: Add desription!
+     *
+     *
+     */
+    size_t getNumPointsOnRobot() const;
 
- private:
-  ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface_;
-  scalar_t minimumDistance_;
+  private:
+    ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface_;
+
+    std::shared_ptr<const PointsOnRobot> pointsOnRobotPtr_;
 };
 
 }  // namespace ocs2

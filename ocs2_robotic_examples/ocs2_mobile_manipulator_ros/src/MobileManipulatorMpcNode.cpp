@@ -121,7 +121,9 @@ int main(int argc, char** argv)
                                interface.getRollout(),
                                interface.getOptimalControlProblem(), 
                                interface.getInitializer());
+
   mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
+
   //while(1){;}
 
   // Launch MPC ROS node

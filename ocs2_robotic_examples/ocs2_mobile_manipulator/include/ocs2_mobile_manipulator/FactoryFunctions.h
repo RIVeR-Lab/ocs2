@@ -56,7 +56,8 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, co
  * @param [in] jointNames: The joint names from URDF to make fixed/unactuated.
  * @return PinocchioInterface
  */
-PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, const ManipulatorModelType& type,
+PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, 
+                                            const ManipulatorModelType& type,
                                             const std::vector<std::string>& jointNames);
 
 /**
@@ -67,8 +68,13 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, co
  * @param [in] eeFrame: Name of the end-effector frame.
  * @return ManipulatorModelInfo
  */
-ManipulatorModelInfo createManipulatorModelInfo(const PinocchioInterface& interface, const ManipulatorModelType& type,
-                                                const std::string& baseFrame, const std::string& eeFrame);
+ManipulatorModelInfo createManipulatorModelInfo(const PinocchioInterface& interface, 
+                                                const ManipulatorModelType& type,
+                                                const std::string& baseFrame, 
+                                                const std::string& armBaseFrame,
+                                                const std::string& eeFrame, 
+                                                const std::string& toolFrame,
+                                                const std::vector<std::string>& dofParentLinkNames);
 
 /** Load ManipulatorModelType for a config file */
 ManipulatorModelType loadManipulatorType(const std::string& configFilePath, const std::string& fieldName = "manipulatorModelType");

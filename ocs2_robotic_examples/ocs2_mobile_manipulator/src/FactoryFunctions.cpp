@@ -136,34 +136,46 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, co
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ManipulatorModelInfo createManipulatorModelInfo(const PinocchioInterface& interface, const ManipulatorModelType& type,
-                                                const std::string& baseFrame, const std::string& eeFrame) {
+ManipulatorModelInfo createManipulatorModelInfo(const PinocchioInterface& interface, 
+                                                const ManipulatorModelType& type,
+                                                const std::string& baseFrame, 
+                                                const std::string& armBaseFrame,
+                                                const std::string& eeFrame, 
+                                                const std::string& toolFrame,
+                                                const std::vector<std::string>& dofParentLinkNames) 
+{
   const auto& model = interface.getModel();
 
   ManipulatorModelInfo info;
   info.manipulatorModelType = type;
   info.stateDim = model.nq;
+  
   // resolve for actuated dof based on type of robot
-  switch (type) {
-    case ManipulatorModelType::DefaultManipulator: {
+  switch (type) 
+  {
+    case ManipulatorModelType::DefaultManipulator: 
+    {
       // for default arm, the state dimension and input dimensions are same.
       info.inputDim = info.stateDim;
       info.armDim = info.inputDim;
       break;
     }
-    case ManipulatorModelType::FloatingArmManipulator: {
+    case ManipulatorModelType::FloatingArmManipulator: 
+    {
       // remove the static 6-DOF base joints that are unactuated.
       info.inputDim = info.stateDim - 6;
       info.armDim = info.inputDim;
       break;
     }
-    case ManipulatorModelType::FullyActuatedFloatingArmManipulator: {
+    case ManipulatorModelType::FullyActuatedFloatingArmManipulator: 
+    {
       // all states are actuatable
       info.inputDim = info.stateDim;
       info.armDim = info.inputDim - 6;
       break;
     }
-    case ManipulatorModelType::WheelBasedMobileManipulator: {
+    case ManipulatorModelType::WheelBasedMobileManipulator: 
+    {
       // for wheel-based, the input dimension is (v, omega, dq_j) while state dimension is (x, y, psi, q_j).
       info.inputDim = info.stateDim - 1;
       info.armDim = info.inputDim - 2;
@@ -173,9 +185,14 @@ ManipulatorModelInfo createManipulatorModelInfo(const PinocchioInterface& interf
       throw std::invalid_argument("Invalid manipulator model type provided.");
       break;
   }
+  
   // store frame names for using later.
-  info.eeFrame = eeFrame;
   info.baseFrame = baseFrame;
+  info.armBaseFrame = armBaseFrame;
+  info.eeFrame = eeFrame;
+  info.toolFrame = toolFrame;
+  info.dofParentLinkNames = dofParentLinkNames;
+
   // get name of arm joints.
   const auto& jointNames = model.names;
   info.dofNames = std::vector<std::string>(jointNames.end() - info.armDim, jointNames.end());
@@ -186,7 +203,8 @@ ManipulatorModelInfo createManipulatorModelInfo(const PinocchioInterface& interf
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ManipulatorModelType loadManipulatorType(const std::string& configFilePath, const std::string& fieldName) {
+ManipulatorModelType loadManipulatorType(const std::string& configFilePath, const std::string& fieldName) 
+{
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(configFilePath, pt);
   const size_t type = pt.template get<size_t>(fieldName);

@@ -42,11 +42,9 @@ ReferenceManager::ReferenceManager(TargetTrajectories initialTargetTrajectories,
 /******************************************************************************************************/
 void ReferenceManager::preSolverRun(scalar_t initTime, scalar_t finalTime, const vector_t& initState) 
 {
-  std::cout << "[ReferenceManager::preSolverRun] START" << std::endl;
   targetTrajectories_.updateFromBuffer();
   modeSchedule_.updateFromBuffer();
   modifyReferences(initTime, finalTime, initState, targetTrajectories_.get(), modeSchedule_.get());
-  std::cout << "[ReferenceManager::preSolverRun] END" << std::endl;
 }
 
 }  // namespace ocs2

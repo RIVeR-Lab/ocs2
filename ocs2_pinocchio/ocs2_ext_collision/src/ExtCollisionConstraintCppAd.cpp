@@ -49,7 +49,6 @@ ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(PinocchioInterface pino
                                                          const PinocchioStateInputMapping<scalar_t>& mapping,
                                                          ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface,
                                                          std::shared_ptr<PointsOnRobot> pointsOnRobotPtr, 
-                                                         scalar_t minimumDistance,
                                                          const std::string& modelName, 
                                                          const std::string& modelFolder,
                                                          bool recompileLibraries, 
@@ -58,7 +57,6 @@ ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(PinocchioInterface pino
                                 mapping, 
                                 std::move(extCollisionPinocchioGeometryInterface), 
                                 pointsOnRobotPtr,
-                                minimumDistance,
                                 defaultUpdatePinocchioInterface, 
                                 modelName, 
                                 modelFolder, 
@@ -72,7 +70,6 @@ ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(PinocchioInterface pino
                                                          const PinocchioStateInputMapping<scalar_t>& mapping,
                                                          ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
                                                          std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
-                                                         scalar_t minimumDistance,
                                                          update_pinocchio_interface_callback updateCallback, 
                                                          const std::string& modelName,
                                                          const std::string& modelFolder, 
@@ -80,10 +77,9 @@ ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(PinocchioInterface pino
                                                          bool verbose)
   : StateConstraint(ConstraintOrder::Linear),
     pinocchioInterface_(std::move(pinocchioInterface)),
-    extCollision_(pinocchioInterface_, 
+    extCollisionCppAd_(pinocchioInterface_, 
                   std::move(extCollisionPinocchioGeometryInterface), 
                   pointsOnRobotPtr,
-                  minimumDistance, 
                   modelName, 
                   modelFolder,
                   recompileLibraries, 
@@ -104,7 +100,7 @@ ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(PinocchioInterface pino
 ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(const ExtCollisionConstraintCppAd& rhs)
     : StateConstraint(rhs),
       pinocchioInterface_(rhs.pinocchioInterface_),
-      extCollision_(rhs.extCollision_),
+      extCollisionCppAd_(rhs.extCollisionCppAd_),
       mappingPtr_(rhs.mappingPtr_->clone()),
       updateCallback_(rhs.updateCallback_) {
       mappingPtr_->setPinocchioInterface(pinocchioInterface_);
@@ -115,7 +111,7 @@ ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(const ExtCollisionConst
 /******************************************************************************************************/
 size_t ExtCollisionConstraintCppAd::getNumConstraints(scalar_t time) const 
 {
-  return extCollision_.getNumCollisionPairs();
+  return extCollisionCppAd_.getNumCollisionPairs();
 }
 
 /******************************************************************************************************/
@@ -128,7 +124,7 @@ vector_t ExtCollisionConstraintCppAd::getValue(scalar_t time, const vector_t& st
   auto& data = pinocchioInterface_.getData();
   pinocchio::forwardKinematics(model, data, q);
 
-  return extCollision_.getValue(pinocchioInterface_);
+  return extCollisionCppAd_.getValue(pinocchioInterface_);
 }
 
 /******************************************************************************************************/
@@ -146,7 +142,7 @@ VectorFunctionLinearApproximation ExtCollisionConstraintCppAd::getLinearApproxim
 
   VectorFunctionLinearApproximation constraint;
   matrix_t dfdq, dfdv;
-  std::tie(constraint.f, dfdq) = extCollision_.getLinearApproximation(pinocchioInterface_, q);
+  std::tie(constraint.f, dfdq) = extCollisionCppAd_.getLinearApproximation(pinocchioInterface_, q);
   dfdv.setZero(dfdq.rows(), dfdq.cols());
   std::tie(constraint.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, dfdq, dfdv);
   return constraint;

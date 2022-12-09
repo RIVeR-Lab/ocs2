@@ -97,6 +97,12 @@ class Collection {
    */
   bool getTermIndex(const std::string& name, size_t& index) const;
 
+  /**
+   * TODO: Add description!
+   *
+   */
+  size_t getTermSize() const;
+
  protected:
   /** Copy constructor */
   Collection(const Collection& other);
@@ -211,6 +217,15 @@ bool Collection<T>::getTermIndex(const std::string& name, size_t& index) const {
 template <typename T, typename Allocator>
 inline void appendVectorToVectorByMoving(std::vector<T, Allocator>& v1, std::vector<T, Allocator>&& v2) {
   v1.insert(v1.end(), std::make_move_iterator(v2.begin()), std::make_move_iterator(v2.end()));
+} 
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename T>
+size_t Collection<T>::getTermSize() const 
+{
+  return terms_.size();
 }
 
-}  // namespace ocs2
+} // namespace ocs2

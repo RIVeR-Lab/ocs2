@@ -56,7 +56,6 @@ class ExtCollisionConstraintCppAd final : public StateConstraint
      * @param [in] pinocchioInterface: Pinocchio interface of the robot model.
      * @param [in] mapping: The pinocchio mapping from pinocchio states to ocs2 states.
      * @param [in] extCollisionPinocchioGeometryInterface: Pinocchio geometry interface of the robot model.
-     * @param [in] minimumDistance: The minimum allowed distance between collision pairs.
      * @param [in] modelName: Name of the generated model library.
      * @param [in] modelFolder: Folder to save the model library files to.
      * @param [in] recompileLibraries: If true, the model library will be newly compiled. If false, an existing library will be loaded if
@@ -67,7 +66,6 @@ class ExtCollisionConstraintCppAd final : public StateConstraint
                                 const PinocchioStateInputMapping<scalar_t>& mapping,
                                 ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
                                 std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
-                                scalar_t minimumDistance,
                                 const std::string& modelName, 
                                 const std::string& modelFolder = "/tmp/ocs2", 
                                 bool recompileLibraries = true,
@@ -79,7 +77,6 @@ class ExtCollisionConstraintCppAd final : public StateConstraint
      * @param [in] pinocchioInterface: Pinocchio interface of the robot model.
      * @param [in] mapping: The pinocchio mapping from pinocchio states to ocs2 states.
      * @param [in] extCollisionPinocchioGeometryInterface: Pinocchio geometry interface of the robot model.
-     * @param [in] minimumDistance: The minimum allowed distance between collision pairs.
      * @param [in] updateCallback: In the cases that PinocchioStateInputMapping requires some additional update calls on PinocchioInterface,
      *                             use this callback (no need to call pinocchio::forwardKinematics).
      * @param [in] modelName: Name of the generated model library.
@@ -92,7 +89,6 @@ class ExtCollisionConstraintCppAd final : public StateConstraint
                                 const PinocchioStateInputMapping<scalar_t>& mapping,
                                 ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
                                 std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
-                                scalar_t minimumDistance,
                                 update_pinocchio_interface_callback updateCallback, 
                                 const std::string& modelName,
                                 const std::string& modelFolder = "/tmp/ocs2", 
@@ -118,7 +114,7 @@ class ExtCollisionConstraintCppAd final : public StateConstraint
     ExtCollisionConstraintCppAd(const ExtCollisionConstraintCppAd& rhs);
 
     mutable PinocchioInterface pinocchioInterface_;
-    ExtCollisionCppAd extCollision_;
+    ExtCollisionCppAd extCollisionCppAd_;
     std::unique_ptr<PinocchioStateInputMapping<scalar_t>> mappingPtr_;
     update_pinocchio_interface_callback updateCallback_;
 };

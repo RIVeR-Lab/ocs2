@@ -63,7 +63,6 @@ class ExtCollisionCppAd
     ExtCollisionCppAd(const PinocchioInterface& pinocchioInterface, 
                       ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface,
                       std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
-                      scalar_t minimumDistance, 
                       const std::string& modelName, 
                       const std::string& modelFolder = "/tmp/ocs2",
                       bool recompileLibraries = true, 

@@ -48,11 +48,9 @@ SolverBase::SolverBase() : referenceManagerPtr_(new ReferenceManager) {}
 /******************************************************************************************************/
 void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime) 
 {
-  std::cout << "[SolverBase::run] START" << std::endl;
   preRun(initTime, initState, finalTime);
   runImpl(initTime, initState, finalTime);
   postRun();
-  std::cout << "[SolverBase::run] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -95,15 +93,12 @@ void SolverBase::printString(const std::string& text) const {
 /******************************************************************************************************/
 void SolverBase::preRun(scalar_t initTime, const vector_t& initState, scalar_t finalTime) 
 {
-  std::cout << "[SolverBase::preRun] START" << std::endl;
   referenceManagerPtr_ -> preSolverRun(initTime, finalTime, initState);
 
   for (auto& module : synchronizedModules_) 
   {
-    std::cout << "[SolverBase::preRun] synchronizedModules_" << std::endl;
     module -> preSolverRun(initTime, finalTime, initState, *referenceManagerPtr_);
   }
-  std::cout << "[SolverBase::preRun] END" << std::endl;
 }
 
 /******************************************************************************************************/

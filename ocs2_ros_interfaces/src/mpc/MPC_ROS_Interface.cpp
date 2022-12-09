@@ -251,13 +251,12 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   // current time, state, input, and subsystem
   const auto currentObservation = ros_msg_conversions::readObservationMsg(*msg);
 
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] esdfCachingServer_ START" << std::endl;
+  /*
   if (esdfCachingServer_) 
   {
-    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] esdfCachingServer_ IN" << std::endl;
     esdfCachingServer_ -> updateInterpolator();
   }
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] esdfCachingServer_ END" << std::endl;
+  */
 
   // measure the delay in running MPC
   mpcTimer_.startTimer();
@@ -305,8 +304,11 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   mpcPolicyPublisher_.publish(mpcPolicyMsg);
 #endif
 
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END" << std::endl;
-  std::cout << "" << std::endl;
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE INF LOOP" << std::endl;
+  while(1){;}
+
+  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END" << std::endl;
+  //std::cout << "" << std::endl;
 }
 
 /******************************************************************************************************/

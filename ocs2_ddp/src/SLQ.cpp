@@ -77,7 +77,6 @@ SLQ::SLQ(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalCon
 /******************************************************************************************************/
 void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDataContainer& primalData) 
 {
-  std::cout << "[SLQ::approximateIntermediateLQ] START" << std::endl;
   // create alias
   const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
   const auto& stateTrajectory = primalData.primalSolution.stateTrajectory_;
@@ -129,8 +128,6 @@ void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalData
   };
 
   runParallel(task, settings().nThreads_);
-
-  std::cout << "[SLQ::approximateIntermediateLQ] END" << std::endl;
 }
 
 /******************************************************************************************************/

@@ -86,10 +86,6 @@ VectorFunctionLinearApproximation StateConstraintCollection::getLinearApproximat
                                                                                     const vector_t& state,
                                                                                     const PreComputation& preComp) const 
 {
-  std::cout << "[StateConstraintCollection::getLinearApproximation] START" << std::endl;
-
-  std::cout << "[StateConstraintCollection::getLinearApproximation] NumConstraints: " << getNumConstraints(time) << std::endl;
-
   VectorFunctionLinearApproximation linearApproximation(getNumConstraints(time), state.rows());
 
   // append linearApproximation of each constraintTerm
@@ -105,8 +101,6 @@ VectorFunctionLinearApproximation StateConstraintCollection::getLinearApproximat
       i += nc;
     }
   }
-
-  std::cout << "[StateConstraintCollection::getLinearApproximation] END" << std::endl;
 
   return linearApproximation;
 }

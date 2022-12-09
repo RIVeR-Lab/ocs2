@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_mobile_manipulator/MobileManipulatorPreComputation.h>
 #include <ocs2_ext_collision/ExtCollisionConstraint.h>
+#include <ocs2_ext_collision/PointsOnRobot.h>
 
 namespace ocs2 {
 namespace mobile_manipulator {
@@ -42,8 +43,8 @@ class MobileManipulatorExtCollisionConstraint final : public ExtCollisionConstra
   public:
     MobileManipulatorExtCollisionConstraint(const PinocchioStateInputMapping<scalar_t>& mapping,
                                             ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
-                                            scalar_t minimumDistance)
-      : ExtCollisionConstraint(mapping, std::move(extCollisionPinocchioGeometryInterface), minimumDistance) {}
+                                            std::shared_ptr<PointsOnRobot> pointsOnRobotPtr)
+      : ExtCollisionConstraint(mapping, std::move(extCollisionPinocchioGeometryInterface), pointsOnRobotPtr) {}
     
     ~MobileManipulatorExtCollisionConstraint() override = default;
     

@@ -587,7 +587,6 @@ scalar_t GaussNewtonDDP::solveSequentialRiccatiEquationsImpl(const ScalarFunctio
 /******************************************************************************************************/
 void GaussNewtonDDP::calculateController() 
 {
-  std::cout << "[GaussNewtonDDP::calculateController] START" << std::endl;
   const size_t N = nominalPrimalData_.primalSolution.timeTrajectory_.size();
 
   unoptimizedController_.clear();
@@ -641,7 +640,6 @@ void GaussNewtonDDP::calculateController()
   if (ddpSettings_.displayInfo_) {
     std::cerr << "max feedforward norm: " << maxControllerUpdateNorm(unoptimizedController_) << "\n";
   }
-  std::cout << "[GaussNewtonDDP::calculateController] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -649,7 +647,6 @@ void GaussNewtonDDP::calculateController()
 /******************************************************************************************************/
 void GaussNewtonDDP::approximateOptimalControlProblem() 
 {
-  std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] START" << std::endl;
   /*
    * compute and augment the LQ approximation of intermediate times
    */
@@ -663,8 +660,6 @@ void GaussNewtonDDP::approximateOptimalControlProblem()
   const size_t NE = nominalPrimalData_.primalSolution.postEventIndices_.size();
   nominalPrimalData_.modelDataEventTimes.clear();
   nominalPrimalData_.modelDataEventTimes.resize(NE);
-  
-  std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] NE: " << NE << std::endl;
   
   if (NE > 0) 
   {
@@ -737,7 +732,6 @@ void GaussNewtonDDP::approximateOptimalControlProblem()
                                        ddpSettings_.lineSearch_.hessianCorrectionMultiple);
     }
   }
-  std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -798,7 +792,6 @@ void GaussNewtonDDP::computeProjections(const matrix_t& Hm, const matrix_t& Dm, 
 /******************************************************************************************************/
 void GaussNewtonDDP::initializeConstraintPenalties() 
 {
-  std::cout << "[GaussNewtonDDP::initializeConstraintPenalties] START" << std::endl;
   assert(ddpSettings_.constraintPenaltyInitialValue_ > 1.0);
   assert(ddpSettings_.constraintPenaltyIncreaseRate_ > 1.0);
 
@@ -814,7 +807,6 @@ void GaussNewtonDDP::initializeConstraintPenalties()
 
     this->printString(displayText);
   }
-  std::cout << "[GaussNewtonDDP::initializeConstraintPenalties] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -888,27 +880,20 @@ bool GaussNewtonDDP::initializePrimalSolution() {
 /******************************************************************************************************/
 void GaussNewtonDDP::initializeDualSolutionAndMetrics() 
 {
-  std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] START" << std::endl;
   // adjust dual solution
   totalDualSolutionTimer_.startTimer();
   if (!optimizedDualSolution_.timeTrajectory.empty()) 
   {
-    std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] START trajectorySpread" << std::endl;
     const auto status = trajectorySpread(optimizedPrimalSolution_.modeSchedule_, nominalPrimalData_.primalSolution.modeSchedule_, optimizedDualSolution_);
-    std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] END trajectorySpread" << std::endl;
   }
 
-  std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] START initializeDualSolution" << std::endl;
   // initialize dual solution
   ocs2::initializeDualSolution(optimalControlProblemStock_[0], nominalPrimalData_.primalSolution, optimizedDualSolution_,
                                nominalDualData_.dualSolution);
-  std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] END initializeDualSolution" << std::endl;
   totalDualSolutionTimer_.endTimer();
 
-  std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] START computeRolloutMetrics" << std::endl;
   computeRolloutMetrics(optimalControlProblemStock_[0], nominalPrimalData_.primalSolution, nominalDualData_.dualSolution,
                         nominalPrimalData_.problemMetrics);
-  std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] END computeRolloutMetrics" << std::endl;
 
   // update dual
   //  totalDualSolutionTimer_.startTimer();
@@ -917,15 +902,8 @@ void GaussNewtonDDP::initializeDualSolutionAndMetrics()
   //  totalDualSolutionTimer_.endTimer();
 
   // calculates rollout merit
-  std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] START computeRolloutPerformanceIndex" << std::endl;
   performanceIndex_ = computeRolloutPerformanceIndex(nominalPrimalData_.primalSolution.timeTrajectory_, nominalPrimalData_.problemMetrics);
-  std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] END computeRolloutPerformanceIndex" << std::endl;
-
-  std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] START calculateRolloutMerit" << std::endl;
   performanceIndex_.merit = calculateRolloutMerit(performanceIndex_);
-  std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] END calculateRolloutMerit" << std::endl;
-
-  std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -933,8 +911,6 @@ void GaussNewtonDDP::initializeDualSolutionAndMetrics()
 /******************************************************************************************************/
 void GaussNewtonDDP::takePrimalDualStep(scalar_t lqModelExpectedCost) 
 {
-  std::cout << "[GaussNewtonDDP::takePrimalDualStep] START" << std::endl;
-
   // update primal: run search strategy and find the optimal stepLength
   searchStrategyTimer_.startTimer();
   scalar_t avgTimeStep;
@@ -942,10 +918,8 @@ void GaussNewtonDDP::takePrimalDualStep(scalar_t lqModelExpectedCost)
   search_strategy::SolutionRef solution(avgTimeStep, optimizedDualSolution_, optimizedPrimalSolution_, optimizedProblemMetrics_,
                                         performanceIndex_);
 
-  std::cout << "[GaussNewtonDDP::takePrimalDualStep] START searchStrategyPtr_" << std::endl;
   const bool success = searchStrategyPtr_->run({initTime_, finalTime_}, initState_, lqModelExpectedCost, unoptimizedController_,
                                                nominalDualData_.dualSolution, modeSchedule, solution);
-  std::cout << "[GaussNewtonDDP::takePrimalDualStep] END searchStrategyPtr_" << std::endl;
 
   if (success) 
   {
@@ -959,13 +933,8 @@ void GaussNewtonDDP::takePrimalDualStep(scalar_t lqModelExpectedCost)
   {
     ocs2::updateDualSolution(optimalControlProblemStock_[0], optimizedPrimalSolution_, optimizedProblemMetrics_, optimizedDualSolution_);
 
-    std::cout << "[GaussNewtonDDP::takePrimalDualStep] START computeRolloutPerformanceIndex" << std::endl;
     performanceIndex_ = computeRolloutPerformanceIndex(optimizedPrimalSolution_.timeTrajectory_, optimizedProblemMetrics_);
-    std::cout << "[GaussNewtonDDP::takePrimalDualStep] END computeRolloutPerformanceIndex" << std::endl;
-
-    std::cout << "[GaussNewtonDDP::takePrimalDualStep] START calculateRolloutMerit" << std::endl;
     performanceIndex_.merit = calculateRolloutMerit(performanceIndex_);
-    std::cout << "[GaussNewtonDDP::takePrimalDualStep] END calculateRolloutMerit" << std::endl;
   }
   totalDualSolutionTimer_.endTimer();
 
@@ -977,8 +946,6 @@ void GaussNewtonDDP::takePrimalDualStep(scalar_t lqModelExpectedCost)
     optimizedProblemMetrics_ = nominalPrimalData_.problemMetrics;
     performanceIndex_ = performanceIndexHistory_.back();
   }
-
-  std::cout << "[GaussNewtonDDP::takePrimalDualStep] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -1027,7 +994,6 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 /******************************************************************************************************/
 void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) 
 {
-  std::cout << "[GaussNewtonDDP::runImpl] START" << std::endl;
   if (ddpSettings_.displayInfo_) 
   {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
@@ -1050,9 +1016,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   performanceIndexHistory_.clear();
   const auto initIteration = totalNumIterations_;
 
-  std::cout << "[GaussNewtonDDP::runImpl] START initializeConstraintPenalties" << std::endl;
   initializeConstraintPenalties();  // initialize penalty coefficients
-  std::cout << "[GaussNewtonDDP::runImpl] END initializeConstraintPenalties" << std::endl;
 
   // display
   if (ddpSettings_.displayInfo_) 
@@ -1070,9 +1034,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   initializationTimer_.startTimer();
   bool initialSolutionExists = initializePrimalSolution();  // true if the rollout is not purely from the Initializer
 
-  std::cout << "[GaussNewtonDDP::runImpl] START initializeDualSolutionAndMetrics" << std::endl;
   initializeDualSolutionAndMetrics();
-  std::cout << "[GaussNewtonDDP::runImpl] END initializeDualSolutionAndMetrics" << std::endl;
   
   performanceIndexHistory_.push_back(performanceIndex_);
   initializationTimer_.endTimer();
@@ -1087,12 +1049,9 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   std::string convergenceInfo;
 
   int ctr = 0;
-  std::cout << "[GaussNewtonDDP::runImpl] START DDP main loop" << std::endl;
   // DDP main loop
   while (true) 
   {
-    std::cout << "[GaussNewtonDDP::runImpl] ctr: " << ctr << std::endl;
-
     if (ddpSettings_.displayInfo_) 
     {
       std::cerr << "\n###################";
@@ -1101,31 +1060,25 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     }
 
     // nominal --> nominal: constructs the LQ problem around the nominal trajectories
-    std::cout << "[GaussNewtonDDP::runImpl] START approximateOptimalControlProblem" << std::endl;
     linearQuadraticApproximationTimer_.startTimer();
     approximateOptimalControlProblem();
     linearQuadraticApproximationTimer_.endTimer();
-    std::cout << "[GaussNewtonDDP::runImpl] END approximateOptimalControlProblem" << std::endl;
 
     // nominal --> nominal: solves the LQ problem
     backwardPassTimer_.startTimer();
     avgTimeStepBP_ = solveSequentialRiccatiEquations(nominalPrimalData_.modelDataFinalTime.cost);
     backwardPassTimer_.endTimer();
 
-    std::cout << "[GaussNewtonDDP::runImpl] START calculateController" << std::endl;
     // calculate controller and store the result in unoptimizedController_
     computeControllerTimer_.startTimer();
     calculateController();
     computeControllerTimer_.endTimer();
-    std::cout << "[GaussNewtonDDP::runImpl] END calculateController" << std::endl;
 
     // the expected cost/merit calculated by the Riccati solution is not reliable
     const auto lqModelExpectedCost = initialSolutionExists ? nominalDualData_.valueFunctionTrajectory.front().f : performanceIndex_.merit;
 
-    std::cout << "[GaussNewtonDDP::runImpl] START takePrimalDualStep" << std::endl;
     // nominal --> optimized: based on the current LQ solution updates the optimized primal and dual solutions
     takePrimalDualStep(lqModelExpectedCost);
-    std::cout << "[GaussNewtonDDP::runImpl] END takePrimalDualStep" << std::endl;
 
     // iteration info
     ++totalNumIterations_;
@@ -1136,12 +1089,10 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
       printRolloutInfo();
     }
 
-    std::cout << "[GaussNewtonDDP::runImpl] START isConverged" << std::endl;
     // check convergence
     std::tie(isConverged, convergenceInfo) = searchStrategyPtr_->checkConvergence(
         !initialSolutionExists, *std::prev(performanceIndexHistory_.end(), 2), performanceIndexHistory_.back());
     initialSolutionExists = true;
-    std::cout << "[GaussNewtonDDP::runImpl] END isConverged" << std::endl;
 
     if (isConverged || (totalNumIterations_ - initIteration) == ddpSettings_.maxNumIterations_) 
     {
@@ -1150,10 +1101,8 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     } 
     else 
     {
-      std::cout << "[GaussNewtonDDP::runImpl] START updateConstraintPenalties" << std::endl;
       // update the constraint penalty coefficients
       updateConstraintPenalties(performanceIndex_.equalityConstraintsSSE);
-      std::cout << "[GaussNewtonDDP::runImpl] END updateConstraintPenalties" << std::endl;
 
       // optimized --> nominal: use the optimized solution as the nominal for the next iteration
       nominalDualData_.swap(cachedDualData_);
@@ -1161,15 +1110,9 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
       optimizedDualSolution_.swap(nominalDualData_.dualSolution);
       optimizedPrimalSolution_.swap(nominalPrimalData_.primalSolution);
       optimizedProblemMetrics_.swap(nominalPrimalData_.problemMetrics);
-
-      std::cout << "[GaussNewtonDDP::runImpl] AFTER swap" << std::endl;
     }
     ctr++;
   }  // end of while loop
-  std::cout << "[GaussNewtonDDP::runImpl] END DDP main loop" << std::endl;
-
-  std::cout << "[GaussNewtonDDP::runImpl] Time Period:          [" << initTime_ << " ," << finalTime_ << "]\n";
-  std::cout << "[GaussNewtonDDP::runImpl] Number of Iterations: " << (totalNumIterations_ - initIteration) << " out of " << ddpSettings_.maxNumIterations_ << "\n";
 
   // display
   if (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_) {
@@ -1190,7 +1133,6 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
       std::cerr << "The algorithm has terminated for an unknown reason!" << std::endl;
     }
   }
-  std::cout << "[GaussNewtonDDP::runImpl] END" << std::endl;
 }
 
 }  // namespace ocs2
