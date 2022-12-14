@@ -58,7 +58,7 @@ class PointsOnRobot
 
     PointsOnRobot(const PointsOnRobot& rhs);
 
-    void initialize(const ocs2::PinocchioInterface& pinocchioInterface,
+    void initialize(ocs2::PinocchioInterface& pinocchioInterface,
                     const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
                     const std::string& modelName, 
                     const std::string& modelFolder, 
@@ -70,39 +70,51 @@ class PointsOnRobot
                     const std::string& ee_link_name,
                     const std::vector<std::string>& dofParentLinkNames);
 
-    Eigen::VectorXd getPoints(const Eigen::VectorXd& state) const;
+    Eigen::VectorXd getPointsPositions(ocs2::PinocchioInterface& pinocchioInterface, 
+                                       const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
+                                       const Eigen::VectorXd& state) const;
 
-    Eigen::MatrixXd getJacobian(const Eigen::VectorXd& state) const;
+    Eigen::MatrixXd getPointsJacobian(const Eigen::VectorXd& state) const;
 
     Eigen::VectorXd getRadii() const;
 
-    int numOfPoints() const;
+    int getNumOfPoints() const;
 
-    visualization_msgs::MarkerArray getVisualization(const Eigen::VectorXd& state) const;
+    int getDimPoints() const;
 
-    Eigen::Quaternion<ad_scalar_t> EulerToQuaternion(ad_scalar_t& yaw, ad_scalar_t& pitch, ad_scalar_t& roll) const;
+    visualization_msgs::MarkerArray getVisualization(ocs2::PinocchioInterface& pinocchioInterface, 
+                                                     const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
+                                                     const Eigen::VectorXd& state) const;
 
-    Eigen::Matrix<PointsOnRobot::ad_scalar_t, 3, 1> QuaternionToEuler(Eigen::Quaternion<ad_scalar_t>& quat) const;
+    Eigen::Quaternion<ocs2::scalar_t> EulerToQuaternion(const ocs2::scalar_t& yaw, const ocs2::scalar_t& pitch, const ocs2::scalar_t& roll) const;
 
-    Eigen::Matrix<ad_scalar_t, 3, -1> computeState2MultiplePointsOnRobot(ocs2::PinocchioInterfaceCppAd& pinocchioInterfaceAd,
-                                                                         const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mapping,
-                                                                         const Eigen::Matrix<ad_scalar_t, -1, 1>& state,
-                                                                         const std::vector<std::vector<double>>& points) const;
+    Eigen::Matrix<ocs2::scalar_t, 3, 1> QuaternionToEuler(Eigen::Quaternion<ocs2::scalar_t>& quat) const;
+
+    void setFixedTransforms();
+
+    void updateTransforms() const;
+
+    void updateTransforms(ocs2::PinocchioInterface& pinocchioInterface,
+                          const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
+                          const Eigen::VectorXd& state) const;
+
+    Eigen::Matrix<ocs2::scalar_t, 3, -1> computeState2PointsOnRobot(ocs2::PinocchioInterface& pinocchioInterface,
+                                                                    const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
+                                                                    const Eigen::Matrix<ocs2::scalar_t, -1, 1>& state) const;
+
+    Eigen::Matrix<ad_scalar_t, 3, -1> computeState2PointsOnRobotCppAd(ocs2::PinocchioInterfaceCppAd& pinocchioInterfaceAd,
+                                                                      const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
+                                                                      const Eigen::Matrix<ad_scalar_t, -1, 1>& stateCppAd) const;
     
+    /*
     Eigen::Matrix<ad_scalar_t, 3, -1> computeArmState2MultiplePointsOnRobot(ocs2::PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
-                                                                            const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mapping,
-                                                                            const Eigen::Matrix<ad_scalar_t, -1, 1>& state,
-                                                                            const std::vector<std::vector<double>>& points,
-                                                                            const Eigen::Matrix<ad_scalar_t, 4, 4>& transformWorld_X_Base) const;
-
-    void setTransforms(const std::string base_link_name, 
-                       const std::string arm_mount_link_name, 
-                       const std::string tool_link_name, 
-                       const std::string ee_link_name);
+                                                                            const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
+                                                                            const Eigen::Matrix<ad_scalar_t, -1, 1>& stateCppAd) const;
+    */
 
   private:
-    void setADInterfaces(ocs2::PinocchioInterfaceCppAd& pinocchioInterfaceAd, 
-                         const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mapping,
+    void setADInterfaces(ocs2::PinocchioInterfaceCppAd& pinocchioInterfaceAd,
+                         const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
                          const std::string& modelName,
                          const std::string& modelFolder);
 
@@ -110,12 +122,28 @@ class PointsOnRobot
     
     void loadModelsIfAvailable(bool verbose);
 
-    std::shared_ptr<ocs2::CppAdInterface> cppAdInterface_;
-
     std::vector<std::vector<double>> points_;
     Eigen::VectorXd radii_;
 
-    Eigen::Matrix4d transformBase_X_ArmMount_;
-    Eigen::Matrix4d transformToolMount_X_Endeffector_;
+    //std::unique_ptr<ocs2::PinocchioInterface> pinocchioInterfacePtr_;
+    std::shared_ptr<ocs2::CppAdInterface> cppAdInterface_;
+
+    std::string base_link_name_;
+    std::string arm_mount_link_name_;
+    std::string tool_link_name_;
+    std::string ee_link_name_;
+
+    mutable Eigen::Matrix4d transform_Base_wrt_World_;
+    mutable Eigen::Matrix4d transform_ArmMount_wrt_Base_;
+    mutable Eigen::Matrix4d transform_J1_wrt_ArmMount_;
+    mutable Eigen::Matrix4d transform_J2_wrt_J1_;
+    mutable Eigen::Matrix4d transform_J3_wrt_J2_;
+    mutable Eigen::Matrix4d transform_J4_wrt_J3_;
+    mutable Eigen::Matrix4d transform_J5_wrt_J4_;
+    mutable Eigen::Matrix4d transform_J6_wrt_J5_;
+    mutable Eigen::Matrix4d transform_ToolMount_wrt_J6_;
+    mutable Eigen::Matrix4d transform_ToolMount_wrt_World_;
+
+    std::vector<std::string> dofParentLinkNames_;
     std::vector<size_t> dofParentLinkIds_;
 };

@@ -80,17 +80,36 @@ const std::vector<std::string>& PinocchioEndEffectorKinematics::getIds() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto PinocchioEndEffectorKinematics::getPosition(const vector_t& state) const -> std::vector<vector3_t> {
+auto PinocchioEndEffectorKinematics::getPosition(const vector_t& state) const -> std::vector<vector3_t> 
+{
+  //std::cout << "[PinocchioEndEffectorKinematics::getPosition] START" << std::endl;
   if (pinocchioInterfacePtr_ == nullptr) {
     throw std::runtime_error("[PinocchioEndEffectorKinematics] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
   }
 
   const pinocchio::Data& data = pinocchioInterfacePtr_->getData();
 
+  /*
+  // NUA TEST START
+  size_t bid_ur5_shoulder_link = pinocchioInterfacePtr_->getModel().getBodyId("ur5_shoulder_link");
+  std::cout << "[PinocchioEndEffectorKinematics::getPosition] bid_ur5_shoulder_link: " << bid_ur5_shoulder_link << std::endl;
+
+  Eigen::Matrix4d transform_J1_wrt_ArmMount_pin = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
+  transform_J1_wrt_ArmMount_pin.topLeftCorner(3,3) = data.oMf[bid_ur5_shoulder_link].rotation();
+  transform_J1_wrt_ArmMount_pin.topRightCorner(3,1) = data.oMf[bid_ur5_shoulder_link].translation();
+
+  std::cout << "[PointsOnRobot::getPointsPositions] transform_J1_wrt_ArmMount_pin: " << std::endl << transform_J1_wrt_ArmMount_pin << std::endl;
+  std::cout << "--------------------&&--------------------" << std::endl;
+  // NUA TEST END
+  */
+
   std::vector<vector3_t> positions;
   for (const auto& frameId : endEffectorFrameIds_) {
     positions.emplace_back(data.oMf[frameId].translation());
   }
+
+  //std::cout << "[PinocchioEndEffectorKinematics::getPosition] END" << std::endl;
+
   return positions;
 }
 

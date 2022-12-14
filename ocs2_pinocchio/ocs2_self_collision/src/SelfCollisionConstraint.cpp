@@ -59,12 +59,7 @@ size_t SelfCollisionConstraint::getNumConstraints(scalar_t time) const {
 /******************************************************************************************************/
 vector_t SelfCollisionConstraint::getValue(scalar_t time, const vector_t& state, const PreComputation& preComputation) const 
 {
-  std::cout << "[SelfCollisionConstraint::getValue] START" << std::endl;
-  
   const auto& pinocchioInterface = getPinocchioInterface(preComputation);
-
-  std::cout << "[SelfCollisionConstraint::getValue] END" << std::endl;
-
   return selfCollision_.getValue(pinocchioInterface);
 }
 

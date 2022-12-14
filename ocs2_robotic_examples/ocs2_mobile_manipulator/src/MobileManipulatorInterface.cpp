@@ -200,14 +200,13 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   // external-collision avoidance constraint
   bool activateExtCollision = false;
   loadData::loadPtreeValue(pt, activateExtCollision, "extCollision.activate", false);
-
   if (activateExtCollision) 
   {
     std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] activateExtCollision: " << activateExtCollision << std::endl;
 
     pointsOnRobotPtr_.reset(new PointsOnRobot(pointsAndRadii));
     
-    if (pointsOnRobotPtr_->numOfPoints() > 0) 
+    if (pointsOnRobotPtr_->getNumOfPoints() > 0) 
     {
       std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] pointsOnRobotPtr_ TRUE" << std::endl;
 
@@ -485,7 +484,12 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
 
   ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface(pinocchioInterface);
 
+  //MobileManipulatorPinocchioMapping pinocchioMapping(manipulatorModelInfo_);
   std::unique_ptr<StateConstraint> constraint;
+  constraint = std::unique_ptr<StateConstraint>(new MobileManipulatorExtCollisionConstraint(MobileManipulatorPinocchioMapping(manipulatorModelInfo_), 
+                                                                                            std::move(extCollisionPinocchioGeometryInterface), 
+                                                                                            pointsOnRobotPtr_));
+  /*
   if (usePreComputation) 
   {
     std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] PRECOMPUTED!" << std::endl;
@@ -507,6 +511,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
                                                                                   recompileLibraries, 
                                                                                   false));
   }
+  */
 
   std::unique_ptr<PenaltyBase> penalty(new RelaxedBarrierPenalty({mu, delta}));
 

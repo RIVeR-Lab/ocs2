@@ -63,11 +63,11 @@ vector_t ExtCollisionConstraint::getValue(scalar_t time, const vector_t& state, 
 {
   std::cout << "[ExtCollisionConstraint::getValue] START" << std::endl;
 
-  const auto& pinocchioInterface = getPinocchioInterface(preComputation);
+  auto pinocchioInterface = getPinocchioInterface(preComputation);
 
   std::cout << "[ExtCollisionConstraint::getValue] END" << std::endl;
 
-  return extCollision_.getValue(pinocchioInterface, state);
+  return extCollision_.getValue(pinocchioInterface, *mappingPtr_, state);
 }
 
 /******************************************************************************************************/

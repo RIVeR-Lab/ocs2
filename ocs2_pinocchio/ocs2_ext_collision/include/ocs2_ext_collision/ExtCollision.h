@@ -54,7 +54,7 @@ class ExtCollision {
      * @param [in] pinocchioInterface: pinocchio interface of the robot model
      * @return: The differences between the distance of each collision pair and the minimum distance
      */
-    vector_t getValue(const PinocchioInterface& pinocchioInterface, const vector_t& state) const;
+    vector_t getValue(PinocchioInterface& pinocchioInterface, const PinocchioStateInputMapping<scalar_t>& mapping, const vector_t& state) const;
 
     /**
      * TODO: Add desription!
