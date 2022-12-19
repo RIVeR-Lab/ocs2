@@ -77,8 +77,9 @@ PointsOnRobot::PointsOnRobot(const PointsOnRobot& rhs)
     cppAdInterface_(new ocs2::CppAdInterface(*rhs.cppAdInterface_)),
     base_link_name_(rhs.base_link_name_),
     arm_mount_link_name_(rhs.arm_mount_link_name_),
-    tool_link_name_(rhs.tool_link_name_),
     ee_link_name_(rhs.ee_link_name_),
+    frameNames_(rhs.frameNames_),
+    frameIds_(rhs.frameIds_),
     transform_Base_wrt_World_(rhs.transform_Base_wrt_World_),
     transform_ArmMount_wrt_Base_(rhs.transform_ArmMount_wrt_Base_),
     transform_J1_wrt_ArmMount_(rhs.transform_J1_wrt_ArmMount_),
@@ -87,8 +88,7 @@ PointsOnRobot::PointsOnRobot(const PointsOnRobot& rhs)
     transform_J4_wrt_J3_(rhs.transform_J4_wrt_J3_),
     transform_J5_wrt_J4_(rhs.transform_J5_wrt_J4_),
     transform_J6_wrt_J5_(rhs.transform_J6_wrt_J5_),
-    transform_ToolMount_wrt_J6_(rhs.transform_ToolMount_wrt_J6_),
-    dofParentLinkIds_(rhs.dofParentLinkIds_){}
+    transform_ToolMount_wrt_J6_(rhs.transform_ToolMount_wrt_J6_){}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -100,27 +100,30 @@ void PointsOnRobot::initialize(ocs2::PinocchioInterface& pinocchioInterface,
                                bool recompileLibraries, 
                                bool verbose,
                                const std::string& base_link_name, 
-                               const std::string& arm_mount_link_name, 
-                               const std::string& tool_link_name, 
+                               const std::string& arm_mount_link_name,  
                                const std::string& ee_link_name,
-                               const std::vector<std::string>& dofParentLinkNames)
+                               const std::vector<std::string>& jointParentFrameNames)
 {
   base_link_name_ = base_link_name;
   arm_mount_link_name_ = arm_mount_link_name; 
-  tool_link_name_ = tool_link_name; 
   ee_link_name_ = ee_link_name;
-  dofParentLinkNames_ = dofParentLinkNames;
-  dofParentLinkNames_.push_back(tool_link_name);
+
+  frameNames_.push_back(base_link_name);
+  frameNames_.push_back(arm_mount_link_name);
+  for(auto dof_name : jointParentFrameNames)
+  {
+    frameNames_.push_back(dof_name);
+  }
+  frameNames_.push_back(ee_link_name);
 
   // Set link Ids of joints
-  for (const auto& bodyName : dofParentLinkNames_) 
+  for (const auto& bodyName : frameNames_) 
   {
-    dofParentLinkIds_.push_back(pinocchioInterface.getModel().getBodyId(bodyName));
+    frameIds_.push_back(pinocchioInterface.getModel().getBodyId(bodyName));
   }
-  dofParentLinkIds_.push_back(pinocchioInterface.getModel().getBodyId(tool_link_name));
 
   // Set fixed transforms
-  setFixedTransforms();
+  //setFixedTransforms();
 
   // CppAD interface
   ocs2::PinocchioInterfaceCppAd pinocchioInterfaceCppAd = pinocchioInterface.toCppAd();
@@ -150,155 +153,20 @@ Eigen::VectorXd PointsOnRobot::getPointsPositions(ocs2::PinocchioInterface& pino
 {
   std::cout << "[PointsOnRobot::getPointPosition] START" << std::endl;
 
-  std::cout << "[PointsOnRobot::getPointPosition] state:" << std::endl << state << std::endl;
+  //std::cout << "[PointsOnRobot::getPointPosition] state:" << std::endl << state << std::endl;
   //updateTransforms(pinocchioInterface, mapping, state);
   
-  const ocs2::scalar_t yaw = state[2];
-  const ocs2::scalar_t pitch = 0.0;
-  const ocs2::scalar_t roll = 0.0;
-
-  Eigen::Quaternion<ocs2::scalar_t> baseOrientation = EulerToQuaternion(yaw, pitch, roll);
-  Eigen::Matrix<ocs2::scalar_t, 3, 1> basePosition;
-  basePosition << state[0], state[1], 0.0;
-
-  transform_Base_wrt_World_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
-  transform_Base_wrt_World_.topLeftCorner(3,3) = baseOrientation.toRotationMatrix();
-  transform_Base_wrt_World_.topRightCorner(3,1) = basePosition;
-
-  std::cout << "[PointsOnRobot::getPointsPositions] transform_Base_wrt_World_: " << std::endl << transform_Base_wrt_World_ << std::endl;
-
-  std::cout << "[PointsOnRobot::getPointsPositions] transform_ArmMount_wrt_Base_: " << std::endl << transform_ArmMount_wrt_Base_ << std::endl;
-
   updateTransforms();
+  updateTransforms(pinocchioInterface, mapping, state);
 
-  const auto& model = pinocchioInterface.getModel();
-  auto& data = pinocchioInterface.getData();
-  const auto q = mapping.getPinocchioJointPosition(state);
-
-  //std::cout << "[PointsOnRobot::getPointPosition] q:" << std::endl << q << std::endl;
-
-  pinocchio::forwardKinematics(model, data, q);
-  pinocchio::updateFramePlacements(model, data);
-
-  Eigen::Matrix4d transform_J1_wrt_ArmMount_pin = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
-  transform_J1_wrt_ArmMount_pin.topLeftCorner(3,3) = data.oMf[dofParentLinkIds_[0]].rotation();
-  transform_J1_wrt_ArmMount_pin.topRightCorner(3,1) = data.oMf[dofParentLinkIds_[0]].translation();
-
-  //std::cout << "[PointsOnRobot::getPointsPositions] transform_Base_wrt_World_: " << std::endl << transform_Base_wrt_World_ << std::endl;
-  //std::cout << "[PointsOnRobot::getPointsPositions] transform_ArmMount_wrt_Base_: " << std::endl << transform_ArmMount_wrt_Base_ << std::endl;
-  //std::cout << "[PointsOnRobot::getPointsPositions] transform_J1_wrt_ArmMount_: " << std::endl << transform_J1_wrt_ArmMount_ << std::endl;
-
-  std::cout << "[PointsOnRobot::getPointsPositions] dofParentLinkIds_[0]: " << dofParentLinkNames_[0] << std::endl;
-  std::cout << "[PointsOnRobot::getPointsPositions] dofParentLinkIds_[0]: " << dofParentLinkIds_[0] << std::endl;
-  std::cout << "[PointsOnRobot::getPointsPositions] transform_J1_wrt_ArmMount_: " << std::endl << transform_J1_wrt_ArmMount_ << std::endl;
+  std::cout << "[PointsOnRobot::getPointPosition] tf2_transform_ArmMount_wrt_Base_: " << std::endl << tf2_transform_ArmMount_wrt_Base_ << std::endl;
   std::cout << "--------------------&&--------------------" << std::endl;
-
-  std::cout << "[PointsOnRobot::getPointsPositions] transform_J1_wrt_ArmMount_pin: " << std::endl << transform_J1_wrt_ArmMount_pin << std::endl;
+  std::cout << "[PointsOnRobot::getPointPosition] transform_ArmMount_wrt_Base_: " << std::endl << transform_ArmMount_wrt_Base_ << std::endl;
+  std::cout << "//////////////////////////////////////////" << std::endl;
+  std::cout << "[PointsOnRobot::getPointPosition] tf2_transform_J1_wrt_ArmMount_: " << std::endl << tf2_transform_J1_wrt_ArmMount_ << std::endl;
   std::cout << "--------------------&&--------------------" << std::endl;
-
-  Eigen::Matrix4d transform_J1_wrt_ArmMount_test = transform_Base_wrt_World_ * transform_ArmMount_wrt_Base_ * transform_J1_wrt_ArmMount_;
-  std::cout << "[PointsOnRobot::getPointsPositions] transform_J1_wrt_ArmMount_test: " << std::endl << transform_J1_wrt_ArmMount_test << std::endl;
-  std::cout << "==========================================" << std::endl;
-
-  ///////////////////
-  std::cout << "[PointsOnRobot::getPointsPositions] dofParentLinkIds_[1]: " << dofParentLinkNames_[1] << std::endl;
-  std::cout << "[PointsOnRobot::getPointsPositions] dofParentLinkIds_[1]: " << dofParentLinkIds_[1] << std::endl;
-  Eigen::Matrix4d transform_J2_wrt_J1_pin = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
-  transform_J2_wrt_J1_pin.topLeftCorner(3,3) = data.oMf[dofParentLinkIds_[1]].rotation();
-  transform_J2_wrt_J1_pin.topRightCorner(3,1) = data.oMf[dofParentLinkIds_[1]].translation();
-
-  std::cout << "[PointsOnRobot::getPointsPositions] transform_J2_wrt_J1_: " << std::endl << transform_J2_wrt_J1_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-
-  std::cout << "[PointsOnRobot::getPointsPositions] transform_J2_wrt_J1_pin: " << std::endl << transform_J2_wrt_J1_pin << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-
-  Eigen::Matrix4d transform_J2_wrt_J1_test = transform_J1_wrt_ArmMount_test * transform_J2_wrt_J1_;
-  std::cout << "[PointsOnRobot::getPointsPositions] transform_J2_wrt_J1_test: " << std::endl << transform_J2_wrt_J1_test << std::endl;
-  std::cout << "==========================================" << std::endl;
-
-  ///////////////////
-  Eigen::Matrix4d transform_J3_wrt_J2_pin = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
-  transform_J3_wrt_J2_pin.topLeftCorner(3,3) = data.oMf[dofParentLinkIds_[2]].rotation();
-  transform_J3_wrt_J2_pin.topRightCorner(3,1) = data.oMf[dofParentLinkIds_[2]].translation();
-
-  std::cout << "[PointsOnRobot::getPointsPositions] transform_J3_wrt_J2_: " << std::endl << transform_J3_wrt_J2_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-
-  std::cout << "[PointsOnRobot::getPointsPositions] transform_J3_wrt_J2_pin: " << std::endl << transform_J3_wrt_J2_pin << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-
-  Eigen::Matrix4d transform_J3_wrt_J2_test = transform_J2_wrt_J1_test * transform_J3_wrt_J2_;
-  std::cout << "[PointsOnRobot::getPointsPositions] transform_J3_wrt_J2_test: " << std::endl << transform_J3_wrt_J2_test << std::endl;
-  std::cout << "==========================================" << std::endl;
-
-  ///////////////////
-  Eigen::Matrix4d transform_J4_wrt_J3_pin = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
-  transform_J4_wrt_J3_pin.topLeftCorner(3,3) = data.oMf[dofParentLinkIds_[3]].rotation();
-  transform_J4_wrt_J3_pin.topRightCorner(3,1) = data.oMf[dofParentLinkIds_[3]].translation();
-
-  std::cout << "[PointsOnRobot::getPointsPositions] transform_J4_wrt_J3_pin: " << std::endl << transform_J4_wrt_J3_pin << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-
-  Eigen::Matrix4d transform_J4_wrt_J3_test = transform_J3_wrt_J2_test * transform_J4_wrt_J3_;
-  std::cout << "[PointsOnRobot::getPointsPositions] transform_J4_wrt_J3_test: " << std::endl << transform_J4_wrt_J3_test << std::endl;
-  std::cout << "==========================================" << std::endl;
-
-  ///////////////////
-  Eigen::Matrix4d transform_J5_wrt_J4_pin = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
-  transform_J5_wrt_J4_pin.topLeftCorner(3,3) = data.oMf[dofParentLinkIds_[4]].rotation();
-  transform_J5_wrt_J4_pin.topRightCorner(3,1) = data.oMf[dofParentLinkIds_[4]].translation();
-
-  std::cout << "[PointsOnRobot::getPointsPositions] transform_J5_wrt_J4_pin: " << std::endl << transform_J5_wrt_J4_pin << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-
-  Eigen::Matrix4d transform_J5_wrt_J4_test = transform_J4_wrt_J3_test * transform_J5_wrt_J4_;
-  std::cout << "[PointsOnRobot::getPointsPositions] transform_J5_wrt_J4_test: " << std::endl << transform_J5_wrt_J4_test << std::endl;
-  std::cout << "==========================================" << std::endl;
-
-  ///////////////////
-  Eigen::Matrix4d transform_J6_wrt_J5_pin = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
-  transform_J6_wrt_J5_pin.topLeftCorner(3,3) = data.oMf[dofParentLinkIds_[5]].rotation();
-  transform_J6_wrt_J5_pin.topRightCorner(3,1) = data.oMf[dofParentLinkIds_[5]].translation();
-
-  std::cout << "[PointsOnRobot::getPointsPositions] transform_J6_wrt_J5_pin: " << std::endl << transform_J6_wrt_J5_pin << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-
-  Eigen::Matrix4d transform_J6_wrt_J5_test = transform_J5_wrt_J4_test * transform_J6_wrt_J5_;
-  std::cout << "[PointsOnRobot::getPointsPositions] transform_J6_wrt_J5_test: " << std::endl << transform_J6_wrt_J5_test << std::endl;
-  std::cout << "==========================================" << std::endl;
-
-  ///////////////////
-  Eigen::Matrix4d transform_ToolMount_wrt_J6_pin = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
-  transform_ToolMount_wrt_J6_pin.topLeftCorner(3,3) = data.oMf[dofParentLinkIds_[6]].rotation();
-  transform_ToolMount_wrt_J6_pin.topRightCorner(3,1) = data.oMf[dofParentLinkIds_[6]].translation();
-
-  std::cout << "[PointsOnRobot::getPointsPositions] transform_ToolMount_wrt_World_: " << std::endl << transform_ToolMount_wrt_World_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-
-  std::cout << "[PointsOnRobot::getPointsPositions] transform_ToolMount_wrt_J6_pin: " << std::endl << transform_ToolMount_wrt_J6_pin << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-
-  Eigen::Matrix4d transform_ToolMount_wrt_J6_test = transform_J6_wrt_J5_test * transform_ToolMount_wrt_J6_;
-  std::cout << "[PointsOnRobot::getPointsPositions] transform_ToolMount_wrt_J6_test: " << std::endl << transform_ToolMount_wrt_J6_test << std::endl;
-  std::cout << "==========================================" << std::endl;
-
-  /*
-  std::cout << "[PointsOnRobot::updateTransforms] transform_J1_wrt_ArmMount_: " << std::endl << transform_J1_wrt_ArmMount_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::updateTransforms] transform_J2_wrt_J1_: " << std::endl << transform_J2_wrt_J1_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::updateTransforms] transform_J3_wrt_J2_: " << std::endl << transform_J3_wrt_J2_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::updateTransforms] transform_J4_wrt_J3_: " << std::endl << transform_J4_wrt_J3_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::updateTransforms] transform_J5_wrt_J4_: " << std::endl << transform_J5_wrt_J4_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::updateTransforms] transform_J6_wrt_J5_: " << std::endl << transform_J6_wrt_J5_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::updateTransforms] transform_ToolMount_wrt_J6_: " << std::endl << transform_ToolMount_wrt_J6_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  */
+  std::cout << "[PointsOnRobot::getPointPosition] transform_J1_wrt_ArmMount_: " << std::endl << transform_J1_wrt_ArmMount_ << std::endl;
+  std::cout << "//////////////////////////////////////////" << std::endl;
 
   std::cout << "[PointsOnRobot::getPointPosition] END" << std::endl;
   return cppAdInterface_->getFunctionValue(state);
@@ -423,9 +291,9 @@ void PointsOnRobot::setFixedTransforms()
 {
   tf2_ros::Buffer tfBuffer;
   tf2_ros::TransformListener tfListener(tfBuffer);
+  geometry_msgs::TransformStamped transformStamped;
 
   {
-    geometry_msgs::TransformStamped transformStamped;
     try 
     {
       while(!tfBuffer.canTransform(base_link_name_, arm_mount_link_name_, ros::Time(0), ros::Duration(5.0))){;};
@@ -441,22 +309,21 @@ void PointsOnRobot::setFixedTransforms()
     Eigen::Quaterniond quat(transformStamped.transform.rotation.w, transformStamped.transform.rotation.x,
                             transformStamped.transform.rotation.y, transformStamped.transform.rotation.z);
 
-    transform_ArmMount_wrt_Base_ = Eigen::Matrix4d::Identity();
-    transform_ArmMount_wrt_Base_.block<3, 3>(0, 0) = quat.toRotationMatrix();
+    tf2_transform_ArmMount_wrt_Base_ = Eigen::Matrix4d::Identity();
+    tf2_transform_ArmMount_wrt_Base_.block<3, 3>(0, 0) = quat.toRotationMatrix();
 
-    transform_ArmMount_wrt_Base_(0, 3) = transformStamped.transform.translation.x;
-    transform_ArmMount_wrt_Base_(1, 3) = transformStamped.transform.translation.y;
-    transform_ArmMount_wrt_Base_(2, 3) = transformStamped.transform.translation.z;
+    tf2_transform_ArmMount_wrt_Base_(0, 3) = transformStamped.transform.translation.x;
+    tf2_transform_ArmMount_wrt_Base_(1, 3) = transformStamped.transform.translation.y;
+    tf2_transform_ArmMount_wrt_Base_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::setFixedTransforms] baseToArmMount_: " << std::endl << transform_ArmMount_wrt_Base_ << std::endl;
+    //std::cout << "[PointsOnRobot::setFixedTransforms] baseToArmMount_: " << std::endl << tf2_transform_ArmMount_wrt_Base_ << std::endl;
   }
 
   {
-    geometry_msgs::TransformStamped transformStamped;
     try 
     {
-      while(!tfBuffer.canTransform(tool_link_name_, ee_link_name_, ros::Time(0), ros::Duration(5.0))){;};
-      transformStamped = tfBuffer.lookupTransform(tool_link_name_, ee_link_name_, ros::Time(0), ros::Duration(5.0));
+      while(!tfBuffer.canTransform(ee_link_name_, frameNames_[frameNames_.size()-2], ros::Time(0), ros::Duration(5.0))){;};
+      transformStamped = tfBuffer.lookupTransform(ee_link_name_, frameNames_[frameNames_.size()-2], ros::Time(0), ros::Duration(5.0));
     } 
     catch (tf2::TransformException& ex) 
     {
@@ -468,14 +335,14 @@ void PointsOnRobot::setFixedTransforms()
     Eigen::Quaterniond quat(transformStamped.transform.rotation.w, transformStamped.transform.rotation.x,
                             transformStamped.transform.rotation.y, transformStamped.transform.rotation.z);
 
-    transform_ToolMount_wrt_J6_ = Eigen::Matrix4d::Identity();
-    transform_ToolMount_wrt_J6_.block<3, 3>(0, 0) = quat.toRotationMatrix();
+    tf2_transform_ToolMount_wrt_J6_ = Eigen::Matrix4d::Identity();
+    tf2_transform_ToolMount_wrt_J6_.block<3, 3>(0, 0) = quat.toRotationMatrix();
 
-    transform_ToolMount_wrt_J6_(0, 3) = transformStamped.transform.translation.x;
-    transform_ToolMount_wrt_J6_(1, 3) = transformStamped.transform.translation.y;
-    transform_ToolMount_wrt_J6_(2, 3) = transformStamped.transform.translation.z;
+    tf2_transform_ToolMount_wrt_J6_(0, 3) = transformStamped.transform.translation.x;
+    tf2_transform_ToolMount_wrt_J6_(1, 3) = transformStamped.transform.translation.y;
+    tf2_transform_ToolMount_wrt_J6_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::setFixedTransforms] wrist2ToEETransform_: " << std::endl << transform_ToolMount_wrt_J6_ << std::endl;
+    //std::cout << "[PointsOnRobot::setFixedTransforms] wrist2ToEETransform_: " << std::endl << tf2_transform_ToolMount_wrt_J6_ << std::endl;
   }
 }
 
@@ -483,15 +350,15 @@ void PointsOnRobot::updateTransforms() const
 {
   tf2_ros::Buffer tfBuffer;
   tf2_ros::TransformListener tfListener(tfBuffer);
+  geometry_msgs::TransformStamped transformStamped;
 
   {
-    geometry_msgs::TransformStamped transformStamped;
     try 
     {
       //std::cout << "[PointsOnRobot::updateTransforms] arm_mount_link_name_: " << arm_mount_link_name_ << std::endl;
-      //std::cout << "[PointsOnRobot::updateTransforms] dofParentLinkNames_[0]: " << dofParentLinkNames_[0] << std::endl;
-      while(!tfBuffer.canTransform(arm_mount_link_name_, dofParentLinkNames_[0], ros::Time(0), ros::Duration(5.0))){;};
-      transformStamped = tfBuffer.lookupTransform(arm_mount_link_name_, dofParentLinkNames_[0], ros::Time(0), ros::Duration(5.0));
+      //std::cout << "[PointsOnRobot::updateTransforms] frameNames_[2]: " << frameNames_[2] << std::endl;
+      while(!tfBuffer.canTransform(arm_mount_link_name_, frameNames_[2], ros::Time(0), ros::Duration(5.0))){;};
+      transformStamped = tfBuffer.lookupTransform(arm_mount_link_name_, frameNames_[2], ros::Time(0), ros::Duration(5.0));
     } 
     catch (tf2::TransformException& ex) 
     {
@@ -503,25 +370,23 @@ void PointsOnRobot::updateTransforms() const
     Eigen::Quaterniond quat(transformStamped.transform.rotation.w, transformStamped.transform.rotation.x,
                             transformStamped.transform.rotation.y, transformStamped.transform.rotation.z);
 
-    transform_J1_wrt_ArmMount_ = Eigen::Matrix4d::Identity();
-    transform_J1_wrt_ArmMount_.block<3, 3>(0, 0) = quat.toRotationMatrix();
+    tf2_transform_J1_wrt_ArmMount_ = Eigen::Matrix4d::Identity();
+    tf2_transform_J1_wrt_ArmMount_.block<3, 3>(0, 0) = quat.toRotationMatrix();
 
-    transform_J1_wrt_ArmMount_(0, 3) = transformStamped.transform.translation.x;
-    transform_J1_wrt_ArmMount_(1, 3) = transformStamped.transform.translation.y;
-    transform_J1_wrt_ArmMount_(2, 3) = transformStamped.transform.translation.z;
+    tf2_transform_J1_wrt_ArmMount_(0, 3) = transformStamped.transform.translation.x;
+    tf2_transform_J1_wrt_ArmMount_(1, 3) = transformStamped.transform.translation.y;
+    tf2_transform_J1_wrt_ArmMount_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::updateTransforms] transform_J1_wrt_ArmMount_: " << std::endl << transform_J1_wrt_ArmMount_ << std::endl;
+    //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_J1_wrt_ArmMount_: " << std::endl << tf2_transform_J1_wrt_ArmMount_ << std::endl;
     //std::cout << "--------------------&&--------------------" << std::endl;
   }
 
-  
   {
-    geometry_msgs::TransformStamped transformStamped;
     try 
     {
-      //std::cout << "[PointsOnRobot::updateTransforms] dofParentLinkNames_[0]: " << dofParentLinkNames_[1] << std::endl;
-      while(!tfBuffer.canTransform(dofParentLinkNames_[0], dofParentLinkNames_[1], ros::Time(0), ros::Duration(5.0))){;};
-      transformStamped = tfBuffer.lookupTransform(dofParentLinkNames_[0], dofParentLinkNames_[1], ros::Time(0), ros::Duration(5.0));
+      //std::cout << "[PointsOnRobot::updateTransforms] frameNames_[3]: " << frameNames_[3] << std::endl;
+      while(!tfBuffer.canTransform(frameNames_[2], frameNames_[3], ros::Time(0), ros::Duration(5.0))){;};
+      transformStamped = tfBuffer.lookupTransform(frameNames_[2], frameNames_[3], ros::Time(0), ros::Duration(5.0));
     } 
     catch (tf2::TransformException& ex) 
     {
@@ -533,24 +398,23 @@ void PointsOnRobot::updateTransforms() const
     Eigen::Quaterniond quat(transformStamped.transform.rotation.w, transformStamped.transform.rotation.x,
                             transformStamped.transform.rotation.y, transformStamped.transform.rotation.z);
 
-    transform_J2_wrt_J1_ = Eigen::Matrix4d::Identity();
-    transform_J2_wrt_J1_.block<3, 3>(0, 0) = quat.toRotationMatrix();
+    tf2_transform_J2_wrt_J1_ = Eigen::Matrix4d::Identity();
+    tf2_transform_J2_wrt_J1_.block<3, 3>(0, 0) = quat.toRotationMatrix();
 
-    transform_J2_wrt_J1_(0, 3) = transformStamped.transform.translation.x;
-    transform_J2_wrt_J1_(1, 3) = transformStamped.transform.translation.y;
-    transform_J2_wrt_J1_(2, 3) = transformStamped.transform.translation.z;
+    tf2_transform_J2_wrt_J1_(0, 3) = transformStamped.transform.translation.x;
+    tf2_transform_J2_wrt_J1_(1, 3) = transformStamped.transform.translation.y;
+    tf2_transform_J2_wrt_J1_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::updateTransforms] transform_J2_wrt_J1_: " << std::endl << transform_J2_wrt_J1_ << std::endl;
+    //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_J2_wrt_J1_: " << std::endl << tf2_transform_J2_wrt_J1_ << std::endl;
     //std::cout << "--------------------&&--------------------" << std::endl;
   }
 
   {
-    geometry_msgs::TransformStamped transformStamped;
     try 
     {
-      //std::cout << "[PointsOnRobot::updateTransforms] dofParentLinkNames_[2]: " << dofParentLinkNames_[2] << std::endl;
-      while(!tfBuffer.canTransform(dofParentLinkNames_[1], dofParentLinkNames_[2], ros::Time(0), ros::Duration(5.0))){;};
-      transformStamped = tfBuffer.lookupTransform(dofParentLinkNames_[1], dofParentLinkNames_[2], ros::Time(0), ros::Duration(5.0));
+      //std::cout << "[PointsOnRobot::updateTransforms] frameNames_[4]: " << frameNames_[4] << std::endl;
+      while(!tfBuffer.canTransform(frameNames_[3], frameNames_[4], ros::Time(0), ros::Duration(5.0))){;};
+      transformStamped = tfBuffer.lookupTransform(frameNames_[3], frameNames_[4], ros::Time(0), ros::Duration(5.0));
     } 
     catch (tf2::TransformException& ex) 
     {
@@ -562,24 +426,23 @@ void PointsOnRobot::updateTransforms() const
     Eigen::Quaterniond quat(transformStamped.transform.rotation.w, transformStamped.transform.rotation.x,
                             transformStamped.transform.rotation.y, transformStamped.transform.rotation.z);
 
-    transform_J3_wrt_J2_ = Eigen::Matrix4d::Identity();
-    transform_J3_wrt_J2_.block<3, 3>(0, 0) = quat.toRotationMatrix();
+    tf2_transform_J3_wrt_J2_ = Eigen::Matrix4d::Identity();
+    tf2_transform_J3_wrt_J2_.block<3, 3>(0, 0) = quat.toRotationMatrix();
 
-    transform_J3_wrt_J2_(0, 3) = transformStamped.transform.translation.x;
-    transform_J3_wrt_J2_(1, 3) = transformStamped.transform.translation.y;
-    transform_J3_wrt_J2_(2, 3) = transformStamped.transform.translation.z;
+    tf2_transform_J3_wrt_J2_(0, 3) = transformStamped.transform.translation.x;
+    tf2_transform_J3_wrt_J2_(1, 3) = transformStamped.transform.translation.y;
+    tf2_transform_J3_wrt_J2_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::updateTransforms] transform_J3_wrt_J2_: " << std::endl << transform_J3_wrt_J2_ << std::endl;
+    //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_J3_wrt_J2_: " << std::endl << tf2_transform_J3_wrt_J2_ << std::endl;
     //std::cout << "--------------------&&--------------------" << std::endl;
   }
 
   {
-    geometry_msgs::TransformStamped transformStamped;
     try 
     {
-      //std::cout << "[PointsOnRobot::updateTransforms] dofParentLinkNames_[3]: " << dofParentLinkNames_[3] << std::endl;
-      while(!tfBuffer.canTransform(dofParentLinkNames_[2], dofParentLinkNames_[3], ros::Time(0), ros::Duration(5.0))){;};
-      transformStamped = tfBuffer.lookupTransform(dofParentLinkNames_[2], dofParentLinkNames_[3], ros::Time(0), ros::Duration(5.0));
+      //std::cout << "[PointsOnRobot::updateTransforms] frameNames_[5]: " << frameNames_[5] << std::endl;
+      while(!tfBuffer.canTransform(frameNames_[4], frameNames_[5], ros::Time(0), ros::Duration(5.0))){;};
+      transformStamped = tfBuffer.lookupTransform(frameNames_[4], frameNames_[5], ros::Time(0), ros::Duration(5.0));
     } 
     catch (tf2::TransformException& ex) 
     {
@@ -591,24 +454,23 @@ void PointsOnRobot::updateTransforms() const
     Eigen::Quaterniond quat(transformStamped.transform.rotation.w, transformStamped.transform.rotation.x,
                             transformStamped.transform.rotation.y, transformStamped.transform.rotation.z);
 
-    transform_J4_wrt_J3_ = Eigen::Matrix4d::Identity();
-    transform_J4_wrt_J3_.block<3, 3>(0, 0) = quat.toRotationMatrix();
+    tf2_transform_J4_wrt_J3_ = Eigen::Matrix4d::Identity();
+    tf2_transform_J4_wrt_J3_.block<3, 3>(0, 0) = quat.toRotationMatrix();
 
-    transform_J4_wrt_J3_(0, 3) = transformStamped.transform.translation.x;
-    transform_J4_wrt_J3_(1, 3) = transformStamped.transform.translation.y;
-    transform_J4_wrt_J3_(2, 3) = transformStamped.transform.translation.z;
+    tf2_transform_J4_wrt_J3_(0, 3) = transformStamped.transform.translation.x;
+    tf2_transform_J4_wrt_J3_(1, 3) = transformStamped.transform.translation.y;
+    tf2_transform_J4_wrt_J3_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::updateTransforms] transform_J4_wrt_J3_: " << std::endl << transform_J4_wrt_J3_ << std::endl;
+    //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_J4_wrt_J3_: " << std::endl << tf2_transform_J4_wrt_J3_ << std::endl;
     //std::cout << "--------------------&&--------------------" << std::endl;
   }
 
   {
-    geometry_msgs::TransformStamped transformStamped;
     try 
     {
-      //std::cout << "[PointsOnRobot::updateTransforms] dofParentLinkNames_[4]: " << dofParentLinkNames_[4] << std::endl;
-      while(!tfBuffer.canTransform(dofParentLinkNames_[3], dofParentLinkNames_[4], ros::Time(0), ros::Duration(5.0))){;};
-      transformStamped = tfBuffer.lookupTransform(dofParentLinkNames_[3], dofParentLinkNames_[4], ros::Time(0), ros::Duration(5.0));
+      //std::cout << "[PointsOnRobot::updateTransforms] frameNames_[6]: " << dofParentLinkNames_[4] << std::endl;
+      while(!tfBuffer.canTransform(frameNames_[5], frameNames_[6], ros::Time(0), ros::Duration(5.0))){;};
+      transformStamped = tfBuffer.lookupTransform(frameNames_[5], frameNames_[6], ros::Time(0), ros::Duration(5.0));
     } 
     catch (tf2::TransformException& ex) 
     {
@@ -620,24 +482,23 @@ void PointsOnRobot::updateTransforms() const
     Eigen::Quaterniond quat(transformStamped.transform.rotation.w, transformStamped.transform.rotation.x,
                             transformStamped.transform.rotation.y, transformStamped.transform.rotation.z);
 
-    transform_J5_wrt_J4_ = Eigen::Matrix4d::Identity();
-    transform_J5_wrt_J4_.block<3, 3>(0, 0) = quat.toRotationMatrix();
+    tf2_transform_J5_wrt_J4_ = Eigen::Matrix4d::Identity();
+    tf2_transform_J5_wrt_J4_.block<3, 3>(0, 0) = quat.toRotationMatrix();
 
-    transform_J5_wrt_J4_(0, 3) = transformStamped.transform.translation.x;
-    transform_J5_wrt_J4_(1, 3) = transformStamped.transform.translation.y;
-    transform_J5_wrt_J4_(2, 3) = transformStamped.transform.translation.z;
+    tf2_transform_J5_wrt_J4_(0, 3) = transformStamped.transform.translation.x;
+    tf2_transform_J5_wrt_J4_(1, 3) = transformStamped.transform.translation.y;
+    tf2_transform_J5_wrt_J4_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::updateTransforms] transform_J5_wrt_J4_: " << std::endl << transform_J5_wrt_J4_ << std::endl;
+    //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_J5_wrt_J4_: " << std::endl << tf2_transform_J5_wrt_J4_ << std::endl;
     //std::cout << "--------------------&&--------------------" << std::endl;
   }
 
   {
-    geometry_msgs::TransformStamped transformStamped;
     try 
     {
-      //std::cout << "[PointsOnRobot::updateTransforms] dofParentLinkNames_[5]: " << dofParentLinkNames_[5] << std::endl;
-      while(!tfBuffer.canTransform(dofParentLinkNames_[4], dofParentLinkNames_[5], ros::Time(0), ros::Duration(5.0))){;};
-      transformStamped = tfBuffer.lookupTransform(dofParentLinkNames_[4], dofParentLinkNames_[5], ros::Time(0), ros::Duration(5.0));
+      //std::cout << "[PointsOnRobot::updateTransforms] frameNames_[7]: " << dofParentLinkNames_[5] << std::endl;
+      while(!tfBuffer.canTransform(frameNames_[6], frameNames_[7], ros::Time(0), ros::Duration(5.0))){;};
+      transformStamped = tfBuffer.lookupTransform(frameNames_[6], frameNames_[7], ros::Time(0), ros::Duration(5.0));
     } 
     catch (tf2::TransformException& ex) 
     {
@@ -649,24 +510,23 @@ void PointsOnRobot::updateTransforms() const
     Eigen::Quaterniond quat(transformStamped.transform.rotation.w, transformStamped.transform.rotation.x,
                             transformStamped.transform.rotation.y, transformStamped.transform.rotation.z);
 
-    transform_J6_wrt_J5_ = Eigen::Matrix4d::Identity();
-    transform_J6_wrt_J5_.block<3, 3>(0, 0) = quat.toRotationMatrix();
+    tf2_transform_J6_wrt_J5_ = Eigen::Matrix4d::Identity();
+    tf2_transform_J6_wrt_J5_.block<3, 3>(0, 0) = quat.toRotationMatrix();
 
-    transform_J6_wrt_J5_(0, 3) = transformStamped.transform.translation.x;
-    transform_J6_wrt_J5_(1, 3) = transformStamped.transform.translation.y;
-    transform_J6_wrt_J5_(2, 3) = transformStamped.transform.translation.z;
+    tf2_transform_J6_wrt_J5_(0, 3) = transformStamped.transform.translation.x;
+    tf2_transform_J6_wrt_J5_(1, 3) = transformStamped.transform.translation.y;
+    tf2_transform_J6_wrt_J5_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::updateTransforms] transform_J6_wrt_J5_: " << std::endl << transform_J6_wrt_J5_ << std::endl;
+    //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_J6_wrt_J5_: " << std::endl << tf2_transform_J6_wrt_J5_ << std::endl;
     //std::cout << "--------------------&&--------------------" << std::endl;
   }
 
   {
-    geometry_msgs::TransformStamped transformStamped;
     try 
     {
-      //std::cout << "[PointsOnRobot::updateTransforms] dofParentLinkNames_[6]: " << dofParentLinkNames_[6] << std::endl;
-      while(!tfBuffer.canTransform(dofParentLinkNames_[5], dofParentLinkNames_[6], ros::Time(0), ros::Duration(5.0))){;};
-      transformStamped = tfBuffer.lookupTransform(dofParentLinkNames_[5], dofParentLinkNames_[6], ros::Time(0), ros::Duration(5.0));
+      //std::cout << "[PointsOnRobot::updateTransforms] ee_link_name_: " << ee_link_name_ << std::endl;
+      while(!tfBuffer.canTransform(frameNames_[7], ee_link_name_, ros::Time(0), ros::Duration(5.0))){;};
+      transformStamped = tfBuffer.lookupTransform(frameNames_[7], ee_link_name_, ros::Time(0), ros::Duration(5.0));
     } 
     catch (tf2::TransformException& ex) 
     {
@@ -678,44 +538,14 @@ void PointsOnRobot::updateTransforms() const
     Eigen::Quaterniond quat(transformStamped.transform.rotation.w, transformStamped.transform.rotation.x,
                             transformStamped.transform.rotation.y, transformStamped.transform.rotation.z);
 
-    transform_ToolMount_wrt_J6_ = Eigen::Matrix4d::Identity();
-    transform_ToolMount_wrt_J6_.block<3, 3>(0, 0) = quat.toRotationMatrix();
+    tf2_transform_ToolMount_wrt_J6_ = Eigen::Matrix4d::Identity();
+    tf2_transform_ToolMount_wrt_J6_.block<3, 3>(0, 0) = quat.toRotationMatrix();
 
-    transform_ToolMount_wrt_J6_(0, 3) = transformStamped.transform.translation.x;
-    transform_ToolMount_wrt_J6_(1, 3) = transformStamped.transform.translation.y;
-    transform_ToolMount_wrt_J6_(2, 3) = transformStamped.transform.translation.z;
+    tf2_transform_ToolMount_wrt_J6_(0, 3) = transformStamped.transform.translation.x;
+    tf2_transform_ToolMount_wrt_J6_(1, 3) = transformStamped.transform.translation.y;
+    tf2_transform_ToolMount_wrt_J6_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::updateTransforms] transform_ToolMount_wrt_J6_: " << std::endl << transform_ToolMount_wrt_J6_ << std::endl;
-    //std::cout << "--------------------&&--------------------" << std::endl;
-  }
-
-  {
-    geometry_msgs::TransformStamped transformStamped;
-    try 
-    {
-      //std::cout << "[PointsOnRobot::updateTransforms] dofParentLinkNames_[6]: " << dofParentLinkNames_[6] << std::endl;
-      while(!tfBuffer.canTransform("world", dofParentLinkNames_[6], ros::Time(0), ros::Duration(5.0))){;};
-      transformStamped = tfBuffer.lookupTransform("world", dofParentLinkNames_[6], ros::Time(0), ros::Duration(5.0));
-    } 
-    catch (tf2::TransformException& ex) 
-    {
-      ROS_ERROR("%s", ex.what());
-      
-      while(1){;}
-      throw;
-    }
-    Eigen::Quaterniond quat(transformStamped.transform.rotation.w, transformStamped.transform.rotation.x,
-                            transformStamped.transform.rotation.y, transformStamped.transform.rotation.z);
-
-    transform_ToolMount_wrt_World_ = Eigen::Matrix4d::Identity();
-    transform_ToolMount_wrt_World_.block<3, 3>(0, 0) = quat.toRotationMatrix();
-
-    transform_ToolMount_wrt_World_(0, 3) = transformStamped.transform.translation.x;
-    transform_ToolMount_wrt_World_(1, 3) = transformStamped.transform.translation.y;
-    transform_ToolMount_wrt_World_(2, 3) = transformStamped.transform.translation.z;
-
-    //std::cout << "[PointsOnRobot::updateTransforms] transform_ToolMount_wrt_World_: " << std::endl << transform_ToolMount_wrt_World_ << std::endl;
-    //std::cout << "--------------------&&--------------------" << std::endl;
+    //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_ToolMount_wrt_J6_: " << std::endl << tf2_transform_ToolMount_wrt_J6_ << std::endl;
   }
 }
 
@@ -726,9 +556,31 @@ void PointsOnRobot::updateTransforms(ocs2::PinocchioInterface& pinocchioInterfac
                                      const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
                                      const Eigen::VectorXd& state) const
 {
-  
-  std::cout << "[PointsOnRobot::updateTransforms] NOWAY START" << std::endl;
+  //std::cout << "[PointsOnRobot::updateTransforms(3)] START" << std::endl;
+
+  transform_ArmMount_wrt_World_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
+  transform_J1_wrt_World_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
+  transform_J2_wrt_World_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
+  transform_J3_wrt_World_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
+  transform_J4_wrt_World_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
+  transform_J5_wrt_World_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
+  transform_J6_wrt_World_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
+
   /*
+  // Base wrt world
+  const ocs2::scalar_t yaw = state[2];
+  const ocs2::scalar_t pitch = 0.0;
+  const ocs2::scalar_t roll = 0.0;
+
+  Eigen::Quaternion<ocs2::scalar_t> baseOrientation = EulerToQuaternion(yaw, pitch, roll);
+  Eigen::Matrix<ocs2::scalar_t, 3, 1> basePosition;
+  basePosition << state[0], state[1], 0.0;
+
+  transform_Base_wrt_World_.topLeftCorner(3,3) = baseOrientation.toRotationMatrix();
+  transform_Base_wrt_World_.topRightCorner(3,1) = basePosition;
+  */
+
+  // Update Pinocchio
   const auto& model = pinocchioInterface.getModel();
   auto& data = pinocchioInterface.getData();
   const auto q = mapping.getPinocchioJointPosition(state);
@@ -736,57 +588,76 @@ void PointsOnRobot::updateTransforms(ocs2::PinocchioInterface& pinocchioInterfac
   pinocchio::forwardKinematics(model, data, q);
   pinocchio::updateFramePlacements(model, data);
 
-  transform_J1_wrt_ArmMount_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
-  transform_J1_wrt_ArmMount_.topLeftCorner(3,3) = data.liMi[dofParentLinkIds_[0]].rotation();
-  transform_J1_wrt_ArmMount_.topRightCorner(3,1) = data.liMi[dofParentLinkIds_[0]].translation();
+  // Arm Base wrt World
+  transform_ArmMount_wrt_World_.topLeftCorner(3,3) = data.oMf[frameIds_[1]].rotation();
+  transform_ArmMount_wrt_World_.topRightCorner(3,1) = data.oMf[frameIds_[1]].translation();
 
-  std::cout << "[PointsOnRobot::updateTransforms] transform_J1_wrt_ArmMount_: " << std::endl << transform_J1_wrt_ArmMount_ << std::endl;
+  // J1 wrt World
+  transform_J1_wrt_World_.topLeftCorner(3,3) = data.oMf[frameIds_[2]].rotation();
+  transform_J1_wrt_World_.topRightCorner(3,1) = data.oMf[frameIds_[2]].translation();
+
+  // J2 wrt World
+  transform_J2_wrt_World_.topLeftCorner(3,3) = data.oMf[frameIds_[3]].rotation();
+  transform_J2_wrt_World_.topRightCorner(3,1) = data.oMf[frameIds_[3]].translation();
+
+  // J3 wrt World
+  transform_J3_wrt_World_.topLeftCorner(3,3) = data.oMf[frameIds_[4]].rotation();
+  transform_J3_wrt_World_.topRightCorner(3,1) = data.oMf[frameIds_[4]].translation();
+
+  // J4 wrt World
+  transform_J4_wrt_World_.topLeftCorner(3,3) = data.oMf[frameIds_[5]].rotation();
+  transform_J4_wrt_World_.topRightCorner(3,1) = data.oMf[frameIds_[5]].translation();
+
+  // J5 wrt World
+  transform_J5_wrt_World_.topLeftCorner(3,3) = data.oMf[frameIds_[6]].rotation();
+  transform_J5_wrt_World_.topRightCorner(3,1) = data.oMf[frameIds_[6]].translation();
+
+  // J6 wrt World
+  transform_J6_wrt_World_.topLeftCorner(3,3) = data.oMf[frameIds_[7]].rotation();
+  transform_J6_wrt_World_.topRightCorner(3,1) = data.oMf[frameIds_[7]].translation();
+
+  // Tool Mount wrt World
+  transform_ToolMount_wrt_World_.topLeftCorner(3,3) = data.oMf[frameIds_[8]].rotation();
+  transform_ToolMount_wrt_World_.topRightCorner(3,1) = data.oMf[frameIds_[8]].translation();
+
+  // J1 wrt Arm Base
+  transform_J1_wrt_ArmMount_ = transform_ArmMount_wrt_World_.transpose() * transform_J1_wrt_World_;
+
+  // J2 wrt J1
+  transform_J2_wrt_J1_ = transform_J1_wrt_World_.transpose() * transform_J2_wrt_World_;
+
+  // J3 wrt J2
+  transform_J3_wrt_J2_ = transform_J2_wrt_World_.transpose() * transform_J3_wrt_World_;
+
+  // J4 wrt J3
+  transform_J4_wrt_J3_ = transform_J3_wrt_World_.transpose() * transform_J4_wrt_World_;
+
+  // J5 wrt J4
+  transform_J5_wrt_J4_ = transform_J4_wrt_World_.transpose() * transform_J5_wrt_World_;
+
+  // J6 wrt J5
+  transform_J6_wrt_J5_ = transform_J5_wrt_World_.transpose() * transform_J6_wrt_World_;
+
+  // Tool Mount wrt J6
+  transform_ToolMount_wrt_J6_ = transform_J6_wrt_World_.transpose() * transform_ToolMount_wrt_World_;
+
+  /*
+  std::cout << "[PointsOnRobot::updateTransforms(3)] transform_ArmMount_wrt_World_: " << std::endl << transform_ArmMount_wrt_World_ << std::endl;
   std::cout << "--------------------&&--------------------" << std::endl;
-
-  transform_J2_wrt_J1_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
-  transform_J2_wrt_J1_.topLeftCorner(3,3) = data.liMi[dofParentLinkIds_[1]].rotation();
-  transform_J2_wrt_J1_.topRightCorner(3,1) = data.liMi[dofParentLinkIds_[1]].translation();
-
-  std::cout << "[PointsOnRobot::updateTransforms] transform_J2_wrt_J1_: " << std::endl << transform_J2_wrt_J1_ << std::endl;
+  std::cout << "[PointsOnRobot::updateTransforms(3)] transform_J1_wrt_World_: " << std::endl << transform_J1_wrt_World_ << std::endl;
   std::cout << "--------------------&&--------------------" << std::endl;
-  
-  transform_J3_wrt_J2_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
-  transform_J3_wrt_J2_.topLeftCorner(3,3) = data.liMi[dofParentLinkIds_[2]].rotation();
-  transform_J3_wrt_J2_.topRightCorner(3,1) = data.liMi[dofParentLinkIds_[2]].translation();
-
-  std::cout << "[PointsOnRobot::updateTransforms] transform_J3_wrt_J2_: " << std::endl << transform_J3_wrt_J2_ << std::endl;
+  std::cout << "[PointsOnRobot::updateTransforms(3)] transform_J2_wrt_World_: " << std::endl << transform_J2_wrt_World_ << std::endl;
   std::cout << "--------------------&&--------------------" << std::endl;
-
-  transform_J4_wrt_J3_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
-  transform_J4_wrt_J3_.topLeftCorner(3,3) = data.liMi[dofParentLinkIds_[3]].rotation();
-  transform_J4_wrt_J3_.topRightCorner(3,1) = data.liMi[dofParentLinkIds_[3]].translation();
-
-  std::cout << "[PointsOnRobot::updateTransforms] transform_J4_wrt_J3_: " << std::endl << transform_J4_wrt_J3_ << std::endl;
+  std::cout << "[PointsOnRobot::updateTransforms(3)] transform_J3_wrt_World_: " << std::endl << transform_J3_wrt_World_ << std::endl;
   std::cout << "--------------------&&--------------------" << std::endl;
-
-  transform_J5_wrt_J4_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
-  transform_J5_wrt_J4_.topLeftCorner(3,3) = data.liMi[dofParentLinkIds_[4]].rotation();
-  transform_J5_wrt_J4_.topRightCorner(3,1) = data.liMi[dofParentLinkIds_[4]].translation();
-
-  std::cout << "[PointsOnRobot::updateTransforms] transform_J5_wrt_J4_: " << std::endl << transform_J5_wrt_J4_ << std::endl;
+  std::cout << "[PointsOnRobot::updateTransforms(3)] transform_J4_wrt_World_: " << std::endl << transform_J4_wrt_World_ << std::endl;
   std::cout << "--------------------&&--------------------" << std::endl;
-
-  transform_J6_wrt_J5_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
-  transform_J6_wrt_J5_.topLeftCorner(3,3) = data.liMi[dofParentLinkIds_[5]].rotation();
-  transform_J6_wrt_J5_.topRightCorner(3,1) = data.liMi[dofParentLinkIds_[5]].translation();
-
-  std::cout << "[PointsOnRobot::updateTransforms] transform_J6_wrt_J5_: " << std::endl << transform_J6_wrt_J5_ << std::endl;
+  std::cout << "[PointsOnRobot::updateTransforms(3)] transform_J5_wrt_World_: " << std::endl << transform_J5_wrt_World_ << std::endl;
   std::cout << "--------------------&&--------------------" << std::endl;
-
-  transform_ToolMount_wrt_J6_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
-  transform_ToolMount_wrt_J6_.topLeftCorner(3,3) = data.liMi[dofParentLinkIds_[6]].rotation();
-  transform_ToolMount_wrt_J6_.topRightCorner(3,1) = data.liMi[dofParentLinkIds_[6]].translation();
-
-  std::cout << "[PointsOnRobot::updateTransforms] transform_ToolMount_wrt_J6_: " << std::endl << transform_ToolMount_wrt_J6_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
+  std::cout << "[PointsOnRobot::updateTransforms(3)] transform_J6_wrt_World_: " << std::endl << transform_J6_wrt_World_ << std::endl;
   */
 
-  std::cout << "[PointsOnRobot::updateTransforms] NOWAY END" << std::endl;
+  //std::cout << "[PointsOnRobot::updateTransforms(3)] END" << std::endl;
 }
 
 /******************************************************************************************************/

@@ -141,8 +141,7 @@ ManipulatorModelInfo createManipulatorModelInfo(const PinocchioInterface& interf
                                                 const std::string& baseFrame, 
                                                 const std::string& armBaseFrame,
                                                 const std::string& eeFrame, 
-                                                const std::string& toolFrame,
-                                                const std::vector<std::string>& dofParentLinkNames) 
+                                                const std::vector<std::string>& jointParentFrameNames) 
 {
   const auto& model = interface.getModel();
 
@@ -190,8 +189,7 @@ ManipulatorModelInfo createManipulatorModelInfo(const PinocchioInterface& interf
   info.baseFrame = baseFrame;
   info.armBaseFrame = armBaseFrame;
   info.eeFrame = eeFrame;
-  info.toolFrame = toolFrame;
-  info.dofParentLinkNames = dofParentLinkNames;
+  info.jointParentFrameNames = jointParentFrameNames;
 
   // get name of arm joints.
   const auto& jointNames = model.names;

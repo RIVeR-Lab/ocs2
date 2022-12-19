@@ -83,15 +83,14 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   loadData::loadStdVector<std::string>(taskFile, "model_information.removeJoints", removeJointNames, false);
   
   // read the link names of joints
-  std::vector<std::string> dofParentLinkNames;
-  loadData::loadStdVector<std::string>(taskFile, "model_information.dofParentLinkNames", dofParentLinkNames, false);
+  std::vector<std::string> jointParentFrameNames;
+  loadData::loadStdVector<std::string>(taskFile, "model_information.jointParentFrameNames", jointParentFrameNames, false);
 
   // read the frame names
-  std::string baseFrame, armBaseFrame, eeFrame, toolFrame;
+  std::string baseFrame, armBaseFrame, eeFrame;
   loadData::loadPtreeValue<std::string>(pt, baseFrame, "model_information.baseFrame", false);
   loadData::loadPtreeValue<std::string>(pt, armBaseFrame, "model_information.armBaseFrame", false);
   loadData::loadPtreeValue<std::string>(pt, eeFrame, "model_information.eeFrame", false);
-  loadData::loadPtreeValue<std::string>(pt, toolFrame, "model_information.toolFrame", false);
 
   std::cerr << "\n #### Model Information:";
   std::cerr << "\n #### =============================================================================\n";
@@ -101,15 +100,14 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   {
     std::cerr << "\"" << name << "\" ";
   }
-  std::cerr << "\n #### model_information.dofParentLinkNames: ";
-  for (const auto& name : dofParentLinkNames) 
+  std::cerr << "\n #### model_information.jointParentFrameNames: ";
+  for (const auto& name : jointParentFrameNames) 
   {
     std::cerr << "\"" << name << "\" ";
   }
   std::cerr << "\n #### model_information.baseFrame: \"" << baseFrame << "\"";
   std::cerr << "\n #### model_information.armBaseFrame: \"" << armBaseFrame << "\"";
   std::cerr << "\n #### model_information.eeFrame: \"" << eeFrame << "\"";
-  std::cerr << "\n #### model_information.toolFrame: \"" << toolFrame << "\"" << std::endl;
   std::cerr << " #### =============================================================================" << std::endl;
 
   // create pinocchio interface
@@ -121,9 +119,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
                                                                          modelType, 
                                                                          baseFrame, 
                                                                          armBaseFrame, 
-                                                                         eeFrame, 
-                                                                         toolFrame,
-                                                                         dofParentLinkNames);
+                                                                         eeFrame,
+                                                                         jointParentFrameNames);
 
   bool usePreComputation = true;
   bool recompileLibraries = true;
@@ -222,8 +219,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
                                     manipulatorModelInfo_.baseFrame,
                                     manipulatorModelInfo_.armBaseFrame,
                                     manipulatorModelInfo_.eeFrame,
-                                    manipulatorModelInfo_.toolFrame,
-                                    manipulatorModelInfo_.dofParentLinkNames);
+                                    manipulatorModelInfo_.jointParentFrameNames);
     } 
     else 
     {

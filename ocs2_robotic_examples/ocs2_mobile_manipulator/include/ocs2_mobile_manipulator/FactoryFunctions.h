@@ -72,9 +72,8 @@ ManipulatorModelInfo createManipulatorModelInfo(const PinocchioInterface& interf
                                                 const ManipulatorModelType& type,
                                                 const std::string& baseFrame, 
                                                 const std::string& armBaseFrame,
-                                                const std::string& eeFrame, 
-                                                const std::string& toolFrame,
-                                                const std::vector<std::string>& dofParentLinkNames);
+                                                const std::string& eeFrame,
+                                                const std::vector<std::string>& jointParentFrameNames);
 
 /** Load ManipulatorModelType for a config file */
 ManipulatorModelType loadManipulatorType(const std::string& configFilePath, const std::string& fieldName = "manipulatorModelType");

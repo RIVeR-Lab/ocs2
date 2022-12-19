@@ -63,7 +63,7 @@ struct ManipulatorModelInfo
   std::string eeFrame;                            // name of the end-effector frame of the robot
   std::string toolFrame;                          // name of the tool frame of the robot
   std::vector<std::string> dofNames;              // name of the actuated DOFs in the robot
-  std::vector<std::string> dofParentLinkNames;    // name of the DOFs parent links of the robot
+  std::vector<std::string> jointParentFrameNames; // name of the parent frames of the robot joints
 };
 
 /**

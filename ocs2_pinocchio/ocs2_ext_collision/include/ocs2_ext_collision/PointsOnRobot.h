@@ -66,9 +66,8 @@ class PointsOnRobot
                     bool verbose,
                     const std::string& base_link_name, 
                     const std::string& arm_mount_link_name, 
-                    const std::string& tool_link_name, 
                     const std::string& ee_link_name,
-                    const std::vector<std::string>& dofParentLinkNames);
+                    const std::vector<std::string>& jointParentFrameNames);
 
     Eigen::VectorXd getPointsPositions(ocs2::PinocchioInterface& pinocchioInterface, 
                                        const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
@@ -130,8 +129,20 @@ class PointsOnRobot
 
     std::string base_link_name_;
     std::string arm_mount_link_name_;
-    std::string tool_link_name_;
     std::string ee_link_name_;
+
+    std::vector<std::string> frameNames_;
+    std::vector<size_t> frameIds_;
+
+    mutable Eigen::Matrix4d tf2_transform_Base_wrt_World_;
+    mutable Eigen::Matrix4d tf2_transform_ArmMount_wrt_Base_;
+    mutable Eigen::Matrix4d tf2_transform_J1_wrt_ArmMount_;
+    mutable Eigen::Matrix4d tf2_transform_J2_wrt_J1_;
+    mutable Eigen::Matrix4d tf2_transform_J3_wrt_J2_;
+    mutable Eigen::Matrix4d tf2_transform_J4_wrt_J3_;
+    mutable Eigen::Matrix4d tf2_transform_J5_wrt_J4_;
+    mutable Eigen::Matrix4d tf2_transform_J6_wrt_J5_;
+    mutable Eigen::Matrix4d tf2_transform_ToolMount_wrt_J6_;
 
     mutable Eigen::Matrix4d transform_Base_wrt_World_;
     mutable Eigen::Matrix4d transform_ArmMount_wrt_Base_;
@@ -142,8 +153,13 @@ class PointsOnRobot
     mutable Eigen::Matrix4d transform_J5_wrt_J4_;
     mutable Eigen::Matrix4d transform_J6_wrt_J5_;
     mutable Eigen::Matrix4d transform_ToolMount_wrt_J6_;
-    mutable Eigen::Matrix4d transform_ToolMount_wrt_World_;
 
-    std::vector<std::string> dofParentLinkNames_;
-    std::vector<size_t> dofParentLinkIds_;
+    mutable Eigen::Matrix4d transform_ArmMount_wrt_World_;
+    mutable Eigen::Matrix4d transform_J1_wrt_World_;
+    mutable Eigen::Matrix4d transform_J2_wrt_World_;
+    mutable Eigen::Matrix4d transform_J3_wrt_World_;
+    mutable Eigen::Matrix4d transform_J4_wrt_World_;
+    mutable Eigen::Matrix4d transform_J5_wrt_World_;
+    mutable Eigen::Matrix4d transform_J6_wrt_World_;
+    mutable Eigen::Matrix4d transform_ToolMount_wrt_World_;
 };
