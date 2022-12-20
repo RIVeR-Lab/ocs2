@@ -58,6 +58,8 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
   
   Eigen::VectorXd points = pointsOnRobotPtr_->getPointsPositions(pinocchioInterface, mapping, state);
 
+  pointsOnRobotPtr_->getVisualization(pinocchioInterface, mapping, state);
+  
   /*
   std::cout << "[ExtCollision::getValue] state" << std::endl;
   for (size_t i = 0; i < state.rows(); i++)
@@ -67,6 +69,7 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
       std::cout << i << ": " << state(i,j) << std::endl;
     } 
   }
+  */
 
   std::cout << "[ExtCollision::getValue] points" << std::endl;
   for (size_t i = 0; i < points.rows(); i++)
@@ -76,8 +79,7 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
       std::cout << i << ": " << points(i,j) << std::endl;
     } 
   }
-  */
-
+  
   const std::vector<hpp::fcl::DistanceResult> distanceArray = extCollisionPinocchioGeometryInterface_.computeDistances(pinocchioInterface);
   vector_t violations = vector_t::Zero(distanceArray.size());
 

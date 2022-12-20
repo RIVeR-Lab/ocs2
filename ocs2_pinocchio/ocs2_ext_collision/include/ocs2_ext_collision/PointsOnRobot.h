@@ -81,9 +81,9 @@ class PointsOnRobot
 
     int getDimPoints() const;
 
-    visualization_msgs::MarkerArray getVisualization(ocs2::PinocchioInterface& pinocchioInterface, 
-                                                     const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
-                                                     const Eigen::VectorXd& state) const;
+    void getVisualization(ocs2::PinocchioInterface& pinocchioInterface, 
+                          const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
+                          const Eigen::VectorXd& state) const;
 
     Eigen::Quaternion<ocs2::scalar_t> EulerToQuaternion(const ocs2::scalar_t& yaw, const ocs2::scalar_t& pitch, const ocs2::scalar_t& roll) const;
 
@@ -93,13 +93,15 @@ class PointsOnRobot
 
     void updateTransforms() const;
 
+    void updateTransformsWorld() const;
+
     void updateTransforms(ocs2::PinocchioInterface& pinocchioInterface,
                           const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
                           const Eigen::VectorXd& state) const;
 
-    Eigen::Matrix<ocs2::scalar_t, 3, -1> computeState2PointsOnRobot(ocs2::PinocchioInterface& pinocchioInterface,
-                                                                    const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
-                                                                    const Eigen::Matrix<ocs2::scalar_t, -1, 1>& state) const;
+    Eigen::VectorXd computeState2PointsOnRobot(ocs2::PinocchioInterface& pinocchioInterface,
+                                               const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
+                                               const Eigen::Matrix<ocs2::scalar_t, -1, 1>& state) const;
 
     Eigen::Matrix<ad_scalar_t, 3, -1> computeState2PointsOnRobotCppAd(ocs2::PinocchioInterfaceCppAd& pinocchioInterfaceAd,
                                                                       const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
@@ -133,8 +135,7 @@ class PointsOnRobot
 
     std::vector<std::string> frameNames_;
     std::vector<size_t> frameIds_;
-
-    mutable Eigen::Matrix4d tf2_transform_Base_wrt_World_;
+    
     mutable Eigen::Matrix4d tf2_transform_ArmMount_wrt_Base_;
     mutable Eigen::Matrix4d tf2_transform_J1_wrt_ArmMount_;
     mutable Eigen::Matrix4d tf2_transform_J2_wrt_J1_;
@@ -143,6 +144,16 @@ class PointsOnRobot
     mutable Eigen::Matrix4d tf2_transform_J5_wrt_J4_;
     mutable Eigen::Matrix4d tf2_transform_J6_wrt_J5_;
     mutable Eigen::Matrix4d tf2_transform_ToolMount_wrt_J6_;
+
+    mutable Eigen::Matrix4d tf2_transform_Base_wrt_World_;
+    mutable Eigen::Matrix4d tf2_transform_ArmMount_wrt_World_;
+    mutable Eigen::Matrix4d tf2_transform_J1_wrt_World_;
+    mutable Eigen::Matrix4d tf2_transform_J2_wrt_World_;
+    mutable Eigen::Matrix4d tf2_transform_J3_wrt_World_;
+    mutable Eigen::Matrix4d tf2_transform_J4_wrt_World_;
+    mutable Eigen::Matrix4d tf2_transform_J5_wrt_World_;
+    mutable Eigen::Matrix4d tf2_transform_J6_wrt_World_;
+    mutable Eigen::Matrix4d tf2_transform_ToolMount_wrt_World_;
 
     mutable Eigen::Matrix4d transform_Base_wrt_World_;
     mutable Eigen::Matrix4d transform_ArmMount_wrt_Base_;
@@ -162,4 +173,8 @@ class PointsOnRobot
     mutable Eigen::Matrix4d transform_J5_wrt_World_;
     mutable Eigen::Matrix4d transform_J6_wrt_World_;
     mutable Eigen::Matrix4d transform_ToolMount_wrt_World_;
+
+    ros::NodeHandle nh_;
+    mutable visualization_msgs::MarkerArray pointsOnRobot_visu_;
+    ros::Publisher pointsOnRobot_visu_pub_;
 };

@@ -304,8 +304,8 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   mpcPolicyPublisher_.publish(mpcPolicyMsg);
 #endif
 
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE INF LOOP" << std::endl;
-  while(1){;}
+  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE INF LOOP" << std::endl;
+  //while(1){;}
 
   //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END" << std::endl;
   //std::cout << "" << std::endl;
