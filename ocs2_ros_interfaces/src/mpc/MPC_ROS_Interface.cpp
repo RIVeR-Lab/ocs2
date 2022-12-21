@@ -57,14 +57,16 @@ MPC_ROS_Interface::MPC_ROS_Interface(MPC_BASE& mpc, std::string topicPrefix)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MPC_ROS_Interface::~MPC_ROS_Interface() {
+MPC_ROS_Interface::~MPC_ROS_Interface() 
+{
   shutdownNode();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_ROS_Interface::resetMpcNode(TargetTrajectories&& initTargetTrajectories) {
+void MPC_ROS_Interface::resetMpcNode(TargetTrajectories&& initTargetTrajectories) 
+{
   std::lock_guard<std::mutex> resetLock(resetMutex_);
   mpc_.reset();
   mpc_.getSolverPtr()->getReferenceManager().setTargetTrajectories(std::move(initTargetTrajectories));
@@ -77,7 +79,16 @@ void MPC_ROS_Interface::resetMpcNode(TargetTrajectories&& initTargetTrajectories
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_msgs::reset::Response& res) {
+void MPC_ROS_Interface::setEsdfCachingServer(std::shared_ptr<voxblox::EsdfCachingServer> new_esdfCachingServer)
+{
+  esdfCachingServer_ = new_esdfCachingServer;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_msgs::reset::Response& res) 
+{
   if (static_cast<bool>(req.reset)) {
     auto targetTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(req.targetTrajectories);
     resetMpcNode(std::move(targetTrajectories));
@@ -251,12 +262,10 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   // current time, state, input, and subsystem
   const auto currentObservation = ros_msg_conversions::readObservationMsg(*msg);
 
-  /*
   if (esdfCachingServer_) 
   {
     esdfCachingServer_ -> updateInterpolator();
   }
-  */
 
   // measure the delay in running MPC
   mpcTimer_.startTimer();

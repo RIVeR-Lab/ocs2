@@ -209,6 +209,7 @@ class MobileManipulatorInterface final : public RobotInterface
 
     std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_;
     std::shared_ptr<voxblox::EsdfCachingServer> esdfCachingServerPtr_;
+    std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> voxbloxInterpolatorPtr_;
 };
 
 }  // namespace mobile_manipulator

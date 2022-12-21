@@ -1,31 +1,13 @@
-/*
- * Copyright (c) 2020 Johannes Pankert <pankertj@ethz.ch>
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of this work nor the names of its
- *    contributors may be used to endorse or promote products derived from
- *    this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+// LAST UPDATE: 2022.12.21
+//
+// AUTHOR: Neset Unver Akmandor
+//
+// E-MAIL: akmandor.n@northeastern.edu
+//
+// DESCRIPTION: TODO...
+//
+// REFERENCES:
+//
 
 #include <pinocchio/fwd.hpp>
 #include "pinocchio/algorithm/kinematics.hpp"
@@ -98,6 +80,7 @@ PointsOnRobot::PointsOnRobot(const PointsOnRobot& rhs)
 /******************************************************************************************************/
 /******************************************************************************************************/
 void PointsOnRobot::initialize(ocs2::PinocchioInterface& pinocchioInterface,
+                               const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
                                const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
                                const std::string& modelName, 
                                const std::string& modelFolder, 
@@ -112,7 +95,7 @@ void PointsOnRobot::initialize(ocs2::PinocchioInterface& pinocchioInterface,
   arm_mount_link_name_ = arm_mount_link_name; 
   ee_link_name_ = ee_link_name;
 
-  std::cout << "[PointsOnRobot::initialize] frameNames_: " << std::endl;
+  //std::cout << "[PointsOnRobot::initialize] frameNames_: " << std::endl;
   frameNames_.push_back(base_link_name);
   frameNames_.push_back(arm_mount_link_name);
   for(auto dof_name : jointParentFrameNames)
@@ -136,7 +119,7 @@ void PointsOnRobot::initialize(ocs2::PinocchioInterface& pinocchioInterface,
   }
 
   // Set fixed transforms
-  setFixedTransforms();
+  setFixedTransformsTf2();
 
   // CppAD interface
   ocs2::PinocchioInterfaceCppAd pinocchioInterfaceCppAd = pinocchioInterface.toCppAd();
@@ -145,7 +128,11 @@ void PointsOnRobot::initialize(ocs2::PinocchioInterface& pinocchioInterface,
   std::unique_ptr<ocs2::PinocchioStateInputMapping<ad_scalar_t>> mappingCppAdPtr(mappingCppAd.clone());
   mappingCppAdPtr->setPinocchioInterface(pinocchioInterfaceCppAd);
 
-  setADInterfaces(pinocchioInterfaceCppAd, *mappingCppAdPtr, modelName, modelFolder);
+  setADInterfaces(pinocchioInterface,
+                  pinocchioInterfaceCppAd, 
+                  *mappingCppAdPtr, 
+                  modelName, 
+                  modelFolder);
 
   if (recompileLibraries) 
   {
@@ -160,184 +147,40 @@ void PointsOnRobot::initialize(ocs2::PinocchioInterface& pinocchioInterface,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-Eigen::VectorXd PointsOnRobot::getPointsPositions(ocs2::PinocchioInterface& pinocchioInterface, 
+Eigen::VectorXd PointsOnRobot::getPointsPosition(ocs2::PinocchioInterface& pinocchioInterface, 
                                                   const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
                                                   const Eigen::VectorXd& state) const
 {
-  std::cout << "[PointsOnRobot::getPointPosition] START" << std::endl;
+  //std::cout << "[PointsOnRobot::getPointPosition] START" << std::endl;
 
-  //std::cout << "[PointsOnRobot::getPointPosition] state:" << std::endl << state << std::endl;
-  //updateTransforms(pinocchioInterface, mapping, state);
-  
-  //updateTransforms();
-  //updateTransformsWorld();
-  updateTransforms(pinocchioInterface, mapping, state);
+  updateTransformsPinocchio(pinocchioInterface, mapping, state);
 
-  /*
-  std::cout << "[PointsOnRobot::getPointPosition] tf2_transform_Base_wrt_World_: " << std::endl << tf2_transform_Base_wrt_World_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] transform_Base_wrt_World_: " << std::endl << transform_Base_wrt_World_ << std::endl;
-  std::cout << "//////////////////////////////////////////" << std::endl;
+  Eigen::Matrix<ocs2::scalar_t, 3, -1> pointsOnRobot_matrix = computeState2PointsOnRobot(pinocchioInterface, mapping, state);
+  points_on_robot_ = Eigen::Map<Eigen::Matrix<ocs2::scalar_t, -1, 1>>(pointsOnRobot_matrix.data(), pointsOnRobot_matrix.size()); 
 
-  std::cout << "[PointsOnRobot::getPointPosition] tf2_transform_ArmMount_wrt_World_: " << std::endl << tf2_transform_ArmMount_wrt_World_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] transform_ArmMount_wrt_World_: " << std::endl << transform_ArmMount_wrt_World_ << std::endl;
-  std::cout << "//////////////////////////////////////////" << std::endl;
+  //std::cout << "[PointsOnRobot::getPointPosition] END" << std::endl;
 
-  std::cout << "[PointsOnRobot::getPointPosition] tf2_transform_J1_wrt_World_: " << std::endl << tf2_transform_J1_wrt_World_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] transform_J1_wrt_World_: " << std::endl << transform_J1_wrt_World_ << std::endl;
-  std::cout << "//////////////////////////////////////////" << std::endl;
-
-  std::cout << "[PointsOnRobot::getPointPosition] tf2_transform_J2_wrt_World_: " << std::endl << tf2_transform_J2_wrt_World_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] transform_J2_wrt_World_: " << std::endl << transform_J2_wrt_World_ << std::endl;
-  std::cout << "//////////////////////////////////////////" << std::endl;
-
-  std::cout << "[PointsOnRobot::getPointPosition] tf2_transform_J3_wrt_World_: " << std::endl << tf2_transform_J3_wrt_World_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] transform_J3_wrt_World_: " << std::endl << transform_J3_wrt_World_ << std::endl;
-  std::cout << "//////////////////////////////////////////" << std::endl;
-
-  std::cout << "[PointsOnRobot::getPointPosition] tf2_transform_J4_wrt_World_: " << std::endl << tf2_transform_J4_wrt_World_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] transform_J4_wrt_World_: " << std::endl << transform_J4_wrt_World_ << std::endl;
-  std::cout << "//////////////////////////////////////////" << std::endl;
-
-  std::cout << "[PointsOnRobot::getPointPosition] tf2_transform_J5_wrt_World_: " << std::endl << tf2_transform_J5_wrt_World_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] transform_J5_wrt_World_: " << std::endl << transform_J5_wrt_World_ << std::endl;
-  std::cout << "//////////////////////////////////////////" << std::endl;
-
-  std::cout << "[PointsOnRobot::getPointPosition] tf2_transform_J6_wrt_World_: " << std::endl << tf2_transform_J6_wrt_World_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] transform_J6_wrt_World_: " << std::endl << transform_J6_wrt_World_ << std::endl;
-  std::cout << "//////////////////////////////////////////" << std::endl;
-
-  std::cout << "[PointsOnRobot::getPointPosition] tf2_transform_ToolMount_wrt_World_: " << std::endl << tf2_transform_ToolMount_wrt_World_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] transform_ToolMount_wrt_World_: " << std::endl << transform_ToolMount_wrt_World_ << std::endl;
-  std::cout << "//////////////////////////////////////////" << std::endl;
-  */
-
-  /*
-  Eigen::Matrix4d diff_transform_Base_wrt_World = tf2_transform_Base_wrt_World_ - transform_Base_wrt_World_;
-  Eigen::Matrix4d diff_transform_ArmMount_wrt_World = tf2_transform_ArmMount_wrt_World_ - transform_ArmMount_wrt_World_;
-  Eigen::Matrix4d diff_transform_J1_wrt_World = tf2_transform_J1_wrt_World_ - transform_J1_wrt_World_;
-  Eigen::Matrix4d diff_transform_J2_wrt_World = tf2_transform_J2_wrt_World_ - transform_J2_wrt_World_;
-  Eigen::Matrix4d diff_transform_J3_wrt_World = tf2_transform_J3_wrt_World_ - transform_J3_wrt_World_;
-  Eigen::Matrix4d diff_transform_J4_wrt_World = tf2_transform_J4_wrt_World_ - transform_J4_wrt_World_;
-  Eigen::Matrix4d diff_transform_J5_wrt_World = tf2_transform_J5_wrt_World_ - transform_J5_wrt_World_;
-  Eigen::Matrix4d diff_transform_J6_wrt_World = tf2_transform_J6_wrt_World_ - transform_J6_wrt_World_;
-  Eigen::Matrix4d diff_transform_ToolMount_wrt_World = tf2_transform_ToolMount_wrt_World_ - transform_ToolMount_wrt_World_;
-
-  std::cout << "[PointsOnRobot::getPointPosition] diff_transform_Base_wrt_World: " << std::endl << diff_transform_Base_wrt_World << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] diff_transform_ArmMount_wrt_World: " << std::endl << diff_transform_ArmMount_wrt_World << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] diff_transform_J1_wrt_World: " << std::endl << diff_transform_J1_wrt_World << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] diff_transform_J2_wrt_World: " << std::endl << diff_transform_J2_wrt_World << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] diff_transform_J3_wrt_World: " << std::endl << diff_transform_J3_wrt_World << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] diff_transform_J4_wrt_World: " << std::endl << diff_transform_J4_wrt_World << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] diff_transform_J5_wrt_World: " << std::endl << diff_transform_J5_wrt_World << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] diff_transform_J6_wrt_World: " << std::endl << diff_transform_J6_wrt_World << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] diff_transform_ToolMount_wrt_World: " << std::endl << diff_transform_ToolMount_wrt_World << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  */
-
-  /*
-  Eigen::Matrix4d diff_transform_ArmMount_wrt_Base = tf2_transform_ArmMount_wrt_Base_ - transform_ArmMount_wrt_Base_;
-  Eigen::Matrix4d diff_transform_J2_wrt_J1 = tf2_transform_J2_wrt_J1_ - transform_J2_wrt_J1_;
-  Eigen::Matrix4d diff_transform_J3_wrt_J2 = tf2_transform_J3_wrt_J2_ - transform_J3_wrt_J2_;
-  Eigen::Matrix4d diff_transform_J4_wrt_J3 = tf2_transform_J4_wrt_J3_ - transform_J4_wrt_J3_;
-  Eigen::Matrix4d diff_transform_J5_wrt_J4 = tf2_transform_J5_wrt_J4_ - transform_J5_wrt_J4_;
-  Eigen::Matrix4d diff_transform_J6_wrt_J5 = tf2_transform_J6_wrt_J5_ - transform_J6_wrt_J5_;
-  Eigen::Matrix4d diff_transform_ToolMount_wrt_J6 = tf2_transform_ToolMount_wrt_J6_ - transform_ToolMount_wrt_J6_;
-
-  std::cout << "[PointsOnRobot::getPointPosition] diff_transform_ArmMount_wrt_Base: " << std::endl << diff_transform_ArmMount_wrt_Base << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] diff_transform_J2_wrt_J1: " << std::endl << diff_transform_J2_wrt_J1 << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] diff_transform_J3_wrt_J2: " << std::endl << diff_transform_J3_wrt_J2 << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] diff_transform_J4_wrt_J3: " << std::endl << diff_transform_J4_wrt_J3 << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] diff_transform_J5_wrt_J4: " << std::endl << diff_transform_J5_wrt_J4 << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] diff_transform_J6_wrt_J5: " << std::endl << diff_transform_J6_wrt_J5 << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] diff_transform_ToolMount_wrt_J6: " << std::endl << diff_transform_ToolMount_wrt_J6 << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-
-  std::cout << "[PointsOnRobot::getPointPosition] tf2_transform_ArmMount_wrt_Base_: " << std::endl << tf2_transform_ArmMount_wrt_Base_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] transform_ArmMount_wrt_Base_: " << std::endl << transform_ArmMount_wrt_Base_ << std::endl;
-  //std::cout << "--------------------&&--------------------" << std::endl;
-  //std::cout << "[PointsOnRobot::getPointPosition] transform_Base_wrt_World_: " << std::endl << transform_Base_wrt_World_ << std::endl;
-  //std::cout << "--------------------&&--------------------" << std::endl;
-  //std::cout << "[PointsOnRobot::getPointPosition] transform_ArmMount_wrt_World_: " << std::endl << transform_ArmMount_wrt_World_ << std::endl;
-  std::cout << "//////////////////////////////////////////" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] tf2_transform_J1_wrt_ArmMount_: " << std::endl << tf2_transform_J1_wrt_ArmMount_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] transform_J1_wrt_ArmMount_: " << std::endl << transform_J1_wrt_ArmMount_ << std::endl;
-  //std::cout << "--------------------&&--------------------" << std::endl;
-  //std::cout << "[PointsOnRobot::getPointPosition] transform_J1_wrt_World_: " << std::endl << transform_J1_wrt_ArmMount_ << std::endl;
-  std::cout << "//////////////////////////////////////////" << std::endl;
-  std::cout << "J1: " << frameNames_[2] << std::endl;
-  std::cout << "J2: " << frameNames_[3] << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] tf2_transform_J2_wrt_J1_: " << std::endl << tf2_transform_J2_wrt_J1_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] transform_J2_wrt_J1_: " << std::endl << transform_J2_wrt_J1_ << std::endl;
-  std::cout << "//////////////////////////////////////////" << std::endl;
-  std::cout << "J2: " << frameNames_[3] << std::endl;
-  std::cout << "J3: " << frameNames_[4] << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] tf2_transform_J3_wrt_J2_: " << std::endl << tf2_transform_J3_wrt_J2_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] transform_J3_wrt_J2_: " << std::endl << transform_J3_wrt_J2_ << std::endl;
-  std::cout << "//////////////////////////////////////////" << std::endl;
-  std::cout << "J3: " << frameNames_[4] << std::endl;
-  std::cout << "J4: " << frameNames_[5] << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] tf2_transform_J4_wrt_J3_: " << std::endl << tf2_transform_J4_wrt_J3_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] transform_J4_wrt_J3_: " << std::endl << transform_J4_wrt_J3_ << std::endl;
-  std::cout << "//////////////////////////////////////////" << std::endl;
-  std::cout << "J4: " << frameNames_[5] << std::endl;
-  std::cout << "J5: " << frameNames_[6] << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] tf2_transform_J5_wrt_J4_: " << std::endl << tf2_transform_J5_wrt_J4_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] transform_J5_wrt_J4_: " << std::endl << transform_J5_wrt_J4_ << std::endl;
-  std::cout << "//////////////////////////////////////////" << std::endl;
-  std::cout << "J5: " << frameNames_[6] << std::endl;
-  std::cout << "J6: " << frameNames_[7] << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] tf2_transform_J6_wrt_J5_: " << std::endl << tf2_transform_J6_wrt_J5_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] transform_J6_wrt_J5_: " << std::endl << transform_J6_wrt_J5_ << std::endl;
-  std::cout << "//////////////////////////////////////////" << std::endl;
-  std::cout << "J6: " << frameNames_[7] << std::endl;
-  std::cout << "ToolMount: " << frameNames_[8] << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] tf2_transform_ToolMount_wrt_J6_: " << std::endl << tf2_transform_ToolMount_wrt_J6_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::getPointPosition] transform_ToolMount_wrt_J6_: " << std::endl << transform_ToolMount_wrt_J6_ << std::endl;
-  std::cout << "//////////////////////////////////////////" << std::endl;
-  */
-
-  std::cout << "[PointsOnRobot::getPointPosition] END" << std::endl;
-
-  Eigen::VectorXd points_on_robot_cppAd = cppAdInterface_->getFunctionValue(state);
-
-  return computeState2PointsOnRobot(pinocchioInterface, mapping, state);
+  return points_on_robot_;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-Eigen::MatrixXd PointsOnRobot::getPointsJacobian(const Eigen::VectorXd& state) const 
+Eigen::VectorXd PointsOnRobot::getPointsPositionCppAd(const Eigen::VectorXd& state) const
+{
+  //std::cout << "[PointsOnRobot::getPointsPositionCppAd] START" << std::endl;
+
+  points_on_robot_ = cppAdInterface_->getFunctionValue(state);
+
+  //std::cout << "[PointsOnRobot::getPointsPositionCppAd] END" << std::endl;
+
+  return points_on_robot_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+Eigen::MatrixXd PointsOnRobot::getPointsJacobianCppAd(const Eigen::VectorXd& state) const 
 {
   return cppAdInterface_->getJacobian(state);
 }
@@ -377,13 +220,14 @@ int PointsOnRobot::getDimPoints() const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void PointsOnRobot::getVisualization(ocs2::PinocchioInterface& pinocchioInterface, 
-                                     const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
-                                     const Eigen::VectorXd& state) const
+void PointsOnRobot::publishPointsOnRobotVisu(ocs2::PinocchioInterface& pinocchioInterface, 
+                                             const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
+                                             const Eigen::VectorXd& state) const
 {
   pointsOnRobot_visu_.markers.resize(radii_.size());
 
-  Eigen::VectorXd points = getPointsPositions(pinocchioInterface, mapping, state);
+  //Eigen::VectorXd pointsOnRobot = getPointsPosition(pinocchioInterface, mapping, state);
+  //Eigen::VectorXd pointsOnRobot = getPointsPositionCppAd(state);
 
   for (int i = 0; i < pointsOnRobot_visu_.markers.size(); i++) 
   {
@@ -394,9 +238,9 @@ void PointsOnRobot::getVisualization(ocs2::PinocchioInterface& pinocchioInterfac
     marker.scale.x = radii_[i] * 1;
     marker.scale.y = radii_[i] * 1;
     marker.scale.z = radii_[i] * 1;
-    marker.pose.position.x = points(3 * i + 0);
-    marker.pose.position.y = points(3 * i + 1);
-    marker.pose.position.z = points(3 * i + 2);
+    marker.pose.position.x = points_on_robot_(3 * i + 0);
+    marker.pose.position.y = points_on_robot_(3 * i + 1);
+    marker.pose.position.z = points_on_robot_(3 * i + 2);
 
     marker.pose.orientation.w = 1;
     marker.pose.orientation.x = 0;
@@ -408,7 +252,7 @@ void PointsOnRobot::getVisualization(ocs2::PinocchioInterface& pinocchioInterfac
     marker.color.b = 0.0;
     marker.color.g = 0.0;
 
-    marker.frame_locked = true;
+    //marker.frame_locked = true;
     marker.header.frame_id = "world";
     marker.header.stamp = ros::Time::now();
   }
@@ -449,7 +293,7 @@ Eigen::Matrix<ocs2::scalar_t, 3, 1> PointsOnRobot::QuaternionToEuler(Eigen::Quat
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void PointsOnRobot::setFixedTransforms()
+void PointsOnRobot::setFixedTransformsTf2()
 {
   tf2_ros::Buffer tfBuffer;
   tf2_ros::TransformListener tfListener(tfBuffer);
@@ -458,8 +302,8 @@ void PointsOnRobot::setFixedTransforms()
   {
     try 
     {
-      //std::cout << "[PointsOnRobot::setFixedTransforms] base_link_name_: " << base_link_name_ << std::endl;
-      //std::cout << "[PointsOnRobot::setFixedTransforms] arm_mount_link_name_: " << arm_mount_link_name_ << std::endl;
+      //std::cout << "[PointsOnRobot::setFixedTransformsTf2] base_link_name_: " << base_link_name_ << std::endl;
+      //std::cout << "[PointsOnRobot::setFixedTransformsTf2] arm_mount_link_name_: " << arm_mount_link_name_ << std::endl;
       while(!tfBuffer.canTransform(base_link_name_, arm_mount_link_name_, ros::Time(0), ros::Duration(5.0))){;};
       transformStamped = tfBuffer.lookupTransform(base_link_name_, arm_mount_link_name_, ros::Time(0), ros::Duration(5.0));
     } 
@@ -473,21 +317,21 @@ void PointsOnRobot::setFixedTransforms()
     Eigen::Quaterniond quat(transformStamped.transform.rotation.w, transformStamped.transform.rotation.x,
                             transformStamped.transform.rotation.y, transformStamped.transform.rotation.z);
 
-    tf2_transform_ArmMount_wrt_Base_ = Eigen::Matrix4d::Identity();
-    tf2_transform_ArmMount_wrt_Base_.block<3, 3>(0, 0) = quat.toRotationMatrix();
+    transform_ArmMount_wrt_Base_ = Eigen::Matrix4d::Identity();
+    transform_ArmMount_wrt_Base_.block<3, 3>(0, 0) = quat.toRotationMatrix();
 
-    tf2_transform_ArmMount_wrt_Base_(0, 3) = transformStamped.transform.translation.x;
-    tf2_transform_ArmMount_wrt_Base_(1, 3) = transformStamped.transform.translation.y;
-    tf2_transform_ArmMount_wrt_Base_(2, 3) = transformStamped.transform.translation.z;
+    transform_ArmMount_wrt_Base_(0, 3) = transformStamped.transform.translation.x;
+    transform_ArmMount_wrt_Base_(1, 3) = transformStamped.transform.translation.y;
+    transform_ArmMount_wrt_Base_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::setFixedTransforms] baseToArmMount_: " << std::endl << tf2_transform_ArmMount_wrt_Base_ << std::endl;
+    //std::cout << "[PointsOnRobot::setFixedTransformsTf2] baseToArmMount_: " << std::endl << transform_ArmMount_wrt_Base_ << std::endl;
   }
 
   {
     try 
     {
-      //std::cout << "[PointsOnRobot::setFixedTransforms] ee_link_name_: " << ee_link_name_ << std::endl;
-      //std::cout << "[PointsOnRobot::setFixedTransforms] J6: " << frameNames_[frameNames_.size()-2] << std::endl;
+      //std::cout << "[PointsOnRobot::setFixedTransformsTf2] ee_link_name_: " << ee_link_name_ << std::endl;
+      //std::cout << "[PointsOnRobot::setFixedTransformsTf2] J6: " << frameNames_[frameNames_.size()-2] << std::endl;
       while(!tfBuffer.canTransform(frameNames_[frameNames_.size()-2], ee_link_name_, ros::Time(0), ros::Duration(5.0))){;};
       transformStamped = tfBuffer.lookupTransform(frameNames_[frameNames_.size()-2], ee_link_name_, ros::Time(0), ros::Duration(5.0));
     } 
@@ -501,21 +345,21 @@ void PointsOnRobot::setFixedTransforms()
     Eigen::Quaterniond quat(transformStamped.transform.rotation.w, transformStamped.transform.rotation.x,
                             transformStamped.transform.rotation.y, transformStamped.transform.rotation.z);
 
-    tf2_transform_ToolMount_wrt_J6_ = Eigen::Matrix4d::Identity();
-    tf2_transform_ToolMount_wrt_J6_.block<3, 3>(0, 0) = quat.toRotationMatrix();
+    transform_ToolMount_wrt_J6_ = Eigen::Matrix4d::Identity();
+    transform_ToolMount_wrt_J6_.block<3, 3>(0, 0) = quat.toRotationMatrix();
 
-    tf2_transform_ToolMount_wrt_J6_(0, 3) = transformStamped.transform.translation.x;
-    tf2_transform_ToolMount_wrt_J6_(1, 3) = transformStamped.transform.translation.y;
-    tf2_transform_ToolMount_wrt_J6_(2, 3) = transformStamped.transform.translation.z;
+    transform_ToolMount_wrt_J6_(0, 3) = transformStamped.transform.translation.x;
+    transform_ToolMount_wrt_J6_(1, 3) = transformStamped.transform.translation.y;
+    transform_ToolMount_wrt_J6_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::setFixedTransforms] wrist2ToEETransform_: " << std::endl << tf2_transform_ToolMount_wrt_J6_ << std::endl;
+    //std::cout << "[PointsOnRobot::setFixedTransformsTf2] wrist2ToEETransform_: " << std::endl << transform_ToolMount_wrt_J6_ << std::endl;
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void PointsOnRobot::updateTransforms() const
+void PointsOnRobot::updateTransformsTf2Relative() const
 {
   tf2_ros::Buffer tfBuffer;
   tf2_ros::TransformListener tfListener(tfBuffer);
@@ -524,8 +368,8 @@ void PointsOnRobot::updateTransforms() const
   {
     try 
     {
-      //std::cout << "[PointsOnRobot::updateTransforms] arm_mount_link_name_: " << arm_mount_link_name_ << std::endl;
-      //std::cout << "[PointsOnRobot::updateTransforms] frameNames_[2]: " << frameNames_[2] << std::endl;
+      //std::cout << "[PointsOnRobot::updateTransformsTf2Relative] arm_mount_link_name_: " << arm_mount_link_name_ << std::endl;
+      //std::cout << "[PointsOnRobot::updateTransformsTf2Relative] frameNames_[2]: " << frameNames_[2] << std::endl;
       while(!tfBuffer.canTransform(arm_mount_link_name_, frameNames_[2], ros::Time(0), ros::Duration(5.0))){;};
       transformStamped = tfBuffer.lookupTransform(arm_mount_link_name_, frameNames_[2], ros::Time(0), ros::Duration(5.0));
     } 
@@ -539,21 +383,21 @@ void PointsOnRobot::updateTransforms() const
     Eigen::Quaterniond quat(transformStamped.transform.rotation.w, transformStamped.transform.rotation.x,
                             transformStamped.transform.rotation.y, transformStamped.transform.rotation.z);
 
-    tf2_transform_J1_wrt_ArmMount_ = Eigen::Matrix4d::Identity();
-    tf2_transform_J1_wrt_ArmMount_.block<3, 3>(0, 0) = quat.toRotationMatrix();
+    transform_J1_wrt_ArmMount_ = Eigen::Matrix4d::Identity();
+    transform_J1_wrt_ArmMount_.block<3, 3>(0, 0) = quat.toRotationMatrix();
 
-    tf2_transform_J1_wrt_ArmMount_(0, 3) = transformStamped.transform.translation.x;
-    tf2_transform_J1_wrt_ArmMount_(1, 3) = transformStamped.transform.translation.y;
-    tf2_transform_J1_wrt_ArmMount_(2, 3) = transformStamped.transform.translation.z;
+    transform_J1_wrt_ArmMount_(0, 3) = transformStamped.transform.translation.x;
+    transform_J1_wrt_ArmMount_(1, 3) = transformStamped.transform.translation.y;
+    transform_J1_wrt_ArmMount_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_J1_wrt_ArmMount_: " << std::endl << tf2_transform_J1_wrt_ArmMount_ << std::endl;
+    //std::cout << "[PointsOnRobot::updateTransformsTf2Relative] transform_J1_wrt_ArmMount_: " << std::endl << transform_J1_wrt_ArmMount_ << std::endl;
     //std::cout << "--------------------&&--------------------" << std::endl;
   }
 
   {
     try 
     {
-      //std::cout << "[PointsOnRobot::updateTransforms] frameNames_[3]: " << frameNames_[3] << std::endl;
+      //std::cout << "[PointsOnRobot::updateTransformsTf2Relative] frameNames_[3]: " << frameNames_[3] << std::endl;
       while(!tfBuffer.canTransform(frameNames_[2], frameNames_[3], ros::Time(0), ros::Duration(5.0))){;};
       transformStamped = tfBuffer.lookupTransform(frameNames_[2], frameNames_[3], ros::Time(0), ros::Duration(5.0));
     } 
@@ -567,21 +411,21 @@ void PointsOnRobot::updateTransforms() const
     Eigen::Quaterniond quat(transformStamped.transform.rotation.w, transformStamped.transform.rotation.x,
                             transformStamped.transform.rotation.y, transformStamped.transform.rotation.z);
 
-    tf2_transform_J2_wrt_J1_ = Eigen::Matrix4d::Identity();
-    tf2_transform_J2_wrt_J1_.block<3, 3>(0, 0) = quat.toRotationMatrix();
+    transform_J2_wrt_J1_ = Eigen::Matrix4d::Identity();
+    transform_J2_wrt_J1_.block<3, 3>(0, 0) = quat.toRotationMatrix();
 
-    tf2_transform_J2_wrt_J1_(0, 3) = transformStamped.transform.translation.x;
-    tf2_transform_J2_wrt_J1_(1, 3) = transformStamped.transform.translation.y;
-    tf2_transform_J2_wrt_J1_(2, 3) = transformStamped.transform.translation.z;
+    transform_J2_wrt_J1_(0, 3) = transformStamped.transform.translation.x;
+    transform_J2_wrt_J1_(1, 3) = transformStamped.transform.translation.y;
+    transform_J2_wrt_J1_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_J2_wrt_J1_: " << std::endl << tf2_transform_J2_wrt_J1_ << std::endl;
+    //std::cout << "[PointsOnRobot::updateTransformsTf2Relative] transform_J2_wrt_J1_: " << std::endl << transform_J2_wrt_J1_ << std::endl;
     //std::cout << "--------------------&&--------------------" << std::endl;
   }
 
   {
     try 
     {
-      //std::cout << "[PointsOnRobot::updateTransforms] frameNames_[4]: " << frameNames_[4] << std::endl;
+      //std::cout << "[PointsOnRobot::updateTransformsTf2Relative] frameNames_[4]: " << frameNames_[4] << std::endl;
       while(!tfBuffer.canTransform(frameNames_[3], frameNames_[4], ros::Time(0), ros::Duration(5.0))){;};
       transformStamped = tfBuffer.lookupTransform(frameNames_[3], frameNames_[4], ros::Time(0), ros::Duration(5.0));
     } 
@@ -595,21 +439,21 @@ void PointsOnRobot::updateTransforms() const
     Eigen::Quaterniond quat(transformStamped.transform.rotation.w, transformStamped.transform.rotation.x,
                             transformStamped.transform.rotation.y, transformStamped.transform.rotation.z);
 
-    tf2_transform_J3_wrt_J2_ = Eigen::Matrix4d::Identity();
-    tf2_transform_J3_wrt_J2_.block<3, 3>(0, 0) = quat.toRotationMatrix();
+    transform_J3_wrt_J2_ = Eigen::Matrix4d::Identity();
+    transform_J3_wrt_J2_.block<3, 3>(0, 0) = quat.toRotationMatrix();
 
-    tf2_transform_J3_wrt_J2_(0, 3) = transformStamped.transform.translation.x;
-    tf2_transform_J3_wrt_J2_(1, 3) = transformStamped.transform.translation.y;
-    tf2_transform_J3_wrt_J2_(2, 3) = transformStamped.transform.translation.z;
+    transform_J3_wrt_J2_(0, 3) = transformStamped.transform.translation.x;
+    transform_J3_wrt_J2_(1, 3) = transformStamped.transform.translation.y;
+    transform_J3_wrt_J2_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_J3_wrt_J2_: " << std::endl << tf2_transform_J3_wrt_J2_ << std::endl;
+    //std::cout << "[PointsOnRobot::updateTransformsTf2Relative] transform_J3_wrt_J2_: " << std::endl << transform_J3_wrt_J2_ << std::endl;
     //std::cout << "--------------------&&--------------------" << std::endl;
   }
 
   {
     try 
     {
-      //std::cout << "[PointsOnRobot::updateTransforms] frameNames_[5]: " << frameNames_[5] << std::endl;
+      //std::cout << "[PointsOnRobot::updateTransformsTf2Relative] frameNames_[5]: " << frameNames_[5] << std::endl;
       while(!tfBuffer.canTransform(frameNames_[4], frameNames_[5], ros::Time(0), ros::Duration(5.0))){;};
       transformStamped = tfBuffer.lookupTransform(frameNames_[4], frameNames_[5], ros::Time(0), ros::Duration(5.0));
     } 
@@ -623,21 +467,21 @@ void PointsOnRobot::updateTransforms() const
     Eigen::Quaterniond quat(transformStamped.transform.rotation.w, transformStamped.transform.rotation.x,
                             transformStamped.transform.rotation.y, transformStamped.transform.rotation.z);
 
-    tf2_transform_J4_wrt_J3_ = Eigen::Matrix4d::Identity();
-    tf2_transform_J4_wrt_J3_.block<3, 3>(0, 0) = quat.toRotationMatrix();
+    transform_J4_wrt_J3_ = Eigen::Matrix4d::Identity();
+    transform_J4_wrt_J3_.block<3, 3>(0, 0) = quat.toRotationMatrix();
 
-    tf2_transform_J4_wrt_J3_(0, 3) = transformStamped.transform.translation.x;
-    tf2_transform_J4_wrt_J3_(1, 3) = transformStamped.transform.translation.y;
-    tf2_transform_J4_wrt_J3_(2, 3) = transformStamped.transform.translation.z;
+    transform_J4_wrt_J3_(0, 3) = transformStamped.transform.translation.x;
+    transform_J4_wrt_J3_(1, 3) = transformStamped.transform.translation.y;
+    transform_J4_wrt_J3_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_J4_wrt_J3_: " << std::endl << tf2_transform_J4_wrt_J3_ << std::endl;
+    //std::cout << "[PointsOnRobot::updateTransformsTf2Relative] transform_J4_wrt_J3_: " << std::endl << transform_J4_wrt_J3_ << std::endl;
     //std::cout << "--------------------&&--------------------" << std::endl;
   }
 
   {
     try 
     {
-      //std::cout << "[PointsOnRobot::updateTransforms] frameNames_[6]: " << dofParentLinkNames_[4] << std::endl;
+      //std::cout << "[PointsOnRobot::updateTransformsTf2Relative] frameNames_[6]: " << dofParentLinkNames_[4] << std::endl;
       while(!tfBuffer.canTransform(frameNames_[5], frameNames_[6], ros::Time(0), ros::Duration(5.0))){;};
       transformStamped = tfBuffer.lookupTransform(frameNames_[5], frameNames_[6], ros::Time(0), ros::Duration(5.0));
     } 
@@ -651,21 +495,21 @@ void PointsOnRobot::updateTransforms() const
     Eigen::Quaterniond quat(transformStamped.transform.rotation.w, transformStamped.transform.rotation.x,
                             transformStamped.transform.rotation.y, transformStamped.transform.rotation.z);
 
-    tf2_transform_J5_wrt_J4_ = Eigen::Matrix4d::Identity();
-    tf2_transform_J5_wrt_J4_.block<3, 3>(0, 0) = quat.toRotationMatrix();
+    transform_J5_wrt_J4_ = Eigen::Matrix4d::Identity();
+    transform_J5_wrt_J4_.block<3, 3>(0, 0) = quat.toRotationMatrix();
 
-    tf2_transform_J5_wrt_J4_(0, 3) = transformStamped.transform.translation.x;
-    tf2_transform_J5_wrt_J4_(1, 3) = transformStamped.transform.translation.y;
-    tf2_transform_J5_wrt_J4_(2, 3) = transformStamped.transform.translation.z;
+    transform_J5_wrt_J4_(0, 3) = transformStamped.transform.translation.x;
+    transform_J5_wrt_J4_(1, 3) = transformStamped.transform.translation.y;
+    transform_J5_wrt_J4_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_J5_wrt_J4_: " << std::endl << tf2_transform_J5_wrt_J4_ << std::endl;
+    //std::cout << "[PointsOnRobot::updateTransformsTf2Relative] transform_J5_wrt_J4_: " << std::endl << transform_J5_wrt_J4_ << std::endl;
     //std::cout << "--------------------&&--------------------" << std::endl;
   }
 
   {
     try 
     {
-      //std::cout << "[PointsOnRobot::updateTransforms] frameNames_[7]: " << dofParentLinkNames_[5] << std::endl;
+      //std::cout << "[PointsOnRobot::updateTransformsTf2Relative] frameNames_[7]: " << dofParentLinkNames_[5] << std::endl;
       while(!tfBuffer.canTransform(frameNames_[6], frameNames_[7], ros::Time(0), ros::Duration(5.0))){;};
       transformStamped = tfBuffer.lookupTransform(frameNames_[6], frameNames_[7], ros::Time(0), ros::Duration(5.0));
     } 
@@ -679,21 +523,21 @@ void PointsOnRobot::updateTransforms() const
     Eigen::Quaterniond quat(transformStamped.transform.rotation.w, transformStamped.transform.rotation.x,
                             transformStamped.transform.rotation.y, transformStamped.transform.rotation.z);
 
-    tf2_transform_J6_wrt_J5_ = Eigen::Matrix4d::Identity();
-    tf2_transform_J6_wrt_J5_.block<3, 3>(0, 0) = quat.toRotationMatrix();
+    transform_J6_wrt_J5_ = Eigen::Matrix4d::Identity();
+    transform_J6_wrt_J5_.block<3, 3>(0, 0) = quat.toRotationMatrix();
 
-    tf2_transform_J6_wrt_J5_(0, 3) = transformStamped.transform.translation.x;
-    tf2_transform_J6_wrt_J5_(1, 3) = transformStamped.transform.translation.y;
-    tf2_transform_J6_wrt_J5_(2, 3) = transformStamped.transform.translation.z;
+    transform_J6_wrt_J5_(0, 3) = transformStamped.transform.translation.x;
+    transform_J6_wrt_J5_(1, 3) = transformStamped.transform.translation.y;
+    transform_J6_wrt_J5_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_J6_wrt_J5_: " << std::endl << tf2_transform_J6_wrt_J5_ << std::endl;
+    //std::cout << "[PointsOnRobot::updateTransformsTf2Relative] transform_J6_wrt_J5_: " << std::endl << transform_J6_wrt_J5_ << std::endl;
     //std::cout << "--------------------&&--------------------" << std::endl;
   }
 
   {
     try 
     {
-      //std::cout << "[PointsOnRobot::updateTransforms] ee_link_name_: " << ee_link_name_ << std::endl;
+      //std::cout << "[PointsOnRobot::updateTransformsTf2Relative] ee_link_name_: " << ee_link_name_ << std::endl;
       while(!tfBuffer.canTransform(frameNames_[7], ee_link_name_, ros::Time(0), ros::Duration(5.0))){;};
       transformStamped = tfBuffer.lookupTransform(frameNames_[7], ee_link_name_, ros::Time(0), ros::Duration(5.0));
     } 
@@ -707,21 +551,21 @@ void PointsOnRobot::updateTransforms() const
     Eigen::Quaterniond quat(transformStamped.transform.rotation.w, transformStamped.transform.rotation.x,
                             transformStamped.transform.rotation.y, transformStamped.transform.rotation.z);
 
-    tf2_transform_ToolMount_wrt_J6_ = Eigen::Matrix4d::Identity();
-    tf2_transform_ToolMount_wrt_J6_.block<3, 3>(0, 0) = quat.toRotationMatrix();
+    transform_ToolMount_wrt_J6_ = Eigen::Matrix4d::Identity();
+    transform_ToolMount_wrt_J6_.block<3, 3>(0, 0) = quat.toRotationMatrix();
 
-    tf2_transform_ToolMount_wrt_J6_(0, 3) = transformStamped.transform.translation.x;
-    tf2_transform_ToolMount_wrt_J6_(1, 3) = transformStamped.transform.translation.y;
-    tf2_transform_ToolMount_wrt_J6_(2, 3) = transformStamped.transform.translation.z;
+    transform_ToolMount_wrt_J6_(0, 3) = transformStamped.transform.translation.x;
+    transform_ToolMount_wrt_J6_(1, 3) = transformStamped.transform.translation.y;
+    transform_ToolMount_wrt_J6_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_ToolMount_wrt_J6_: " << std::endl << tf2_transform_ToolMount_wrt_J6_ << std::endl;
+    //std::cout << "[PointsOnRobot::updateTransformsTf2Relative] transform_ToolMount_wrt_J6_: " << std::endl << transform_ToolMount_wrt_J6_ << std::endl;
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void PointsOnRobot::updateTransformsWorld() const
+void PointsOnRobot::updateTransformsTf2World() const
 {
   tf2_ros::Buffer tfBuffer;
   tf2_ros::TransformListener tfListener(tfBuffer);
@@ -750,7 +594,7 @@ void PointsOnRobot::updateTransformsWorld() const
     tf2_transform_Base_wrt_World_(1, 3) = transformStamped.transform.translation.y;
     tf2_transform_Base_wrt_World_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_Base_wrt_World_: " << std::endl << tf2_transform_Base_wrt_World_ << std::endl;
+    //std::cout << "[PointsOnRobot::updateTransformsTf2World] tf2_transform_Base_wrt_World_: " << std::endl << tf2_transform_Base_wrt_World_ << std::endl;
     //std::cout << "--------------------&&--------------------" << std::endl;
   }
 
@@ -777,7 +621,7 @@ void PointsOnRobot::updateTransformsWorld() const
     tf2_transform_ArmMount_wrt_World_(1, 3) = transformStamped.transform.translation.y;
     tf2_transform_ArmMount_wrt_World_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_ArmMount_wrt_World_: " << std::endl << tf2_transform_ArmMount_wrt_World_ << std::endl;
+    //std::cout << "[PointsOnRobot::updateTransformsTf2World] tf2_transform_ArmMount_wrt_World_: " << std::endl << tf2_transform_ArmMount_wrt_World_ << std::endl;
     //std::cout << "--------------------&&--------------------" << std::endl;
   }
 
@@ -804,14 +648,14 @@ void PointsOnRobot::updateTransformsWorld() const
     tf2_transform_J1_wrt_World_(1, 3) = transformStamped.transform.translation.y;
     tf2_transform_J1_wrt_World_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_J1_wrt_World_: " << std::endl << tf2_transform_J1_wrt_World_ << std::endl;
+    //std::cout << "[PointsOnRobot::updateTransformsTf2World] tf2_transform_J1_wrt_World_: " << std::endl << tf2_transform_J1_wrt_World_ << std::endl;
     //std::cout << "--------------------&&--------------------" << std::endl;
   }
 
   {
     try 
     {
-      //std::cout << "[PointsOnRobot::updateTransforms] frameNames_[3]: " << frameNames_[3] << std::endl;
+      //std::cout << "[PointsOnRobot::updateTransformsTf2World] frameNames_[3]: " << frameNames_[3] << std::endl;
       while(!tfBuffer.canTransform("world", frameNames_[3], ros::Time(0), ros::Duration(5.0))){;};
       transformStamped = tfBuffer.lookupTransform("world", frameNames_[3], ros::Time(0), ros::Duration(5.0));
     } 
@@ -832,14 +676,14 @@ void PointsOnRobot::updateTransformsWorld() const
     tf2_transform_J2_wrt_World_(1, 3) = transformStamped.transform.translation.y;
     tf2_transform_J2_wrt_World_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_J2_wrt_World_: " << std::endl << tf2_transform_J2_wrt_World_ << std::endl;
+    //std::cout << "[PointsOnRobot::updateTransformsTf2World] tf2_transform_J2_wrt_World_: " << std::endl << tf2_transform_J2_wrt_World_ << std::endl;
     //std::cout << "--------------------&&--------------------" << std::endl;
   }
 
   {
     try 
     {
-      //std::cout << "[PointsOnRobot::updateTransforms] frameNames_[4]: " << frameNames_[4] << std::endl;
+      //std::cout << "[PointsOnRobot::updateTransformsTf2World] frameNames_[4]: " << frameNames_[4] << std::endl;
       while(!tfBuffer.canTransform("world", frameNames_[4], ros::Time(0), ros::Duration(5.0))){;};
       transformStamped = tfBuffer.lookupTransform("world", frameNames_[4], ros::Time(0), ros::Duration(5.0));
     } 
@@ -860,14 +704,14 @@ void PointsOnRobot::updateTransformsWorld() const
     tf2_transform_J3_wrt_World_(1, 3) = transformStamped.transform.translation.y;
     tf2_transform_J3_wrt_World_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_J3_wrt_World_: " << std::endl << tf2_transform_J3_wrt_World_ << std::endl;
+    //std::cout << "[PointsOnRobot::updateTransformsTf2World] tf2_transform_J3_wrt_World_: " << std::endl << tf2_transform_J3_wrt_World_ << std::endl;
     //std::cout << "--------------------&&--------------------" << std::endl;
   }
 
   {
     try 
     {
-      //std::cout << "[PointsOnRobot::updateTransforms] frameNames_[5]: " << frameNames_[5] << std::endl;
+      //std::cout << "[PointsOnRobot::updateTransformsTf2World] frameNames_[5]: " << frameNames_[5] << std::endl;
       while(!tfBuffer.canTransform("world", frameNames_[5], ros::Time(0), ros::Duration(5.0))){;};
       transformStamped = tfBuffer.lookupTransform("world", frameNames_[5], ros::Time(0), ros::Duration(5.0));
     } 
@@ -888,14 +732,14 @@ void PointsOnRobot::updateTransformsWorld() const
     tf2_transform_J4_wrt_World_(1, 3) = transformStamped.transform.translation.y;
     tf2_transform_J4_wrt_World_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_J4_wrt_World_: " << std::endl << tf2_transform_J4_wrt_World_ << std::endl;
+    //std::cout << "[PointsOnRobot::updateTransformsTf2World] tf2_transform_J4_wrt_World_: " << std::endl << tf2_transform_J4_wrt_World_ << std::endl;
     //std::cout << "--------------------&&--------------------" << std::endl;
   }
 
   {
     try 
     {
-      //std::cout << "[PointsOnRobot::updateTransforms] frameNames_[6]: " << dofParentLinkNames_[4] << std::endl;
+      //std::cout << "[PointsOnRobot::updateTransformsTf2World] frameNames_[6]: " << dofParentLinkNames_[4] << std::endl;
       while(!tfBuffer.canTransform("world", frameNames_[6], ros::Time(0), ros::Duration(5.0))){;};
       transformStamped = tfBuffer.lookupTransform("world", frameNames_[6], ros::Time(0), ros::Duration(5.0));
     } 
@@ -916,14 +760,14 @@ void PointsOnRobot::updateTransformsWorld() const
     tf2_transform_J5_wrt_World_(1, 3) = transformStamped.transform.translation.y;
     tf2_transform_J5_wrt_World_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_J5_wrt_World_: " << std::endl << tf2_transform_J5_wrt_World_ << std::endl;
+    //std::cout << "[PointsOnRobot::updateTransformsTf2World] tf2_transform_J5_wrt_World_: " << std::endl << tf2_transform_J5_wrt_World_ << std::endl;
     //std::cout << "--------------------&&--------------------" << std::endl;
   }
 
   {
     try 
     {
-      //std::cout << "[PointsOnRobot::updateTransforms] frameNames_[7]: " << dofParentLinkNames_[5] << std::endl;
+      //std::cout << "[PointsOnRobot::updateTransformsTf2World] frameNames_[7]: " << dofParentLinkNames_[5] << std::endl;
       while(!tfBuffer.canTransform("world", frameNames_[7], ros::Time(0), ros::Duration(5.0))){;};
       transformStamped = tfBuffer.lookupTransform("world", frameNames_[7], ros::Time(0), ros::Duration(5.0));
     } 
@@ -944,14 +788,14 @@ void PointsOnRobot::updateTransformsWorld() const
     tf2_transform_J6_wrt_World_(1, 3) = transformStamped.transform.translation.y;
     tf2_transform_J6_wrt_World_(2, 3) = transformStamped.transform.translation.z;
 
-    //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_J6_wrt_World_: " << std::endl << tf2_transform_J6_wrt_World_ << std::endl;
+    //std::cout << "[PointsOnRobot::updateTransformsTf2World] tf2_transform_J6_wrt_World_: " << std::endl << tf2_transform_J6_wrt_World_ << std::endl;
     //std::cout << "--------------------&&--------------------" << std::endl;
   }
 
   {
     try 
     {
-      //std::cout << "[PointsOnRobot::updateTransforms] ee_link_name_: " << ee_link_name_ << std::endl;
+      //std::cout << "[PointsOnRobot::updateTransformsTf2World] ee_link_name_: " << ee_link_name_ << std::endl;
       while(!tfBuffer.canTransform("world", ee_link_name_, ros::Time(0), ros::Duration(5.0))){;};
       transformStamped = tfBuffer.lookupTransform("world", ee_link_name_, ros::Time(0), ros::Duration(5.0));
     } 
@@ -979,11 +823,11 @@ void PointsOnRobot::updateTransformsWorld() const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void PointsOnRobot::updateTransforms(ocs2::PinocchioInterface& pinocchioInterface,
-                                     const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
-                                     const Eigen::VectorXd& state) const
+void PointsOnRobot::updateTransformsPinocchio(ocs2::PinocchioInterface& pinocchioInterface,
+                                              const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
+                                              const Eigen::VectorXd& state) const
 {
-  //std::cout << "[PointsOnRobot::updateTransforms(3)] START" << std::endl;
+  //std::cout << "[PointsOnRobot::updateTransformsPinocchio] START" << std::endl;
 
   transform_Base_wrt_World_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
   transform_ArmMount_wrt_World_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
@@ -1077,31 +921,105 @@ void PointsOnRobot::updateTransforms(ocs2::PinocchioInterface& pinocchioInterfac
   // Tool Mount wrt J6
   transform_ToolMount_wrt_J6_ = transform_J6_wrt_World_.inverse() * transform_ToolMount_wrt_World_;
 
-  /*
-  std::cout << "[PointsOnRobot::updateTransforms(3)] transform_ArmMount_wrt_World_: " << std::endl << transform_ArmMount_wrt_World_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::updateTransforms(3)] transform_J1_wrt_World_: " << std::endl << transform_J1_wrt_World_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::updateTransforms(3)] transform_J2_wrt_World_: " << std::endl << transform_J2_wrt_World_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::updateTransforms(3)] transform_J3_wrt_World_: " << std::endl << transform_J3_wrt_World_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::updateTransforms(3)] transform_J4_wrt_World_: " << std::endl << transform_J4_wrt_World_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::updateTransforms(3)] transform_J5_wrt_World_: " << std::endl << transform_J5_wrt_World_ << std::endl;
-  std::cout << "--------------------&&--------------------" << std::endl;
-  std::cout << "[PointsOnRobot::updateTransforms(3)] transform_J6_wrt_World_: " << std::endl << transform_J6_wrt_World_ << std::endl;
-  */
-
-  //std::cout << "[PointsOnRobot::updateTransforms(3)] END" << std::endl;
+  //std::cout << "[PointsOnRobot::updateTransformsPinocchio] END" << std::endl;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-Eigen::VectorXd PointsOnRobot::computeState2PointsOnRobot(ocs2::PinocchioInterface& pinocchioInterface,
-                                                          const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
-                                                          const Eigen::Matrix<ocs2::scalar_t, -1, 1>& state) const
+void PointsOnRobot::updateTransformsPinocchio(ocs2::PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
+                                              const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
+                                              const Eigen::Matrix<ad_scalar_t, -1, 1>& stateCppAd) const
+{
+  //std::cout << "[PointsOnRobot::updateTransformsPinocchio(CppAD)] START" << std::endl;
+
+  transform_Base_wrt_World_cppAd_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity().cast<ad_scalar_t>();
+  transform_ArmMount_wrt_World_cppAd_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity().cast<ad_scalar_t>();
+  transform_J1_wrt_World_cppAd_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity().cast<ad_scalar_t>();
+  transform_J2_wrt_World_cppAd_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity().cast<ad_scalar_t>();
+  transform_J3_wrt_World_cppAd_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity().cast<ad_scalar_t>();
+  transform_J4_wrt_World_cppAd_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity().cast<ad_scalar_t>();
+  transform_J5_wrt_World_cppAd_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity().cast<ad_scalar_t>();
+  transform_J6_wrt_World_cppAd_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity().cast<ad_scalar_t>();
+  transform_ToolMount_wrt_World_cppAd_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity().cast<ad_scalar_t>();
+
+  // Update Pinocchio
+  const auto& model = pinocchioInterfaceCppAd.getModel();
+  auto& data = pinocchioInterfaceCppAd.getData();
+  const auto q = mappingCppAd.getPinocchioJointPosition(stateCppAd);
+
+  pinocchio::forwardKinematics(model, data, q);
+  pinocchio::updateFramePlacements(model, data);
+
+  // Base wrt World
+  transform_Base_wrt_World_cppAd_.topLeftCorner(3,3) = data.oMf[frameIds_[0]].rotation();
+  transform_Base_wrt_World_cppAd_.topRightCorner(3,1) = data.oMf[frameIds_[0]].translation();
+
+  // Arm Base wrt World
+  transform_ArmMount_wrt_World_cppAd_.topLeftCorner(3,3) = data.oMf[frameIds_[1]].rotation();
+  transform_ArmMount_wrt_World_cppAd_.topRightCorner(3,1) = data.oMf[frameIds_[1]].translation();
+
+  // J1 wrt World
+  transform_J1_wrt_World_cppAd_.topLeftCorner(3,3) = data.oMf[frameIds_[2]].rotation();
+  transform_J1_wrt_World_cppAd_.topRightCorner(3,1) = data.oMf[frameIds_[2]].translation();
+
+  // J2 wrt World
+  transform_J2_wrt_World_cppAd_.topLeftCorner(3,3) = data.oMf[frameIds_[3]].rotation();
+  transform_J2_wrt_World_cppAd_.topRightCorner(3,1) = data.oMf[frameIds_[3]].translation();
+
+  // J3 wrt World
+  transform_J3_wrt_World_cppAd_.topLeftCorner(3,3) = data.oMf[frameIds_[4]].rotation();
+  transform_J3_wrt_World_cppAd_.topRightCorner(3,1) = data.oMf[frameIds_[4]].translation();
+
+  // J4 wrt World
+  transform_J4_wrt_World_cppAd_.topLeftCorner(3,3) = data.oMf[frameIds_[5]].rotation();
+  transform_J4_wrt_World_cppAd_.topRightCorner(3,1) = data.oMf[frameIds_[5]].translation();
+
+  // J5 wrt World
+  transform_J5_wrt_World_cppAd_.topLeftCorner(3,3) = data.oMf[frameIds_[6]].rotation();
+  transform_J5_wrt_World_cppAd_.topRightCorner(3,1) = data.oMf[frameIds_[6]].translation();
+
+  // J6 wrt World
+  transform_J6_wrt_World_cppAd_.topLeftCorner(3,3) = data.oMf[frameIds_[7]].rotation();
+  transform_J6_wrt_World_cppAd_.topRightCorner(3,1) = data.oMf[frameIds_[7]].translation();
+
+  // Tool Mount wrt World
+  transform_ToolMount_wrt_World_cppAd_.topLeftCorner(3,3) = data.oMf[frameIds_[8]].rotation();
+  transform_ToolMount_wrt_World_cppAd_.topRightCorner(3,1) = data.oMf[frameIds_[8]].translation();
+
+  // Arm Base wrt Base
+  transform_ArmMount_wrt_Base_cppAd_ = transform_Base_wrt_World_cppAd_.inverse() * transform_ArmMount_wrt_World_cppAd_;
+
+  // J1 wrt Arm Base
+  transform_J1_wrt_ArmMount_cppAd_ = transform_ArmMount_wrt_World_cppAd_.inverse() * transform_J1_wrt_World_cppAd_;
+
+  // J2 wrt J1
+  transform_J2_wrt_J1_cppAd_ = transform_J1_wrt_World_cppAd_.inverse() * transform_J2_wrt_World_cppAd_;
+
+  // J3 wrt J2
+  transform_J3_wrt_J2_cppAd_ = transform_J2_wrt_World_cppAd_.inverse() * transform_J3_wrt_World_cppAd_;
+
+  // J4 wrt J3
+  transform_J4_wrt_J3_cppAd_ = transform_J3_wrt_World_cppAd_.inverse() * transform_J4_wrt_World_cppAd_;
+
+  // J5 wrt J4
+  transform_J5_wrt_J4_cppAd_ = transform_J4_wrt_World_cppAd_.inverse() * transform_J5_wrt_World_cppAd_;
+
+  // J6 wrt J5
+  transform_J6_wrt_J5_cppAd_ = transform_J5_wrt_World_cppAd_.inverse() * transform_J6_wrt_World_cppAd_;
+
+  // Tool Mount wrt J6
+  transform_ToolMount_wrt_J6_cppAd_ = transform_J6_wrt_World_cppAd_.inverse() * transform_ToolMount_wrt_World_cppAd_;
+
+  //std::cout << "[PointsOnRobot::updateTransformsPinocchio(CppAD)] END" << std::endl;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+Eigen::Matrix<ocs2::scalar_t, 3, -1> PointsOnRobot::computeState2PointsOnRobot(ocs2::PinocchioInterface& pinocchioInterface,
+                                                                               const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
+                                                                               const Eigen::Matrix<ocs2::scalar_t, -1, 1>& state) const
 {
   // NUA TODO: The function is specific to a robot model!  Generalize it!
 
@@ -1111,11 +1029,10 @@ Eigen::VectorXd PointsOnRobot::computeState2PointsOnRobot(ocs2::PinocchioInterfa
     return Eigen::Matrix<ocs2::scalar_t, 3, -1>(3, 0);
   }
   Eigen::Matrix<ocs2::scalar_t, 3, -1> pointsOnRobot_matrix(3, dim);
-  Eigen::VectorXd pointsOnRobot_vec;
 
-  std::cout << "[PointsOnRobot::computeState2PointsOnRobot] dim: " << dim << std::endl;
+  //std::cout << "[PointsOnRobot::computeState2PointsOnRobot] dim: " << dim << std::endl;
   
-  updateTransforms(pinocchioInterface, mapping, state);
+  updateTransformsPinocchio(pinocchioInterface, mapping, state);
 
   int linkIndex = 0;
   int pointIndex = 0;
@@ -1126,8 +1043,8 @@ Eigen::VectorXd PointsOnRobot::computeState2PointsOnRobot(ocs2::PinocchioInterfa
   Eigen::Matrix<ocs2::scalar_t, 4, 4> next_transform = transform_ArmMount_wrt_Base_;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobot] linkIndex: " << linkIndex << std::endl;
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobot] pointIndex: " << pointIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobot] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobot] pointIndex: " << pointIndex << std::endl;
     Eigen::Matrix<ocs2::scalar_t, 4, 1> directionVector = next_transform.col(3);
     directionVector.template head<3>() = directionVector.template head<3>() * points_[linkIndex][i];
     pointsOnRobot_matrix.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
@@ -1139,8 +1056,8 @@ Eigen::VectorXd PointsOnRobot::computeState2PointsOnRobot(ocs2::PinocchioInterfa
   next_transform = transform_J1_wrt_ArmMount_;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobot] linkIndex: " << linkIndex << std::endl;
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobot] pointIndex: " << pointIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobot] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobot] pointIndex: " << pointIndex << std::endl;
     Eigen::Matrix<ocs2::scalar_t, 4, 1> directionVector = next_transform.col(3);
     directionVector.template head<3>() = directionVector.template head<3>() * points_[linkIndex][i];
     pointsOnRobot_matrix.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
@@ -1152,8 +1069,8 @@ Eigen::VectorXd PointsOnRobot::computeState2PointsOnRobot(ocs2::PinocchioInterfa
   next_transform = transform_J2_wrt_J1_;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobot] linkIndex: " << linkIndex << std::endl;
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobot] pointIndex: " << pointIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobot] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobot] pointIndex: " << pointIndex << std::endl;
     Eigen::Matrix<ocs2::scalar_t, 4, 1> directionVector = next_transform.col(3);
     directionVector.template head<3>() = directionVector.template head<3>() * points_[linkIndex][i];
     pointsOnRobot_matrix.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
@@ -1165,8 +1082,8 @@ Eigen::VectorXd PointsOnRobot::computeState2PointsOnRobot(ocs2::PinocchioInterfa
   next_transform = transform_J3_wrt_J2_;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobot] linkIndex: " << linkIndex << std::endl;
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobot] pointIndex: " << pointIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobot] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobot] pointIndex: " << pointIndex << std::endl;
     Eigen::Matrix<ocs2::scalar_t, 4, 1> directionVector = next_transform.col(3);
     directionVector.template head<3>() = directionVector.template head<3>() * points_[linkIndex][i];
     pointsOnRobot_matrix.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
@@ -1178,8 +1095,8 @@ Eigen::VectorXd PointsOnRobot::computeState2PointsOnRobot(ocs2::PinocchioInterfa
   next_transform = transform_J4_wrt_J3_;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobot] linkIndex: " << linkIndex << std::endl;
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobot] pointIndex: " << pointIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobot] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobot] pointIndex: " << pointIndex << std::endl;
     Eigen::Matrix<ocs2::scalar_t, 4, 1> directionVector = next_transform.col(3);
     directionVector.template head<3>() = directionVector.template head<3>() * points_[linkIndex][i];
     pointsOnRobot_matrix.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
@@ -1191,8 +1108,8 @@ Eigen::VectorXd PointsOnRobot::computeState2PointsOnRobot(ocs2::PinocchioInterfa
   next_transform = transform_J5_wrt_J4_;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobot] linkIndex: " << linkIndex << std::endl;
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobot] pointIndex: " << pointIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobot] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobot] pointIndex: " << pointIndex << std::endl;
     Eigen::Matrix<ocs2::scalar_t, 4, 1> directionVector = next_transform.col(3);
     directionVector.template head<3>() = directionVector.template head<3>() * points_[linkIndex][i];
     pointsOnRobot_matrix.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
@@ -1204,8 +1121,8 @@ Eigen::VectorXd PointsOnRobot::computeState2PointsOnRobot(ocs2::PinocchioInterfa
   next_transform = transform_J6_wrt_J5_;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobot] linkIndex: " << linkIndex << std::endl;
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobot] pointIndex: " << pointIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobot] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobot] pointIndex: " << pointIndex << std::endl;
     Eigen::Matrix<ocs2::scalar_t, 4, 1> directionVector = next_transform.col(3);
     directionVector.template head<3>() = directionVector.template head<3>() * points_[linkIndex][i];
     pointsOnRobot_matrix.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
@@ -1217,24 +1134,20 @@ Eigen::VectorXd PointsOnRobot::computeState2PointsOnRobot(ocs2::PinocchioInterfa
   next_transform = transform_ToolMount_wrt_J6_;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobot] linkIndex: " << linkIndex << std::endl;
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobot] pointIndex: " << pointIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobot] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobot] pointIndex: " << pointIndex << std::endl;
     Eigen::Matrix<ocs2::scalar_t, 4, 1> directionVector = next_transform.col(3);
     directionVector.template head<3>() = directionVector.template head<3>() * points_[linkIndex][i];
     pointsOnRobot_matrix.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
   }
-  linkIndex++;
-  transform_tmp = transform_tmp * next_transform;
 
-  pointsOnRobot_vec = Eigen::Map<Eigen::Matrix<ocs2::scalar_t, -1, 1>>(pointsOnRobot_matrix.data(), pointsOnRobot_matrix.size());
-
-  return pointsOnRobot_vec;
+  return pointsOnRobot_matrix;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-Eigen::Matrix<PointsOnRobot::ad_scalar_t, 3, -1> PointsOnRobot::computeState2PointsOnRobotCppAd(ocs2::PinocchioInterfaceCppAd& pinocchioInterfaceAd,
+Eigen::Matrix<PointsOnRobot::ad_scalar_t, 3, -1> PointsOnRobot::computeState2PointsOnRobotCppAd(ocs2::PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
                                                                                                 const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
                                                                                                 const Eigen::Matrix<ad_scalar_t, -1, 1>& stateCppAd) const
 {
@@ -1245,167 +1158,127 @@ Eigen::Matrix<PointsOnRobot::ad_scalar_t, 3, -1> PointsOnRobot::computeState2Poi
   {
     return Eigen::Matrix<ad_scalar_t, 3, -1>(3, 0);
   }
-  Eigen::Matrix<ad_scalar_t, 3, -1> points_on_robot(3, dim);
+  Eigen::Matrix<ad_scalar_t, 3, -1> pointsOnRobot_matrix(3, dim);
+
+  //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] dim: " << dim << std::endl;
   
-  //updateTransforms(pinocchioInterface, mapping, stateCppAd);
-
-  /*
-  const auto& model = pinocchioInterfaceCppAd.getModel();
-  auto& data = pinocchioInterfaceCppAd.getData();
-  const PointsOnRobot::ad_dynamic_vector_t q = mappingCppAd.getPinocchioJointPosition(stateCppAd);
-
-  pinocchio::forwardKinematics(model, data, q);
-  pinocchio::updateFramePlacements(model, data);
-  */
-
-  Eigen::Matrix<ad_scalar_t, 4, 4> transform_ArmMount_wrt_Base_cppAd = transform_ArmMount_wrt_Base_.cast<ad_scalar_t>();
-  Eigen::Matrix<ad_scalar_t, 4, 4> transform_J1_wrt_ArmMount_cppAd = transform_J1_wrt_ArmMount_.cast<ad_scalar_t>();
-  Eigen::Matrix<ad_scalar_t, 4, 4> transform_J2_wrt_J1_cppAd = transform_J2_wrt_J1_.cast<ad_scalar_t>();
-  Eigen::Matrix<ad_scalar_t, 4, 4> transform_J3_wrt_J2_cppAd = transform_J2_wrt_J1_.cast<ad_scalar_t>();
-  Eigen::Matrix<ad_scalar_t, 4, 4> transform_J4_wrt_J3_cppAd = transform_J2_wrt_J1_.cast<ad_scalar_t>();
-  Eigen::Matrix<ad_scalar_t, 4, 4> transform_J5_wrt_J4_cppAd = transform_J2_wrt_J1_.cast<ad_scalar_t>();
-  Eigen::Matrix<ad_scalar_t, 4, 4> transform_J6_wrt_J5_cppAd = transform_J2_wrt_J1_.cast<ad_scalar_t>();
-  Eigen::Matrix<ad_scalar_t, 4, 4> transform_ToolMount_wrt_J6_cppAd = transform_ToolMount_wrt_J6_.cast<ad_scalar_t>();
+  updateTransformsPinocchio(pinocchioInterfaceCppAd, mappingCppAd, stateCppAd);
 
   int linkIndex = 0;
   int pointIndex = 0;
 
-  Eigen::Matrix<ad_scalar_t, 4, 4> transform_tmp = transform_ArmMount_wrt_Base_cppAd;
+  Eigen::Matrix<ad_scalar_t, 4, 4> transform_tmp = transform_Base_wrt_World_cppAd_;
 
   // Points between base and arm mount
-  Eigen::Matrix<ad_scalar_t, 4, 4> next_transform = transform_ArmMount_wrt_Base_cppAd;
+  Eigen::Matrix<ad_scalar_t, 4, 4> next_transform = transform_ArmMount_wrt_Base_cppAd_;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] pointIndex: " << pointIndex << std::endl;
     Eigen::Matrix<ad_scalar_t, 4, 1> directionVector = next_transform.col(3);
-    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t)points_[linkIndex][i];
-    points_on_robot.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
+    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t) points_[linkIndex][i];
+    pointsOnRobot_matrix.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
   }
   linkIndex++;
   transform_tmp = transform_tmp * next_transform;
 
   // Points between arm mount and joint 1
-  next_transform = transform_J1_wrt_ArmMount_cppAd;
+  next_transform = transform_J1_wrt_ArmMount_cppAd_;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] pointIndex: " << pointIndex << std::endl;
     Eigen::Matrix<ad_scalar_t, 4, 1> directionVector = next_transform.col(3);
-    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t)points_[linkIndex][i];
-    points_on_robot.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
+    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t) points_[linkIndex][i];
+    pointsOnRobot_matrix.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
   }
   linkIndex++;
   transform_tmp = transform_tmp * next_transform;
 
   // Points between joint 1 and joint 2
-  next_transform = transform_J2_wrt_J1_cppAd;
+  next_transform = transform_J2_wrt_J1_cppAd_;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] pointIndex: " << pointIndex << std::endl;
     Eigen::Matrix<ad_scalar_t, 4, 1> directionVector = next_transform.col(3);
-    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t)points_[linkIndex][i];
-    points_on_robot.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
+    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t) points_[linkIndex][i];
+    pointsOnRobot_matrix.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
   }
   linkIndex++;
   transform_tmp = transform_tmp * next_transform;
 
   // Points between joint 2 and joint 3
-  next_transform = transform_J3_wrt_J2_cppAd;
+  next_transform = transform_J3_wrt_J2_cppAd_;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] pointIndex: " << pointIndex << std::endl;
     Eigen::Matrix<ad_scalar_t, 4, 1> directionVector = next_transform.col(3);
-    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t)points_[linkIndex][i];
-    points_on_robot.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
+    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t) points_[linkIndex][i];
+    pointsOnRobot_matrix.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
   }
   linkIndex++;
   transform_tmp = transform_tmp * next_transform;
 
   // Points between joint 3 and joint 4
-  next_transform = transform_J4_wrt_J3_cppAd;
+  next_transform = transform_J4_wrt_J3_cppAd_;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] pointIndex: " << pointIndex << std::endl;
     Eigen::Matrix<ad_scalar_t, 4, 1> directionVector = next_transform.col(3);
-    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t)points_[linkIndex][i];
-    points_on_robot.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
+    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t) points_[linkIndex][i];
+    pointsOnRobot_matrix.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
   }
   linkIndex++;
   transform_tmp = transform_tmp * next_transform;
 
   // Points between joint 4 and joint 5
-  next_transform = transform_J5_wrt_J4_cppAd;
+  next_transform = transform_J5_wrt_J4_cppAd_;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] pointIndex: " << pointIndex << std::endl;
     Eigen::Matrix<ad_scalar_t, 4, 1> directionVector = next_transform.col(3);
-    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t)points_[linkIndex][i];
-    points_on_robot.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
+    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t) points_[linkIndex][i];
+    pointsOnRobot_matrix.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
   }
   linkIndex++;
   transform_tmp = transform_tmp * next_transform;
 
   // Points between joint 5 and joint 6
-  next_transform = transform_J6_wrt_J5_cppAd;
+  next_transform = transform_J6_wrt_J5_cppAd_;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] pointIndex: " << pointIndex << std::endl;
     Eigen::Matrix<ad_scalar_t, 4, 1> directionVector = next_transform.col(3);
-    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t)points_[linkIndex][i];
-    points_on_robot.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
+    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t) points_[linkIndex][i];
+    pointsOnRobot_matrix.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
   }
   linkIndex++;
   transform_tmp = transform_tmp * next_transform;
 
   // Points between joint 6 and tool mount
-  next_transform = transform_ToolMount_wrt_J6_cppAd;
+  next_transform = transform_ToolMount_wrt_J6_cppAd_;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
+    //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] pointIndex: " << pointIndex << std::endl;
     Eigen::Matrix<ad_scalar_t, 4, 1> directionVector = next_transform.col(3);
-    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t)points_[linkIndex][i];
-    points_on_robot.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
+    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t) points_[linkIndex][i];
+    pointsOnRobot_matrix.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
   }
-  linkIndex++;
-  transform_tmp = transform_tmp * next_transform;
 
-  /*
-  // Points between base and arm mount
-  Eigen::Matrix<ad_scalar_t, 4, 4> next_transform = transformBase_X_ArmMount_.cast<ad_scalar_t>();
-  for (int i = 0; i < points[linkIndex].size(); i++) 
-  {
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
-    Eigen::Matrix<ad_scalar_t, 4, 1> directionVector = next_transform.col(3);
-    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t)points[linkIndex][i];
-    points_on_robot.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
-  }
-  linkIndex++;
-  transform_tmp = transform_tmp * next_transform;
-
-  // Points between arm mount and joint 1
-  next_transform = Eigen::Matrix<ad_scalar_t, 4, 4>::Identity();
-  next_transform.template topLeftCorner<3, 3>() = data.oMf[dofParentLinkIds_[0]].rotation();
-  next_transform.template topRightCorner<3, 1>() = data.oMf[dofParentLinkIds_[0]].translation();
-  next_transform = transform_tmp.transpose() * next_transform;
-  for (int i = 0; i < points[linkIndex].size(); i++)
-  {
-    std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
-    Eigen::Matrix<ad_scalar_t, 4, 1> directionVector = next_transform.col(3);
-
-    directionVector.template head<3>() = directionVector.template head<3>() * (ad_scalar_t)points[linkIndex][i];
-    
-    points_on_robot.col(pointIndex++) = (transform_tmp * directionVector).template head<3>();
-  }
-  linkIndex++;
-  transform_tmp = transform_tmp * next_transform;
-  */
-
-  return points_on_robot;
+  return pointsOnRobot_matrix;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void PointsOnRobot::setADInterfaces(ocs2::PinocchioInterfaceCppAd& pinocchioInterfaceAd,
+void PointsOnRobot::setADInterfaces(ocs2::PinocchioInterface& pinocchioInterface,
+                                    ocs2::PinocchioInterfaceCppAd& pinocchioInterfaceAd,
                                     const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
                                     const std::string& modelName,
                                     const std::string& modelFolder)

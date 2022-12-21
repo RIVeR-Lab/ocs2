@@ -99,6 +99,11 @@ class MPC_ROS_Interface
     void spin();
 
     /**
+     * Set the Esdf Caching Server
+     */
+    void setEsdfCachingServer(std::shared_ptr<voxblox::EsdfCachingServer> new_esdfCachingServer);
+
+    /**
      * This is the main routine which launches all the nodes required for MPC to run which includes:
      * (1) The MPC policy publisher (either feedback or feedforward policy).
      * (2) The observation subscriber which gets the current measured state to invoke the MPC run routine.

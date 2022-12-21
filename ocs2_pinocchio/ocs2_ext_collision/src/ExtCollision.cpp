@@ -1,31 +1,13 @@
-/******************************************************************************
- Copyright (c) 2020, Neset Unver Akmandor. All rights reserved.
-
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions are met:
-
- * Redistributions of source code must retain the above copyright notice, this
- list of conditions and the following disclaimer.
-
- * Redistributions in binary form must reproduce the above copyright notice,
- this list of conditions and the following disclaimer in the documentation
- and/or other materials provided with the distribution.
-
- * Neither the name of the copyright holder nor the names of its
- contributors may be used to endorse or promote products derived from
- this software without specific prior written permission.
-
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
+// LAST UPDATE: 2022.12.21
+//
+// AUTHOR: Neset Unver Akmandor
+//
+// E-MAIL: akmandor.n@northeastern.edu
+//
+// DESCRIPTION: TODO...
+//
+// REFERENCES:
+//
 
 #include <pinocchio/fwd.hpp>
 
@@ -43,9 +25,11 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 ExtCollision::ExtCollision(ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
-                           std::shared_ptr<PointsOnRobot> pointsOnRobotPtr)
+                           std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
+                           std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> voxbloxInterpolatorPtr)
   : extCollisionPinocchioGeometryInterface_(std::move(extCollisionPinocchioGeometryInterface)), 
-    pointsOnRobotPtr_(pointsOnRobotPtr) {}
+    pointsOnRobotPtr_(pointsOnRobotPtr),
+    voxbloxInterpolatorPtr_(voxbloxInterpolatorPtr) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -56,9 +40,9 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
 {
   std::cout << "[ExtCollision::getValue] START" << std::endl;
   
-  Eigen::VectorXd points = pointsOnRobotPtr_->getPointsPositions(pinocchioInterface, mapping, state);
-
-  pointsOnRobotPtr_->getVisualization(pinocchioInterface, mapping, state);
+  //Eigen::VectorXd points = pointsOnRobotPtr_->getPointsPosition(pinocchioInterface, mapping, state);
+  Eigen::VectorXd points = pointsOnRobotPtr_->getPointsPositionCppAd(state);
+  pointsOnRobotPtr_->publishPointsOnRobotVisu(pinocchioInterface, mapping, state);
   
   /*
   std::cout << "[ExtCollision::getValue] state" << std::endl;
@@ -69,7 +53,6 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
       std::cout << i << ": " << state(i,j) << std::endl;
     } 
   }
-  */
 
   std::cout << "[ExtCollision::getValue] points" << std::endl;
   for (size_t i = 0; i < points.rows(); i++)
@@ -79,6 +62,7 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
       std::cout << i << ": " << points(i,j) << std::endl;
     } 
   }
+  */
   
   const std::vector<hpp::fcl::DistanceResult> distanceArray = extCollisionPinocchioGeometryInterface_.computeDistances(pinocchioInterface);
   vector_t violations = vector_t::Zero(distanceArray.size());

@@ -208,9 +208,10 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
       std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] pointsOnRobotPtr_ TRUE" << std::endl;
 
       esdfCachingServerPtr_.reset(new voxblox::EsdfCachingServer(ros::NodeHandle(), ros::NodeHandle("~")));
-      //esdfCachingServerPtr_->getInterpolator();
+      voxbloxInterpolatorPtr_ = esdfCachingServerPtr_->getInterpolator();
 
       pointsOnRobotPtr_->initialize(*pinocchioInterfacePtr_,
+                                    MobileManipulatorPinocchioMapping(manipulatorModelInfo_),
                                     MobileManipulatorPinocchioMappingCppAd(manipulatorModelInfo_),
                                     "points_on_robot",
                                     libraryFolder,
@@ -484,7 +485,8 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
   std::unique_ptr<StateConstraint> constraint;
   constraint = std::unique_ptr<StateConstraint>(new MobileManipulatorExtCollisionConstraint(MobileManipulatorPinocchioMapping(manipulatorModelInfo_), 
                                                                                             std::move(extCollisionPinocchioGeometryInterface), 
-                                                                                            pointsOnRobotPtr_));
+                                                                                            pointsOnRobotPtr_,
+                                                                                            voxbloxInterpolatorPtr_));
   /*
   if (usePreComputation) 
   {

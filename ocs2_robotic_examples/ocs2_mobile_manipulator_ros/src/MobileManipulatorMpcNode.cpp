@@ -111,6 +111,9 @@ int main(int argc, char** argv)
   std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
   std::cout << "" << std::endl;
 
+  //std::cout << "[MobileManipulatorMpcNode::main] BEFORE INF LOOP" << std::endl;
+  //while(1){;}
+
   // ROS ReferenceManager
   std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(new ocs2::RosReferenceManager(robotName, interface.getReferenceManagerPtr()));
   rosReferenceManagerPtr->subscribe(nodeHandle);
@@ -118,16 +121,18 @@ int main(int argc, char** argv)
   // MPC
   ocs2::GaussNewtonDDP_MPC mpc(interface.mpcSettings(), 
                                interface.ddpSettings(), 
-                               interface.getRollout(),
+                               interface.getRollout(), 
                                interface.getOptimalControlProblem(), 
                                interface.getInitializer());
 
   mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
 
+  //std::cout << "[MobileManipulatorMpcNode::main] BEFORE INF LOOP" << std::endl;
   //while(1){;}
 
   // Launch MPC ROS node
   MPC_ROS_Interface mpcNode(mpc, robotName);
+  mpcNode.setEsdfCachingServer(interface.getEsdfCachingServerPtr());
   mpcNode.launchNodes(nodeHandle);
 
   std::cout << "[MobileManipulatorMpcNode::main] END" << std::endl;
