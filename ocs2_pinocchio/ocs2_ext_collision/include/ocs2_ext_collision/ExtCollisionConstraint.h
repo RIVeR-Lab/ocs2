@@ -41,7 +41,8 @@ class ExtCollisionConstraint : public StateConstraint
     ExtCollisionConstraint(const PinocchioStateInputMapping<scalar_t>& mapping, 
                            ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface,
                            std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
-                           std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> voxbloxInterpolatorPtr);
+                           std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> voxbloxInterpolatorPtr,
+                           ocs2::scalar_t maxDistance);
 
     ~ExtCollisionConstraint() override = default;
 

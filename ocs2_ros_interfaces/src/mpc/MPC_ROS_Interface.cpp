@@ -46,7 +46,7 @@ MPC_ROS_Interface::MPC_ROS_Interface(MPC_BASE& mpc, std::string topicPrefix)
     bufferPerformanceIndicesPtr_(new PerformanceIndex),
     publisherPerformanceIndicesPtr_(new PerformanceIndex) 
 {
-  esdfCachingServer_.reset(new voxblox::EsdfCachingServer(ros::NodeHandle(), ros::NodeHandle("~")));
+  //esdfCachingServerPtr_.reset(new voxblox::EsdfCachingServer(ros::NodeHandle(), ros::NodeHandle("~")));
 
   // start thread for publishing
 #ifdef PUBLISH_THREAD
@@ -79,9 +79,9 @@ void MPC_ROS_Interface::resetMpcNode(TargetTrajectories&& initTargetTrajectories
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_ROS_Interface::setEsdfCachingServer(std::shared_ptr<voxblox::EsdfCachingServer> new_esdfCachingServer)
+void MPC_ROS_Interface::setEsdfCachingServer(std::shared_ptr<voxblox::EsdfCachingServer> new_esdfCachingServerPtr)
 {
-  esdfCachingServer_ = new_esdfCachingServer;
+  esdfCachingServerPtr_ = new_esdfCachingServerPtr;
 }
 
 /******************************************************************************************************/
@@ -250,7 +250,7 @@ void MPC_ROS_Interface::copyToBuffer(const SystemObservation& mpcInitObservation
 /******************************************************************************************************/
 void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg) 
 {
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START" << std::endl;
+  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START" << std::endl;
   std::lock_guard<std::mutex> resetLock(resetMutex_);
 
   if (!resetRequestedEver_.load()) 
@@ -262,9 +262,9 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   // current time, state, input, and subsystem
   const auto currentObservation = ros_msg_conversions::readObservationMsg(*msg);
 
-  if (esdfCachingServer_) 
+  if (esdfCachingServerPtr_) 
   {
-    esdfCachingServer_ -> updateInterpolator();
+    esdfCachingServerPtr_ -> updateInterpolator();
   }
 
   // measure the delay in running MPC

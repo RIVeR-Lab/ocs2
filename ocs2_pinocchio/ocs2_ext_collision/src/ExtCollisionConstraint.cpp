@@ -20,9 +20,10 @@ namespace ocs2 {
 ExtCollisionConstraint::ExtCollisionConstraint(const PinocchioStateInputMapping<scalar_t>& mapping,
                                                ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
                                                std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
-                                               std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> voxbloxInterpolatorPtr)
+                                               std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> voxbloxInterpolatorPtr,
+                                               ocs2::scalar_t maxDistance)
   : StateConstraint(ConstraintOrder::Linear),
-    extCollision_(std::move(extCollisionPinocchioGeometryInterface), pointsOnRobotPtr, voxbloxInterpolatorPtr),
+    extCollision_(std::move(extCollisionPinocchioGeometryInterface), pointsOnRobotPtr, voxbloxInterpolatorPtr, maxDistance),
     mappingPtr_(mapping.clone()) {}
 
 /******************************************************************************************************/
@@ -44,11 +45,11 @@ size_t ExtCollisionConstraint::getNumConstraints(scalar_t time) const
 /******************************************************************************************************/
 vector_t ExtCollisionConstraint::getValue(scalar_t time, const vector_t& state, const PreComputation& preComputation) const 
 {
-  std::cout << "[ExtCollisionConstraint::getValue] START" << std::endl;
+  //std::cout << "[ExtCollisionConstraint::getValue] START" << std::endl;
 
   auto pinocchioInterface = getPinocchioInterface(preComputation);
 
-  std::cout << "[ExtCollisionConstraint::getValue] END" << std::endl;
+  //std::cout << "[ExtCollisionConstraint::getValue] END" << std::endl;
 
   return extCollision_.getValue(pinocchioInterface, *mappingPtr_, state);
 }
@@ -60,7 +61,7 @@ VectorFunctionLinearApproximation ExtCollisionConstraint::getLinearApproximation
                                                                                  const vector_t& state,
                                                                                  const PreComputation& preComputation) const 
 {
-  std::cout << "[ExtCollisionConstraint::getLinearApproximation] START" << std::endl;
+  //std::cout << "[ExtCollisionConstraint::getLinearApproximation] START" << std::endl;
 
   const auto& pinocchioInterface = getPinocchioInterface(preComputation);
   mappingPtr_->setPinocchioInterface(pinocchioInterface);
@@ -71,7 +72,7 @@ VectorFunctionLinearApproximation ExtCollisionConstraint::getLinearApproximation
   dfdv.setZero(dfdq.rows(), dfdq.cols());
   std::tie(constraint.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, dfdq, dfdv);
 
-  std::cout << "[ExtCollisionConstraint::getLinearApproximation] END" << std::endl;
+  //std::cout << "[ExtCollisionConstraint::getLinearApproximation] END" << std::endl;
 
   return constraint;
 }

@@ -91,6 +91,8 @@ void PointsOnRobot::initialize(ocs2::PinocchioInterface& pinocchioInterface,
                                const std::string& ee_link_name,
                                const std::vector<std::string>& jointParentFrameNames)
 {
+  std::cout << "[PointsOnRobot::initialize] START" << std::endl;
+
   base_link_name_ = base_link_name;
   arm_mount_link_name_ = arm_mount_link_name; 
   ee_link_name_ = ee_link_name;
@@ -142,6 +144,8 @@ void PointsOnRobot::initialize(ocs2::PinocchioInterface& pinocchioInterface,
   {
     loadModelsIfAvailable(verbose);
   }
+
+  std::cout << "[PointsOnRobot::initialize] END" << std::endl;
 }
 
 /******************************************************************************************************/

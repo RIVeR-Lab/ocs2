@@ -102,6 +102,9 @@ int main(int argc, char** argv)
     std::cout << "[MobileManipulatorMpcNode::main] ERROR: collision_points is not defined!" << std::endl;
   }
 
+  //std::shared_ptr<voxblox::EsdfCachingServer> esdfCachingServerPtr;
+  //esdfCachingServerPtr.reset(new voxblox::EsdfCachingServer(ros::NodeHandle(), ros::NodeHandle("~")));
+
   // Robot interface
   std::cout << "" << std::endl;
   std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
@@ -111,12 +114,128 @@ int main(int argc, char** argv)
   std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
   std::cout << "" << std::endl;
 
-  //std::cout << "[MobileManipulatorMpcNode::main] BEFORE INF LOOP" << std::endl;
-  //while(1){;}
+  //Eigen::VectorXd state(9);
+  //state << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+  //scalar_t maxDistance_ = 10;
+
+  //voxblox::EsdfServer voxblox_server_(ros::NodeHandle(), ros::NodeHandle("~"));
+
+  /*
+  while(1)
+  {
+    /*
+    //if (interface.getEsdfCachingServerPtr()) 
+    if (esdfCachingServerPtr) 
+    {
+      std::cout << "[MobileManipulatorMpcNode::main] updateInterpolator" << std::endl;
+      esdfCachingServerPtr -> updateInterpolator();
+    }
+    * /
+
+    Eigen::Matrix<scalar_t, -1, 1> distances_(interface.getPointsOnRobotPtr()->getNumOfPoints());
+    Eigen::MatrixXd gradientsVoxblox_(interface.getPointsOnRobotPtr()->getNumOfPoints(), interface.getPointsOnRobotPtr()->getNumOfPoints() * 3);
+    Eigen::Matrix<scalar_t, -1, -1> gradients_(interface.getPointsOnRobotPtr()->getNumOfPoints(), 9);
+    vector_t violations;
+
+    if (interface.getPointsOnRobotPtr()) 
+    {
+      violations.resize(interface.getPointsOnRobotPtr()->getNumOfPoints());
+      gradientsVoxblox_.setZero();
+
+      //std::cout << "[MobileManipulatorMpcNode::main] BEFORE INF LOOP" << std::endl;
+      //while(1){;}
+      
+      Eigen::VectorXd positionPointsOnRobot = interface.getPointsOnRobotPtr()->getPointsPositionCppAd(state);
+      Eigen::MatrixXd jacobianPointsOnRobot = interface.getPointsOnRobotPtr()->getPointsJacobianCppAd(state);
+      Eigen::VectorXd radii = interface.getPointsOnRobotPtr()->getRadii();
+
+      std::cout << "[MobileManipulatorMpcNode::main] positionPointsOnRobot:" << std::endl << positionPointsOnRobot << std::endl;
+      //std::cout << "[MobileManipulatorMpcNode::main] jacobianPointsOnRobot:" << std::endl << jacobianPointsOnRobot << std::endl;
+      std::cout << "[MobileManipulatorMpcNode::main] radii:" << std::endl << radii << std::endl;
+
+      assert(positionPointsOnRobot.size() % 3 == 0);
+      int numPoints = interface.getPointsOnRobotPtr()->getNumOfPoints();
+
+      std::cout << "[MobileManipulatorMpcNode::main] numPoints: " << numPoints << std::endl;
+
+      double distance = 0.0;
+      Eigen::Vector3f gradientVoxblox;
+      for (int i = 0; i < numPoints; i++)
+      {
+        Eigen::Ref<Eigen::Matrix<scalar_t, 3, 1>> position = positionPointsOnRobot.segment<3>(i * 3);
+        
+        std::cout << "[MobileManipulatorMpcNode::main] " << i << ": (" << position(0) << ", " << position(1) << ", " << position(2) << ") -> " << distance << std::endl;
+
+        if (!voxblox_server_.getEsdfMapPtr()) 
+        {
+          std::cout << "[MobileManipulatorMpcNode::main] NO EsdfMapPtr!" << std::endl;
+          distance = 0.0;
+        }
+        
+        if (!voxblox_server_.getEsdfMapPtr()->getDistanceAtPosition(position, &distance)) 
+        {
+          distance = 0;
+        }
+
+        if (distance > 0)
+        {
+          std::cout << "[MobileManipulatorMpcNode::main] (" << position(0) << ", " << position(1) << ", " << position(2) << ") -> " << distance << std::endl;
+          distances_[i] = distance - radii(i);
+        }
+        else
+        {
+          std::cout << "[MobileManipulatorMpcNode::main] maxDistance_" << std::endl;
+          distances_[i] = maxDistance_ - radii(i);
+        }
+
+        /*
+        if (esdfCachingServerPtr->getInterpolator()->getInterpolatedDistanceGradient(position.cast<float>(), &distance, &gradientVoxblox)) 
+        {
+          distances_[i] = distance - radii(i);
+
+          //std::cout << "[MobileManipulatorMpcNode::main] BEFORE INF LOOP" << std::endl;
+          //while(1){ros::spinOnce();}
+
+          gradientsVoxblox_.block<1, 3>(i, 3 * i) = gradientVoxblox.transpose().cast<double>();
+
+          std::cout << "[MobileManipulatorMpcNode::main] (" << position(0) << ", " << position(1) << ", " << position(2) << ") -> " << distance << std::endl;
+          std::cout << "[MobileManipulatorMpcNode::main] BEFORE INF LOOP 1" << std::endl;
+          //while(1){ros::spinOnce();}
+        } 
+        else 
+        {
+          std::cout << "[MobileManipulatorMpcNode::main] maxDistance_" << std::endl;
+          std::cout << "[MobileManipulatorMpcNode::main] BEFORE INF LOOP 2" << std::endl;
+          //while(1){ros::spinOnce();}
+          distances_[i] = maxDistance_ - radii(i);
+        }
+        * /
+      }
+
+      //std::cout << "[MobileManipulatorMpcNode::main] BEFORE INF LOOP 3" << std::endl;
+      //while(1){ros::spinOnce();}
+
+      assert(gradients_.rows() == gradientsVoxblox_.rows());
+      assert(gradients_.cols() == jacobianPointsOnRobot.cols());
+      gradients_ = gradientsVoxblox_ * jacobianPointsOnRobot;
+    }
+    else
+    {
+      std::cout << "[MobileManipulatorMpcNode::main] No points on robot!" << std::endl;
+      violations = vector_t::Zero(1);
+    }
+    std::cout << "" << std::endl;
+
+    ros::spinOnce();
+  }
+  */
 
   // ROS ReferenceManager
   std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(new ocs2::RosReferenceManager(robotName, interface.getReferenceManagerPtr()));
   rosReferenceManagerPtr->subscribe(nodeHandle);
+
+  //std::cout << "[MobileManipulatorMpcNode::main] BEFORE INF LOOP" << std::endl;
+  //while(1){;}
 
   // MPC
   ocs2::GaussNewtonDDP_MPC mpc(interface.mpcSettings(), 
@@ -126,9 +245,6 @@ int main(int argc, char** argv)
                                interface.getInitializer());
 
   mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
-
-  //std::cout << "[MobileManipulatorMpcNode::main] BEFORE INF LOOP" << std::endl;
-  //while(1){;}
 
   // Launch MPC ROS node
   MPC_ROS_Interface mpcNode(mpc, robotName);

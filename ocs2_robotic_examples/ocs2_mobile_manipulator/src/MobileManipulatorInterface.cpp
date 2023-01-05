@@ -43,6 +43,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 {
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START" << std::endl;
 
+  //esdfCachingServerPtr_ = esdfCachingServerPtr;
+
   // check that task file exists
   boost::filesystem::path taskFilePath(taskFile);
   if (boost::filesystem::exists(taskFilePath)) 
@@ -92,6 +94,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   loadData::loadPtreeValue<std::string>(pt, armBaseFrame, "model_information.armBaseFrame", false);
   loadData::loadPtreeValue<std::string>(pt, eeFrame, "model_information.eeFrame", false);
 
+  
+  
   std::cerr << "\n #### Model Information:";
   std::cerr << "\n #### =============================================================================\n";
   std::cerr << "\n #### model_information.manipulatorModelType: " << static_cast<int>(modelType);
@@ -194,6 +198,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
                                                                                      recompileLibraries));
   }
 
+  
   // external-collision avoidance constraint
   bool activateExtCollision = false;
   loadData::loadPtreeValue(pt, activateExtCollision, "extCollision.activate", false);
@@ -207,8 +212,16 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
     {
       std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] pointsOnRobotPtr_ TRUE" << std::endl;
 
+      std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE initialize 0" << std::endl;
+
       esdfCachingServerPtr_.reset(new voxblox::EsdfCachingServer(ros::NodeHandle(), ros::NodeHandle("~")));
+      //esdfCachingServerPtr_ = esdfCachingServerPtr;
+      
+      std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE initialize 1" << std::endl;
+
       voxbloxInterpolatorPtr_ = esdfCachingServerPtr_->getInterpolator();
+
+      std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE initialize 2" << std::endl;
 
       pointsOnRobotPtr_->initialize(*pinocchioInterfacePtr_,
                                     MobileManipulatorPinocchioMapping(manipulatorModelInfo_),
@@ -301,7 +314,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 
   // Initialization
   initializerPtr_.reset(new DefaultInitializer(manipulatorModelInfo_.inputDim));
-
+  
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END" << std::endl;
 }
 
@@ -468,7 +481,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
 
   scalar_t mu = 1e-2;
   scalar_t delta = 1e-3;
-  scalar_t minimumDistance = 0.2;
+  scalar_t maxDistance = 10;
 
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile, pt);
@@ -476,17 +489,17 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
   std::cerr << "\n #### =============================================================================\n";
   loadData::loadPtreeValue(pt, mu, prefix + ".mu", true);
   loadData::loadPtreeValue(pt, delta, prefix + ".delta", true);
-  loadData::loadPtreeValue(pt, minimumDistance, prefix + ".minimumDistance", true);
+  loadData::loadPtreeValue(pt, maxDistance, prefix + ".maxDistance", true);
   std::cerr << " #### =============================================================================\n";
 
   ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface(pinocchioInterface);
-
-  //MobileManipulatorPinocchioMapping pinocchioMapping(manipulatorModelInfo_);
   std::unique_ptr<StateConstraint> constraint;
   constraint = std::unique_ptr<StateConstraint>(new MobileManipulatorExtCollisionConstraint(MobileManipulatorPinocchioMapping(manipulatorModelInfo_), 
                                                                                             std::move(extCollisionPinocchioGeometryInterface), 
                                                                                             pointsOnRobotPtr_,
-                                                                                            voxbloxInterpolatorPtr_));
+                                                                                            voxbloxInterpolatorPtr_,
+                                                                                            maxDistance));
+
   /*
   if (usePreComputation) 
   {

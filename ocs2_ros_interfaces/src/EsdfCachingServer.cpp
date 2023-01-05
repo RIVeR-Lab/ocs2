@@ -33,7 +33,8 @@ namespace voxblox {
 
 void EsdfCachingServer::esdfMapCallback(const voxblox_msgs::Layer& layer_msg) 
 {
-  std::cout << "[EsdfCachingServer::esdfMapCallback] START" << std::endl;
+  //std::cout << "************************************************" << std::endl;
+  //std::cout << "[EsdfCachingServer::esdfMapCallback] START" << std::endl;
 
   EsdfServer::esdfMapCallback(layer_msg);
   auto start = std::chrono::high_resolution_clock::now();
@@ -42,14 +43,14 @@ void EsdfCachingServer::esdfMapCallback(const voxblox_msgs::Layer& layer_msg)
   using us = std::chrono::microseconds;
   us elapsedUs = std::chrono::duration_cast<us>(stop - start);
 
-  std::cout << "[EsdfCachingServer::esdfMapCallback] create caching layer from incoming esdf: " << elapsedUs.count() << "us" << std::endl;
+  //std::cout << "[EsdfCachingServer::esdfMapCallback] create caching layer from incoming esdf: " << elapsedUs.count() << "us" << std::endl;
 
   start = std::chrono::high_resolution_clock::now();
   incomingEsdfCached->cacheGradients();
   stop = std::chrono::high_resolution_clock::now();
   elapsedUs = std::chrono::duration_cast<us>(stop - start);
   
-  std::cout << "[EsdfCachingServer::esdfMapCallback] cache gradients: " << elapsedUs.count() << "us" << std::endl;
+  //std::cout << "[EsdfCachingServer::esdfMapCallback] cache gradients: " << elapsedUs.count() << "us" << std::endl;
 
   //incomingEsdfCached->cacheHessians();
   {
@@ -57,7 +58,9 @@ void EsdfCachingServer::esdfMapCallback(const voxblox_msgs::Layer& layer_msg)
     cachedCachingLayer_ = incomingEsdfCached;
   }
 
-  std::cout << "[EsdfCachingServer::esdfMapCallback] END" << std::endl;
+  //std::cout << "[EsdfCachingServer::esdfMapCallback] END" << std::endl;
+  //std::cout << "************************************************" << std::endl;
+  //std::cout << "" << std::endl;
 }
 
 std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> EsdfCachingServer::getInterpolator() 

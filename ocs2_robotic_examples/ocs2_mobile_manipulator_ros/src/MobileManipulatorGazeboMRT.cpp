@@ -66,9 +66,59 @@ int main(int argc, char** argv)
   std::cerr << "Loading library folder: " << libFolder << std::endl;
   std::cerr << "Loading urdf file: " << urdfFile << std::endl;
 
+  PointsOnRobot::points_radii_t pointsAndRadii(8);
+  if (nodeHandle.hasParam("/voxblox_node/collision_points")) 
+  {
+    using pair_t = std::pair<double, double>;
+    XmlRpc::XmlRpcValue collisionPoints;
+    nodeHandle.getParam("/voxblox_node/collision_points", collisionPoints);
+
+    if (collisionPoints.getType() != XmlRpc::XmlRpcValue::TypeArray) 
+    {
+      ROS_WARN("[MobileManipulatorGazeboMRT::main] collision_points parameter is not of type array.");
+    }
+    
+    std::cout << "[MobileManipulatorGazeboMRT::main] pointsAndRadii:" << std::endl;
+    for (int i = 0; i < collisionPoints.size(); i++) 
+    {
+      if (collisionPoints.getType() != XmlRpc::XmlRpcValue::TypeArray) 
+      {
+        ROS_WARN_STREAM("[MobileManipulatorGazeboMRT::main] collision_points[" << i << "] parameter is not of type array.");
+      }
+
+      for (int j = 0; j < collisionPoints[i].size(); j++) 
+      {
+        if (collisionPoints[j].getType() != XmlRpc::XmlRpcValue::TypeArray) 
+        {
+          ROS_WARN_STREAM("[MobileManipulatorGazeboMRT::main] collision_points[" << i << "][" << j << "] parameter is not of type array.");
+        }
+
+        if (collisionPoints[i][j].size() != 2) 
+        {
+          ROS_WARN_STREAM("[MobileManipulatorGazeboMRT::main] collision_points[" << i << "][" << j << "] does not have 2 elements.");
+        }
+
+        double segmentId = collisionPoints[i][j][0];
+        double radius = collisionPoints[i][j][1];
+        pointsAndRadii[i].push_back(pair_t(segmentId, radius));
+        ROS_INFO_STREAM("[MobileManipulatorGazeboMRT::main] segment=" << i << ". relative pos on segment:" << segmentId << ". radius:" << radius);
+      }
+    }
+  }
+  else
+  {
+    std::cout << "[MobileManipulatorGazeboMRT::main] ERROR: collision_points is not defined!" << std::endl;
+  }
+
+  //std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE INF LOOP" << std::endl;
+  //while(1){;}
+
+  //std::shared_ptr<voxblox::EsdfCachingServer> esdfCachingServerPtr;
+  //esdfCachingServerPtr.reset(new voxblox::EsdfCachingServer(ros::NodeHandle(), ros::NodeHandle("~")));
+
   // Robot Interface
   std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE MobileManipulatorInterface" << std::endl;
-  MobileManipulatorInterface interface(taskFile, libFolder, urdfFile);
+  MobileManipulatorInterface interface(taskFile, libFolder, urdfFile, pointsAndRadii);
   std::cout << "[MobileManipulatorGazeboMRT::main] AFTER MobileManipulatorInterface" << std::endl;
 
   // ManipulatorModelInfo

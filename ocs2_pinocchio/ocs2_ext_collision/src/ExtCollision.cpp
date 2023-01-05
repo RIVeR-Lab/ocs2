@@ -26,10 +26,15 @@ namespace ocs2 {
 /******************************************************************************************************/
 ExtCollision::ExtCollision(ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
                            std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
-                           std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> voxbloxInterpolatorPtr)
+                           std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> voxbloxInterpolatorPtr,
+                           ocs2::scalar_t maxDistance)
   : extCollisionPinocchioGeometryInterface_(std::move(extCollisionPinocchioGeometryInterface)), 
     pointsOnRobotPtr_(pointsOnRobotPtr),
-    voxbloxInterpolatorPtr_(voxbloxInterpolatorPtr) {}
+    voxbloxInterpolatorPtr_(voxbloxInterpolatorPtr),
+    maxDistance_(maxDistance),
+    distances_(pointsOnRobotPtr->getNumOfPoints()),
+    gradientsVoxblox_(pointsOnRobotPtr->getNumOfPoints(), pointsOnRobotPtr->getNumOfPoints() * 3),
+    gradients_(pointsOnRobotPtr->getNumOfPoints(), 9) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -38,12 +43,56 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
                                 const PinocchioStateInputMapping<scalar_t>& mapping, 
                                 const vector_t& state) const 
 {
-  std::cout << "[ExtCollision::getValue] START" << std::endl;
+  //std::cout << "[ExtCollision::getValue] START" << std::endl;
+  //std::cout << "[ExtCollision::getValue] state size: " << state.size() << std::endl;
+  //std::cout << "[ExtCollision::getValue] maxDistance_: " << maxDistance_ << std::endl;
   
+  vector_t violations;
+
   //Eigen::VectorXd points = pointsOnRobotPtr_->getPointsPosition(pinocchioInterface, mapping, state);
   Eigen::VectorXd points = pointsOnRobotPtr_->getPointsPositionCppAd(state);
   pointsOnRobotPtr_->publishPointsOnRobotVisu(pinocchioInterface, mapping, state);
   
+  if (pointsOnRobotPtr_) 
+  {
+    violations.resize(pointsOnRobotPtr_->getNumOfPoints());
+    gradientsVoxblox_.setZero();
+    Eigen::VectorXd positionPointsOnRobot = pointsOnRobotPtr_->getPointsPositionCppAd(state);
+    Eigen::MatrixXd jacobianPointsOnRobot = pointsOnRobotPtr_->getPointsJacobianCppAd(state);
+    Eigen::VectorXd radii = pointsOnRobotPtr_->getRadii();
+    
+    assert(positionPointsOnRobot.size() % 3 == 0);
+    int numPoints = pointsOnRobotPtr_->getNumOfPoints();
+    
+    float distance;
+    Eigen::Vector3f gradientVoxblox;
+    for (int i = 0; i < numPoints; i++)
+    {
+      Eigen::Ref<Eigen::Matrix<scalar_t, 3, 1>> position = positionPointsOnRobot.segment<3>(i * 3);
+      
+      std::cout << "[ExtCollision::getValue] " << i << ": (" << position(0) << ", " << position(1) << ", " << position(2) << ") -> " << distance << std::endl;
+      if (voxbloxInterpolatorPtr_->getInterpolatedDistanceGradient(position.cast<float>(), &distance, &gradientVoxblox)) 
+      {
+        distances_[i] = distance - radii(i);
+        gradientsVoxblox_.block<1, 3>(i, 3 * i) = gradientVoxblox.transpose().cast<double>();
+
+        std::cout << "[ExtCollision::getValue] (" << position(0) << ", " << position(1) << ", " << position(2) << ") -> " << distance << std::endl;
+      } 
+      else 
+      {
+        distances_[i] = maxDistance_ - radii(i);
+      }
+    }
+    assert(gradients_.rows() == gradientsVoxblox_.rows());
+    assert(gradients_.cols() == jacobianPointsOnRobot.cols());
+    gradients_ = gradientsVoxblox_ * jacobianPointsOnRobot;
+  }
+  else
+  {
+    std::cout << "[ExtCollision::getValue] No points on robot!" << std::endl;
+    violations = vector_t::Zero(1);
+  }
+
   /*
   std::cout << "[ExtCollision::getValue] state" << std::endl;
   for (size_t i = 0; i < state.rows(); i++)
@@ -64,8 +113,8 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
   }
   */
   
-  const std::vector<hpp::fcl::DistanceResult> distanceArray = extCollisionPinocchioGeometryInterface_.computeDistances(pinocchioInterface);
-  vector_t violations = vector_t::Zero(distanceArray.size());
+  //const std::vector<hpp::fcl::DistanceResult> distanceArray = extCollisionPinocchioGeometryInterface_.computeDistances(pinocchioInterface);
+  //vector_t violations = vector_t::Zero(distanceArray.size());
 
   /*
   for (size_t i = 0; i < distanceArray.size(); ++i) {
@@ -73,8 +122,8 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
   }
   */
 
-  std::cout << "[ExtCollision::getValue] END" << std::endl;
-  std::cout << "" << std::endl;
+  //std::cout << "[ExtCollision::getValue] END" << std::endl;
+  //std::cout << "" << std::endl;
 
   return violations;
 }
@@ -84,7 +133,7 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
 /******************************************************************************************************/
 std::pair<vector_t, matrix_t> ExtCollision::getLinearApproximation(const PinocchioInterface& pinocchioInterface) const 
 {
-  std::cout << "[ExtCollision::getLinearApproximation] START" << std::endl;
+  //std::cout << "[ExtCollision::getLinearApproximation] START" << std::endl;
 
   const std::vector<hpp::fcl::DistanceResult> distanceArray = extCollisionPinocchioGeometryInterface_.computeDistances(pinocchioInterface);
 
@@ -137,7 +186,7 @@ std::pair<vector_t, matrix_t> ExtCollision::getLinearApproximation(const Pinocch
   }  // end of i loop
   */
 
-  std::cout << "[ExtCollision::getLinearApproximation] END" << std::endl;
+  //std::cout << "[ExtCollision::getLinearApproximation] END" << std::endl;
 
   return {f, dfdq};
 }

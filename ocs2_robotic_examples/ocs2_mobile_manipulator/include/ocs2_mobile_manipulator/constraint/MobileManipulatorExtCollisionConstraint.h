@@ -26,8 +26,13 @@ class MobileManipulatorExtCollisionConstraint final : public ExtCollisionConstra
     MobileManipulatorExtCollisionConstraint(const PinocchioStateInputMapping<scalar_t>& mapping,
                                             ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
                                             std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
-                                            std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> voxbloxInterpolatorPtr)
-      : ExtCollisionConstraint(mapping, std::move(extCollisionPinocchioGeometryInterface), pointsOnRobotPtr, voxbloxInterpolatorPtr) {}
+                                            std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> voxbloxInterpolatorPtr,
+                                            ocs2::scalar_t maxDistance)
+      : ExtCollisionConstraint(mapping, 
+                               std::move(extCollisionPinocchioGeometryInterface), 
+                               pointsOnRobotPtr, 
+                               voxbloxInterpolatorPtr, 
+                               maxDistance) {}
     
     ~MobileManipulatorExtCollisionConstraint() override = default;
     

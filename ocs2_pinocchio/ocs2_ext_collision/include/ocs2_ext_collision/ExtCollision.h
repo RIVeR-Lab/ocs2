@@ -16,6 +16,7 @@
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_ext_collision/ExtCollisionPinocchioGeometryInterface.h>
 #include <ocs2_ext_collision/PointsOnRobot.h>
+#include <voxblox/interpolator/interpolator.h>
 
 namespace ocs2 {
 
@@ -30,7 +31,8 @@ class ExtCollision {
      */
     ExtCollision(ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface,
                  std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
-                 std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> voxbloxInterpolatorPtr);
+                 std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> voxbloxInterpolatorPtr,
+                 ocs2::scalar_t maxDistance);
 
     /**
      * TODO: Add desription!
@@ -65,6 +67,12 @@ class ExtCollision {
 
     std::shared_ptr<const PointsOnRobot> pointsOnRobotPtr_;
     std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> voxbloxInterpolatorPtr_;
+
+    ocs2::scalar_t maxDistance_;
+
+    mutable Eigen::Matrix<scalar_t, -1, 1> distances_;
+    mutable Eigen::MatrixXd gradientsVoxblox_;
+    mutable Eigen::Matrix<scalar_t, -1, -1> gradients_;
 };
 
 }  // namespace ocs2

@@ -160,7 +160,7 @@ class MPC_ROS_Interface
 
     std::shared_ptr<ros::NodeHandle> nodeHandlerPtr_;
 
-    std::shared_ptr<voxblox::EsdfCachingServer> esdfCachingServer_;
+    std::shared_ptr<voxblox::EsdfCachingServer> esdfCachingServerPtr_;
 
     // Publishers and subscribers
     ::ros::Subscriber mpcObservationSubscriber_;

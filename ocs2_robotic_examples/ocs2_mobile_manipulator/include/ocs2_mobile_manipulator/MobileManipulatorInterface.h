@@ -160,9 +160,24 @@ class MobileManipulatorInterface final : public RobotInterface
       return esdfCachingServerPtr_;
     }
 
+    std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> getVoxbloxInterpolatorPtr()
+    {
+      return voxbloxInterpolatorPtr_;
+    }
+
     void setPointsOnRobotPtr(std::shared_ptr<PointsOnRobot> newPointsOnRobotPtr) 
     { 
       pointsOnRobotPtr_ = newPointsOnRobotPtr;
+    }
+
+    void setEsdfCachingServerPtr(std::shared_ptr<voxblox::EsdfCachingServer> newEsdfCachingServerPtr) 
+    { 
+      esdfCachingServerPtr_ = newEsdfCachingServerPtr;
+    }
+
+    void setVoxbloxInterpolatorPtr(std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> newVoxbloxInterpolatorPtr)
+    {
+      voxbloxInterpolatorPtr_ = newVoxbloxInterpolatorPtr;
     }
 
   private:
