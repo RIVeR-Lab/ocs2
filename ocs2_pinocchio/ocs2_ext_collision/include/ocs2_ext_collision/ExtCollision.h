@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.12.21
+// LAST UPDATE: 2022.01.05
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -62,12 +62,16 @@ class ExtCollision {
      */
     size_t getNumPointsOnRobot() const;
 
+    //void setDistanceAndGradient() const;
+
   private:
     ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface_;
 
     std::shared_ptr<const PointsOnRobot> pointsOnRobotPtr_;
     std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> voxbloxInterpolatorPtr_;
 
+    scalar_t mu_;
+    scalar_t delta_;
     ocs2::scalar_t maxDistance_;
 
     mutable Eigen::Matrix<scalar_t, -1, 1> distances_;

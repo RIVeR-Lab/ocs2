@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.12.21
+// LAST UPDATE: 2022.01.06
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -49,7 +49,7 @@ PointsOnRobot::PointsOnRobot(const PointsOnRobot::points_radii_t& points_radii)
 
   ros::NodeHandle nh;
   nh_ = nh;
-  pointsOnRobot_visu_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("points_on_robot", 100);
+  pointsOnRobot_visu_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("points_on_robot", 1);
 
   std::cout << "[PointsOnRobot::PointsOnRobot] END" << std::endl;
 }
@@ -66,15 +66,10 @@ PointsOnRobot::PointsOnRobot(const PointsOnRobot& rhs)
     ee_link_name_(rhs.ee_link_name_),
     frameNames_(rhs.frameNames_),
     frameIds_(rhs.frameIds_),
-    transform_Base_wrt_World_(rhs.transform_Base_wrt_World_),
-    transform_ArmMount_wrt_Base_(rhs.transform_ArmMount_wrt_Base_),
-    transform_J1_wrt_ArmMount_(rhs.transform_J1_wrt_ArmMount_),
-    transform_J2_wrt_J1_(rhs.transform_J2_wrt_J1_),
-    transform_J3_wrt_J2_(rhs.transform_J3_wrt_J2_),
-    transform_J4_wrt_J3_(rhs.transform_J4_wrt_J3_),
-    transform_J5_wrt_J4_(rhs.transform_J5_wrt_J4_),
-    transform_J6_wrt_J5_(rhs.transform_J6_wrt_J5_),
-    transform_ToolMount_wrt_J6_(rhs.transform_ToolMount_wrt_J6_){}
+    points_on_robot_(rhs.points_on_robot_),
+    nh_(rhs.nh_),
+    pointsOnRobot_visu_(rhs.pointsOnRobot_visu_),
+    pointsOnRobot_visu_pub_(rhs.pointsOnRobot_visu_pub_){}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -121,7 +116,7 @@ void PointsOnRobot::initialize(ocs2::PinocchioInterface& pinocchioInterface,
   }
 
   // Set fixed transforms
-  setFixedTransformsTf2();
+  //setFixedTransformsTf2();
 
   // CppAD interface
   ocs2::PinocchioInterfaceCppAd pinocchioInterfaceCppAd = pinocchioInterface.toCppAd();
@@ -151,6 +146,7 @@ void PointsOnRobot::initialize(ocs2::PinocchioInterface& pinocchioInterface,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+/*
 Eigen::VectorXd PointsOnRobot::getPointsPosition(ocs2::PinocchioInterface& pinocchioInterface, 
                                                   const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
                                                   const Eigen::VectorXd& state) const
@@ -166,6 +162,7 @@ Eigen::VectorXd PointsOnRobot::getPointsPosition(ocs2::PinocchioInterface& pinoc
 
   return points_on_robot_;
 }
+*/
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -228,17 +225,20 @@ void PointsOnRobot::publishPointsOnRobotVisu(ocs2::PinocchioInterface& pinocchio
                                              const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
                                              const Eigen::VectorXd& state) const
 {
-  pointsOnRobot_visu_.markers.resize(radii_.size());
+  //std::cout << "[PointsOnRobot::publishPointsOnRobotVisu] START" << std::endl;
+  //pointsOnRobot_visu_.markers.resize(radii_.size());
+
+  visualization_msgs::MarkerArray markerArray;
 
   //Eigen::VectorXd pointsOnRobot = getPointsPosition(pinocchioInterface, mapping, state);
   //Eigen::VectorXd pointsOnRobot = getPointsPositionCppAd(state);
 
-  for (int i = 0; i < pointsOnRobot_visu_.markers.size(); i++) 
+  for (int i = 0; i < radii_.size(); i++) 
   {
-    auto& marker = pointsOnRobot_visu_.markers[i];
+    visualization_msgs::Marker marker;
     marker.type = visualization_msgs::Marker::Type::SPHERE;
     marker.id = i;
-    marker.action = 0;
+    //marker.action = 0;
     marker.scale.x = radii_[i] * 1;
     marker.scale.y = radii_[i] * 1;
     marker.scale.z = radii_[i] * 1;
@@ -258,10 +258,17 @@ void PointsOnRobot::publishPointsOnRobotVisu(ocs2::PinocchioInterface& pinocchio
 
     //marker.frame_locked = true;
     marker.header.frame_id = "world";
+    marker.header.seq = i;
     marker.header.stamp = ros::Time::now();
+
+    //pointsOnRobot_visu_.markers[i] = marker;
+    markerArray.markers.push_back(marker);
   }
 
-  pointsOnRobot_visu_pub_.publish(pointsOnRobot_visu_);
+  //pointsOnRobot_visu_pub_.publish(pointsOnRobot_visu_);
+  pointsOnRobot_visu_pub_.publish(markerArray);
+
+  //std::cout << "[PointsOnRobot::publishPointsOnRobotVisu] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -297,6 +304,7 @@ Eigen::Matrix<ocs2::scalar_t, 3, 1> PointsOnRobot::QuaternionToEuler(Eigen::Quat
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+/*
 void PointsOnRobot::setFixedTransformsTf2()
 {
   tf2_ros::Buffer tfBuffer;
@@ -359,10 +367,12 @@ void PointsOnRobot::setFixedTransformsTf2()
     //std::cout << "[PointsOnRobot::setFixedTransformsTf2] wrist2ToEETransform_: " << std::endl << transform_ToolMount_wrt_J6_ << std::endl;
   }
 }
+*/
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+/*
 void PointsOnRobot::updateTransformsTf2Relative() const
 {
   tf2_ros::Buffer tfBuffer;
@@ -565,10 +575,12 @@ void PointsOnRobot::updateTransformsTf2Relative() const
     //std::cout << "[PointsOnRobot::updateTransformsTf2Relative] transform_ToolMount_wrt_J6_: " << std::endl << transform_ToolMount_wrt_J6_ << std::endl;
   }
 }
+*/
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+/*
 void PointsOnRobot::updateTransformsTf2World() const
 {
   tf2_ros::Buffer tfBuffer;
@@ -823,10 +835,12 @@ void PointsOnRobot::updateTransformsTf2World() const
     //std::cout << "[PointsOnRobot::updateTransforms] tf2_transform_ToolMount_wrt_World_: " << std::endl << tf2_transform_ToolMount_wrt_World_ << std::endl;
   }
 }
+*/
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+/*
 void PointsOnRobot::updateTransformsPinocchio(ocs2::PinocchioInterface& pinocchioInterface,
                                               const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
                                               const Eigen::VectorXd& state) const
@@ -843,7 +857,6 @@ void PointsOnRobot::updateTransformsPinocchio(ocs2::PinocchioInterface& pinocchi
   transform_J6_wrt_World_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
   transform_ToolMount_wrt_World_ = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity();
 
-  /*
   // Base wrt world
   const ocs2::scalar_t yaw = state[2];
   const ocs2::scalar_t pitch = 0.0;
@@ -855,7 +868,6 @@ void PointsOnRobot::updateTransformsPinocchio(ocs2::PinocchioInterface& pinocchi
 
   transform_Base_wrt_World_.topLeftCorner(3,3) = baseOrientation.toRotationMatrix();
   transform_Base_wrt_World_.topRightCorner(3,1) = basePosition;
-  */
 
   // Update Pinocchio
   const auto& model = pinocchioInterface.getModel();
@@ -927,10 +939,12 @@ void PointsOnRobot::updateTransformsPinocchio(ocs2::PinocchioInterface& pinocchi
 
   //std::cout << "[PointsOnRobot::updateTransformsPinocchio] END" << std::endl;
 }
+*/
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+/*
 void PointsOnRobot::updateTransformsPinocchio(ocs2::PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
                                               const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
                                               const Eigen::Matrix<ad_scalar_t, -1, 1>& stateCppAd) const
@@ -1017,10 +1031,12 @@ void PointsOnRobot::updateTransformsPinocchio(ocs2::PinocchioInterfaceCppAd& pin
 
   //std::cout << "[PointsOnRobot::updateTransformsPinocchio(CppAD)] END" << std::endl;
 }
+*/
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+/*
 Eigen::Matrix<ocs2::scalar_t, 3, -1> PointsOnRobot::computeState2PointsOnRobot(ocs2::PinocchioInterface& pinocchioInterface,
                                                                                const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
                                                                                const Eigen::Matrix<ocs2::scalar_t, -1, 1>& state) const
@@ -1030,6 +1046,7 @@ Eigen::Matrix<ocs2::scalar_t, 3, -1> PointsOnRobot::computeState2PointsOnRobot(o
   int dim = getDimPoints();
   if (dim == 0) 
   {
+
     return Eigen::Matrix<ocs2::scalar_t, 3, -1>(3, 0);
   }
   Eigen::Matrix<ocs2::scalar_t, 3, -1> pointsOnRobot_matrix(3, dim);
@@ -1147,6 +1164,7 @@ Eigen::Matrix<ocs2::scalar_t, 3, -1> PointsOnRobot::computeState2PointsOnRobot(o
 
   return pointsOnRobot_matrix;
 }
+*/
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -1160,21 +1178,101 @@ Eigen::Matrix<PointsOnRobot::ad_scalar_t, 3, -1> PointsOnRobot::computeState2Poi
   int dim = getDimPoints();
   if (dim == 0) 
   {
+    std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] WHY ZERO?" << std::endl;
+    while(1){;}
     return Eigen::Matrix<ad_scalar_t, 3, -1>(3, 0);
   }
   Eigen::Matrix<ad_scalar_t, 3, -1> pointsOnRobot_matrix(3, dim);
 
   //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] dim: " << dim << std::endl;
   
-  updateTransformsPinocchio(pinocchioInterfaceCppAd, mappingCppAd, stateCppAd);
+  //updateTransformsPinocchio(pinocchioInterfaceCppAd, mappingCppAd, stateCppAd);
+
+  Eigen::Matrix<ad_scalar_t, 4, 4> transform_Base_wrt_World_cppAd = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity().cast<ad_scalar_t>();
+  Eigen::Matrix<ad_scalar_t, 4, 4> transform_ArmMount_wrt_World_cppAd = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity().cast<ad_scalar_t>();
+  Eigen::Matrix<ad_scalar_t, 4, 4> transform_J1_wrt_World_cppAd = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity().cast<ad_scalar_t>();
+  Eigen::Matrix<ad_scalar_t, 4, 4> transform_J2_wrt_World_cppAd = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity().cast<ad_scalar_t>();
+  Eigen::Matrix<ad_scalar_t, 4, 4> transform_J3_wrt_World_cppAd = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity().cast<ad_scalar_t>();
+  Eigen::Matrix<ad_scalar_t, 4, 4> transform_J4_wrt_World_cppAd = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity().cast<ad_scalar_t>();
+  Eigen::Matrix<ad_scalar_t, 4, 4> transform_J5_wrt_World_cppAd = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity().cast<ad_scalar_t>();
+  Eigen::Matrix<ad_scalar_t, 4, 4> transform_J6_wrt_World_cppAd = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity().cast<ad_scalar_t>();
+  Eigen::Matrix<ad_scalar_t, 4, 4> transform_ToolMount_wrt_World_cppAd = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity().cast<ad_scalar_t>();
+
+  // Update Pinocchio
+  const auto& model = pinocchioInterfaceCppAd.getModel();
+  auto& data = pinocchioInterfaceCppAd.getData();
+  const auto q = mappingCppAd.getPinocchioJointPosition(stateCppAd);
+
+  pinocchio::forwardKinematics(model, data, q);
+  pinocchio::updateFramePlacements(model, data);
+
+  // Base wrt World
+  transform_Base_wrt_World_cppAd.topLeftCorner(3,3) = data.oMf[frameIds_[0]].rotation();
+  transform_Base_wrt_World_cppAd.topRightCorner(3,1) = data.oMf[frameIds_[0]].translation();
+
+  // Arm Base wrt World
+  transform_ArmMount_wrt_World_cppAd.topLeftCorner(3,3) = data.oMf[frameIds_[1]].rotation();
+  transform_ArmMount_wrt_World_cppAd.topRightCorner(3,1) = data.oMf[frameIds_[1]].translation();
+
+  // J1 wrt World
+  transform_J1_wrt_World_cppAd.topLeftCorner(3,3) = data.oMf[frameIds_[2]].rotation();
+  transform_J1_wrt_World_cppAd.topRightCorner(3,1) = data.oMf[frameIds_[2]].translation();
+
+  // J2 wrt World
+  transform_J2_wrt_World_cppAd.topLeftCorner(3,3) = data.oMf[frameIds_[3]].rotation();
+  transform_J2_wrt_World_cppAd.topRightCorner(3,1) = data.oMf[frameIds_[3]].translation();
+
+  // J3 wrt World
+  transform_J3_wrt_World_cppAd.topLeftCorner(3,3) = data.oMf[frameIds_[4]].rotation();
+  transform_J3_wrt_World_cppAd.topRightCorner(3,1) = data.oMf[frameIds_[4]].translation();
+
+  // J4 wrt World
+  transform_J4_wrt_World_cppAd.topLeftCorner(3,3) = data.oMf[frameIds_[5]].rotation();
+  transform_J4_wrt_World_cppAd.topRightCorner(3,1) = data.oMf[frameIds_[5]].translation();
+
+  // J5 wrt World
+  transform_J5_wrt_World_cppAd.topLeftCorner(3,3) = data.oMf[frameIds_[6]].rotation();
+  transform_J5_wrt_World_cppAd.topRightCorner(3,1) = data.oMf[frameIds_[6]].translation();
+
+  // J6 wrt World
+  transform_J6_wrt_World_cppAd.topLeftCorner(3,3) = data.oMf[frameIds_[7]].rotation();
+  transform_J6_wrt_World_cppAd.topRightCorner(3,1) = data.oMf[frameIds_[7]].translation();
+
+  // Tool Mount wrt World
+  transform_ToolMount_wrt_World_cppAd.topLeftCorner(3,3) = data.oMf[frameIds_[8]].rotation();
+  transform_ToolMount_wrt_World_cppAd.topRightCorner(3,1) = data.oMf[frameIds_[8]].translation();
+
+  // Arm Base wrt Base
+  Eigen::Matrix<ad_scalar_t, 4, 4> transform_ArmMount_wrt_Base_cppAd = transform_Base_wrt_World_cppAd.inverse() * transform_ArmMount_wrt_World_cppAd;
+
+  // J1 wrt Arm Base
+  Eigen::Matrix<ad_scalar_t, 4, 4> transform_J1_wrt_ArmMount_cppAd = transform_ArmMount_wrt_World_cppAd.inverse() * transform_J1_wrt_World_cppAd;
+
+  // J2 wrt J1
+  Eigen::Matrix<ad_scalar_t, 4, 4> transform_J2_wrt_J1_cppAd = transform_J1_wrt_World_cppAd.inverse() * transform_J2_wrt_World_cppAd;
+
+  // J3 wrt J2
+  Eigen::Matrix<ad_scalar_t, 4, 4> transform_J3_wrt_J2_cppAd = transform_J2_wrt_World_cppAd.inverse() * transform_J3_wrt_World_cppAd;
+
+  // J4 wrt J3
+  Eigen::Matrix<ad_scalar_t, 4, 4> transform_J4_wrt_J3_cppAd = transform_J3_wrt_World_cppAd.inverse() * transform_J4_wrt_World_cppAd;
+
+  // J5 wrt J4
+  Eigen::Matrix<ad_scalar_t, 4, 4> transform_J5_wrt_J4_cppAd = transform_J4_wrt_World_cppAd.inverse() * transform_J5_wrt_World_cppAd;
+
+  // J6 wrt J5
+  Eigen::Matrix<ad_scalar_t, 4, 4> transform_J6_wrt_J5_cppAd = transform_J5_wrt_World_cppAd.inverse() * transform_J6_wrt_World_cppAd;
+
+  // Tool Mount wrt J6
+  Eigen::Matrix<ad_scalar_t, 4, 4> transform_ToolMount_wrt_J6_cppAd = transform_J6_wrt_World_cppAd.inverse() * transform_ToolMount_wrt_World_cppAd;
 
   int linkIndex = 0;
   int pointIndex = 0;
 
-  Eigen::Matrix<ad_scalar_t, 4, 4> transform_tmp = transform_Base_wrt_World_cppAd_;
+  Eigen::Matrix<ad_scalar_t, 4, 4> transform_tmp = transform_Base_wrt_World_cppAd;
 
   // Points between base and arm mount
-  Eigen::Matrix<ad_scalar_t, 4, 4> next_transform = transform_ArmMount_wrt_Base_cppAd_;
+  Eigen::Matrix<ad_scalar_t, 4, 4> next_transform = transform_ArmMount_wrt_Base_cppAd;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
     //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
@@ -1187,7 +1285,7 @@ Eigen::Matrix<PointsOnRobot::ad_scalar_t, 3, -1> PointsOnRobot::computeState2Poi
   transform_tmp = transform_tmp * next_transform;
 
   // Points between arm mount and joint 1
-  next_transform = transform_J1_wrt_ArmMount_cppAd_;
+  next_transform = transform_J1_wrt_ArmMount_cppAd;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
     //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
@@ -1200,7 +1298,7 @@ Eigen::Matrix<PointsOnRobot::ad_scalar_t, 3, -1> PointsOnRobot::computeState2Poi
   transform_tmp = transform_tmp * next_transform;
 
   // Points between joint 1 and joint 2
-  next_transform = transform_J2_wrt_J1_cppAd_;
+  next_transform = transform_J2_wrt_J1_cppAd;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
     //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
@@ -1213,7 +1311,7 @@ Eigen::Matrix<PointsOnRobot::ad_scalar_t, 3, -1> PointsOnRobot::computeState2Poi
   transform_tmp = transform_tmp * next_transform;
 
   // Points between joint 2 and joint 3
-  next_transform = transform_J3_wrt_J2_cppAd_;
+  next_transform = transform_J3_wrt_J2_cppAd;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
     //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
@@ -1226,7 +1324,7 @@ Eigen::Matrix<PointsOnRobot::ad_scalar_t, 3, -1> PointsOnRobot::computeState2Poi
   transform_tmp = transform_tmp * next_transform;
 
   // Points between joint 3 and joint 4
-  next_transform = transform_J4_wrt_J3_cppAd_;
+  next_transform = transform_J4_wrt_J3_cppAd;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
     //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
@@ -1239,7 +1337,7 @@ Eigen::Matrix<PointsOnRobot::ad_scalar_t, 3, -1> PointsOnRobot::computeState2Poi
   transform_tmp = transform_tmp * next_transform;
 
   // Points between joint 4 and joint 5
-  next_transform = transform_J5_wrt_J4_cppAd_;
+  next_transform = transform_J5_wrt_J4_cppAd;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
     //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
@@ -1252,7 +1350,7 @@ Eigen::Matrix<PointsOnRobot::ad_scalar_t, 3, -1> PointsOnRobot::computeState2Poi
   transform_tmp = transform_tmp * next_transform;
 
   // Points between joint 5 and joint 6
-  next_transform = transform_J6_wrt_J5_cppAd_;
+  next_transform = transform_J6_wrt_J5_cppAd;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
     //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;
@@ -1265,7 +1363,7 @@ Eigen::Matrix<PointsOnRobot::ad_scalar_t, 3, -1> PointsOnRobot::computeState2Poi
   transform_tmp = transform_tmp * next_transform;
 
   // Points between joint 6 and tool mount
-  next_transform = transform_ToolMount_wrt_J6_cppAd_;
+  next_transform = transform_ToolMount_wrt_J6_cppAd;
   for (int i = 0; i < points_[linkIndex].size(); i++) 
   {
     //std::cout << "[PointsOnRobot::computeState2PointsOnRobotCppAd] linkIndex: " << linkIndex << std::endl;

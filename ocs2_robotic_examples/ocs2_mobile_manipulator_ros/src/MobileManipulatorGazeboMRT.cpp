@@ -110,12 +110,6 @@ int main(int argc, char** argv)
     std::cout << "[MobileManipulatorGazeboMRT::main] ERROR: collision_points is not defined!" << std::endl;
   }
 
-  //std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE INF LOOP" << std::endl;
-  //while(1){;}
-
-  //std::shared_ptr<voxblox::EsdfCachingServer> esdfCachingServerPtr;
-  //esdfCachingServerPtr.reset(new voxblox::EsdfCachingServer(ros::NodeHandle(), ros::NodeHandle("~")));
-
   // Robot Interface
   std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE MobileManipulatorInterface" << std::endl;
   MobileManipulatorInterface interface(taskFile, libFolder, urdfFile, pointsAndRadii);

@@ -43,8 +43,6 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 {
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START" << std::endl;
 
-  //esdfCachingServerPtr_ = esdfCachingServerPtr;
-
   // check that task file exists
   boost::filesystem::path taskFilePath(taskFile);
   if (boost::filesystem::exists(taskFilePath)) 
@@ -210,18 +208,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
     
     if (pointsOnRobotPtr_->getNumOfPoints() > 0) 
     {
-      std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] pointsOnRobotPtr_ TRUE" << std::endl;
-
-      std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE initialize 0" << std::endl;
-
       esdfCachingServerPtr_.reset(new voxblox::EsdfCachingServer(ros::NodeHandle(), ros::NodeHandle("~")));
-      //esdfCachingServerPtr_ = esdfCachingServerPtr;
-      
-      std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE initialize 1" << std::endl;
-
       voxbloxInterpolatorPtr_ = esdfCachingServerPtr_->getInterpolator();
-
-      std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE initialize 2" << std::endl;
 
       pointsOnRobotPtr_->initialize(*pinocchioInterfacePtr_,
                                     MobileManipulatorPinocchioMapping(manipulatorModelInfo_),
@@ -237,7 +225,6 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
     } 
     else 
     {
-      std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] pointsOnRobotPtr_ FALSE" << std::endl;
       // if there are no points defined for collision checking, set this pointer to null to disable the visualization
       pointsOnRobotPtr_ = nullptr;
     }
@@ -252,7 +239,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   }
 
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Dynamics" << std::endl;
-
+  
   // Dynamics
   switch (manipulatorModelInfo_.manipulatorModelType) 
   {

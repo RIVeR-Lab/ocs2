@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.12.21
+// LAST UPDATE: 2022.01.05
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -54,15 +54,17 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
   pointsOnRobotPtr_->publishPointsOnRobotVisu(pinocchioInterface, mapping, state);
   
   if (pointsOnRobotPtr_) 
-  {
-    violations.resize(pointsOnRobotPtr_->getNumOfPoints());
+  { 
+    int numPoints = pointsOnRobotPtr_->getNumOfPoints();
+
+    violations.resize(numPoints);
     gradientsVoxblox_.setZero();
+
     Eigen::VectorXd positionPointsOnRobot = pointsOnRobotPtr_->getPointsPositionCppAd(state);
     Eigen::MatrixXd jacobianPointsOnRobot = pointsOnRobotPtr_->getPointsJacobianCppAd(state);
     Eigen::VectorXd radii = pointsOnRobotPtr_->getRadii();
     
     assert(positionPointsOnRobot.size() % 3 == 0);
-    int numPoints = pointsOnRobotPtr_->getNumOfPoints();
     
     float distance;
     Eigen::Vector3f gradientVoxblox;
@@ -83,6 +85,9 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
         distances_[i] = maxDistance_ - radii(i);
       }
     }
+
+    violations = distances_;
+
     assert(gradients_.rows() == gradientsVoxblox_.rows());
     assert(gradients_.cols() == jacobianPointsOnRobot.cols());
     gradients_ = gradientsVoxblox_ * jacobianPointsOnRobot;
@@ -124,6 +129,9 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
 
   //std::cout << "[ExtCollision::getValue] END" << std::endl;
   //std::cout << "" << std::endl;
+
+  std::cout << "[ExtCollision::getValue] violations: " << std::endl << violations << std::endl;
+  std::cout << "" << std::endl;
 
   return violations;
 }
@@ -188,6 +196,8 @@ std::pair<vector_t, matrix_t> ExtCollision::getLinearApproximation(const Pinocch
 
   //std::cout << "[ExtCollision::getLinearApproximation] END" << std::endl;
 
+  //dfdq = gradients_.transpose() * distances_
+
   return {f, dfdq};
 }
 
@@ -198,5 +208,55 @@ size_t ExtCollision::getNumPointsOnRobot() const
 {
   return pointsOnRobotPtr_->getNumOfPoints();
 }
+
+/*
+void ExtCollision::setDistanceAndGradient() const
+{
+  if (pointsOnRobotPtr_) 
+  { 
+    int numPoints = pointsOnRobotPtr_->getNumOfPoints();
+
+    violations.resize(numPoints);
+    gradientsVoxblox_.setZero();
+
+    Eigen::VectorXd positionPointsOnRobot = pointsOnRobotPtr_->getPointsPositionCppAd(state);
+    Eigen::MatrixXd jacobianPointsOnRobot = pointsOnRobotPtr_->getPointsJacobianCppAd(state);
+    Eigen::VectorXd radii = pointsOnRobotPtr_->getRadii();
+    
+    assert(positionPointsOnRobot.size() % 3 == 0);
+    
+    float distance;
+    Eigen::Vector3f gradientVoxblox;
+    for (int i = 0; i < numPoints; i++)
+    {
+      Eigen::Ref<Eigen::Matrix<scalar_t, 3, 1>> position = positionPointsOnRobot.segment<3>(i * 3);
+      
+      std::cout << "[ExtCollision::getValue] " << i << ": (" << position(0) << ", " << position(1) << ", " << position(2) << ") -> " << distance << std::endl;
+      if (voxbloxInterpolatorPtr_->getInterpolatedDistanceGradient(position.cast<float>(), &distance, &gradientVoxblox)) 
+      {
+        distances_[i] = distance - radii(i);
+        gradientsVoxblox_.block<1, 3>(i, 3 * i) = gradientVoxblox.transpose().cast<double>();
+
+        std::cout << "[ExtCollision::getValue] (" << position(0) << ", " << position(1) << ", " << position(2) << ") -> " << distance << std::endl;
+      } 
+      else 
+      {
+        distances_[i] = maxDistance_ - radii(i);
+      }
+    }
+
+    violations = distances_;
+
+    assert(gradients_.rows() == gradientsVoxblox_.rows());
+    assert(gradients_.cols() == jacobianPointsOnRobot.cols());
+    gradients_ = gradientsVoxblox_ * jacobianPointsOnRobot;
+  }
+  else
+  {
+    std::cout << "[ExtCollision::getValue] No points on robot!" << std::endl;
+    violations = vector_t::Zero(1);
+  }
+}
+*/
 
 }  // namespace ocs2
