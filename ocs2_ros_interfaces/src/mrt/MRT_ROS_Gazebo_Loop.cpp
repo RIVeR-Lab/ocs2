@@ -65,7 +65,6 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   
   dt_ = 1.0 / mrtDesiredFrequency_;
 
-
   setStateIndexMap();
   
   // SUBSCRIBE TO STATE INFO (sensor_msgs/JointState)
@@ -484,10 +483,12 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
 
   if (initFlag)
   {
+    //std::cout << "OCS2_MRT_Loop::getCurrentObservation -> AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" << std::endl;
     currentObservation.input.setZero(inputDim_);
   }
   else
   {
+    //std::cout << "OCS2_MRT_Loop::getCurrentObservation -> BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" << std::endl;
     PrimalSolution primalSolution = mrt_.getPolicy();
     currentObservation.input = primalSolution.getDesiredInput(time_);
   }

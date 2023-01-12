@@ -62,6 +62,7 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
+  src/command/TargetTrajectoriesGazebo.cpp
   src/command/TargetTrajectoriesRosPublisher.cpp
   src/command/TargetTrajectoriesInteractiveMarker.cpp
   src/command/TargetTrajectoriesKeyboardPublisher.cpp
