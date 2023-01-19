@@ -130,8 +130,9 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
   //std::cout << "[ExtCollision::getValue] END" << std::endl;
   //std::cout << "" << std::endl;
 
-  std::cout << "[ExtCollision::getValue] violations: " << std::endl << violations << std::endl;
-  std::cout << "" << std::endl;
+  std::cout << "[ExtCollision::getValue] violations (ZERO'D AFTERWARDS!): " << std::endl << violations << std::endl << std::endl;
+
+  violations = vector_t::Zero(1);
 
   return violations;
 }

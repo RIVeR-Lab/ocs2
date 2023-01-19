@@ -58,12 +58,12 @@ int main(int argc, char* argv[])
   ::ros::NodeHandle nodeHandle;
 
   // Gazebo
-  TargetTrajectoriesGazebo targetPoseCommand(nodeHandle, robotName, &goalPoseToTargetTrajectories);
-  targetPoseCommand.publishInteractiveMarker();
+  //TargetTrajectoriesGazebo targetPoseCommand(nodeHandle, robotName, &goalPoseToTargetTrajectories);
+  //targetPoseCommand.publishInteractiveMarker();
 
   // Interactive Marker
-  //TargetTrajectoriesInteractiveMarker targetPoseCommand(nodeHandle, robotName, &goalPoseToTargetTrajectories);
-  //targetPoseCommand.publishInteractiveMarker();
+  TargetTrajectoriesInteractiveMarker targetPoseCommand(nodeHandle, robotName, &goalPoseToTargetTrajectories);
+  targetPoseCommand.publishInteractiveMarker();
 
   // Successful exit
   return 0;

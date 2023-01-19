@@ -92,8 +92,6 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   loadData::loadPtreeValue<std::string>(pt, armBaseFrame, "model_information.armBaseFrame", false);
   loadData::loadPtreeValue<std::string>(pt, eeFrame, "model_information.eeFrame", false);
 
-  
-  
   std::cerr << "\n #### Model Information:";
   std::cerr << "\n #### =============================================================================\n";
   std::cerr << "\n #### model_information.manipulatorModelType: " << static_cast<int>(modelType);
@@ -196,7 +194,6 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
                                                                                      recompileLibraries));
   }
 
-  
   // external-collision avoidance constraint
   bool activateExtCollision = false;
   loadData::loadPtreeValue(pt, activateExtCollision, "extCollision.activate", false);

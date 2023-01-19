@@ -59,11 +59,11 @@ int main(int argc, char** argv)
   std::cerr << "Loading urdf file: " << urdfFile << std::endl;
   
   PointsOnRobot::points_radii_t pointsAndRadii(8);
-  if (nodeHandle.hasParam("/voxblox_node/collision_points")) 
+  if (nodeHandle.hasParam("/collision_points")) 
   {
     using pair_t = std::pair<double, double>;
     XmlRpc::XmlRpcValue collisionPoints;
-    nodeHandle.getParam("/voxblox_node/collision_points", collisionPoints);
+    nodeHandle.getParam("/collision_points", collisionPoints);
 
     if (collisionPoints.getType() != XmlRpc::XmlRpcValue::TypeArray) 
     {
