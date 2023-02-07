@@ -28,7 +28,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
 #include "ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h"
-
 #include "ocs2_ros_interfaces/common/RosMsgConversions.h"
 
 namespace ocs2 {

@@ -56,8 +56,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
 
-#include <ocs2_ros_interfaces/EsdfCachingServer.hpp>
-
+//#include <ocs2_ros_interfaces/EsdfCachingServer.hpp>
 //#include <ocs2_ext_collision/ext_map_utility.h>
 
 #define PUBLISH_THREAD

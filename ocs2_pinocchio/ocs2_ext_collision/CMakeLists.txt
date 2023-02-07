@@ -6,19 +6,29 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_compile_options(-std=c++14)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
+  message_generation
+  roscpp
+  rospy
+  std_msgs
+  geometry_msgs
+  tf
   ocs2_core
   ocs2_robotic_tools
   ocs2_pinocchio_interface
+  laser_geometry
+  pcl_msgs 
+  pcl_conversions 
+  pcl_ros
   #ocs2_self_collision
   #voxblox
   #voxblox_ros
 )
 
+find_package(PCL REQUIRED)
+
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
 )
-
-find_package(PCL REQUIRED)
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/cmake/FindFCL.cmake")
   find_package(FCL REQUIRED)
@@ -42,10 +52,12 @@ catkin_package(
   INCLUDE_DIRS
     include
     ${FCL_INCLUDE_DIRS}
+    ${PCL_INCLUDE_DIRS}
   LIBRARIES
     ${PROJECT_NAME}
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
+    message_runtime
   DEPENDS
     pinocchio
     FCL
