@@ -16,6 +16,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   interactive_markers
   voxblox
   voxblox_ros
+  #ocs2_ext_collision
 )
 
 ## Find catkin macros and libraries

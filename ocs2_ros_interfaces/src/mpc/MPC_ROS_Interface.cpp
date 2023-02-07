@@ -65,6 +65,26 @@ MPC_ROS_Interface::~MPC_ROS_Interface()
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+/*
+void MPC_ROS_Interface::setEsdfCachingServer(std::shared_ptr<voxblox::EsdfCachingServer> new_esdfCachingServerPtr)
+{
+  esdfCachingServerPtr_ = new_esdfCachingServerPtr;
+}
+*/
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+/*
+void MPC_ROS_Interface::setExtMapUtility(std::shared_ptr<ExtMapUtility> emuPtr)
+{
+  emuPtr_ = emuPtr;
+}
+*/
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void MPC_ROS_Interface::resetMpcNode(TargetTrajectories&& initTargetTrajectories) 
 {
   std::lock_guard<std::mutex> resetLock(resetMutex_);
@@ -74,14 +94,6 @@ void MPC_ROS_Interface::resetMpcNode(TargetTrajectories&& initTargetTrajectories
   resetRequestedEver_ = true;
   terminateThread_ = false;
   readyToPublish_ = false;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void MPC_ROS_Interface::setEsdfCachingServer(std::shared_ptr<voxblox::EsdfCachingServer> new_esdfCachingServerPtr)
-{
-  esdfCachingServerPtr_ = new_esdfCachingServerPtr;
 }
 
 /******************************************************************************************************/
@@ -262,10 +274,12 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   // current time, state, input, and subsystem
   const auto currentObservation = ros_msg_conversions::readObservationMsg(*msg);
 
+  /*
   if (esdfCachingServerPtr_) 
   {
     esdfCachingServerPtr_ -> updateInterpolator();
   }
+  */
 
   // measure the delay in running MPC
   mpcTimer_.startTimer();
@@ -369,6 +383,11 @@ void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
                                                    &MPC_ROS_Interface::mpcObservationCallback, 
                                                    this,
                                                    ::ros::TransportHints().tcpNoDelay());
+
+  // Octomap Subscriber
+  //string oct_msg_name = "octomap_scan";
+  //emuPtr_->setNodeHandle(nodeHandle);
+  //emuPtr_->updateOct(oct_msg_name);
 
   // MPC publisher
   mpcPolicyPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_flattened_controller>(topicPrefix_ + "_mpc_policy", 1, true);

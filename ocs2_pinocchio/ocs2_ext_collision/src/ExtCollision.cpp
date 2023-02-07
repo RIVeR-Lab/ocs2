@@ -26,15 +26,28 @@ namespace ocs2 {
 /******************************************************************************************************/
 ExtCollision::ExtCollision(ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
                            std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
-                           std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> voxbloxInterpolatorPtr,
-                           ocs2::scalar_t maxDistance)
+                           ocs2::scalar_t maxDistance,
+                           std::shared_ptr<ExtMapUtility> emuPtr)
   : extCollisionPinocchioGeometryInterface_(std::move(extCollisionPinocchioGeometryInterface)), 
     pointsOnRobotPtr_(pointsOnRobotPtr),
-    voxbloxInterpolatorPtr_(voxbloxInterpolatorPtr),
     maxDistance_(maxDistance),
     distances_(pointsOnRobotPtr->getNumOfPoints()),
+    emuPtr_(emuPtr),
     gradientsVoxblox_(pointsOnRobotPtr->getNumOfPoints(), pointsOnRobotPtr->getNumOfPoints() * 3),
-    gradients_(pointsOnRobotPtr->getNumOfPoints(), 9) {}
+    gradients_(pointsOnRobotPtr->getNumOfPoints(), 9) 
+{
+  /*
+  string world_frame_name = "world";
+  string oct_msg_name = "octomap_scan";
+  string pub_name_oct_dist_visu = "occupancy_distance";
+
+  emu_.setWorldFrameName(world_frame_name);
+  //emu_.setPubOctMsg(pub_name_oct_msg);
+  emu_.setPubOctDistVisu(pub_name_oct_dist_visu);
+  emu_.updateOct(oct_msg_name);
+  */
+  //occ_distance_client_ = nh_.serviceClient<mobiman_simulation::getNearestOccDist>("get_nearest_occ_dist");
+}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -68,11 +81,49 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
     
     float distance;
     Eigen::Vector3f gradientVoxblox;
+
+    vector<geometry_msgs::Point> p0_vec;
+    vector<geometry_msgs::Point> p1_vec;
+
     for (int i = 0; i < numPoints; i++)
     {
       Eigen::Ref<Eigen::Matrix<scalar_t, 3, 1>> position = positionPointsOnRobot.segment<3>(i * 3);
       
-      std::cout << "[ExtCollision::getValue] " << i << ": (" << position(0) << ", " << position(1) << ", " << position(2) << ") -> " << distance << std::endl;
+      geometry_msgs::Point p0;
+      p0.x = position(0);
+      p0.y = position(1);
+      p0.z = position(2);
+      p0_vec.push_back(p0);
+
+      //std::cout << "[ExtCollision::getValue] " << i << ": (" << position(0) << ", " << position(1) << ", " << position(2) << ") -> " << distance << std::endl;
+      
+      //occ_distance_srv_.request.x = position(0);
+      //occ_distance_srv_.request.y = position(1);
+      //occ_distance_srv_.request.z = position(2);
+
+      geometry_msgs::Point p1;
+      distance = emuPtr_->getNearestOccupancyDist2(position(0), position(1), position(2), p1, maxDistance_, false);
+      p1_vec.push_back(p1);
+      //std::cout << "[ExtCollision::getValue] " << i << ": (" << position(0) << ", " << position(1) << ", " << position(2) << ") -> " << distance << std::endl << std::endl;
+
+      distances_[i] = distance - radii(i);
+
+      /*
+      if (const_cast<ros::ServiceClient*>(&occ_distance_client_)->call(occ_distance_srv_))
+      {
+        distance = occ_distance_srv_.response.distance;
+        std::cout << "[ExtCollision::getValue] " << i << ": (" << position(0) << ", " << position(1) << ", " << position(2) << ") -> " << distance << std::endl;
+        distances_[i] = distance - radii(i);
+      }
+      else
+      {
+        ROS_ERROR("[ExtCollision::getValue] Failed to call service get_nearest_occ_dist!");
+        distances_[i] = maxDistance_ - radii(i);
+      }
+      */
+
+      // NUA TODO: GET FROM MAP UTILITY SERVICE!!!
+      /*
       if (voxbloxInterpolatorPtr_->getInterpolatedDistanceGradient(position.cast<float>(), &distance, &gradientVoxblox)) 
       {
         distances_[i] = distance - radii(i);
@@ -84,7 +135,10 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
       {
         distances_[i] = maxDistance_ - radii(i);
       }
+      */
     }
+
+    emuPtr_->fillOccDistanceArrayVisu(p0_vec, p1_vec);
 
     violations = distances_;
 

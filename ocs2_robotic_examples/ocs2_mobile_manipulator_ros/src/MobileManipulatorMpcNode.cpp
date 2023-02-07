@@ -107,10 +107,11 @@ int main(int argc, char** argv)
   std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
   std::cout << "[MobileManipulatorMpcNode::main] START INIT MobileManipulatorInterface" << std::endl;
   MobileManipulatorInterface interface(taskFile, libFolder, urdfFile, pointsAndRadii);
+  interface.launchNodes(nodeHandle);
   std::cout << "[MobileManipulatorMpcNode::main] END INIT MobileManipulatorInterface" << std::endl;
   std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
   std::cout << "" << std::endl;
-
+  
   // ROS ReferenceManager
   std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(new ocs2::RosReferenceManager(robotName, interface.getReferenceManagerPtr()));
   rosReferenceManagerPtr->subscribe(nodeHandle);
@@ -129,7 +130,7 @@ int main(int argc, char** argv)
 
   // Launch MPC ROS node
   MPC_ROS_Interface mpcNode(mpc, robotName);
-  mpcNode.setEsdfCachingServer(interface.getEsdfCachingServerPtr());
+  //mpcNode.setEsdfCachingServer(interface.getEsdfCachingServerPtr());
   mpcNode.launchNodes(nodeHandle);
 
   std::cout << "[MobileManipulatorMpcNode::main] END" << std::endl;

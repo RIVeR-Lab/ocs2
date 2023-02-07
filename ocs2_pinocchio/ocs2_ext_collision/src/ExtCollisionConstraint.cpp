@@ -20,10 +20,10 @@ namespace ocs2 {
 ExtCollisionConstraint::ExtCollisionConstraint(const PinocchioStateInputMapping<scalar_t>& mapping,
                                                ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
                                                std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
-                                               std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> voxbloxInterpolatorPtr,
-                                               ocs2::scalar_t maxDistance)
+                                               ocs2::scalar_t maxDistance,
+                                               std::shared_ptr<ExtMapUtility> emuPtr)
   : StateConstraint(ConstraintOrder::Linear),
-    extCollision_(std::move(extCollisionPinocchioGeometryInterface), pointsOnRobotPtr, voxbloxInterpolatorPtr, maxDistance),
+    extCollision_(std::move(extCollisionPinocchioGeometryInterface), pointsOnRobotPtr, maxDistance, emuPtr),
     mappingPtr_(mapping.clone()) {}
 
 /******************************************************************************************************/

@@ -205,8 +205,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
     
     if (pointsOnRobotPtr_->getNumOfPoints() > 0) 
     {
-      esdfCachingServerPtr_.reset(new voxblox::EsdfCachingServer(ros::NodeHandle(), ros::NodeHandle("~")));
-      voxbloxInterpolatorPtr_ = esdfCachingServerPtr_->getInterpolator();
+      //esdfCachingServerPtr_.reset(new voxblox::EsdfCachingServer(ros::NodeHandle(), ros::NodeHandle("~")));
+      //voxbloxInterpolatorPtr_ = esdfCachingServerPtr_->getInterpolator();
 
       pointsOnRobotPtr_->initialize(*pinocchioInterfacePtr_,
                                     MobileManipulatorPinocchioMapping(manipulatorModelInfo_),
@@ -226,13 +226,23 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
       pointsOnRobotPtr_ = nullptr;
     }
 
-    problem_.stateSoftConstraintPtr -> add("extCollision", getExtCollisionConstraint(*pinocchioInterfacePtr_,
-                                                                                     taskFile, 
-                                                                                     urdfFile, 
-                                                                                     "extCollision", 
-                                                                                     usePreComputation,
-                                                                                     libraryFolder, 
-                                                                                     recompileLibraries));
+    emuPtr_.reset(new ExtMapUtility());
+    string world_frame_name = "world";
+    string pub_name_oct_dist_visu = "occ_dist";
+    string pub_name_oct_dist_array_visu = "occ_dist_array";
+
+    emuPtr_->setWorldFrameName(world_frame_name);
+    //emu_.setPubOctMsg(pub_name_oct_msg);
+    emuPtr_->setPubOccDistVisu(pub_name_oct_dist_visu);
+    emuPtr_->setPubOccDistArrayVisu(pub_name_oct_dist_array_visu);
+    
+    problem_.stateSoftConstraintPtr->add("extCollision", getExtCollisionConstraint(*pinocchioInterfacePtr_,
+                                                                                   taskFile, 
+                                                                                   urdfFile, 
+                                                                                   "extCollision", 
+                                                                                   usePreComputation,
+                                                                                   libraryFolder, 
+                                                                                   recompileLibraries));
   }
 
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Dynamics" << std::endl;
@@ -300,6 +310,22 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   initializerPtr_.reset(new DefaultInitializer(manipulatorModelInfo_.inputDim));
   
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END" << std::endl;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
+{
+  string oct_msg_name = "octomap_scan";
+  double dt_pub_occ_dist = 0.1;
+
+  // Octomap Subscriber
+  emuPtr_->setNodeHandle(nodeHandle);
+  emuPtr_->updateOct(oct_msg_name);
+  //emuPtr_->createTimerPubOctDistVisu(ros::Duration(dt_pub_occ_dist));
+
+  //spin();
 }
 
 /******************************************************************************************************/
@@ -481,8 +507,8 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
   constraint = std::unique_ptr<StateConstraint>(new MobileManipulatorExtCollisionConstraint(MobileManipulatorPinocchioMapping(manipulatorModelInfo_), 
                                                                                             std::move(extCollisionPinocchioGeometryInterface), 
                                                                                             pointsOnRobotPtr_,
-                                                                                            voxbloxInterpolatorPtr_,
-                                                                                            maxDistance));
+                                                                                            maxDistance,
+                                                                                            emuPtr_));
 
   /*
   if (usePreComputation) 

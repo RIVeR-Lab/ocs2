@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <voxblox/interpolator/interpolator.h>
+//#include <voxblox/interpolator/interpolator.h>
 
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
@@ -154,7 +154,7 @@ class ExtCollisionCppAd
 
     ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface_;
     std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_;
-    std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> interpolator_;
+    //std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> interpolator_;
     scalar_t minimumDistance_;
     std::vector<std::vector<double>> points_;
 };

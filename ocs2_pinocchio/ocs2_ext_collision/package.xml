@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>ocs2_ext_collision</name>
+  <name>ocs2_ext_collision</name> 
   <version>0.0.0</version>
   <description>The ocs2_ext_collision package</description>
 
@@ -16,8 +16,8 @@
   <depend>ocs2_pinocchio_interface</depend>
   <depend>pinocchio</depend>
   <!--depend>ocs2_self_collision</depend-->
-  <depend>voxblox</depend>
-  <depend>voxblox_ros</depend>
+  <!--depend>voxblox</depend>
+  <depend>voxblox_ros</depend-->
   
 </package>
 

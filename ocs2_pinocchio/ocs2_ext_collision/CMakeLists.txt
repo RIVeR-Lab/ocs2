@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_ext_collision)
 
 # Generate compile_commands.json for clang tools
-#set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_compile_options(-std=c++14)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
@@ -10,15 +10,22 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_robotic_tools
   ocs2_pinocchio_interface
   #ocs2_self_collision
-  voxblox
-  voxblox_ros
+  #voxblox
+  #voxblox_ros
 )
-
-find_package(PCL REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
 )
+
+find_package(PCL REQUIRED)
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/cmake/FindFCL.cmake")
+  find_package(FCL REQUIRED)
+else()
+  set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/cmake/")
+  find_package(FCL REQUIRED)
+endif()
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(pinocchio REQUIRED pinocchio)
@@ -34,12 +41,14 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 catkin_package(
   INCLUDE_DIRS
     include
+    ${FCL_INCLUDE_DIRS}
   LIBRARIES
     ${PROJECT_NAME}
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
   DEPENDS
     pinocchio
+    FCL
 )
 
 ###########
@@ -77,14 +86,16 @@ add_library(${PROJECT_NAME}
   src/ExtCollisionPinocchioGeometryInterface.cpp
   src/PointsOnRobot.cpp
   src/KinematicsInterface.cpp
+  src/ext_map_utility.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(${PROJECT_NAME}
-  ${PCL_LIBRARIES}
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
   ${pinocchio_LIBRARIES}
+  ${FCL_LIBRARIES}
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${FLAGS})
 

@@ -16,6 +16,7 @@
 #include <ocs2_mobile_manipulator/MobileManipulatorPreComputation.h>
 #include <ocs2_ext_collision/ExtCollisionConstraint.h>
 #include <ocs2_ext_collision/PointsOnRobot.h>
+#include <ocs2_ext_collision/ext_map_utility.h>
 
 namespace ocs2 {
 namespace mobile_manipulator {
@@ -26,13 +27,13 @@ class MobileManipulatorExtCollisionConstraint final : public ExtCollisionConstra
     MobileManipulatorExtCollisionConstraint(const PinocchioStateInputMapping<scalar_t>& mapping,
                                             ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
                                             std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
-                                            std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> voxbloxInterpolatorPtr,
-                                            ocs2::scalar_t maxDistance)
+                                            ocs2::scalar_t maxDistance,
+                                            std::shared_ptr<ExtMapUtility> emuPtr)
       : ExtCollisionConstraint(mapping, 
                                std::move(extCollisionPinocchioGeometryInterface), 
-                               pointsOnRobotPtr, 
-                               voxbloxInterpolatorPtr, 
-                               maxDistance) {}
+                               pointsOnRobotPtr,
+                               maxDistance,
+                               emuPtr) {}
     
     ~MobileManipulatorExtCollisionConstraint() override = default;
     

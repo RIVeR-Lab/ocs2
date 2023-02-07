@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/multibody/joint/joint-composite.hpp>
 #include <pinocchio/multibody/model.hpp>
 
-#include <voxblox/interpolator/interpolator.h>
+//#include <voxblox/interpolator/interpolator.h>
 
 // OCS2
 #include <ocs2_core/Types.h>
@@ -65,6 +65,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ext_collision/ExtCollisionConstraint.h>
 #include <ocs2_ext_collision/ExtCollisionConstraintCppAd.h>
 #include <ocs2_ext_collision/PointsOnRobot.h>
+#include <ocs2_ext_collision/ext_map_utility.h>
 
 #include <ocs2_mobile_manipulator/FactoryFunctions.h>
 #include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
@@ -155,30 +156,40 @@ class MobileManipulatorInterface final : public RobotInterface
       return pointsOnRobotPtr_;
     }
 
+    /*
     std::shared_ptr<voxblox::EsdfCachingServer> getEsdfCachingServerPtr() 
     { 
       return esdfCachingServerPtr_;
     }
+    */
 
+    /*
     std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> getVoxbloxInterpolatorPtr()
     {
       return voxbloxInterpolatorPtr_;
     }
+    */
 
     void setPointsOnRobotPtr(std::shared_ptr<PointsOnRobot> newPointsOnRobotPtr) 
     { 
       pointsOnRobotPtr_ = newPointsOnRobotPtr;
     }
 
+    /*
     void setEsdfCachingServerPtr(std::shared_ptr<voxblox::EsdfCachingServer> newEsdfCachingServerPtr) 
     { 
       esdfCachingServerPtr_ = newEsdfCachingServerPtr;
     }
+    */
 
+    /*
     void setVoxbloxInterpolatorPtr(std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> newVoxbloxInterpolatorPtr)
     {
       voxbloxInterpolatorPtr_ = newVoxbloxInterpolatorPtr;
     }
+    */
+
+   void launchNodes(ros::NodeHandle& nodeHandle);
 
   private:
     std::unique_ptr<StateInputCost> getQuadraticInputCost(const std::string& taskFile);
@@ -223,8 +234,9 @@ class MobileManipulatorInterface final : public RobotInterface
     vector_t initialState_;
 
     std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_;
-    std::shared_ptr<voxblox::EsdfCachingServer> esdfCachingServerPtr_;
-    std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> voxbloxInterpolatorPtr_;
+    //std::shared_ptr<voxblox::EsdfCachingServer> esdfCachingServerPtr_;
+    //std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> voxbloxInterpolatorPtr_;
+    std::shared_ptr<ExtMapUtility> emuPtr_;
 };
 
 }  // namespace mobile_manipulator

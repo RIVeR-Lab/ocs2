@@ -58,6 +58,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_ros_interfaces/EsdfCachingServer.hpp>
 
+//#include <ocs2_ext_collision/ext_map_utility.h>
+
 #define PUBLISH_THREAD
 
 namespace ocs2 {
@@ -82,6 +84,16 @@ class MPC_ROS_Interface
     virtual ~MPC_ROS_Interface();
 
     /**
+     * Set the Esdf Caching Server
+     */
+    //void setEsdfCachingServer(std::shared_ptr<voxblox::EsdfCachingServer> new_esdfCachingServer);
+
+    /**
+     * Set the External Map Utility
+     */
+    //void setExtMapUtility(std::shared_ptr<ExtMapUtility> emuPtr);
+
+    /**
      * Resets the class to its instantiation state.
      *
      * @param [in] initTargetTrajectories: The initial desired cost trajectories.
@@ -97,11 +109,6 @@ class MPC_ROS_Interface
      * Spins ROS.
      */
     void spin();
-
-    /**
-     * Set the Esdf Caching Server
-     */
-    void setEsdfCachingServer(std::shared_ptr<voxblox::EsdfCachingServer> new_esdfCachingServer);
 
     /**
      * This is the main routine which launches all the nodes required for MPC to run which includes:
@@ -160,7 +167,8 @@ class MPC_ROS_Interface
 
     std::shared_ptr<ros::NodeHandle> nodeHandlerPtr_;
 
-    std::shared_ptr<voxblox::EsdfCachingServer> esdfCachingServerPtr_;
+    //std::shared_ptr<voxblox::EsdfCachingServer> esdfCachingServerPtr_;
+    //std::shared_ptr<ExtMapUtility> emuPtr_;
 
     // Publishers and subscribers
     ::ros::Subscriber mpcObservationSubscriber_;
