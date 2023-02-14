@@ -261,7 +261,8 @@ void MPC_ROS_Interface::copyToBuffer(const SystemObservation& mpcInitObservation
 /******************************************************************************************************/
 void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg) 
 {
-  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START" << std::endl;
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START" << std::endl;
+
   std::lock_guard<std::mutex> resetLock(resetMutex_);
 
   if (!resetRequestedEver_.load()) 
@@ -272,13 +273,6 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
 
   // current time, state, input, and subsystem
   const auto currentObservation = ros_msg_conversions::readObservationMsg(*msg);
-
-  /*
-  if (esdfCachingServerPtr_) 
-  {
-    esdfCachingServerPtr_ -> updateInterpolator();
-  }
-  */
 
   // measure the delay in running MPC
   mpcTimer_.startTimer();
@@ -329,8 +323,8 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE INF LOOP" << std::endl;
   //while(1){;}
 
-  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END" << std::endl;
-  //std::cout << "" << std::endl;
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END" << std::endl;
+  std::cout << "" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -382,11 +376,6 @@ void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
                                                    &MPC_ROS_Interface::mpcObservationCallback, 
                                                    this,
                                                    ::ros::TransportHints().tcpNoDelay());
-
-  // Octomap Subscriber
-  //string oct_msg_name = "octomap_scan";
-  //emuPtr_->setNodeHandle(nodeHandle);
-  //emuPtr_->updateOct(oct_msg_name);
 
   // MPC publisher
   mpcPolicyPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_flattened_controller>(topicPrefix_ + "_mpc_policy", 1, true);

@@ -36,10 +36,13 @@ class PointsOnRobot
 
     using points_radii_t = std::vector<std::vector<std::pair<double, double>>>;
 
+    // DESCRIPTION: TODO...
     explicit PointsOnRobot(const points_radii_t& points_radii);
 
+    // DESCRIPTION: TODO...
     PointsOnRobot(const PointsOnRobot& rhs);
 
+    // DESCRIPTION: TODO...
     void initialize(ocs2::PinocchioInterface& pinocchioInterface,
                     const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
                     const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
@@ -53,53 +56,77 @@ class PointsOnRobot
                     const std::vector<std::string>& jointParentFrameNames);
 
     /*
+    // DESCRIPTION: TODO...
     Eigen::VectorXd getPointsPosition(ocs2::PinocchioInterface& pinocchioInterface, 
                                       const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
                                       const Eigen::VectorXd& state) const;
     */
     
+    // DESCRIPTION: TODO...
     Eigen::VectorXd getPointsPositionCppAd(const Eigen::VectorXd& state) const;
 
+    // DESCRIPTION: TODO...
     Eigen::MatrixXd getPointsJacobianCppAd(const Eigen::VectorXd& state) const;
 
+    // DESCRIPTION: TODO...
     Eigen::VectorXd getRadii() const;
 
+    // DESCRIPTION: TODO...
     int getNumOfPoints() const;
 
+    // DESCRIPTION: TODO...
     int getDimPoints() const;
 
-    void publishPointsOnRobotVisu(ocs2::PinocchioInterface& pinocchioInterface, 
-                                  const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
-                                  const Eigen::VectorXd& state) const;
+    // DESCRIPTION: TODO...
+    void setNodeHandle(ros::NodeHandle& nh);
 
+    // DESCRIPTION: TODO...
+    void fillPointsOnRobotVisu() const;
+
+    // DESCRIPTION: TODO...
+    void publishPointsOnRobotVisu();
+
+    void publishPointsOnRobotVisu(const ros::TimerEvent& e);
+
+    void publishPointsOnRobotVisu(double dt);
+
+    // DESCRIPTION: TODO...
     Eigen::Quaternion<ocs2::scalar_t> EulerToQuaternion(const ocs2::scalar_t& yaw, const ocs2::scalar_t& pitch, const ocs2::scalar_t& roll) const;
 
+    // DESCRIPTION: TODO...
     Eigen::Matrix<ocs2::scalar_t, 3, 1> QuaternionToEuler(Eigen::Quaternion<ocs2::scalar_t>& quat) const;
 
+    // DESCRIPTION: TODO...
     //void setFixedTransformsTf2();
 
+    // DESCRIPTION: TODO...
     //void updateTransformsTf2Relative() const;
 
+    // DESCRIPTION: TODO...
     //void updateTransformsTf2World() const;
 
     /*
+    // DESCRIPTION: TODO...
     void updateTransformsPinocchio(ocs2::PinocchioInterface& pinocchioInterface,
                                    const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
                                    const Eigen::VectorXd& state) const;
     */
 
     /*
+    // DESCRIPTION: TODO...
     void updateTransformsPinocchio(ocs2::PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
                                    const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
                                    const Eigen::Matrix<ad_scalar_t, -1, 1>& stateCppAd) const;
     */
 
     /*
+    // DESCRIPTION: TODO...
     Eigen::Matrix<ocs2::scalar_t, 3, -1> computeState2PointsOnRobot(ocs2::PinocchioInterface& pinocchioInterface,
                                                                     const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
                                                                     const Eigen::Matrix<ocs2::scalar_t, -1, 1>& state) const;
     */
 
+    // DESCRIPTION: TODO...
     Eigen::Matrix<ad_scalar_t, 3, -1> computeState2PointsOnRobotCppAd(ocs2::PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
                                                                       const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
                                                                       const Eigen::Matrix<ad_scalar_t, -1, 1>& stateCppAd) const;
@@ -114,6 +141,10 @@ class PointsOnRobot
     void createModels(bool verbose);
     
     void loadModelsIfAvailable(bool verbose);
+
+    ros::NodeHandle nh_;
+
+    ros::Timer timer_;
 
     std::vector<std::vector<double>> points_;
     Eigen::VectorXd radii_;
@@ -130,7 +161,7 @@ class PointsOnRobot
 
     mutable Eigen::VectorXd points_on_robot_;
 
-    ros::NodeHandle nh_;
+    
     mutable visualization_msgs::MarkerArray pointsOnRobot_visu_;
     ros::Publisher pointsOnRobot_visu_pub_;
     

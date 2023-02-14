@@ -64,6 +64,8 @@ void copySegment(const LinearInterpolation::index_alpha_t& indexAlpha0, const Li
 void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution& primalSolution, DualSolutionConstRef dualSolution,
                            ProblemMetrics& problemMetrics) 
 {
+  //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] START" << std::endl;
+
   const auto& tTrajectory = primalSolution.timeTrajectory_;
   const auto& xTrajectory = primalSolution.stateTrajectory_;
   const auto& uTrajectory = primalSolution.inputTrajectory_;
@@ -105,6 +107,8 @@ void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution&
     problem.preComputationPtr->requestFinal(request, tTrajectory.back(), xTrajectory.back());
     problemMetrics.final = computeFinalMetrics(problem, tTrajectory.back(), xTrajectory.back(), dualSolution.final);
   }
+
+  //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END" << std::endl;
 }
 
 /******************************************************************************************************/

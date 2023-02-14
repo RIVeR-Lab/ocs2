@@ -78,13 +78,21 @@ SelfCollisionCppAd::SelfCollisionCppAd(const SelfCollisionCppAd& rhs)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t SelfCollisionCppAd::getValue(const PinocchioInterface& pinocchioInterface) const {
+vector_t SelfCollisionCppAd::getValue(const PinocchioInterface& pinocchioInterface) const 
+{
+  std::cout << "[SelfCollisionCppAd::getValue] START" << std::endl;
+
   const std::vector<hpp::fcl::DistanceResult> distanceArray = pinocchioGeometryInterface_.computeDistances(pinocchioInterface);
 
+  std::cout << "[SelfCollisionCppAd::getValue] points" << std::endl;
   vector_t violations = vector_t::Zero(distanceArray.size());
-  for (size_t i = 0; i < distanceArray.size(); ++i) {
+  for (size_t i = 0; i < distanceArray.size(); ++i) 
+  {
     violations[i] = distanceArray[i].min_distance - minimumDistance_;
+    std::cout << i << " -> " << violations[i] << std::endl;
   }
+
+  std::cout << "[SelfCollisionCppAd::getValue] END" << std::endl;
 
   return violations;
 }
@@ -93,7 +101,10 @@ vector_t SelfCollisionCppAd::getValue(const PinocchioInterface& pinocchioInterfa
 /******************************************************************************************************/
 /******************************************************************************************************/
 std::pair<vector_t, matrix_t> SelfCollisionCppAd::getLinearApproximation(const PinocchioInterface& pinocchioInterface,
-                                                                         const vector_t& q) const {
+                                                                         const vector_t& q) const 
+{
+  std::cout << "[SelfCollisionCppAd::getLinearApproximation] START" << std::endl;
+
   const std::vector<hpp::fcl::DistanceResult> distanceArray = pinocchioGeometryInterface_.computeDistances(pinocchioInterface);
 
   vector_t pointsInWorldFrame(distanceArray.size() * numberOfParamsPerResult_);
@@ -106,6 +117,8 @@ std::pair<vector_t, matrix_t> SelfCollisionCppAd::getLinearApproximation(const P
   const auto pointsInLinkFrame = cppAdInterfaceLinkPoints_->getFunctionValue(q, pointsInWorldFrame);
   const auto f = cppAdInterfaceDistanceCalculation_->getFunctionValue(q, pointsInLinkFrame);
   const auto dfdq = cppAdInterfaceDistanceCalculation_->getJacobian(q, pointsInLinkFrame);
+
+  std::cout << "[SelfCollisionCppAd::getLinearApproximation] END" << std::endl;
 
   return std::make_pair(f, dfdq);
 }

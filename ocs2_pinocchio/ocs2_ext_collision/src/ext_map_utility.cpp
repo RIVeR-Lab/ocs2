@@ -514,7 +514,7 @@ ros::Publisher ExtMapUtility::getPC2MsgPub()
   return pc2_msg_pub;
 }
 
-void ExtMapUtility::setNodeHandle(ros::NodeHandle nh)
+void ExtMapUtility::setNodeHandle(ros::NodeHandle& nh)
 {
   nh_ = nh;
 }

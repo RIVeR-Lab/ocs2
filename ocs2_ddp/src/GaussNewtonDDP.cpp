@@ -880,6 +880,8 @@ bool GaussNewtonDDP::initializePrimalSolution() {
 /******************************************************************************************************/
 void GaussNewtonDDP::initializeDualSolutionAndMetrics() 
 {
+  //std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] START" << std::endl;
+
   // adjust dual solution
   totalDualSolutionTimer_.startTimer();
   if (!optimizedDualSolution_.timeTrajectory.empty()) 
@@ -904,6 +906,8 @@ void GaussNewtonDDP::initializeDualSolutionAndMetrics()
   // calculates rollout merit
   performanceIndex_ = computeRolloutPerformanceIndex(nominalPrimalData_.primalSolution.timeTrajectory_, nominalPrimalData_.problemMetrics);
   performanceIndex_.merit = calculateRolloutMerit(performanceIndex_);
+
+  //std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -994,6 +998,8 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 /******************************************************************************************************/
 void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) 
 {
+  //std::cout << "[GaussNewtonDDP::runImpl] START" << std::endl;
+
   if (ddpSettings_.displayInfo_) 
   {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
@@ -1035,7 +1041,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   bool initialSolutionExists = initializePrimalSolution();  // true if the rollout is not purely from the Initializer
 
   initializeDualSolutionAndMetrics();
-  
+
   performanceIndexHistory_.push_back(performanceIndex_);
   initializationTimer_.endTimer();
 
@@ -1133,6 +1139,8 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
       std::cerr << "The algorithm has terminated for an unknown reason!" << std::endl;
     }
   }
+
+  //std::cout << "[GaussNewtonDDP::runImpl] END" << std::endl;
 }
 
 }  // namespace ocs2

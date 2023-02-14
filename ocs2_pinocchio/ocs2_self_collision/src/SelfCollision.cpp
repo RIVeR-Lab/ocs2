@@ -48,13 +48,21 @@ SelfCollision::SelfCollision(PinocchioGeometryInterface pinocchioGeometryInterfa
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t SelfCollision::getValue(const PinocchioInterface& pinocchioInterface) const {
+vector_t SelfCollision::getValue(const PinocchioInterface& pinocchioInterface) const 
+{
+  //std::cout << "[SelfCollision::getValue] START" << std::endl;
+
   const std::vector<hpp::fcl::DistanceResult> distanceArray = pinocchioGeometryInterface_.computeDistances(pinocchioInterface);
 
+  //std::cout << "[SelfCollision::getValue] points" << std::endl;
   vector_t violations = vector_t::Zero(distanceArray.size());
-  for (size_t i = 0; i < distanceArray.size(); ++i) {
+  for (size_t i = 0; i < distanceArray.size(); ++i) 
+  {
     violations[i] = distanceArray[i].min_distance - minimumDistance_;
+    //std::cout << i << " -> " << violations[i] << std::endl;
   }
+
+  //std::cout << "[SelfCollision::getValue] END" << std::endl;
 
   return violations;
 }

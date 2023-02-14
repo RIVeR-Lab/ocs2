@@ -34,20 +34,7 @@ ExtCollision::ExtCollision(ExtCollisionPinocchioGeometryInterface extCollisionPi
     distances_(pointsOnRobotPtr->getNumOfPoints()),
     emuPtr_(emuPtr),
     gradientsVoxblox_(pointsOnRobotPtr->getNumOfPoints(), pointsOnRobotPtr->getNumOfPoints() * 3),
-    gradients_(pointsOnRobotPtr->getNumOfPoints(), 9) 
-{
-  /*
-  string world_frame_name = "world";
-  string oct_msg_name = "octomap_scan";
-  string pub_name_oct_dist_visu = "occupancy_distance";
-
-  emu_.setWorldFrameName(world_frame_name);
-  //emu_.setPubOctMsg(pub_name_oct_msg);
-  emu_.setPubOctDistVisu(pub_name_oct_dist_visu);
-  emu_.updateOct(oct_msg_name);
-  */
-  //occ_distance_client_ = nh_.serviceClient<mobiman_simulation::getNearestOccDist>("get_nearest_occ_dist");
-}
+    gradients_(pointsOnRobotPtr->getNumOfPoints(), 9) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -64,7 +51,7 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
 
   //Eigen::VectorXd points = pointsOnRobotPtr_->getPointsPosition(pinocchioInterface, mapping, state);
   Eigen::VectorXd points = pointsOnRobotPtr_->getPointsPositionCppAd(state);
-  pointsOnRobotPtr_->publishPointsOnRobotVisu(pinocchioInterface, mapping, state);
+  //pointsOnRobotPtr_->publishPointsOnRobotVisu(pinocchioInterface, mapping, state);
   
   if (pointsOnRobotPtr_) 
   { 
@@ -138,7 +125,7 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
       */
     }
 
-    emuPtr_->fillOccDistanceArrayVisu(p0_vec, p1_vec);
+    //emuPtr_->fillOccDistanceArrayVisu(p0_vec, p1_vec);
 
     violations = distances_;
 
@@ -184,9 +171,9 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
   //std::cout << "[ExtCollision::getValue] END" << std::endl;
   //std::cout << "" << std::endl;
 
-  std::cout << "[ExtCollision::getValue] violations (ZERO'D AFTERWARDS!): " << std::endl << violations << std::endl << std::endl;
-
-  violations = vector_t::Zero(1);
+  //std::cout << "[ExtCollision::getValue] violations (BEFORE): " << std::endl << violations << std::endl;
+  //violations = vector_t::Zero(1);
+  //std::cout << "[ExtCollision::getValue] violations (AFTER): " << std::endl << violations << std::endl << std::endl;
 
   return violations;
 }

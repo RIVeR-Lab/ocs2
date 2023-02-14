@@ -165,7 +165,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   // Constraints
   // joint limits constraint
   problem_.softConstraintPtr->add("jointLimits", getJointLimitSoftConstraint(*pinocchioInterfacePtr_, taskFile));
-  
+
   // end-effector state constraint
   problem_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, 
                                                                                taskFile, 
@@ -180,6 +180,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
                                                                                     usePreComputation, 
                                                                                     libraryFolder, 
                                                                                     recompileLibraries));
+
   // self-collision avoidance constraint
   bool activateSelfCollision = true;
   loadData::loadPtreeValue(pt, activateSelfCollision, "selfCollision.activate", true);
@@ -318,12 +319,20 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
 {
   string oct_msg_name = "octomap_scan";
-  double dt_pub_occ_dist = 0.1;
+  double dt = 0.1;
 
-  // Octomap Subscriber
-  emuPtr_->setNodeHandle(nodeHandle);
-  emuPtr_->updateOct(oct_msg_name);
-  //emuPtr_->createTimerPubOctDistVisu(ros::Duration(dt_pub_occ_dist));
+  if (emuPtr_)
+  {
+    // Octomap Subscriber
+    emuPtr_->setNodeHandle(nodeHandle);
+    emuPtr_->updateOct(oct_msg_name);
+  }
+
+  if (pointsOnRobotPtr_)
+  {
+    pointsOnRobotPtr_->setNodeHandle(nodeHandle);
+    pointsOnRobotPtr_->publishPointsOnRobotVisu(dt);
+  }
 
   //spin();
 }
@@ -504,20 +513,16 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
 
   ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface(pinocchioInterface);
   std::unique_ptr<StateConstraint> constraint;
-  constraint = std::unique_ptr<StateConstraint>(new MobileManipulatorExtCollisionConstraint(MobileManipulatorPinocchioMapping(manipulatorModelInfo_), 
-                                                                                            std::move(extCollisionPinocchioGeometryInterface), 
-                                                                                            pointsOnRobotPtr_,
-                                                                                            maxDistance,
-                                                                                            emuPtr_));
-
-  /*
+  
   if (usePreComputation) 
   {
     std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] PRECOMPUTED!" << std::endl;
 
     constraint = std::unique_ptr<StateConstraint>(new MobileManipulatorExtCollisionConstraint(MobileManipulatorPinocchioMapping(manipulatorModelInfo_), 
-                                                                                              std::move(extCollisionPinocchioGeometryInterface), 
-                                                                                              pointsOnRobotPtr_));
+                                                                                            std::move(extCollisionPinocchioGeometryInterface), 
+                                                                                            pointsOnRobotPtr_,
+                                                                                            maxDistance,
+                                                                                            emuPtr_));
   }
   else
   {
@@ -532,7 +537,6 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
                                                                                   recompileLibraries, 
                                                                                   false));
   }
-  */
 
   std::unique_ptr<PenaltyBase> penalty(new RelaxedBarrierPenalty({mu, delta}));
 

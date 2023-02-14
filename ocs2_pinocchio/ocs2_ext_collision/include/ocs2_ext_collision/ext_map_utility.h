@@ -238,7 +238,7 @@ class ExtMapUtility
     ros::Publisher getPC2MsgPub();
 
     // DESCRIPTION: TODO...
-    void setNodeHandle(ros::NodeHandle nh); 
+    void setNodeHandle(ros::NodeHandle& nh); 
 
     // DESCRIPTION: TODO...
     void setWorldFrameName(string new_world_frame_name);

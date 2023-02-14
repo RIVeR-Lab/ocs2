@@ -46,6 +46,8 @@ class MobileManipulatorExtCollisionConstraint final : public ExtCollisionConstra
 
     const PinocchioInterface& getPinocchioInterface(const PreComputation& preComputation) const override 
     {
+      //std::cout << "[MobileManipulatorExtCollisionConstraint::getPinocchioInterface] START" << std::endl;
+      
       return cast<MobileManipulatorPreComputation>(preComputation).getPinocchioInterface();
     }
 };

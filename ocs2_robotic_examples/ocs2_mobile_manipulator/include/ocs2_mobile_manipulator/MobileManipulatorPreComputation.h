@@ -54,8 +54,17 @@ class MobileManipulatorPreComputation : public PreComputation {
   void request(RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) override;
   void requestFinal(RequestSet request, scalar_t t, const vector_t& x) override;
 
-  PinocchioInterface& getPinocchioInterface() { return pinocchioInterface_; }
-  const PinocchioInterface& getPinocchioInterface() const { return pinocchioInterface_; }
+  PinocchioInterface& getPinocchioInterface() 
+  { 
+    //std::cout << "[MobileManipulatorPreComputation::getPinocchioInterface] START" << std::endl;
+    return pinocchioInterface_; 
+  }
+
+  const PinocchioInterface& getPinocchioInterface() const 
+  { 
+    //std::cout << "[(const)MobileManipulatorPreComputation::getPinocchioInterface] START" << std::endl;
+    return pinocchioInterface_; 
+  }
 
  private:
   PinocchioInterface pinocchioInterface_;

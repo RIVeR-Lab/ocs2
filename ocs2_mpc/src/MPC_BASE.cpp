@@ -52,6 +52,8 @@ void MPC_BASE::reset() {
 /******************************************************************************************************/
 bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState) 
 {
+  //std::cout << "[MPC_BASE::run] START" << std::endl;
+
   // check if the current time exceeds the solver final limit
   if (!initRun_ && currentTime >= getSolverPtr()->getFinalTime()) 
   {
@@ -89,6 +91,8 @@ bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState)
     std::cerr << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].";
     std::cerr << "\n###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
   }
+
+  //std::cout << "[MPC_BASE::run] END" << std::endl;
 
   return true;
 }

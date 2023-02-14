@@ -47,9 +47,9 @@ PointsOnRobot::PointsOnRobot(const PointsOnRobot::points_radii_t& points_radii)
     }
   }
 
-  ros::NodeHandle nh;
-  nh_ = nh;
-  pointsOnRobot_visu_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("points_on_robot", 1);
+  //ros::NodeHandle nh;
+  //nh_ = nh;
+  //pointsOnRobot_visu_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("points_on_robot", 1);
 
   std::cout << "[PointsOnRobot::PointsOnRobot] END" << std::endl;
 }
@@ -173,6 +173,7 @@ Eigen::VectorXd PointsOnRobot::getPointsPositionCppAd(const Eigen::VectorXd& sta
 
   points_on_robot_ = cppAdInterface_->getFunctionValue(state);
 
+  fillPointsOnRobotVisu();
   //std::cout << "[PointsOnRobot::getPointsPositionCppAd] END" << std::endl;
 
   return points_on_robot_;
@@ -221,17 +222,21 @@ int PointsOnRobot::getDimPoints() const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void PointsOnRobot::publishPointsOnRobotVisu(ocs2::PinocchioInterface& pinocchioInterface, 
-                                             const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
-                                             const Eigen::VectorXd& state) const
+void PointsOnRobot::setNodeHandle(ros::NodeHandle& nh)
 {
-  //std::cout << "[PointsOnRobot::publishPointsOnRobotVisu] START" << std::endl;
+  nh_ = nh;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void PointsOnRobot::fillPointsOnRobotVisu() const
+{
+  //std::cout << "[PointsOnRobot::fillPointsOnRobotVisu] START" << std::endl;
   //pointsOnRobot_visu_.markers.resize(radii_.size());
 
-  visualization_msgs::MarkerArray markerArray;
-
-  //Eigen::VectorXd pointsOnRobot = getPointsPosition(pinocchioInterface, mapping, state);
-  //Eigen::VectorXd pointsOnRobot = getPointsPositionCppAd(state);
+  Eigen::VectorXd points_on_robot = points_on_robot_;
+  pointsOnRobot_visu_.markers.clear();
 
   for (int i = 0; i < radii_.size(); i++) 
   {
@@ -242,9 +247,9 @@ void PointsOnRobot::publishPointsOnRobotVisu(ocs2::PinocchioInterface& pinocchio
     marker.scale.x = radii_[i] * 1;
     marker.scale.y = radii_[i] * 1;
     marker.scale.z = radii_[i] * 1;
-    marker.pose.position.x = points_on_robot_(3 * i + 0);
-    marker.pose.position.y = points_on_robot_(3 * i + 1);
-    marker.pose.position.z = points_on_robot_(3 * i + 2);
+    marker.pose.position.x = points_on_robot(3 * i + 0);
+    marker.pose.position.y = points_on_robot(3 * i + 1);
+    marker.pose.position.z = points_on_robot(3 * i + 2);
 
     marker.pose.orientation.w = 1;
     marker.pose.orientation.x = 0;
@@ -262,13 +267,35 @@ void PointsOnRobot::publishPointsOnRobotVisu(ocs2::PinocchioInterface& pinocchio
     marker.header.stamp = ros::Time::now();
 
     //pointsOnRobot_visu_.markers[i] = marker;
-    markerArray.markers.push_back(marker);
+    pointsOnRobot_visu_.markers.push_back(marker);
   }
 
-  //pointsOnRobot_visu_pub_.publish(pointsOnRobot_visu_);
-  pointsOnRobot_visu_pub_.publish(markerArray);
+  //std::cout << "[PointsOnRobot::fillPointsOnRobotVisu] END" << std::endl;
+}
 
-  //std::cout << "[PointsOnRobot::publishPointsOnRobotVisu] END" << std::endl;
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void PointsOnRobot::publishPointsOnRobotVisu()
+{
+  pointsOnRobot_visu_pub_.publish(pointsOnRobot_visu_);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void PointsOnRobot::publishPointsOnRobotVisu(const ros::TimerEvent& e)
+{
+  pointsOnRobot_visu_pub_.publish(pointsOnRobot_visu_);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void PointsOnRobot::publishPointsOnRobotVisu(double dt)
+{
+  pointsOnRobot_visu_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("points_on_robot", 10);
+  timer_ = nh_.createTimer(ros::Duration(dt), &PointsOnRobot::publishPointsOnRobotVisu, this);
 }
 
 /******************************************************************************************************/

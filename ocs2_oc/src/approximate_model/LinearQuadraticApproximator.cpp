@@ -174,7 +174,10 @@ void approximateFinalLQ(OptimalControlProblem& problem, const scalar_t& time, co
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t computeCost(const OptimalControlProblem& problem, const scalar_t& time, const vector_t& state, const vector_t& input) {
+scalar_t computeCost(const OptimalControlProblem& problem, const scalar_t& time, const vector_t& state, const vector_t& input) 
+{
+  //std::cout << "[LinearQuadraticApproximator::computeCost] START" << std::endl;
+
   const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
   const auto& preComputation = *problem.preComputationPtr;
 
@@ -183,6 +186,8 @@ scalar_t computeCost(const OptimalControlProblem& problem, const scalar_t& time,
   cost += problem.softConstraintPtr->getValue(time, state, input, targetTrajectories, preComputation);
   cost += problem.stateCostPtr->getValue(time, state, targetTrajectories, preComputation);
   cost += problem.stateSoftConstraintPtr->getValue(time, state, targetTrajectories, preComputation);
+
+  //std::cout << "[LinearQuadraticApproximator::computeCost] END" << std::endl;
 
   return cost;
 }
@@ -290,6 +295,7 @@ MetricsCollection computeIntermediateMetrics(OptimalControlProblem& problem, con
   MetricsCollection metrics;
 
   // Cost
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] computeCost" << std::endl;
   metrics.cost = computeCost(problem, time, state, input);
 
   // Equality constraints
