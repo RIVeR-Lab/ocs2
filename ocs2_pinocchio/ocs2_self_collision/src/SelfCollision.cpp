@@ -70,17 +70,24 @@ vector_t SelfCollision::getValue(const PinocchioInterface& pinocchioInterface) c
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::pair<vector_t, matrix_t> SelfCollision::getLinearApproximation(const PinocchioInterface& pinocchioInterface) const {
+std::pair<vector_t, matrix_t> SelfCollision::getLinearApproximation(const PinocchioInterface& pinocchioInterface) const 
+{
+  std::cout << "[SelfCollision::getLinearApproximation] START" << std::endl;
+
   const std::vector<hpp::fcl::DistanceResult> distanceArray = pinocchioGeometryInterface_.computeDistances(pinocchioInterface);
 
   const auto& model = pinocchioInterface.getModel();
   const auto& data = pinocchioInterface.getData();
 
+  //std::cout << "[SelfCollision::getLinearApproximation] distanceArray size: " << distanceArray.size() << std::endl;
+  //std::cout << "[SelfCollision::getLinearApproximation] model.nq: " << model.nq << std::endl;
+
   const auto& geometryModel = pinocchioGeometryInterface_.getGeometryModel();
 
   vector_t f(distanceArray.size());
   matrix_t dfdq(distanceArray.size(), model.nq);
-  for (size_t i = 0; i < distanceArray.size(); ++i) {
+  for (size_t i = 0; i < distanceArray.size(); ++i) 
+  {
     // Distance violation
     f[i] = distanceArray[i].min_distance - minimumDistance_;
 
@@ -94,6 +101,7 @@ std::pair<vector_t, matrix_t> SelfCollision::getLinearApproximation(const Pinocc
     const vector3_t pt1Offset = distanceArray[i].nearest_points[0] - joint1Position;
     matrix_t joint1Jacobian = matrix_t::Zero(6, model.nv);
     pinocchio::getJointJacobian(model, data, joint1, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, joint1Jacobian);
+
     // Jacobians from pinocchio are given as
     // [ position jacobian ]
     // [ rotation jacobian ]
@@ -115,6 +123,24 @@ std::pair<vector_t, matrix_t> SelfCollision::getLinearApproximation(const Pinocc
                                          : (distanceArray[i].nearest_points[0] - distanceArray[i].nearest_points[1]).normalized();
     dfdq.row(i).noalias() = distanceVector.transpose() * differenceJacobian;
   }  // end of i loop
+
+  std::cout << "[SelfCollision::getLinearApproximation] f: " << std::endl;
+  for (size_t i = 0; i < f.size(); i++)
+  {
+    std::cout << i << " -> " << f(i) << std::endl;
+  }
+
+  for (size_t i = 0; i < dfdq.rows(); i++)
+  {
+    std::cout << i << " -> ";
+    for (size_t j = 0; j < dfdq.cols(); j++)
+    {
+      std::cout << f(i) << " ";
+    }
+    std::cout << "" << std::endl;
+  }
+
+  std::cout << "[SelfCollision::getLinearApproximation] END" << std::endl << std::endl;
 
   return {f, dfdq};
 }

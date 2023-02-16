@@ -94,25 +94,30 @@ SelfCollisionConstraintCppAd::SelfCollisionConstraintCppAd(PinocchioInterface pi
 /******************************************************************************************************/
 /******************************************************************************************************/
 SelfCollisionConstraintCppAd::SelfCollisionConstraintCppAd(const SelfCollisionConstraintCppAd& rhs)
-    : StateConstraint(rhs),
-      pinocchioInterface_(rhs.pinocchioInterface_),
-      selfCollision_(rhs.selfCollision_),
-      mappingPtr_(rhs.mappingPtr_->clone()),
-      updateCallback_(rhs.updateCallback_) {
+  : StateConstraint(rhs),
+    pinocchioInterface_(rhs.pinocchioInterface_),
+    selfCollision_(rhs.selfCollision_),
+    mappingPtr_(rhs.mappingPtr_->clone()),
+    updateCallback_(rhs.updateCallback_) 
+{
   mappingPtr_->setPinocchioInterface(pinocchioInterface_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t SelfCollisionConstraintCppAd::getNumConstraints(scalar_t time) const {
+size_t SelfCollisionConstraintCppAd::getNumConstraints(scalar_t time) const 
+{
   return selfCollision_.getNumCollisionPairs();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t SelfCollisionConstraintCppAd::getValue(scalar_t time, const vector_t& state, const PreComputation&) const {
+vector_t SelfCollisionConstraintCppAd::getValue(scalar_t time, const vector_t& state, const PreComputation&) const 
+{
+  //std::cout << "[SelfCollisionConstraintCppAd::getValue] NumConstraints: " << getNumConstraints(time) << std::endl;
+
   const auto q = mappingPtr_->getPinocchioJointPosition(state);
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();

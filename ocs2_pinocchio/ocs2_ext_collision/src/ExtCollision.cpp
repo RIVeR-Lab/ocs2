@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.01.05
+// LAST UPDATE: 2022.02.14
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -34,7 +34,7 @@ ExtCollision::ExtCollision(ExtCollisionPinocchioGeometryInterface extCollisionPi
     distances_(pointsOnRobotPtr->getNumOfPoints()),
     emuPtr_(emuPtr),
     gradientsVoxblox_(pointsOnRobotPtr->getNumOfPoints(), pointsOnRobotPtr->getNumOfPoints() * 3),
-    gradients_(pointsOnRobotPtr->getNumOfPoints(), 9) {}
+    gradients_(pointsOnRobotPtr->getNumOfPoints(), 9) {}  // NUA TODO: 9 IS THE NUMBER OF STATES, BE CAREFUL WHEN GENERALIZATION!!!
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -49,9 +49,7 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
   
   vector_t violations;
 
-  //Eigen::VectorXd points = pointsOnRobotPtr_->getPointsPosition(pinocchioInterface, mapping, state);
   Eigen::VectorXd points = pointsOnRobotPtr_->getPointsPositionCppAd(state);
-  //pointsOnRobotPtr_->publishPointsOnRobotVisu(pinocchioInterface, mapping, state);
   
   if (pointsOnRobotPtr_) 
   { 
@@ -82,50 +80,15 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
       p0.z = position(2);
       p0_vec.push_back(p0);
 
-      //std::cout << "[ExtCollision::getValue] " << i << ": (" << position(0) << ", " << position(1) << ", " << position(2) << ") -> " << distance << std::endl;
-      
-      //occ_distance_srv_.request.x = position(0);
-      //occ_distance_srv_.request.y = position(1);
-      //occ_distance_srv_.request.z = position(2);
-
       geometry_msgs::Point p1;
       distance = emuPtr_->getNearestOccupancyDist2(position(0), position(1), position(2), p1, maxDistance_, false);
       p1_vec.push_back(p1);
       //std::cout << "[ExtCollision::getValue] " << i << ": (" << position(0) << ", " << position(1) << ", " << position(2) << ") -> " << distance << std::endl << std::endl;
 
       distances_[i] = distance - radii(i);
-
-      /*
-      if (const_cast<ros::ServiceClient*>(&occ_distance_client_)->call(occ_distance_srv_))
-      {
-        distance = occ_distance_srv_.response.distance;
-        std::cout << "[ExtCollision::getValue] " << i << ": (" << position(0) << ", " << position(1) << ", " << position(2) << ") -> " << distance << std::endl;
-        distances_[i] = distance - radii(i);
-      }
-      else
-      {
-        ROS_ERROR("[ExtCollision::getValue] Failed to call service get_nearest_occ_dist!");
-        distances_[i] = maxDistance_ - radii(i);
-      }
-      */
-
-      // NUA TODO: GET FROM MAP UTILITY SERVICE!!!
-      /*
-      if (voxbloxInterpolatorPtr_->getInterpolatedDistanceGradient(position.cast<float>(), &distance, &gradientVoxblox)) 
-      {
-        distances_[i] = distance - radii(i);
-        gradientsVoxblox_.block<1, 3>(i, 3 * i) = gradientVoxblox.transpose().cast<double>();
-
-        std::cout << "[ExtCollision::getValue] (" << position(0) << ", " << position(1) << ", " << position(2) << ") -> " << distance << std::endl;
-      } 
-      else 
-      {
-        distances_[i] = maxDistance_ - radii(i);
-      }
-      */
     }
 
-    //emuPtr_->fillOccDistanceArrayVisu(p0_vec, p1_vec);
+    emuPtr_->fillOccDistanceArrayVisu(p0_vec, p1_vec);
 
     violations = distances_;
 
@@ -148,32 +111,9 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
       std::cout << i << ": " << state(i,j) << std::endl;
     } 
   }
-
-  std::cout << "[ExtCollision::getValue] points" << std::endl;
-  for (size_t i = 0; i < points.rows(); i++)
-  {
-    for (size_t j = 0; j < points.cols(); j++)
-    {
-      std::cout << i << ": " << points(i,j) << std::endl;
-    } 
-  }
-  */
-  
-  //const std::vector<hpp::fcl::DistanceResult> distanceArray = extCollisionPinocchioGeometryInterface_.computeDistances(pinocchioInterface);
-  //vector_t violations = vector_t::Zero(distanceArray.size());
-
-  /*
-  for (size_t i = 0; i < distanceArray.size(); ++i) {
-    violations[i] = distanceArray[i].min_distance - minimumDistance_;
-  }
   */
 
   //std::cout << "[ExtCollision::getValue] END" << std::endl;
-  //std::cout << "" << std::endl;
-
-  //std::cout << "[ExtCollision::getValue] violations (BEFORE): " << std::endl << violations << std::endl;
-  //violations = vector_t::Zero(1);
-  //std::cout << "[ExtCollision::getValue] violations (AFTER): " << std::endl << violations << std::endl << std::endl;
 
   return violations;
 }

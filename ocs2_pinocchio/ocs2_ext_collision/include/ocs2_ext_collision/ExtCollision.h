@@ -78,11 +78,6 @@ class ExtCollision {
     mutable Eigen::Matrix<scalar_t, -1, 1> distances_;
     mutable Eigen::MatrixXd gradientsVoxblox_;
     mutable Eigen::Matrix<scalar_t, -1, -1> gradients_;
-
-    ros::NodeHandle nh_;
-    ros::ServiceClient occ_distance_client_;
-    //mutable mobiman_simulation::getNearestOccDist occ_distance_srv_;
-
     std::shared_ptr<ExtMapUtility> emuPtr_;
 };
 

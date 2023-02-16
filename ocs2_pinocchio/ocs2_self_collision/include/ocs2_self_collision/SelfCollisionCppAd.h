@@ -64,7 +64,10 @@ class SelfCollisionCppAd
     SelfCollisionCppAd(const SelfCollisionCppAd& rhs);
 
     /** Get the number of collision pairs */
-    size_t getNumCollisionPairs() const { return pinocchioGeometryInterface_.getNumCollisionPairs(); }
+    size_t getNumCollisionPairs() const 
+    { 
+      return pinocchioGeometryInterface_.getNumCollisionPairs(); 
+    }
 
     /**
      * Evaluate the distance violation

@@ -233,7 +233,6 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
     string pub_name_oct_dist_array_visu = "occ_dist_array";
 
     emuPtr_->setWorldFrameName(world_frame_name);
-    //emu_.setPubOctMsg(pub_name_oct_msg);
     emuPtr_->setPubOccDistVisu(pub_name_oct_dist_visu);
     emuPtr_->setPubOccDistArrayVisu(pub_name_oct_dist_array_visu);
     
@@ -532,6 +531,8 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
                                                                                   MobileManipulatorPinocchioMapping(manipulatorModelInfo_), 
                                                                                   std::move(extCollisionPinocchioGeometryInterface), 
                                                                                   pointsOnRobotPtr_,
+                                                                                  maxDistance,
+                                                                                  emuPtr_,
                                                                                   "ext_collision", 
                                                                                   libraryFolder, 
                                                                                   recompileLibraries, 

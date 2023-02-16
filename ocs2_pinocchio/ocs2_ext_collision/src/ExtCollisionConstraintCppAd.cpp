@@ -48,7 +48,9 @@ namespace ocs2 {
 ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(PinocchioInterface pinocchioInterface,
                                                          const PinocchioStateInputMapping<scalar_t>& mapping,
                                                          ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface,
-                                                         std::shared_ptr<PointsOnRobot> pointsOnRobotPtr, 
+                                                         std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
+                                                         ocs2::scalar_t maxDistance,
+                                                         std::shared_ptr<ExtMapUtility> emuPtr,
                                                          const std::string& modelName, 
                                                          const std::string& modelFolder,
                                                          bool recompileLibraries, 
@@ -57,6 +59,8 @@ ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(PinocchioInterface pino
                                 mapping, 
                                 std::move(extCollisionPinocchioGeometryInterface), 
                                 pointsOnRobotPtr,
+                                maxDistance,
+                                emuPtr,
                                 defaultUpdatePinocchioInterface, 
                                 modelName, 
                                 modelFolder, 
@@ -70,6 +74,8 @@ ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(PinocchioInterface pino
                                                          const PinocchioStateInputMapping<scalar_t>& mapping,
                                                          ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
                                                          std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
+                                                         ocs2::scalar_t maxDistance,
+                                                         std::shared_ptr<ExtMapUtility> emuPtr,
                                                          update_pinocchio_interface_callback updateCallback, 
                                                          const std::string& modelName,
                                                          const std::string& modelFolder, 
@@ -78,12 +84,14 @@ ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(PinocchioInterface pino
   : StateConstraint(ConstraintOrder::Linear),
     pinocchioInterface_(std::move(pinocchioInterface)),
     extCollisionCppAd_(pinocchioInterface_, 
-                  std::move(extCollisionPinocchioGeometryInterface), 
-                  pointsOnRobotPtr,
-                  modelName, 
-                  modelFolder,
-                  recompileLibraries, 
-                  verbose),
+                       std::move(extCollisionPinocchioGeometryInterface), 
+                       pointsOnRobotPtr,
+                       maxDistance,
+                       emuPtr,
+                       modelName, 
+                       modelFolder,
+                       recompileLibraries, 
+                       verbose),
     mappingPtr_(mapping.clone()),
     updateCallback_(std::move(updateCallback)) 
 {
@@ -111,7 +119,7 @@ ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(const ExtCollisionConst
 /******************************************************************************************************/
 size_t ExtCollisionConstraintCppAd::getNumConstraints(scalar_t time) const 
 {
-  return extCollisionCppAd_.getNumCollisionPairs();
+  return extCollisionCppAd_.getNumPointsOnRobot();
 }
 
 /******************************************************************************************************/
@@ -124,7 +132,7 @@ vector_t ExtCollisionConstraintCppAd::getValue(scalar_t time, const vector_t& st
   auto& data = pinocchioInterface_.getData();
   pinocchio::forwardKinematics(model, data, q);
 
-  return extCollisionCppAd_.getValue(pinocchioInterface_);
+  return extCollisionCppAd_.getValue(pinocchioInterface_, state);
 }
 
 /******************************************************************************************************/
