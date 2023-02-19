@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <memory>
+#include <iostream>
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/control/ControllerBase.h>
@@ -101,26 +102,34 @@ struct PrimalSolution {
 
   vector_t getDesiredState(scalar_t time) const
   {
+    std::cout << "[PrimalSolution::getDesiredState] START" << std::endl;
+
     if (this -> stateTrajectory_.empty())
     {
-      throw std::runtime_error("PrimalSolution::getDesiredState -> Error: stateTrajectory_ is empty!");
+      throw std::runtime_error("[PrimalSolution::getDesiredState] Error: stateTrajectory_ is empty!");
     }
     else
     {
       return LinearInterpolation::interpolate(time, this -> timeTrajectory_, this -> stateTrajectory_);
     }
+
+    std::cout << "[PrimalSolution::getDesiredState] END" << std::endl;
   }
 
   vector_t getDesiredInput(scalar_t time) const
   {
+    std::cout << "[PrimalSolution::getDesiredInput] START" << std::endl;
+
     if (this -> inputTrajectory_.empty())
     {
-      throw std::runtime_error("PrimalSolution::getDesiredInput -> Error: inputTrajectory_ is empty!");
+      throw std::runtime_error("[PrimalSolution::getDesiredInput] Error: inputTrajectory_ is empty!");
     }
     else
     {
       return LinearInterpolation::interpolate(time, this -> timeTrajectory_, this -> inputTrajectory_);
     }
+
+    std::cout << "[PrimalSolution::getDesiredInput] END" << std::endl;
   }
 
   scalar_array_t timeTrajectory_;

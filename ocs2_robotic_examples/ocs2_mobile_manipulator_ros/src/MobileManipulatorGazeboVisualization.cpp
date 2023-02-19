@@ -81,6 +81,8 @@ void assignIncreasingId(It firstIt, It lastIt, int startId = 0) {
 /******************************************************************************************************/
 void OCS2_Mobile_Manipulator_Visualization::launchVisualizerNode(ros::NodeHandle& nodeHandle) 
 {
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::launchVisualizerNode] START" << std::endl;
+
   // load a kdl-tree from the urdf robot description and initialize the robot state publisher
   const std::string urdfName = "robot_description";
   urdf::Model model;
@@ -147,6 +149,8 @@ void OCS2_Mobile_Manipulator_Visualization::launchVisualizerNode(ros::NodeHandle
     // set geometry visualization markers
     geometryVisualization_.reset(new GeometryInterfaceVisualization(std::move(pinocchioInterface), geometryInterface, nodeHandle));
   }
+
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::launchVisualizerNode] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -156,6 +160,8 @@ void OCS2_Mobile_Manipulator_Visualization::update(const SystemObservation& obse
                                                    const PrimalSolution& policy,
                                                    const CommandData& command) 
 {
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::update] START" << std::endl;
+
   const ros::Time timeStamp = ros::Time::now();
 
   //publishObservation(timeStamp, observation);   //NUA EDIT: Commented out.
@@ -166,6 +172,8 @@ void OCS2_Mobile_Manipulator_Visualization::update(const SystemObservation& obse
   {
     geometryVisualization_ -> publishDistances(observation.state);
   }
+
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::update] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -173,6 +181,8 @@ void OCS2_Mobile_Manipulator_Visualization::update(const SystemObservation& obse
 /******************************************************************************************************/
 void OCS2_Mobile_Manipulator_Visualization::publishObservation(const ros::Time& timeStamp, const SystemObservation& observation) 
 {
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishObservation] START" << std::endl;
+
   // publish world -> base transform
   const auto r_world_base = getBasePosition(observation.state, modelInfo_);
   const Eigen::Quaternion<scalar_t> q_world_base = getBaseOrientation(observation.state, modelInfo_);
@@ -199,6 +209,8 @@ void OCS2_Mobile_Manipulator_Visualization::publishObservation(const ros::Time& 
     jointPositions[name] = 0.0;
   }
   robotStatePublisherPtr_ -> publishTransforms(jointPositions, timeStamp);
+
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishObservation] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -207,6 +219,8 @@ void OCS2_Mobile_Manipulator_Visualization::publishObservation(const ros::Time& 
 void OCS2_Mobile_Manipulator_Visualization::publishTargetTrajectories(const ros::Time& timeStamp,
                                                                       const TargetTrajectories& targetTrajectories) 
 {
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishTargetTrajectories] START" << std::endl;
+
   // publish command transform
   const Eigen::Vector3d eeDesiredPosition = targetTrajectories.stateTrajectory.back().head(3);
   Eigen::Quaterniond eeDesiredOrientation;
@@ -220,6 +234,8 @@ void OCS2_Mobile_Manipulator_Visualization::publishTargetTrajectories(const ros:
   command_tf.transform.rotation = ros_msg_helpers::getOrientationMsg(eeDesiredOrientation);
 
   tfBroadcaster_.sendTransform(command_tf);
+
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishTargetTrajectories] START" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -227,6 +243,8 @@ void OCS2_Mobile_Manipulator_Visualization::publishTargetTrajectories(const ros:
 /******************************************************************************************************/
 void OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy) 
 {
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] START" << std::endl;
+
   const scalar_t TRAJECTORYLINEWIDTH = 0.005;
   const std::array<scalar_t, 3> red{0.6350, 0.0780, 0.1840};
   const std::array<scalar_t, 3> blue{0, 0.4470, 0.7410};
@@ -281,6 +299,8 @@ void OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(const ros
 
   stateOptimizedPublisher_.publish(markerArray);
   stateOptimizedPosePublisher_.publish(poseArray);
+
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] END" << std::endl;
 }
 
 }  // namespace mobile_manipulator

@@ -77,7 +77,10 @@ void MRT_ROS_Interface::resetMpcNode(const TargetTrajectories& initTargetTraject
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::setCurrentObservation(const SystemObservation& currentObservation) {
+void MRT_ROS_Interface::setCurrentObservation(const SystemObservation& currentObservation) 
+{
+  std::cout << "[MRT_ROS_Interface::setCurrentObservation] START" << std::endl;
+
 #ifdef PUBLISH_THREAD
   std::unique_lock<std::mutex> lk(publisherMutex_);
 #endif
@@ -93,6 +96,8 @@ void MRT_ROS_Interface::setCurrentObservation(const SystemObservation& currentOb
 #else
   mpcObservationPublisher_.publish(mpcObservationMsg_);
 #endif
+
+  std::cout << "[MRT_ROS_Interface::setCurrentObservation] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -236,8 +241,13 @@ void MRT_ROS_Interface::shutdownPublisher() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::spinMRT() {
+void MRT_ROS_Interface::spinMRT() 
+{
+  std::cout << "[MRT_ROS_Interface::spinMRT] START" << std::endl;
+
   mrtCallbackQueue_.callOne();
+
+  std::cout << "[MRT_ROS_Interface::spinMRT] END" << std::endl;
 };
 
 /******************************************************************************************************/

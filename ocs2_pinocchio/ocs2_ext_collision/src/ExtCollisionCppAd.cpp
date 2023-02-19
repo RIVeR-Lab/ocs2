@@ -145,7 +145,7 @@ vector_t ExtCollisionCppAd::getValue(const PinocchioInterface& pinocchioInterfac
 std::pair<vector_t, matrix_t> ExtCollisionCppAd::getLinearApproximation(const PinocchioInterface& pinocchioInterface,
                                                                         const vector_t& q) const 
 {
-  std::cout << "[ExtCollisionCppAd::getLinearApproximation] START" << std::endl;
+  //std::cout << "[ExtCollisionCppAd::getLinearApproximation] START" << std::endl;
 
   vector_t distances;
   if (pointsOnRobotPtr_) 
@@ -175,6 +175,7 @@ std::pair<vector_t, matrix_t> ExtCollisionCppAd::getLinearApproximation(const Pi
   const auto f = cppAdInterfaceDistanceCalculation_ -> getFunctionValue(q, pointsInWorldFrame);
   const auto dfdq = cppAdInterfaceDistanceCalculation_ -> getJacobian(q, pointsInWorldFrame);
 
+  /*
   std::cout << "[ExtCollisionCppAd::getLinearApproximation] f: " << std::endl;
   for (size_t i = 0; i < f.size(); i++)
   {
@@ -191,8 +192,9 @@ std::pair<vector_t, matrix_t> ExtCollisionCppAd::getLinearApproximation(const Pi
     }
     std::cout << "" << std::endl;
   }
+  */
 
-  std::cout << "[ExtCollisionCppAd::getLinearApproximation] END" << std::endl << std::endl;
+  //std::cout << "[ExtCollisionCppAd::getLinearApproximation] END" << std::endl << std::endl;
 
   return std::make_pair(f, dfdq);
 }

@@ -56,6 +56,8 @@ GeometryInterfaceVisualization::GeometryInterfaceVisualization(PinocchioInterfac
 /******************************************************************************************************/
 void GeometryInterfaceVisualization::publishDistances(const ocs2::vector_t& q) 
 {
+  std::cout << "[GeometryInterfaceVisualization::publishDistances] START" << std::endl;
+
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
   pinocchio::forwardKinematics(model, data, q);
@@ -129,6 +131,8 @@ void GeometryInterfaceVisualization::publishDistances(const ocs2::vector_t& q)
   }
 
   markerPublisher_.publish(markerArray);
+
+  std::cout << "[GeometryInterfaceVisualization::publishDistances] END" << std::endl;
 }
 
 }  // namespace ocs2

@@ -148,18 +148,26 @@ int main(int argc, char** argv)
                                interface.mpcSettings().mpcDesiredFrequency_);
   mrt_loop.subscribeObservers({ocs2_mm_visu});
 
+
   // initial state
   SystemObservation initObservation;
   initObservation.state = interface.getInitialState();
   initObservation.input.setZero(interface.getManipulatorModelInfo().inputDim);
   initObservation.time = 0.0;
 
+  std::cout << "[MobileManipulatorGazeboMRT::main] state size: " << initObservation.state.size() << std::endl;
+  std::cout << "[MobileManipulatorGazeboMRT::main] input size: " << initObservation.input.size() << std::endl;
+  //while(1);
+
   // initial command
   vector_t initTarget(7);
-  initTarget.head(3) << 1, 0, 1;
+  initTarget.head(3) << -0.2, 0, 0.8;
   initTarget.tail(4) << Eigen::Quaternion<scalar_t>(0, 0, 1, 0).coeffs();
   const vector_t zeroInput = vector_t::Zero(interface.getManipulatorModelInfo().inputDim);
   const TargetTrajectories initTargetTrajectories({initObservation.time}, {initTarget}, {zeroInput});
+
+  //std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE INF" << std::endl;
+  //while(1);
 
   // Run mrt_loop (loops while ros is ok)
   mrt_loop.run(initTargetTrajectories);

@@ -72,10 +72,18 @@ const CommandData& MRT_BASE::getCommand() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-const PrimalSolution& MRT_BASE::getPolicy() const {
-  if (activePrimalSolutionPtr_ != nullptr) {
+const PrimalSolution& MRT_BASE::getPolicy() const 
+{
+  std::cout << "[MRT_BASE::getPolicy] START" << std::endl;
+
+  if (activePrimalSolutionPtr_ != nullptr) 
+  {
+    std::cout << "[MRT_BASE::getPolicy] END" << std::endl;
+    
     return *activePrimalSolutionPtr_;
-  } else {
+  } 
+  else 
+  {
     throw std::runtime_error("[MRT_BASE::getPolicy] updatePolicy() should be called first!");
   }
 }

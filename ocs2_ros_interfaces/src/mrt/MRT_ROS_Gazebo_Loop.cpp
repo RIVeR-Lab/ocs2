@@ -292,6 +292,8 @@ SystemObservation MRT_ROS_Gazebo_Loop::forwardSimulation(const SystemObservation
 /******************************************************************************************************/
 void MRT_ROS_Gazebo_Loop::mrtLoop() 
 {
+  std::cout << "[OCS2_MRT_Loop::mrtLoop] START" << std::endl;
+
   // Loop variables
   SystemObservation currentObservation;
   SystemObservation targetObservation;
@@ -303,7 +305,7 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
   ros::Rate simRate(mrtDesiredFrequency_);
   while (ros::ok() && ros::master::check()) 
   {
-    //std::cout << "OCS2_MRT_Loop::mrtLoop -> HUGO 0" << std::endl;
+    std::cout << "[OCS2_MRT_Loop::mrtLoop] HUGO 0" << std::endl;
     mrt_.reset();
 
     while (!mrt_.initialPolicyReceived() && ros::ok() && ros::master::check()) 
@@ -313,55 +315,31 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
       // Get initial observation
       currentObservation = getCurrentObservation(true);
 
-      //std::cout << "OCS2_MRT_Loop::run -> initObservation:" << std::endl;
-      //std::cout << initObservation << std::endl;
-
+      // Set 
       mrt_.setCurrentObservation(currentObservation);
     }
 
-    /*
-    std::cout << "OCS2_MRT_Loop::mrtLoop -> HUGO 1" << std::endl;
-    currentObservation = getCurrentObservation(true);
-
-    std::cout << "OCS2_MRT_Loop::mrtLoop -> HUGO 2" << std::endl;
-    // Publish observation
-    mrt_.setCurrentObservation(currentObservation);
-
-    std::cout << "OCS2_MRT_Loop::mrtLoop -> HUGO 3" << std::endl;
-    // Trigger MRT callbacks
-    mrt_.spinMRT();
-    */
-
-    //std::cout << "OCS2_MRT_Loop::mrtLoop -> HUGO 4" << std::endl;
+    std::cout << "[OCS2_MRT_Loop::mrtLoop] HUGO 1" << std::endl;
     // Update the policy if a new on was received
     mrt_.updatePolicy();
-    
 
-    //std::cout << "OCS2_MRT_Loop::mrtLoop -> HUGO 5" << std::endl;
+    std::cout << "[OCS2_MRT_Loop::mrtLoop] HUGO 2" << std::endl;
     // Update observers
     for (auto& observer : observers_) 
     {
       observer -> update(currentObservation, mrt_.getPolicy(), mrt_.getCommand());
     }
 
-    //currentObservation = getCurrentObservation();
-
-    // Forward simulation
-    //currentObservation = forwardSimulation(currentObservation);
-
-    // Publish observation
-    //mrt_.setCurrentObservation(currentObservation);
-
-    //std::cout << "OCS2_MRT_Loop::mrtLoop -> HUGO 6" << std::endl;
-    //std::cout << "OCS2_MRT_Loop::mrtLoop -> publishCommand" << std::endl;
+    std::cout << "OCS2_MRT_Loop::mrtLoop -> HUGO 3" << std::endl;
     publishCommand(currentObservation);
 
     time_ += dt_;
 
     ros::spinOnce();
     simRate.sleep();
-    //std::cout << "OCS2_MRT_Loop::mrtLoop -> HUGO 7" << std::endl;
   }
+
+  std::cout << "OCS2_MRT_Loop::mrtLoop -> END" << std::endl << std::endl;
 }
 
 /******************************************************************************************************/
@@ -474,6 +452,8 @@ void MRT_ROS_Gazebo_Loop::jointTrajectoryControllerStateCallback(const control_m
 /******************************************************************************************************/
 SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
 {
+  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] START" << std::endl;
+
   geometry_msgs::Pose current_robotBasePoseMsg = robotBasePoseMsg_;
   control_msgs::JointTrajectoryControllerState current_jointTrajectoryControllerStateMsg = jointTrajectoryControllerStateMsg_;
 
@@ -483,14 +463,19 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
 
   if (initFlag)
   {
-    //std::cout << "OCS2_MRT_Loop::getCurrentObservation -> AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" << std::endl;
     currentObservation.input.setZero(inputDim_);
   }
   else
   {
-    //std::cout << "OCS2_MRT_Loop::getCurrentObservation -> BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" << std::endl;
+    std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] BEFORE getPolicy" << std::endl;
+
     PrimalSolution primalSolution = mrt_.getPolicy();
+
+    std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] AFTER getPolicy" << std::endl;
+
     currentObservation.input = primalSolution.getDesiredInput(time_);
+
+    std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] AFTER getDesiredInput" << std::endl;
   }
 
   currentObservation.state.setZero(stateDim_);
@@ -530,6 +515,8 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
 
     currentObservation.state[i+3] = current_jointTrajectoryControllerStateMsg.actual.positions[stateIndexMap[i]];
   }
+
+  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] END" << std::endl;
 
   return currentObservation;
 }
