@@ -51,7 +51,7 @@ class MRT_ROS_Gazebo_Loop
 {
   public:
     /**
-     * Constructor.
+     * Constructor. NUA TODO: Update!
      *
      * @param [in] mrt: The underlying MRT class to be used. If MRT contains a rollout object, the dummy will roll out
      * the received controller using the MRT::rolloutPolicy() method instead of just sending back a planned state.
@@ -59,12 +59,11 @@ class MRT_ROS_Gazebo_Loop
      * @param [in] mpcDesiredFrequency: MPC loop frequency in Hz. If set to a positive number, MPC loop
      * will be simulated to run by this frequency. Note that this might not be the MPC's real-time frequency.
      */
-    MRT_ROS_Gazebo_Loop(MRT_ROS_Interface& mrt, 
-                        scalar_t mrtDesiredFrequency, 
-                        scalar_t mpcDesiredFrequency = -1);
-
     MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                         MRT_ROS_Interface& mrt,
+                        std::string worldFrameName,
+                        std::string baseFrameName,
+                        std::string robotModelName,
                         size_t stateDim,
                         size_t inputDim,
                         std::vector<std::string> dofNames,
@@ -76,16 +75,11 @@ class MRT_ROS_Gazebo_Loop
      */
     virtual ~MRT_ROS_Gazebo_Loop() = default;
 
-    /**
-     * Runs the dummy MRT loop.
-     *
-     * @param [in] initObservation: The initial observation.
-     * @param [in] initTargetTrajectories: The initial TargetTrajectories.
-     */
-    void run(const SystemObservation& initObservation, const TargetTrajectories& initTargetTrajectories);
+    /** NUA TODO: Add description */
+    void setRobotModelType(std::string robotModelType);
 
     /**
-       * Runs the dummy MRT loop.
+       * Runs the MRT loop.
        *
        * @param [in] initTargetTrajectories: The initial TargetTrajectories.
        */
@@ -109,16 +103,6 @@ class MRT_ROS_Gazebo_Loop
     virtual void modifyObservation(SystemObservation& observation) {}
 
   private:
-    /**
-     * Runs a loop where mpc optimizations are synchronized with the forward simulation of the system
-     */
-    void synchronizedDummyLoop(const SystemObservation& initObservation, const TargetTrajectories& initTargetTrajectories);
-
-    /**
-     * Runs a loop where mpc optimizations and simulation of the system are asynchronous.
-     * The simulation runs as the specified mrtFrequency, and the MPC runs as fast as possible.
-     */
-    void realtimeDummyLoop(const SystemObservation& initObservation, const TargetTrajectories& initTargetTrajectories);
 
     /** Forward simulates the system from current observation*/
     SystemObservation forwardSimulation(const SystemObservation& currentObservation);
@@ -146,7 +130,17 @@ class MRT_ROS_Gazebo_Loop
 
     /** NUA TODO: Add description */
     //void publishCommand(const PrimalSolution& primalSolution);
-    void publishCommand(SystemObservation& currentObservation);
+    void publishCommand(SystemObservation& targetObservation);
+
+    std::string worldFrameName_;
+    std::string baseFrameName_;
+    std::string robotModelType_;
+
+    size_t stateDim_;
+    size_t inputDim_;
+    std::vector<std::string> dofNames_;
+
+    std::vector<int> stateIndexMap_;
 
     scalar_t mrtDesiredFrequency_;
     scalar_t mpcDesiredFrequency_;
@@ -155,16 +149,11 @@ class MRT_ROS_Gazebo_Loop
     scalar_t dt_;
     scalar_t time_;
 
+    vector_t currentInput_;
+
     tf::TransformListener tfListener_;
 
     std::vector<std::shared_ptr<DummyObserver>> observers_;
-
-    size_t stateDim_;
-    size_t inputDim_;
-    std::vector<std::string> dofNames_;
-    //mobile_manipulator::ManipulatorModelInfo manipulatorModelInfo_;
-
-    std::vector<int> stateIndexMap;
 
     nav_msgs::Odometry odometryMsg_;
     geometry_msgs::Pose robotBasePoseMsg_;

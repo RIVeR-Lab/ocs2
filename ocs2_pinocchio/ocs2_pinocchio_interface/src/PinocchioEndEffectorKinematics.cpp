@@ -47,8 +47,10 @@ namespace ocs2 {
 PinocchioEndEffectorKinematics::PinocchioEndEffectorKinematics(const PinocchioInterface& pinocchioInterface,
                                                                const PinocchioStateInputMapping<scalar_t>& mapping,
                                                                std::vector<std::string> endEffectorIds)
-    : pinocchioInterfacePtr_(nullptr), mappingPtr_(mapping.clone()), endEffectorIds_(std::move(endEffectorIds)) {
-  for (const auto& bodyName : endEffectorIds_) {
+  : pinocchioInterfacePtr_(nullptr), mappingPtr_(mapping.clone()), endEffectorIds_(std::move(endEffectorIds)) 
+{
+  for (const auto& bodyName : endEffectorIds_) 
+  {
     endEffectorFrameIds_.push_back(pinocchioInterface.getModel().getBodyId(bodyName));
   }
 }
@@ -116,8 +118,10 @@ auto PinocchioEndEffectorKinematics::getVelocity(const vector_t& state, const ve
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::getPositionLinearApproximation(const vector_t& state) const {
-  if (pinocchioInterfacePtr_ == nullptr) {
+std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::getPositionLinearApproximation(const vector_t& state) const 
+{ 
+  if (pinocchioInterfacePtr_ == nullptr) 
+  {
     throw std::runtime_error("[PinocchioEndEffectorKinematics] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
   }
 
@@ -128,7 +132,8 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::g
   pinocchio::Data data = pinocchio::Data(pinocchioInterfacePtr_->getData());
 
   std::vector<VectorFunctionLinearApproximation> positions;
-  for (const auto& frameId : endEffectorFrameIds_) {
+  for (const auto& frameId : endEffectorFrameIds_) 
+  {
     matrix_t J = matrix_t::Zero(6, model.nq);
     pinocchio::getFrameJacobian(model, data, frameId, rf, J);
 
@@ -137,6 +142,7 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematics::g
     std::tie(pos.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, J.topRows<3>(), matrix_t::Zero(3, model.nv));
     positions.emplace_back(std::move(pos));
   }
+
   return positions;
 }
 

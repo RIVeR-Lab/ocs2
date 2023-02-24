@@ -40,10 +40,12 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 EndEffectorConstraint::EndEffectorConstraint(const EndEffectorKinematics<scalar_t>& endEffectorKinematics,
                                              const ReferenceManager& referenceManager)
-    : StateConstraint(ConstraintOrder::Linear),
-      endEffectorKinematicsPtr_(endEffectorKinematics.clone()),
-      referenceManagerPtr_(&referenceManager) {
-  if (endEffectorKinematics.getIds().size() != 1) {
+  : StateConstraint(ConstraintOrder::Linear),
+    endEffectorKinematicsPtr_(endEffectorKinematics.clone()),
+    referenceManagerPtr_(&referenceManager) 
+{
+  if (endEffectorKinematics.getIds().size() != 1) 
+  {
     throw std::runtime_error("[EndEffectorConstraint] endEffectorKinematics has wrong number of end effector IDs.");
   }
   pinocchioEEKinPtr_ = dynamic_cast<PinocchioEndEffectorKinematics*>(endEffectorKinematicsPtr_.get());
@@ -52,16 +54,19 @@ EndEffectorConstraint::EndEffectorConstraint(const EndEffectorKinematics<scalar_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t EndEffectorConstraint::getNumConstraints(scalar_t time) const {
+size_t EndEffectorConstraint::getNumConstraints(scalar_t time) const 
+{
   return 6;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t EndEffectorConstraint::getValue(scalar_t time, const vector_t& state, const PreComputation& preComputation) const {
+vector_t EndEffectorConstraint::getValue(scalar_t time, const vector_t& state, const PreComputation& preComputation) const 
+{
   // PinocchioEndEffectorKinematics requires pre-computation with shared PinocchioInterface.
-  if (pinocchioEEKinPtr_ != nullptr) {
+  if (pinocchioEEKinPtr_ != nullptr) 
+  {
     const auto& preCompMM = cast<MobileManipulatorPreComputation>(preComputation);
     pinocchioEEKinPtr_->setPinocchioInterface(preCompMM.getPinocchioInterface());
   }
@@ -77,10 +82,13 @@ vector_t EndEffectorConstraint::getValue(scalar_t time, const vector_t& state, c
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(scalar_t time, const vector_t& state,
-                                                                                const PreComputation& preComputation) const {
+VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(scalar_t time, 
+                                                                                const vector_t& state,
+                                                                                const PreComputation& preComputation) const 
+{
   // PinocchioEndEffectorKinematics requires pre-computation with shared PinocchioInterface.
-  if (pinocchioEEKinPtr_ != nullptr) {
+  if (pinocchioEEKinPtr_ != nullptr) 
+  {
     const auto& preCompMM = cast<MobileManipulatorPreComputation>(preComputation);
     pinocchioEEKinPtr_->setPinocchioInterface(preCompMM.getPinocchioInterface());
   }
@@ -93,8 +101,7 @@ VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(
   approximation.f.head<3>() = eePosition.f - desiredPositionOrientation.first;
   approximation.dfdx.topRows<3>() = eePosition.dfdx;
 
-  const auto eeOrientationError =
-      endEffectorKinematicsPtr_->getOrientationErrorLinearApproximation(state, {desiredPositionOrientation.second}).front();
+  const auto eeOrientationError = endEffectorKinematicsPtr_->getOrientationErrorLinearApproximation(state, {desiredPositionOrientation.second}).front();
   approximation.f.tail<3>() = eeOrientationError.f;
   approximation.dfdx.bottomRows<3>() = eeOrientationError.dfdx;
 
@@ -104,7 +111,8 @@ VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto EndEffectorConstraint::interpolateEndEffectorPose(scalar_t time) const -> std::pair<vector_t, quaternion_t> {
+auto EndEffectorConstraint::interpolateEndEffectorPose(scalar_t time) const -> std::pair<vector_t, quaternion_t> 
+{
   const auto& targetTrajectories = referenceManagerPtr_->getTargetTrajectories();
   const auto& timeTrajectory = targetTrajectories.timeTrajectory;
   const auto& stateTrajectory = targetTrajectories.stateTrajectory;
@@ -112,7 +120,8 @@ auto EndEffectorConstraint::interpolateEndEffectorPose(scalar_t time) const -> s
   vector_t position;
   quaternion_t orientation;
 
-  if (stateTrajectory.size() > 1) {
+  if (stateTrajectory.size() > 1) 
+  {
     // Normal interpolation case
     int index;
     scalar_t alpha;
@@ -120,12 +129,16 @@ auto EndEffectorConstraint::interpolateEndEffectorPose(scalar_t time) const -> s
 
     const auto& lhs = stateTrajectory[index];
     const auto& rhs = stateTrajectory[index + 1];
+
     const quaternion_t q_lhs(lhs.tail<4>());
     const quaternion_t q_rhs(rhs.tail<4>());
 
     position = alpha * lhs.head<3>() + (1.0 - alpha) * rhs.head<3>();
     orientation = q_lhs.slerp((1.0 - alpha), q_rhs);
-  } else {  // stateTrajectory.size() == 1
+  } 
+  else 
+  {  
+    // stateTrajectory.size() == 1
     position = stateTrajectory.front().head<3>();
     orientation = quaternion_t(stateTrajectory.front().tail<4>());
   }

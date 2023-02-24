@@ -61,10 +61,14 @@ void MRT_BASE::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-const CommandData& MRT_BASE::getCommand() const {
-  if (activeCommandPtr_ != nullptr) {
+const CommandData& MRT_BASE::getCommand() const 
+{
+  if (activeCommandPtr_ != nullptr) 
+  {
     return *activeCommandPtr_;
-  } else {
+  } 
+  else 
+  {
     throw std::runtime_error("[MRT_BASE::getCommand] updatePolicy() should be called first!");
   }
 }
@@ -74,11 +78,11 @@ const CommandData& MRT_BASE::getCommand() const {
 /******************************************************************************************************/
 const PrimalSolution& MRT_BASE::getPolicy() const 
 {
-  std::cout << "[MRT_BASE::getPolicy] START" << std::endl;
+  //td::cout << "[MRT_BASE::getPolicy] START" << std::endl;
 
   if (activePrimalSolutionPtr_ != nullptr) 
   {
-    std::cout << "[MRT_BASE::getPolicy] END" << std::endl;
+    //std::cout << "[MRT_BASE::getPolicy] END" << std::endl;
     
     return *activePrimalSolutionPtr_;
   } 
@@ -161,11 +165,16 @@ void MRT_BASE::rolloutPolicy(scalar_t currentTime, const vector_t& currentState,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool MRT_BASE::updatePolicy() {
+bool MRT_BASE::updatePolicy() 
+{
+  //std::cout << "[MRT_BASE::updatePolicy] START" << std::endl;
+
   std::unique_lock<std::mutex> lock(bufferMutex_, std::try_to_lock);
-  if (lock.owns_lock()) {
+  if (lock.owns_lock()) 
+  {
     mrtTrylockWarningCount_ = 0;
-    if (newPolicyInBuffer_) {
+    if (newPolicyInBuffer_) 
+    {
       // update the active solution from buffer
       activeCommandPtr_.swap(bufferCommandPtr_);
       activePrimalSolutionPtr_.swap(bufferPrimalSolutionPtr_);
@@ -174,17 +183,24 @@ bool MRT_BASE::updatePolicy() {
 
       modifyActiveSolution(*activeCommandPtr_, *activePrimalSolutionPtr_);
       return true;
-    } else {
+    } 
+    else 
+    {
       return false;  // No policy update: the buffer contains nothing new.
     }
-  } else {
+  } 
+  else 
+  {
     ++mrtTrylockWarningCount_;
-    if (mrtTrylockWarningCount_ > mrtTrylockWarningThreshold_) {
+    if (mrtTrylockWarningCount_ > mrtTrylockWarningThreshold_) 
+    {
       std::cerr << "[MRT_BASE::updatePolicy] failed to lock the policyBufferMutex for " << mrtTrylockWarningCount_
                 << " consecutive times.\n";
     }
     return false;  // No policy update: the lock could not be acquired.
   }
+
+  //std::cout << "[MRT_BASE::updatePolicy] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -220,12 +236,19 @@ void MRT_BASE::moveToBuffer(std::unique_ptr<CommandData> commandDataPtr, std::un
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_BASE::modifyActiveSolution(const CommandData& command, PrimalSolution& primalSolution) {
-  for (auto& mrtObserver : observerPtrArray_) {
-    if (mrtObserver != nullptr) {
+void MRT_BASE::modifyActiveSolution(const CommandData& command, PrimalSolution& primalSolution) 
+{
+  //std::cout << "[MRT_BASE::modifyActiveSolution] START" << std::endl;
+
+  for (auto& mrtObserver : observerPtrArray_) 
+  {
+    if (mrtObserver != nullptr) 
+    {
       mrtObserver->modifyActiveSolution(command, primalSolution);
     }
   }
+
+  //std::cout << "[MRT_BASE::modifyActiveSolution] END" << std::endl;
 }
 
 /******************************************************************************************************/

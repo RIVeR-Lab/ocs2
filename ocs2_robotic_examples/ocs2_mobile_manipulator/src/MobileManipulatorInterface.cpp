@@ -110,8 +110,14 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   std::cerr << "\n #### model_information.eeFrame: \"" << eeFrame << "\"";
   std::cerr << " #### =============================================================================" << std::endl;
 
+  std::cout << "" << std::endl;
+  std::cout << "*********************************" << std::endl;
+  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START PinocchioInterface" << std::endl;
   // create pinocchio interface
   pinocchioInterfacePtr_.reset(new PinocchioInterface(createPinocchioInterface(urdfFile, modelType, removeJointNames)));
+  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END PinocchioInterface" << std::endl;
+  std::cout << "*********************************" << std::endl;
+  std::cout << "" << std::endl;
   std::cerr << *pinocchioInterfacePtr_;
 
   // ManipulatorModelInfo
@@ -148,6 +154,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   loadData::loadEigenMatrix(taskFile, "initialState.arm", initialArmState);
   initialState_.tail(armStateDim) = initialArmState;
   std::cerr << "Initial State:   " << initialState_.transpose() << std::endl;
+  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] Initial State: " << initialState_.transpose() << std::endl;
 
   // DDP-MPC settings
   ddpSettings_ = ddp::loadSettings(taskFile, "ddp");

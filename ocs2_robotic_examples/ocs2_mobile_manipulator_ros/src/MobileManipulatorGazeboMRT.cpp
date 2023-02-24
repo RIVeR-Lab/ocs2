@@ -117,6 +117,11 @@ int main(int argc, char** argv)
 
   // ManipulatorModelInfo
   ManipulatorModelInfo manipulatorModelInfo = interface.getManipulatorModelInfo();
+  std::string baseFrameName = manipulatorModelInfo.baseFrame;
+  if (modelTypeEnumToString(manipulatorModelInfo.manipulatorModelType) == "defaultManipulator")
+  {
+    baseFrameName = manipulatorModelInfo.armBaseFrame;
+  }
 
   std::cout << "[MobileManipulatorGazeboMRT::main] manipulatorModelType: " << modelTypeEnumToString(manipulatorModelInfo.manipulatorModelType) << std::endl;
   std::cout << "[MobileManipulatorGazeboMRT::main] stateDim: " << manipulatorModelInfo.stateDim << std::endl;
@@ -141,6 +146,9 @@ int main(int argc, char** argv)
   // MRT loop
   MRT_ROS_Gazebo_Loop mrt_loop(nodeHandle, 
                                mrt, 
+                               "world",
+                               baseFrameName,
+                               modelTypeEnumToString(manipulatorModelInfo.manipulatorModelType),
                                interface.getManipulatorModelInfo().stateDim, 
                                interface.getManipulatorModelInfo().inputDim, 
                                interface.getManipulatorModelInfo().dofNames, 
@@ -157,7 +165,7 @@ int main(int argc, char** argv)
 
   std::cout << "[MobileManipulatorGazeboMRT::main] state size: " << initObservation.state.size() << std::endl;
   std::cout << "[MobileManipulatorGazeboMRT::main] input size: " << initObservation.input.size() << std::endl;
-  //while(1);
+  
 
   // initial command
   vector_t initTarget(7);

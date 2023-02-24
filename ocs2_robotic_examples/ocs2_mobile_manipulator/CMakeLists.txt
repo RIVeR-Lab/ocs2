@@ -15,6 +15,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_self_collision
   ocs2_ext_collision
   ocs2_ros_interfaces
+  tf_conversions
   #voxblox
   #voxblox_ros
 )
@@ -50,6 +51,7 @@ catkin_package(
   DEPENDS
     Boost
     pinocchio
+    Eigen3
 )
 
 ###########
@@ -104,6 +106,7 @@ target_link_libraries(${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
   ${pinocchio_LIBRARIES}
+  ${EIGEN_LIBRARIES}
 )
 target_compile_options(${PROJECT_NAME} PUBLIC ${FLAGS})
 

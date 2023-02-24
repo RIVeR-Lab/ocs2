@@ -38,16 +38,30 @@ namespace ocs2 {
 /**
  * This class is an interface class for the user defined target trajectories.
  */
-struct TargetTrajectories {
+struct TargetTrajectories 
+{
   explicit TargetTrajectories(size_t size = 0);
-  TargetTrajectories(scalar_array_t desiredTimeTrajectory, vector_array_t desiredStateTrajectory,
+  
+  TargetTrajectories(scalar_array_t desiredTimeTrajectory, 
+                     vector_array_t desiredStateTrajectory,
                      vector_array_t desiredInputTrajectory = vector_array_t());
+  
   void clear();
-  bool empty() const { return timeTrajectory.empty() || stateTrajectory.empty(); }
-  size_t size() const { return timeTrajectory.size(); }
+  bool empty() const 
+  { 
+    return timeTrajectory.empty() || stateTrajectory.empty(); 
+  }
+  
+  size_t size() const 
+  { 
+    return timeTrajectory.size(); 
+  }
 
   bool operator==(const TargetTrajectories& other);
-  bool operator!=(const TargetTrajectories& other) { return !(*this == other); }
+  bool operator!=(const TargetTrajectories& other) 
+  { 
+    return !(*this == other); 
+  }
 
   vector_t getDesiredState(scalar_t time) const;
   vector_t getDesiredInput(scalar_t time) const;

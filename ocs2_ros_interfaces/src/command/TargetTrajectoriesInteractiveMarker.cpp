@@ -37,11 +37,14 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TargetTrajectoriesInteractiveMarker::TargetTrajectoriesInteractiveMarker(::ros::NodeHandle& nodeHandle, const std::string& topicPrefix,
+TargetTrajectoriesInteractiveMarker::TargetTrajectoriesInteractiveMarker(::ros::NodeHandle& nodeHandle, 
+                                                                         const std::string& topicPrefix,
                                                                          GaolPoseToTargetTrajectories gaolPoseToTargetTrajectories)
-    : server_("simple_marker"), gaolPoseToTargetTrajectories_(std::move(gaolPoseToTargetTrajectories)) {
+    : server_("simple_marker"), gaolPoseToTargetTrajectories_(std::move(gaolPoseToTargetTrajectories)) 
+{
   // observation subscriber
-  auto observationCallback = [this](const ocs2_msgs::mpc_observation::ConstPtr& msg) {
+  auto observationCallback = [this](const ocs2_msgs::mpc_observation::ConstPtr& msg) 
+  {
     std::lock_guard<std::mutex> lock(latestObservationMutex_);
     latestObservation_ = ros_msg_conversions::readObservationMsg(*msg);
   };
@@ -68,17 +71,21 @@ TargetTrajectoriesInteractiveMarker::TargetTrajectoriesInteractiveMarker(::ros::
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-visualization_msgs::InteractiveMarker TargetTrajectoriesInteractiveMarker::createInteractiveMarker() const {
+visualization_msgs::InteractiveMarker TargetTrajectoriesInteractiveMarker::createInteractiveMarker() const 
+{
   visualization_msgs::InteractiveMarker interactiveMarker;
   interactiveMarker.header.frame_id = "world";
   interactiveMarker.header.stamp = ros::Time::now();
   interactiveMarker.name = "Goal";
   interactiveMarker.scale = 0.2;
   interactiveMarker.description = "Right click to send command";
+  interactiveMarker.pose.position.x = 0.0;
+  interactiveMarker.pose.position.y = 0.0;
   interactiveMarker.pose.position.z = 1.0;
 
   // create a grey box marker
-  const auto boxMarker = []() {
+  const auto boxMarker = []() 
+  {
     visualization_msgs::Marker marker;
     marker.type = visualization_msgs::Marker::CUBE;
     marker.scale.x = 0.1;
@@ -144,10 +151,13 @@ visualization_msgs::InteractiveMarker TargetTrajectoriesInteractiveMarker::creat
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void TargetTrajectoriesInteractiveMarker::processFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback) {
+void TargetTrajectoriesInteractiveMarker::processFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback) 
+{
   // Desired state trajectory
   const Eigen::Vector3d position(feedback->pose.position.x, feedback->pose.position.y, feedback->pose.position.z);
-  const Eigen::Quaterniond orientation(feedback->pose.orientation.w, feedback->pose.orientation.x, feedback->pose.orientation.y,
+  const Eigen::Quaterniond orientation(feedback->pose.orientation.w, 
+                                       feedback->pose.orientation.x, 
+                                       feedback->pose.orientation.y,
                                        feedback->pose.orientation.z);
 
   // get the latest observation

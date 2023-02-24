@@ -33,6 +33,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/multibody/joint/joint-composite.hpp>
 #include <pinocchio/multibody/model.hpp>
 
+#include <tf/tf.h>
+#include <tf/transform_listener.h>
+#include <tf_conversions/tf_eigen.h>
+#include <eigen_conversions/eigen_msg.h>
+
 #include <boost/property_tree/info_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 
@@ -45,34 +50,46 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, const ManipulatorModelType& type) {
-  switch (type) {
-    case ManipulatorModelType::DefaultManipulator: {
+PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, const ManipulatorModelType& type) 
+{
+  switch (type) 
+  {
+    case ManipulatorModelType::DefaultManipulator: 
+    {
       // return pinocchio interface
       return getPinocchioInterfaceFromUrdfFile(robotUrdfPath);
     }
-    case ManipulatorModelType::FloatingArmManipulator: {
+
+    case ManipulatorModelType::FloatingArmManipulator: 
+    {
       // add 6 DoF for the floating base
       pinocchio::JointModelComposite jointComposite(2);
       jointComposite.addJoint(pinocchio::JointModelTranslation());
       jointComposite.addJoint(pinocchio::JointModelSphericalZYX());
+      
       // return pinocchio interface
       return getPinocchioInterfaceFromUrdfFile(robotUrdfPath, jointComposite);
     }
-    case ManipulatorModelType::FullyActuatedFloatingArmManipulator: {
+
+    case ManipulatorModelType::FullyActuatedFloatingArmManipulator: 
+    {
       // add 6 DOF for the fully-actuated free-floating base
       pinocchio::JointModelComposite jointComposite(2);
       jointComposite.addJoint(pinocchio::JointModelTranslation());
       jointComposite.addJoint(pinocchio::JointModelSphericalZYX());
+      
       // return pinocchio interface
       return getPinocchioInterfaceFromUrdfFile(robotUrdfPath, jointComposite);
     }
-    case ManipulatorModelType::WheelBasedMobileManipulator: {
+
+    case ManipulatorModelType::WheelBasedMobileManipulator: 
+    {
       // add XY-yaw joint for the wheel-base
       pinocchio::JointModelComposite jointComposite(3);
       jointComposite.addJoint(pinocchio::JointModelPX());
       jointComposite.addJoint(pinocchio::JointModelPY());
       jointComposite.addJoint(pinocchio::JointModelRZ());
+
       // return pinocchio interface
       return getPinocchioInterfaceFromUrdfFile(robotUrdfPath, jointComposite);
     }
@@ -84,50 +101,112 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, co
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, const ManipulatorModelType& type,
-                                            const std::vector<std::string>& jointNames) {
+PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, 
+                                            const ManipulatorModelType& type,
+                                            const std::vector<std::string>& jointNames) 
+{
+  std::cout << "[FactoryFunctions::createPinocchioInterface(3)] START" << std::endl;
+
   using joint_pair_t = std::pair<const std::string, std::shared_ptr<::urdf::Joint>>;
 
   // parse the URDF
   const auto urdfTree = ::urdf::parseURDFFile(robotUrdfPath);
+  
   // remove extraneous joints from urdf
   ::urdf::ModelInterfaceSharedPtr newModel = std::make_shared<::urdf::ModelInterface>(*urdfTree);
-  for (joint_pair_t& jointPair : newModel->joints_) {
-    if (std::find(jointNames.begin(), jointNames.end(), jointPair.first) != jointNames.end()) {
+  for (joint_pair_t& jointPair : newModel->joints_) 
+  {
+    if (std::find(jointNames.begin(), jointNames.end(), jointPair.first) != jointNames.end()) 
+    {
       jointPair.second->type = urdf::Joint::FIXED;
     }
   }
+
   // resolve for the robot type
-  switch (type) {
-    case ManipulatorModelType::DefaultManipulator: {
+  switch (type) 
+  {
+    case ManipulatorModelType::DefaultManipulator: 
+    {
       // return pinocchio interface
       return getPinocchioInterfaceFromUrdfModel(newModel);
     }
-    case ManipulatorModelType::FloatingArmManipulator: {
+
+    case ManipulatorModelType::FloatingArmManipulator: 
+    {
       // add 6 DoF for the floating base
       pinocchio::JointModelComposite jointComposite(2);
       jointComposite.addJoint(pinocchio::JointModelTranslation());
       jointComposite.addJoint(pinocchio::JointModelSphericalZYX());
+      
       // return pinocchio interface
       return getPinocchioInterfaceFromUrdfModel(newModel, jointComposite);
     }
-    case ManipulatorModelType::FullyActuatedFloatingArmManipulator: {
+
+    case ManipulatorModelType::FullyActuatedFloatingArmManipulator: 
+    {
       // add 6 DOF for the free-floating base
       pinocchio::JointModelComposite jointComposite(2);
       jointComposite.addJoint(pinocchio::JointModelTranslation());
       jointComposite.addJoint(pinocchio::JointModelSphericalZYX());
+      
       // return pinocchio interface
       return getPinocchioInterfaceFromUrdfFile(robotUrdfPath, jointComposite);
     }
-    case ManipulatorModelType::WheelBasedMobileManipulator: {
+
+    case ManipulatorModelType::WheelBasedMobileManipulator: 
+    {
       // add XY-yaw joint for the wheel-base
       pinocchio::JointModelComposite jointComposite(3);
       jointComposite.addJoint(pinocchio::JointModelPX());
       jointComposite.addJoint(pinocchio::JointModelPY());
       jointComposite.addJoint(pinocchio::JointModelRZ());
+
+      std::string world_frame_name = "world";
+      std::string base_frame_name = "base_link";
+      tf::TransformListener tflistener;
+      tf::StampedTransform transform_base_wrt_world;
+      pinocchio::SE3 se3_base_wrt_world = pinocchio::SE3::Identity();
+
+      /*
+      try
+      {
+        tflistener.waitForTransform(world_frame_name, base_frame_name, ros::Time(0), ros::Duration(10.0));
+        tflistener.lookupTransform(world_frame_name, base_frame_name, ros::Time(0), transform_base_wrt_world);
+      }
+      catch (tf::TransformException ex)
+      {
+        ROS_INFO("[FactoryFunctions::createPinocchioInterface(3)] Couldn't get transform!");
+        ROS_ERROR("%s", ex.what());
+
+        while(1);
+      }
+      
+      se3_base_wrt_world.translation().x() = transform_base_wrt_world.getOrigin().x();
+      se3_base_wrt_world.translation().y() = transform_base_wrt_world.getOrigin().y();
+      se3_base_wrt_world.translation().z() = transform_base_wrt_world.getOrigin().z();
+      */
+
+      se3_base_wrt_world.translation().z() = 0.06;
+
+			//tf::matrixTFToEigen(tf::Matrix3x3(transform_base_wrt_world.getRotation()), se3_base_wrt_world.rotation());
+
+      std::cout << "[FactoryFunctions::createPinocchioInterface(3)] se3_base_wrt_world:" << std::endl;
+      std::cout << "translation x: " << se3_base_wrt_world.translation().x() << std::endl;
+      std::cout << "translation y: " << se3_base_wrt_world.translation().y() << std::endl;
+      std::cout << "translation z: " << se3_base_wrt_world.translation().z() << std::endl;
+      //std::cout << "rotation x: " << se3_base_wrt_world.rotation().x() << std::endl;
+      //std::cout << "rotation y: " << se3_base_wrt_world.rotation().y() << std::endl;
+      //std::cout << "rotation z: " << se3_base_wrt_world.rotation().z() << std::endl;
+      //std::cout << "rotation w: " << se3_base_wrt_world.rotation().w() << std::endl;
+
+      std::cout << "[FactoryFunctions::createPinocchioInterface(3)] END WheelBasedMobileManipulator" << std::endl;
+
       // return pinocchio interface
-      return getPinocchioInterfaceFromUrdfModel(newModel, jointComposite);
+      //return getPinocchioInterfaceFromUrdfModel(newModel, jointComposite);
+      return getPinocchioInterfaceFromUrdfModel(robotUrdfPath, jointComposite, se3_base_wrt_world, "offset_link");
     }
+    
+
     default:
       throw std::invalid_argument("Invalid manipulator model type provided.");
   }

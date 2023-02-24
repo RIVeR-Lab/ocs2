@@ -63,6 +63,8 @@ void RosReferenceManager::subscribe(ros::NodeHandle& nodeHandle)
   {
     auto targetTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(*msg);
     referenceManagerPtr_->setTargetTrajectories(std::move(targetTrajectories));
+
+    auto tt = referenceManagerPtr_->getTargetTrajectories();
   };
   targetTrajectoriesSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mpc_target_trajectories>(topicPrefix_ + "_mpc_target", 1, targetTrajectoriesCallback);
 }

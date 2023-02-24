@@ -36,27 +36,38 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
-Eigen::Matrix<SCALAR, 3, 1> getBasePosition(const Eigen::Matrix<SCALAR, -1, 1>& state, const ManipulatorModelInfo& info) {
+Eigen::Matrix<SCALAR, 3, 1> getBasePosition(const Eigen::Matrix<SCALAR, -1, 1>& state, const ManipulatorModelInfo& info) 
+{
   assert(state.rows() == info.stateDim);
   assert(state.cols() == 1);
+
   // resolve the position vector based on robot type.
-  switch (info.manipulatorModelType) {
-    case ManipulatorModelType::DefaultManipulator: {
+  switch (info.manipulatorModelType) 
+  {
+    case ManipulatorModelType::DefaultManipulator: 
+    {
       // for default arm, we assume robot is at identity pose
       return Eigen::Matrix<SCALAR, 3, 1>::Zero();
     }
-    case ManipulatorModelType::FloatingArmManipulator: {
+    
+    case ManipulatorModelType::FloatingArmManipulator: 
+    {
       // for floating arm, the first three entries correspond to base position
       return state.head(3);
     }
-    case ManipulatorModelType::FullyActuatedFloatingArmManipulator: {
+    
+    case ManipulatorModelType::FullyActuatedFloatingArmManipulator: 
+    {
       // for floating arm, the first three entries correspond to base position
       return state.head(3);
     }
-    case ManipulatorModelType::WheelBasedMobileManipulator: {
+
+    case ManipulatorModelType::WheelBasedMobileManipulator: 
+    {
       // for wheel-based, we assume 2D base position
       return Eigen::Matrix<SCALAR, 3, 1>(state(0), state(1), 0.0);
     }
+
     default:
       throw std::invalid_argument("Invalid manipulator model type provided.");
   }

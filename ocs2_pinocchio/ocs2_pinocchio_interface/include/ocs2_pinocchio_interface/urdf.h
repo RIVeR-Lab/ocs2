@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string>
 
+#include <tf/transform_listener.h>
+
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <urdf_model/model.h>
 
@@ -67,4 +69,15 @@ PinocchioInterface getPinocchioInterfaceFromUrdfModel(const std::shared_ptr<::ur
  */
 PinocchioInterface getPinocchioInterfaceFromUrdfModel(const std::shared_ptr<::urdf::ModelInterface>& urdfTree,
                                                       const PinocchioInterface::JointModel& rootJoint);
+
+/** Factory function from URDF model tree with root joint NUA TODO: UPDATE!
+ * @param [in] urdfTree: Pointer to a URDF model tree.
+ * @param [in] addedJoint: Added joint (eg. a 6 DOF base) which is attached to specific body of the robot.
+ * @param [in] addedJoint: NUA TODO: UPDATE!
+ * @param [in] addedJoint: NUA TODO: UPDATE!
+ */
+PinocchioInterface getPinocchioInterfaceFromUrdfModel(const std::string& urdfFile,
+                                                      const PinocchioInterface::JointModel& addedJoint,
+                                                      pinocchio::SE3 transform_base_wrt_world,
+                                                      std::string addedJointName);
 }  // namespace ocs2

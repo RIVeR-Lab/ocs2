@@ -33,5 +33,6 @@
   <depend>ocs2_self_collision_visualization</depend>
   <depend>ocs2_mobile_manipulator</depend>
   <depend>pinocchio</depend>
+  <depend>tf_conversions</depend>
 
 </package>

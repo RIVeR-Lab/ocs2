@@ -80,7 +80,8 @@ struct PrimalSolution {
   PrimalSolution& operator=(PrimalSolution&& other) noexcept = default;
 
   /** Swap */
-  void swap(PrimalSolution& other) {
+  void swap(PrimalSolution& other) 
+  {
     timeTrajectory_.swap(other.timeTrajectory_);
     stateTrajectory_.swap(other.stateTrajectory_);
     inputTrajectory_.swap(other.inputTrajectory_);
@@ -89,47 +90,56 @@ struct PrimalSolution {
     controllerPtr_.swap(other.controllerPtr_);
   }
 
-  void clear() {
+  void clear() 
+  {
     timeTrajectory_.clear();
     stateTrajectory_.clear();
     inputTrajectory_.clear();
     postEventIndices_.clear();
     modeSchedule_.clear();
-    if (controllerPtr_ != nullptr) {
+    
+    if (controllerPtr_ != nullptr) 
+    {
       controllerPtr_->clear();
     }
   }
 
   vector_t getDesiredState(scalar_t time) const
   {
-    std::cout << "[PrimalSolution::getDesiredState] START" << std::endl;
+    //std::cout << "[PrimalSolution::getDesiredState] START" << std::endl;
 
-    if (this -> stateTrajectory_.empty())
+    if (stateTrajectory_.empty())
     {
       throw std::runtime_error("[PrimalSolution::getDesiredState] Error: stateTrajectory_ is empty!");
     }
     else
     {
-      return LinearInterpolation::interpolate(time, this -> timeTrajectory_, this -> stateTrajectory_);
+      scalar_array_t timeTrajectory = timeTrajectory_;
+      vector_array_t stateTrajectory = stateTrajectory_;
+
+      return LinearInterpolation::interpolate(time, timeTrajectory, stateTrajectory);
     }
 
-    std::cout << "[PrimalSolution::getDesiredState] END" << std::endl;
+    //std::cout << "[PrimalSolution::getDesiredState] END" << std::endl;
   }
 
   vector_t getDesiredInput(scalar_t time) const
   {
-    std::cout << "[PrimalSolution::getDesiredInput] START" << std::endl;
+    //std::cout << "[PrimalSolution::getDesiredInput] START" << std::endl;
 
-    if (this -> inputTrajectory_.empty())
+    if (inputTrajectory_.empty())
     {
       throw std::runtime_error("[PrimalSolution::getDesiredInput] Error: inputTrajectory_ is empty!");
     }
     else
     {
-      return LinearInterpolation::interpolate(time, this -> timeTrajectory_, this -> inputTrajectory_);
+      scalar_array_t timeTrajectory = timeTrajectory_;
+      vector_array_t inputTrajectory = inputTrajectory_;
+
+      return LinearInterpolation::interpolate(time, timeTrajectory, inputTrajectory);
     }
 
-    std::cout << "[PrimalSolution::getDesiredInput] END" << std::endl;
+    //std::cout << "[PrimalSolution::getDesiredInput] END" << std::endl;
   }
 
   scalar_array_t timeTrajectory_;
