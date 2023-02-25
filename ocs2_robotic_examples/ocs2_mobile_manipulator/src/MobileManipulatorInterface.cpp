@@ -75,6 +75,11 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   boost::property_tree::read_info(taskFile, pt);
   
   // resolve meta-information about the model
+  
+  // read multi modal flag
+  bool useMultiModel;
+  loadData::loadPtreeValue(pt, useMultiModel, "model_information.useMultiModel", false);
+
   // read manipulator type
   ManipulatorModelType modelType = mobile_manipulator::loadManipulatorType(taskFile, "model_information.manipulatorModelType");
   
@@ -94,6 +99,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 
   std::cerr << "\n #### Model Information:";
   std::cerr << "\n #### =============================================================================\n";
+  std::cerr << "\n #### model_information.useMultiModel: " << useMultiModel;
   std::cerr << "\n #### model_information.manipulatorModelType: " << static_cast<int>(modelType);
   std::cerr << "\n #### model_information.removeJoints: ";
   for (const auto& name : removeJointNames) 

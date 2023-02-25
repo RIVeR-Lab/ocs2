@@ -37,7 +37,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SLQ::SLQ(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
+SLQ::SLQ(ddp::Settings ddpSettings, 
+         const RolloutBase& rollout, 
+         const OptimalControlProblem& optimalControlProblem,
          const Initializer& initializer)
     : GaussNewtonDDP(std::move(ddpSettings), rollout, optimalControlProblem, initializer) {
   if (settings().algorithm_ != ddp::Algorithm::SLQ) {

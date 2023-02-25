@@ -133,8 +133,14 @@ int main(int argc, char** argv)
     std::cout << i << ": " << manipulatorModelInfo.dofNames[i] << std::endl;
   }
 
+  int modalMode = 1;
+  int baseStateDim = 3;
+  int armStateDim = 6;
+
   // MRT
-  MRT_ROS_Interface mrt(robotName);
+  MRT_ROS_Interface mrt(robotName, modalMode);
+  mrt.setBaseStateDim(baseStateDim);
+  mrt.setArmStateDim(armStateDim);
   mrt.initRollout(&interface.getRollout());
   mrt.launchNodes(nodeHandle);
 

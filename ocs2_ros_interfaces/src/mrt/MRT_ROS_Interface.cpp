@@ -37,9 +37,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MRT_ROS_Interface::MRT_ROS_Interface(std::string topicPrefix, ros::TransportHints mrtTransportHints)
-    : topicPrefix_(std::move(topicPrefix)), mrtTransportHints_(mrtTransportHints) {
-// Start thread for publishing
+MRT_ROS_Interface::MRT_ROS_Interface(std::string topicPrefix, int modalMode, ros::TransportHints mrtTransportHints)
+  : topicPrefix_(std::move(topicPrefix)), modalMode_(modalMode), mrtTransportHints_(mrtTransportHints)
+{
+  // Start thread for publishing
 #ifdef PUBLISH_THREAD
   // Close old thread if it is already running
   shutdownPublisher();
@@ -52,21 +53,72 @@ MRT_ROS_Interface::MRT_ROS_Interface(std::string topicPrefix, ros::TransportHint
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MRT_ROS_Interface::~MRT_ROS_Interface() {
+MRT_ROS_Interface::~MRT_ROS_Interface() 
+{
   shutdownNodes();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::resetMpcNode(const TargetTrajectories& initTargetTrajectories) {
+int MRT_ROS_Interface::getModalMode()
+{
+  return modalMode_; 
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+int MRT_ROS_Interface::getBaseStateDim()
+{
+  return baseStateDim_; 
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+int MRT_ROS_Interface::getArmStateDim()
+{
+  return armStateDim_; 
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void MRT_ROS_Interface::setModalMode(int modalMode)
+{
+  modalMode_ = modalMode; 
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void MRT_ROS_Interface::setBaseStateDim(int baseStateDim)
+{
+  baseStateDim_ = baseStateDim; 
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void MRT_ROS_Interface::setArmStateDim(int armStateDim)
+{
+  armStateDim_ = armStateDim; 
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void MRT_ROS_Interface::resetMpcNode(const TargetTrajectories& initTargetTrajectories) 
+{
   this->reset();
 
   ocs2_msgs::reset resetSrv;
   resetSrv.request.reset = static_cast<uint8_t>(true);
   resetSrv.request.targetTrajectories = ros_msg_conversions::createTargetTrajectoriesMsg(initTargetTrajectories);
 
-  while (!mpcResetServiceClient_.waitForExistence(ros::Duration(5.0)) && ::ros::ok() && ::ros::master::check()) {
+  while (!mpcResetServiceClient_.waitForExistence(ros::Duration(5.0)) && ::ros::ok() && ::ros::master::check()) 
+  {
     ROS_ERROR_STREAM("Failed to call service to reset MPC, retrying...");
   }
 
@@ -103,8 +155,10 @@ void MRT_ROS_Interface::setCurrentObservation(const SystemObservation& currentOb
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::publisherWorkerThread() {
-  while (!terminateThread_) {
+void MRT_ROS_Interface::publisherWorkerThread() 
+{
+  while (!terminateThread_) 
+  {
     std::unique_lock<std::mutex> lk(publisherMutex_);
 
     msgReady_.wait(lk, [&] { return (readyToPublish_ || terminateThread_); });

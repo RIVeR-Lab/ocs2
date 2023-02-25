@@ -58,6 +58,7 @@ int main(int argc, char** argv)
   std::cerr << "Loading library folder: " << libFolder << std::endl;
   std::cerr << "Loading urdf file: " << urdfFile << std::endl;
   
+  // Get points on robot parameters
   PointsOnRobot::points_radii_t pointsAndRadii(8);
   if (nodeHandle.hasParam("/collision_points")) 
   {
