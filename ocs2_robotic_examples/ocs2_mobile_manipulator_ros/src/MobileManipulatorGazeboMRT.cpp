@@ -133,9 +133,9 @@ int main(int argc, char** argv)
     std::cout << i << ": " << manipulatorModelInfo.dofNames[i] << std::endl;
   }
 
-  int modalMode = 1;
-  int baseStateDim = 3;
-  int armStateDim = 6;
+  size_t modalMode = 1;
+  size_t baseStateDim = 3;
+  size_t armStateDim = 6;
 
   // MRT
   MRT_ROS_Interface mrt(robotName, modalMode);

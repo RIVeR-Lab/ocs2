@@ -54,6 +54,18 @@ class MPC_BASE
     /** Destructor. */
     virtual ~MPC_BASE() = default;
 
+    int getModalMode();
+
+    int getBaseStateDim();
+
+    int getArmStateDim();
+
+    void setModalMode(int modalMode);
+
+    void setBaseStateDim(int baseStateDim);
+    
+    void setArmStateDim(int armStateDim);
+
     /**
      * Resets the class to its state after construction.
      * @note reset() must not be called while the solver is running.
@@ -107,6 +119,10 @@ class MPC_BASE
     const mpc::Settings mpcSettings_;
 
     benchmark::RepeatedTimer mpcTimer_;
+
+    int modalMode_ = 2;     // 0: base, 1: arm, 2: arm+base
+    int baseStateDim_ = 3;
+    int armStateDim_ = 6;
 };
 
 }  // namespace ocs2

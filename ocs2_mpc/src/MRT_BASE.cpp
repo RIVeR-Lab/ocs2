@@ -36,14 +36,16 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MRT_BASE::MRT_BASE() {
+MRT_BASE::MRT_BASE() 
+{
   reset();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_BASE::reset() {
+void MRT_BASE::reset() 
+{
   std::lock_guard<std::mutex> lock(bufferMutex_);
 
   policyReceivedEver_ = false;
@@ -95,10 +97,14 @@ const PrimalSolution& MRT_BASE::getPolicy() const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-const PerformanceIndex& MRT_BASE::getPerformanceIndices() const {
-  if (activePerformanceIndicesPtr_ != nullptr) {
+const PerformanceIndex& MRT_BASE::getPerformanceIndices() const 
+{
+  if (activePerformanceIndicesPtr_ != nullptr) 
+  {
     return *activePerformanceIndicesPtr_;
-  } else {
+  } 
+  else 
+  {
     throw std::runtime_error("[MRT_BASE::getPerformanceIndices] updatePolicy() should be called first!");
   }
 }
@@ -106,26 +112,31 @@ const PerformanceIndex& MRT_BASE::getPerformanceIndices() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_BASE::initRollout(const RolloutBase* rolloutPtr) {
+void MRT_BASE::initRollout(const RolloutBase* rolloutPtr) 
+{
   rolloutPtr_.reset(rolloutPtr->clone());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_BASE::evaluatePolicy(scalar_t currentTime, const vector_t& currentState, vector_t& mpcState, vector_t& mpcInput, size_t& mode) {
-  if (activePrimalSolutionPtr_ == nullptr) {
+void MRT_BASE::evaluatePolicy(scalar_t currentTime, const vector_t& currentState, vector_t& mpcState, vector_t& mpcInput, size_t& mode) 
+{
+  if (activePrimalSolutionPtr_ == nullptr) 
+  {
     throw std::runtime_error("[MRT_BASE::evaluatePolicy] updatePolicy() should be called first!");
   }
 
-  if (currentTime > activePrimalSolutionPtr_->timeTrajectory_.back()) {
+  if (currentTime > activePrimalSolutionPtr_->timeTrajectory_.back()) 
+  {
     std::cerr << "The requested currentTime is greater than the received plan: " << std::to_string(currentTime) << ">"
               << std::to_string(activePrimalSolutionPtr_->timeTrajectory_.back()) << "\n";
   }
 
   mpcInput = activePrimalSolutionPtr_->controllerPtr_->computeInput(currentTime, currentState);
-  mpcState =
-      LinearInterpolation::interpolate(currentTime, activePrimalSolutionPtr_->timeTrajectory_, activePrimalSolutionPtr_->stateTrajectory_);
+  mpcState = LinearInterpolation::interpolate(currentTime, 
+                                              activePrimalSolutionPtr_->timeTrajectory_, 
+                                              activePrimalSolutionPtr_->stateTrajectory_);
 
   mode = activePrimalSolutionPtr_->modeSchedule_.modeAtTime(currentTime);
 }
@@ -133,17 +144,25 @@ void MRT_BASE::evaluatePolicy(scalar_t currentTime, const vector_t& currentState
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_BASE::rolloutPolicy(scalar_t currentTime, const vector_t& currentState, const scalar_t& timeStep, vector_t& mpcState,
-                             vector_t& mpcInput, size_t& mode) {
-  if (rolloutPtr_ == nullptr) {
+void MRT_BASE::rolloutPolicy(scalar_t currentTime, 
+                             const vector_t& currentState, 
+                             const scalar_t& timeStep, 
+                             vector_t& mpcState,
+                             vector_t& mpcInput, 
+                             size_t& mode) 
+{
+  if (rolloutPtr_ == nullptr) 
+  {
     throw std::runtime_error("[MRT_BASE::rolloutPolicy] rollout class is not set! Use initRollout() to initialize it!");
   }
 
-  if (activePrimalSolutionPtr_ == nullptr) {
+  if (activePrimalSolutionPtr_ == nullptr) 
+  {
     throw std::runtime_error("[MRT_BASE::rolloutPolicy] updatePolicy() should be called first!");
   }
 
-  if (currentTime > activePrimalSolutionPtr_->timeTrajectory_.back()) {
+  if (currentTime > activePrimalSolutionPtr_->timeTrajectory_.back()) 
+  {
     std::cerr << "The requested currentTime is greater than the received plan: " << std::to_string(currentTime) << ">"
               << std::to_string(activePrimalSolutionPtr_->timeTrajectory_.back()) << "\n";
   }
@@ -153,8 +172,15 @@ void MRT_BASE::rolloutPolicy(scalar_t currentTime, const vector_t& currentState,
   size_array_t postEventIndicesStock;
   vector_array_t stateTrajectory, inputTrajectory;
   const scalar_t finalTime = currentTime + timeStep;
-  rolloutPtr_->run(currentTime, currentState, finalTime, activePrimalSolutionPtr_->controllerPtr_.get(),
-                   activePrimalSolutionPtr_->modeSchedule_, timeTrajectory, postEventIndicesStock, stateTrajectory, inputTrajectory);
+  rolloutPtr_->run(currentTime, 
+                   currentState, 
+                   finalTime, 
+                   activePrimalSolutionPtr_->controllerPtr_.get(),
+                   activePrimalSolutionPtr_->modeSchedule_, 
+                   timeTrajectory, 
+                   postEventIndicesStock, 
+                   stateTrajectory, 
+                   inputTrajectory);
 
   mpcState = stateTrajectory.back();
   mpcInput = inputTrajectory.back();
@@ -206,17 +232,22 @@ bool MRT_BASE::updatePolicy()
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_BASE::moveToBuffer(std::unique_ptr<CommandData> commandDataPtr, std::unique_ptr<PrimalSolution> primalSolutionPtr,
-                            std::unique_ptr<PerformanceIndex> performanceIndicesPtr) {
-  if (commandDataPtr == nullptr) {
+void MRT_BASE::moveToBuffer(std::unique_ptr<CommandData> commandDataPtr, 
+                            std::unique_ptr<PrimalSolution> primalSolutionPtr,
+                            std::unique_ptr<PerformanceIndex> performanceIndicesPtr) 
+{
+  if (commandDataPtr == nullptr) 
+  {
     throw std::runtime_error("[MRT_BASE::moveToBuffer] commandDataPtr cannot be a null pointer!");
   }
 
-  if (primalSolutionPtr == nullptr) {
+  if (primalSolutionPtr == nullptr) 
+  {
     throw std::runtime_error("[MRT_BASE::moveToBuffer] primalSolutionPtr cannot be a null pointer!");
   }
 
-  if (performanceIndicesPtr == nullptr) {
+  if (performanceIndicesPtr == nullptr) 
+  {
     throw std::runtime_error("[MRT_BASE::moveToBuffer] performanceIndicesPtr cannot be a null pointer!");
   }
 
@@ -254,9 +285,12 @@ void MRT_BASE::modifyActiveSolution(const CommandData& command, PrimalSolution& 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_BASE::modifyBufferedSolution(const CommandData& commandBuffer, PrimalSolution& primalSolutionBuffer) {
-  for (auto& mrtObserver : observerPtrArray_) {
-    if (mrtObserver != nullptr) {
+void MRT_BASE::modifyBufferedSolution(const CommandData& commandBuffer, PrimalSolution& primalSolutionBuffer) 
+{
+  for (auto& mrtObserver : observerPtrArray_) 
+  {
+    if (mrtObserver != nullptr) 
+    {
       mrtObserver->modifyBufferedSolution(commandBuffer, primalSolutionBuffer);
     }
   }

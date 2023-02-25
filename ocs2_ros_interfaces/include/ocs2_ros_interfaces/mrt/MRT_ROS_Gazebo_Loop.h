@@ -78,6 +78,9 @@ class MRT_ROS_Gazebo_Loop
     /** NUA TODO: Add description */
     void setRobotModelType(std::string robotModelType);
 
+    /** NUA TODO: Add description */
+    bool isStateInitialized();
+
     /**
        * Runs the MRT loop.
        *
@@ -126,6 +129,9 @@ class MRT_ROS_Gazebo_Loop
     void jointTrajectoryControllerStateCallback(const control_msgs::JointTrajectoryControllerState::ConstPtr& msg);
 
     /** NUA TODO: Add description */
+    void updateFullModalState();
+
+    /** NUA TODO: Add description */
     SystemObservation getCurrentObservation(bool initFlag=false);
 
     /** NUA TODO: Add description */
@@ -135,6 +141,9 @@ class MRT_ROS_Gazebo_Loop
     std::string worldFrameName_;
     std::string baseFrameName_;
     std::string robotModelType_;
+
+    bool initFlagBaseState_ = false;
+    bool initFlagArmState_ = false;
 
     size_t stateDim_;
     size_t inputDim_;
@@ -150,6 +159,9 @@ class MRT_ROS_Gazebo_Loop
     scalar_t time_;
 
     vector_t currentInput_;
+
+    std::vector<double> baseState_;
+    std::vector<double> armState_;
 
     tf::TransformListener tfListener_;
 

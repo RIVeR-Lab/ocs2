@@ -205,13 +205,16 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MPC_ROS_Interface::publisherWorker() {
-  while (!terminateThread_) {
+void MPC_ROS_Interface::publisherWorker() 
+{
+  while (!terminateThread_) 
+  {
     std::unique_lock<std::mutex> lk(publisherMutex_);
 
     msgReady_.wait(lk, [&] { return (readyToPublish_ || terminateThread_); });
 
-    if (terminateThread_) {
+    if (terminateThread_) 
+    {
       break;
     }
 
@@ -222,8 +225,7 @@ void MPC_ROS_Interface::publisherWorker() {
       publisherPerformanceIndicesPtr_.swap(bufferPerformanceIndicesPtr_);
     }
 
-    ocs2_msgs::mpc_flattened_controller mpcPolicyMsg =
-        createMpcPolicyMsg(*publisherPrimalSolutionPtr_, *publisherCommandPtr_, *publisherPerformanceIndicesPtr_);
+    ocs2_msgs::mpc_flattened_controller mpcPolicyMsg = createMpcPolicyMsg(*publisherPrimalSolutionPtr_, *publisherCommandPtr_, *publisherPerformanceIndicesPtr_);
 
     // publish the message
     mpcPolicyPublisher_.publish(mpcPolicyMsg);

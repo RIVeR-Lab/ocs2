@@ -75,17 +75,17 @@ class MRT_ROS_Interface : public MRT_BASE
      */
     ~MRT_ROS_Interface() override;
 
-    int getModalMode();
+    size_t getModalMode();
 
-    int getBaseStateDim();
+    size_t getBaseStateDim();
 
-    int getArmStateDim();
+    size_t getArmStateDim();
 
-    void setModalMode(int modalMode);
+    void setModalMode(size_t modalMode);
 
-    void setBaseStateDim(int baseStateDim);
+    void setBaseStateDim(size_t baseStateDim);
     
-    void setArmStateDim(int armStateDim);
+    void setArmStateDim(size_t armStateDim);
 
     void resetMpcNode(const TargetTrajectories& initTargetTrajectories) override;
 
@@ -146,17 +146,21 @@ class MRT_ROS_Interface : public MRT_BASE
     int baseStateDim_ = 3;
     int armStateDim_ = 6;
 
-    // Publishers and subscribers
-    ::ros::Publisher mpcObservationPublisher_;
-    ::ros::Subscriber mpcPolicySubscriber_;
-    ::ros::ServiceClient mpcResetServiceClient_;
+    // Subscribers
+    ros::Subscriber mpcPolicySubscriber_;
+
+    // Publishers
+    ros::Publisher mpcObservationPublisher_;
+
+    // Services
+    ros::ServiceClient mpcResetServiceClient_;
 
     // ROS messages
     ocs2_msgs::mpc_observation mpcObservationMsg_;
     ocs2_msgs::mpc_observation mpcObservationMsgBuffer_;
 
-    ::ros::CallbackQueue mrtCallbackQueue_;
-    ::ros::TransportHints mrtTransportHints_;
+    ros::CallbackQueue mrtCallbackQueue_;
+    ros::TransportHints mrtTransportHints_;
 
     // Multi-threading for publishers
     bool terminateThread_;

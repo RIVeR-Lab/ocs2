@@ -61,7 +61,7 @@ MRT_ROS_Interface::~MRT_ROS_Interface()
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-int MRT_ROS_Interface::getModalMode()
+size_t MRT_ROS_Interface::getModalMode()
 {
   return modalMode_; 
 }
@@ -69,7 +69,7 @@ int MRT_ROS_Interface::getModalMode()
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-int MRT_ROS_Interface::getBaseStateDim()
+size_t MRT_ROS_Interface::getBaseStateDim()
 {
   return baseStateDim_; 
 }
@@ -77,7 +77,7 @@ int MRT_ROS_Interface::getBaseStateDim()
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-int MRT_ROS_Interface::getArmStateDim()
+size_t MRT_ROS_Interface::getArmStateDim()
 {
   return armStateDim_; 
 }
@@ -85,7 +85,7 @@ int MRT_ROS_Interface::getArmStateDim()
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::setModalMode(int modalMode)
+void MRT_ROS_Interface::setModalMode(size_t modalMode)
 {
   modalMode_ = modalMode; 
 }
@@ -93,7 +93,7 @@ void MRT_ROS_Interface::setModalMode(int modalMode)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::setBaseStateDim(int baseStateDim)
+void MRT_ROS_Interface::setBaseStateDim(size_t baseStateDim)
 {
   baseStateDim_ = baseStateDim; 
 }
@@ -101,7 +101,7 @@ void MRT_ROS_Interface::setBaseStateDim(int baseStateDim)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::setArmStateDim(int armStateDim)
+void MRT_ROS_Interface::setArmStateDim(size_t armStateDim)
 {
   armStateDim_ = armStateDim; 
 }
@@ -307,7 +307,8 @@ void MRT_ROS_Interface::spinMRT()
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) {
+void MRT_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) 
+{
   this->reset();
 
   // display
@@ -329,6 +330,8 @@ void MRT_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) {
 
   // MPC reset service client
   mpcResetServiceClient_ = nodeHandle.serviceClient<ocs2_msgs::reset>(topicPrefix_ + "_mpc_reset");
+
+
 
   // display
 #ifdef PUBLISH_THREAD
