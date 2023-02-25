@@ -110,6 +110,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   std::cerr << "\n #### model_information.eeFrame: \"" << eeFrame << "\"";
   std::cerr << " #### =============================================================================" << std::endl;
 
+
+
   std::cout << "" << std::endl;
   std::cout << "*********************************" << std::endl;
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START PinocchioInterface" << std::endl;
@@ -136,6 +138,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   loadData::loadPtreeValue(pt, recompileLibraries, "model_settings.recompileLibraries", true);
   std::cerr << " #### =============================================================================\n";
 
+  /**/
   // Default initial state
   initialState_.setZero(manipulatorModelInfo_.stateDim);
   const int baseStateDim = manipulatorModelInfo_.stateDim - manipulatorModelInfo_.armDim;
@@ -322,9 +325,22 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+void MobileManipulatorInterface::tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg)
+{
+  std::cout << "[MobileManipulatorInterface::tfCallback] START" << std::endl;
+
+  tf2_msgs::TFMessage tf_msg = *msg;
+
+  std::cout << "[MobileManipulatorInterface::tfCallback] END" << std::endl << std::endl;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
 {
   string oct_msg_name = "octomap_scan";
+  string tf_msg_name = "tf";
   double dt = 0.1;
 
   if (emuPtr_)
@@ -339,6 +355,8 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
     pointsOnRobotPtr_->setNodeHandle(nodeHandle);
     pointsOnRobotPtr_->publishPointsOnRobotVisu(dt);
   }
+
+  //sub_tf_msg_ = nodeHandle.subscribe(tf_msg_name, 10, &MobileManipulatorInterface::tfCallback, this);
 
   //spin();
 }

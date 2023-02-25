@@ -189,7 +189,9 @@ class MobileManipulatorInterface final : public RobotInterface
     }
     */
 
-   void launchNodes(ros::NodeHandle& nodeHandle);
+    void tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg);
+
+    void launchNodes(ros::NodeHandle& nodeHandle);
 
   private:
     std::unique_ptr<StateInputCost> getQuadraticInputCost(const std::string& taskFile);
@@ -237,6 +239,8 @@ class MobileManipulatorInterface final : public RobotInterface
     //std::shared_ptr<voxblox::EsdfCachingServer> esdfCachingServerPtr_;
     //std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> voxbloxInterpolatorPtr_;
     std::shared_ptr<ExtMapUtility> emuPtr_;
+
+    ros::Subscriber sub_tf_msg_;
 };
 
 }  // namespace mobile_manipulator

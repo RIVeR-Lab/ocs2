@@ -70,14 +70,51 @@ PinocchioInterface getPinocchioInterfaceFromUrdfModel(const std::shared_ptr<::ur
 PinocchioInterface getPinocchioInterfaceFromUrdfModel(const std::shared_ptr<::urdf::ModelInterface>& urdfTree,
                                                       const PinocchioInterface::JointModel& rootJoint);
 
-/** Factory function from URDF model tree with root joint NUA TODO: UPDATE!
- * @param [in] urdfTree: Pointer to a URDF model tree.
- * @param [in] addedJoint: Added joint (eg. a 6 DOF base) which is attached to specific body of the robot.
- * @param [in] addedJoint: NUA TODO: UPDATE!
- * @param [in] addedJoint: NUA TODO: UPDATE!
+/** Factory function from URDF file
+ * @param [in] urdfFile: Path to the URDF file.
+ * @param [in] transform_base_wrt_world: Placement of the root link wrt world.
  */
-PinocchioInterface getPinocchioInterfaceFromUrdfModel(const std::string& urdfFile,
-                                                      const PinocchioInterface::JointModel& addedJoint,
-                                                      pinocchio::SE3 transform_base_wrt_world,
-                                                      std::string addedJointName);
+PinocchioInterface getPinocchioInterfaceFromUrdfFile(const std::string& urdfFile,
+                                                     pinocchio::SE3& transform_base_wrt_world);
+
+/** Factory function from URDF file with root joint
+ * @param [in] urdfFile: Path to the URDF file.
+ * @param [in] rootJoint: Root joint to which the robot is attached (eg. a 6 DOF base).
+ * @param [in] transform_base_wrt_world: Placement of the root link wrt world.
+ */
+PinocchioInterface getPinocchioInterfaceFromUrdfFile(const std::string& urdfFile, 
+                                                     const PinocchioInterface::JointModel& rootJoint,
+                                                     pinocchio::SE3& transform_base_wrt_world);
+
+/** Factory function from URDF string
+ * @param [in] xmlString: A URDF loaded as an std::string.
+ * @param [in] transform_base_wrt_world: Placement of the root link wrt world.
+ */
+PinocchioInterface getPinocchioInterfaceFromUrdfString(const std::string& xmlString,
+                                                       pinocchio::SE3& transform_base_wrt_world);
+
+/** Factory function from URDF string with root joint
+ * @param [in] xmlString: A URDF loaded as an std::string.
+ * @param [in] rootJoint: Root joint to which the robot is attached (eg. a 6 DOF base).
+ * @param [in] transform_base_wrt_world: Placement of the root link wrt world.
+ */
+PinocchioInterface getPinocchioInterfaceFromUrdfString(const std::string& xmlString, 
+                                                       const PinocchioInterface::JointModel& rootJoint,
+                                                       pinocchio::SE3& transform_base_wrt_world);
+
+/** Factory function from URDF model tree
+ * @param [in] urdfTree: Pointer to a URDF model tree.
+ * @param [in] transform_base_wrt_world: Placement of the root link wrt world.
+ */
+PinocchioInterface getPinocchioInterfaceFromUrdfModel(const std::shared_ptr<::urdf::ModelInterface>& urdfTree,
+                                                      pinocchio::SE3& transform_base_wrt_world);
+
+/** Factory function from URDF model tree with root joint
+ * @param [in] urdfTree: Pointer to a URDF model tree.
+ * @param [in] rootJoint: Root joint to which the robot is attached (eg. a 6 DOF base).
+ * @param [in] transform_base_wrt_world: Placement of the root link wrt world.
+ */
+PinocchioInterface getPinocchioInterfaceFromUrdfModel(const std::shared_ptr<::urdf::ModelInterface>& urdfTree,
+                                                      const PinocchioInterface::JointModel& rootJoint,
+                                                      pinocchio::SE3& transform_base_wrt_world);
 }  // namespace ocs2
