@@ -87,6 +87,8 @@ class MRT_ROS_Interface : public MRT_BASE
     
     void setArmStateDim(size_t armStateDim);
 
+    bool checkModalMode(size_t modalMode);
+
     void resetMpcNode(const TargetTrajectories& initTargetTrajectories) override;
 
     /**
@@ -148,6 +150,7 @@ class MRT_ROS_Interface : public MRT_BASE
 
     // Subscribers
     ros::Subscriber mpcPolicySubscriber_;
+    ros::Subscriber sub_tf_;
 
     // Publishers
     ros::Publisher mpcObservationPublisher_;

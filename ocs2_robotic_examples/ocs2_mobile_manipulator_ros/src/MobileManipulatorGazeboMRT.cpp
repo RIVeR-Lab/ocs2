@@ -133,7 +133,7 @@ int main(int argc, char** argv)
     std::cout << i << ": " << manipulatorModelInfo.dofNames[i] << std::endl;
   }
 
-  size_t modalMode = 1;
+  size_t modalMode = 2;
   size_t baseStateDim = 3;
   size_t armStateDim = 6;
 
@@ -165,7 +165,8 @@ int main(int argc, char** argv)
 
   // initial state
   SystemObservation initObservation;
-  initObservation.state = interface.getInitialState();
+  //initObservation.state = interface.getInitialState();
+  initObservation.state.setZero(interface.getManipulatorModelInfo().stateDim);
   initObservation.input.setZero(interface.getManipulatorModelInfo().inputDim);
   initObservation.time = 0.0;
 

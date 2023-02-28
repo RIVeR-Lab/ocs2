@@ -73,7 +73,8 @@ int main(int argc, char** argv) {
 
   // initial state
   SystemObservation initObservation;
-  initObservation.state = interface.getInitialState();
+  //initObservation.state = interface.getInitialState();
+  initObservation.state.setZero(interface.getManipulatorModelInfo().stateDim);
   initObservation.input.setZero(interface.getManipulatorModelInfo().inputDim);
   initObservation.time = 0.0;
 

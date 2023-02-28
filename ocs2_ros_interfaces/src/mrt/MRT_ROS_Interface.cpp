@@ -109,6 +109,21 @@ void MRT_ROS_Interface::setArmStateDim(size_t armStateDim)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+bool MRT_ROS_Interface::checkModalMode(size_t modalMode)
+{
+  if (modalMode_ == modalMode)
+  {
+    return true;
+  } 
+  else
+  {
+    return false;
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void MRT_ROS_Interface::resetMpcNode(const TargetTrajectories& initTargetTrajectories) 
 {
   this->reset();
@@ -182,7 +197,8 @@ void MRT_ROS_Interface::publisherWorkerThread()
 /******************************************************************************************************/
 /******************************************************************************************************/
 void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller& msg, CommandData& commandData,
-                                      PrimalSolution& primalSolution, PerformanceIndex& performanceIndices) {
+                                      PrimalSolution& primalSolution, PerformanceIndex& performanceIndices) 
+{
   commandData.mpcInitObservation_ = ros_msg_conversions::readObservationMsg(msg.initObservation);
   commandData.mpcTargetTrajectories_ = ros_msg_conversions::readTargetTrajectoriesMsg(msg.planTargetTrajectories);
   performanceIndices = ros_msg_conversions::readPerformanceIndicesMsg(msg.performanceIndices);
@@ -247,7 +263,8 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::mpcPolicyCallback(const ocs2_msgs::mpc_flattened_controller::ConstPtr& msg) {
+void MRT_ROS_Interface::mpcPolicyCallback(const ocs2_msgs::mpc_flattened_controller::ConstPtr& msg) 
+{
   // read new policy and command from msg
   std::unique_ptr<CommandData> commandPtr(new CommandData);
   std::unique_ptr<PrimalSolution> primalSolutionPtr(new PrimalSolution);

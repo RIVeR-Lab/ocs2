@@ -39,12 +39,13 @@ namespace mobile_manipulator {
 MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFile, 
                                                        const std::string& libraryFolder,
                                                        const std::string& urdfFile,
-                                                       PointsOnRobot::points_radii_t pointsAndRadii) 
+                                                       PointsOnRobot::points_radii_t pointsAndRadii)
+  : taskFile_(taskFile), libraryFolder_(libraryFolder), urdfFile_(urdfFile)
 {
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START" << std::endl;
 
-  // check that task file exists
-  boost::filesystem::path taskFilePath(taskFile);
+  /// Check that task file exists
+  boost::filesystem::path taskFilePath(taskFile_);
   if (boost::filesystem::exists(taskFilePath)) 
   {
     std::cerr << "[MobileManipulatorInterface::MobileManipulatorInterface] Loading task file: " << taskFilePath << std::endl;
@@ -54,8 +55,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
     throw std::invalid_argument("[MobileManipulatorInterface::MobileManipulatorInterface] Task file not found: " + taskFilePath.string());
   }
 
-  // check that urdf file exists
-  boost::filesystem::path urdfFilePath(urdfFile);
+  /// Check that urdf file exists
+  boost::filesystem::path urdfFilePath(urdfFile_);
   if (boost::filesystem::exists(urdfFilePath)) 
   {
     std::cerr << "[MobileManipulatorInterface::MobileManipulatorInterface] Loading Pinocchio model from: " << urdfFilePath << std::endl;
@@ -65,33 +66,32 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
     throw std::invalid_argument("[MobileManipulatorInterface::MobileManipulatorInterface] URDF file not found: " + urdfFilePath.string());
   }
 
-  // create library folder if it does not exist
-  boost::filesystem::path libraryFolderPath(libraryFolder);
+  /// Create library folder if it does not exist
+  boost::filesystem::path libraryFolderPath(libraryFolder_);
   boost::filesystem::create_directories(libraryFolderPath);
   std::cerr << "[MobileManipulatorInterface::MobileManipulatorInterface] Generated library path: " << libraryFolderPath << std::endl;
 
-  // read the task file
+  /// Read the task file
   boost::property_tree::ptree pt;
-  boost::property_tree::read_info(taskFile, pt);
+  boost::property_tree::read_info(taskFile_, pt);
   
-  // resolve meta-information about the model
-  
-  // read multi modal flag
+  /// Resolve meta-information about the model
+  // Read multi modal flag
   bool useMultiModel;
   loadData::loadPtreeValue(pt, useMultiModel, "model_information.useMultiModel", false);
 
-  // read manipulator type
-  ManipulatorModelType modelType = mobile_manipulator::loadManipulatorType(taskFile, "model_information.manipulatorModelType");
+  // Read manipulator type
+  ManipulatorModelType modelType = mobile_manipulator::loadManipulatorType(taskFile_, "model_information.manipulatorModelType");
   
-  // read the joints to make fixed
+  // Read the joints to make fixed
   std::vector<std::string> removeJointNames;
-  loadData::loadStdVector<std::string>(taskFile, "model_information.removeJoints", removeJointNames, false);
+  loadData::loadStdVector<std::string>(taskFile_, "model_information.removeJoints", removeJointNames, false);
   
-  // read the link names of joints
+  // Read the link names of joints
   std::vector<std::string> jointParentFrameNames;
-  loadData::loadStdVector<std::string>(taskFile, "model_information.jointParentFrameNames", jointParentFrameNames, false);
+  loadData::loadStdVector<std::string>(taskFile_, "model_information.jointParentFrameNames", jointParentFrameNames, false);
 
-  // read the frame names
+  // Read the frame names
   std::string baseFrame, armBaseFrame, eeFrame;
   loadData::loadPtreeValue<std::string>(pt, baseFrame, "model_information.baseFrame", false);
   loadData::loadPtreeValue<std::string>(pt, armBaseFrame, "model_information.armBaseFrame", false);
@@ -116,13 +116,11 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   std::cerr << "\n #### model_information.eeFrame: \"" << eeFrame << "\"";
   std::cerr << " #### =============================================================================" << std::endl;
 
-
-
+  // Create pinocchio interface
   std::cout << "" << std::endl;
   std::cout << "*********************************" << std::endl;
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START PinocchioInterface" << std::endl;
-  // create pinocchio interface
-  pinocchioInterfacePtr_.reset(new PinocchioInterface(createPinocchioInterface(urdfFile, modelType, removeJointNames)));
+  pinocchioInterfacePtr_.reset(new PinocchioInterface(createPinocchioInterface(urdfFile_, modelType, removeJointNames)));
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END PinocchioInterface" << std::endl;
   std::cout << "*********************************" << std::endl;
   std::cout << "" << std::endl;
@@ -130,95 +128,87 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 
   // ManipulatorModelInfo
   manipulatorModelInfo_ = mobile_manipulator::createManipulatorModelInfo(*pinocchioInterfacePtr_, 
-                                                                         modelType, 
+                                                                         modelType,
                                                                          baseFrame, 
                                                                          armBaseFrame, 
                                                                          eeFrame,
                                                                          jointParentFrameNames);
 
-  bool usePreComputation = true;
-  bool recompileLibraries = true;
   std::cerr << "\n #### Model Settings:";
   std::cerr << "\n #### =============================================================================\n";
-  loadData::loadPtreeValue(pt, usePreComputation, "model_settings.usePreComputation", true);
-  loadData::loadPtreeValue(pt, recompileLibraries, "model_settings.recompileLibraries", true);
+  loadData::loadPtreeValue(pt, usePreComputation_, "model_settings.usePreComputation", true);
+  loadData::loadPtreeValue(pt, recompileLibraries_, "model_settings.recompileLibraries", true);
+  loadData::loadPtreeValue(pt, activateSelfCollision_, "selfCollision.activate", true);
+  loadData::loadPtreeValue(pt, activateExtCollision_, "extCollision.activate", false);
   std::cerr << " #### =============================================================================\n";
 
-  /**/
-  // Default initial state
-  initialState_.setZero(manipulatorModelInfo_.stateDim);
-  const int baseStateDim = manipulatorModelInfo_.stateDim - manipulatorModelInfo_.armDim;
-  const int armStateDim = manipulatorModelInfo_.armDim;
-
-  // arm base DOFs initial state
-  if (baseStateDim > 0) 
-  {
-    vector_t initialBaseState = vector_t::Zero(baseStateDim);
-    loadData::loadEigenMatrix(taskFile, "initialState.base." + modelTypeEnumToString(modelType), initialBaseState);
-    initialState_.head(baseStateDim) = initialBaseState;
-  }
-
-  // arm joints DOFs velocity limits
-  vector_t initialArmState = vector_t::Zero(armStateDim);
-  loadData::loadEigenMatrix(taskFile, "initialState.arm", initialArmState);
-  initialState_.tail(armStateDim) = initialArmState;
-  std::cerr << "Initial State:   " << initialState_.transpose() << std::endl;
-  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] Initial State: " << initialState_.transpose() << std::endl;
-
   // DDP-MPC settings
-  ddpSettings_ = ddp::loadSettings(taskFile, "ddp");
-  mpcSettings_ = mpc::loadSettings(taskFile, "mpc");
+  ddpSettings_ = ddp::loadSettings(taskFile_, "ddp");
+  mpcSettings_ = mpc::loadSettings(taskFile_, "mpc");
 
   // Reference Manager
   referenceManagerPtr_.reset(new ReferenceManager);
 
+  // NUA TODO: We don't need to do it here!
+  setMPCProblem(2, pointsAndRadii);
+  
+  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END" << std::endl;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void MobileManipulatorInterface::setMPCProblem(size_t modalMode, PointsOnRobot::points_radii_t& pointsAndRadii)
+{
+  std::cout << "[MobileManipulatorInterface::setMPCProblem] START" << std::endl;
+
+  std::cout << "[MobileManipulatorInterface::setMPCProblem] modalMode: " << modalMode << std::endl;
+
   /*
    * Optimal control problem
    */
-  // Cost
-  problem_.costPtr->add("inputCost", getQuadraticInputCost(taskFile));
+  /// Cost
+  ///////// NUA: ADAPT TO MULTI MODAL!
+  problem_.costPtr->add("inputCost", getQuadraticInputCost(taskFile_));
 
-  // Constraints
-  // joint limits constraint
-  problem_.softConstraintPtr->add("jointLimits", getJointLimitSoftConstraint(*pinocchioInterfacePtr_, taskFile));
+  /// Constraints
+  // Joint limits constraint
+  problem_.softConstraintPtr->add("jointLimits", getJointLimitSoftConstraint(*pinocchioInterfacePtr_, taskFile_));
 
-  // end-effector state constraint
+  // End-effector state constraint
   problem_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, 
-                                                                               taskFile, 
+                                                                               taskFile_, 
                                                                                "endEffector",
-                                                                               usePreComputation, 
-                                                                               libraryFolder, 
-                                                                               recompileLibraries));
+                                                                               usePreComputation_, 
+                                                                               libraryFolder_, 
+                                                                               recompileLibraries_));
   
   problem_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint(*pinocchioInterfacePtr_, 
-                                                                                    taskFile, 
+                                                                                    taskFile_, 
                                                                                     "finalEndEffector",
-                                                                                    usePreComputation, 
-                                                                                    libraryFolder, 
-                                                                                    recompileLibraries));
+                                                                                    usePreComputation_, 
+                                                                                    libraryFolder_, 
+                                                                                    recompileLibraries_));
 
-  // self-collision avoidance constraint
-  bool activateSelfCollision = true;
-  loadData::loadPtreeValue(pt, activateSelfCollision, "selfCollision.activate", true);
-  if (activateSelfCollision) 
+  // Self-collision avoidance constraint
+  if (activateSelfCollision_) 
   {
     problem_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint(*pinocchioInterfacePtr_, 
-                                                                                     taskFile, 
-                                                                                     urdfFile, 
+                                                                                     taskFile_, 
+                                                                                     urdfFile_, 
                                                                                      "selfCollision", 
-                                                                                     usePreComputation, 
-                                                                                     libraryFolder, 
-                                                                                     recompileLibraries));
+                                                                                     usePreComputation_, 
+                                                                                     libraryFolder_, 
+                                                                                     recompileLibraries_));
   }
 
-  // external-collision avoidance constraint
-  bool activateExtCollision = false;
-  loadData::loadPtreeValue(pt, activateExtCollision, "extCollision.activate", false);
-  if (activateExtCollision) 
+  // External-collision avoidance constraint
+  if (activateExtCollision_) 
   {
-    std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] activateExtCollision: " << activateExtCollision << std::endl;
+    std::cout << "[MobileManipulatorInterface::setMPCProblem] activateExtCollision: " << activateExtCollision_ << std::endl;
 
-    pointsOnRobotPtr_.reset(new PointsOnRobot(pointsAndRadii));
+    //pointsOnRobotPtr_.reset(new PointsOnRobot(pointsAndRadii));
+    createPointsOnRobotPtr(pointsAndRadii);
     
     if (pointsOnRobotPtr_->getNumOfPoints() > 0) 
     {
@@ -229,8 +219,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
                                     MobileManipulatorPinocchioMapping(manipulatorModelInfo_),
                                     MobileManipulatorPinocchioMappingCppAd(manipulatorModelInfo_),
                                     "points_on_robot",
-                                    libraryFolder,
-                                    recompileLibraries,
+                                    libraryFolder_,
+                                    recompileLibraries_,
                                     false,
                                     manipulatorModelInfo_.baseFrame,
                                     manipulatorModelInfo_.armBaseFrame,
@@ -239,7 +229,6 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
     } 
     else 
     {
-      // if there are no points defined for collision checking, set this pointer to null to disable the visualization
       pointsOnRobotPtr_ = nullptr;
     }
 
@@ -253,15 +242,15 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
     emuPtr_->setPubOccDistArrayVisu(pub_name_oct_dist_array_visu);
     
     problem_.stateSoftConstraintPtr->add("extCollision", getExtCollisionConstraint(*pinocchioInterfacePtr_,
-                                                                                   taskFile, 
-                                                                                   urdfFile, 
+                                                                                   taskFile_, 
+                                                                                   urdfFile_, 
                                                                                    "extCollision", 
-                                                                                   usePreComputation,
-                                                                                   libraryFolder, 
-                                                                                   recompileLibraries));
+                                                                                   usePreComputation_,
+                                                                                   libraryFolder_, 
+                                                                                   recompileLibraries_));
   }
 
-  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Dynamics" << std::endl;
+  std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE Dynamics" << std::endl;
   
   // Dynamics
   switch (manipulatorModelInfo_.manipulatorModelType) 
@@ -270,8 +259,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
     {
       problem_.dynamicsPtr.reset(new DefaultManipulatorDynamics(manipulatorModelInfo_, 
                                                                 "dynamics", 
-                                                                libraryFolder, 
-                                                                recompileLibraries, 
+                                                                libraryFolder_, 
+                                                                recompileLibraries_, 
                                                                 true));
       break;
     }
@@ -279,8 +268,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
     {
       problem_.dynamicsPtr.reset(new FloatingArmManipulatorDynamics(manipulatorModelInfo_, 
                                                                     "dynamics", 
-                                                                    libraryFolder, 
-                                                                    recompileLibraries, 
+                                                                    libraryFolder_, 
+                                                                    recompileLibraries_, 
                                                                     true));
       break;
     }
@@ -288,8 +277,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
     {
       problem_.dynamicsPtr.reset(new FullyActuatedFloatingArmManipulatorDynamics(manipulatorModelInfo_, 
                                                                                  "dynamics", 
-                                                                                 libraryFolder, 
-                                                                                 recompileLibraries, 
+                                                                                 libraryFolder_, 
+                                                                                 recompileLibraries_, 
                                                                                  true));
       break;
     }
@@ -297,8 +286,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
     {
       problem_.dynamicsPtr.reset(new WheelBasedMobileManipulatorDynamics(manipulatorModelInfo_, 
                                                                          "dynamics", 
-                                                                         libraryFolder, 
-                                                                         recompileLibraries, 
+                                                                         libraryFolder_, 
+                                                                         recompileLibraries_, 
                                                                          true));
       break;
     }
@@ -311,7 +300,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   /*
    * Pre-computation
    */
-  if (usePreComputation) 
+  if (usePreComputation_) 
   {
     problem_.preComputationPtr.reset(new MobileManipulatorPreComputation(*pinocchioInterfacePtr_, manipulatorModelInfo_));
   }
@@ -319,14 +308,15 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Rollout" << std::endl;
 
   // Rollout
-  const auto rolloutSettings = rollout::loadSettings(taskFile, "rollout");
+  const auto rolloutSettings = rollout::loadSettings(taskFile_, "rollout");
   rolloutPtr_.reset(new TimeTriggeredRollout(*problem_.dynamicsPtr, rolloutSettings));
 
   // Initialization
   initializerPtr_.reset(new DefaultInitializer(manipulatorModelInfo_.inputDim));
-  
-  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END" << std::endl;
+
+  std::cout << "[MobileManipulatorInterface::setMPCProblem] END" << std::endl;
 }
+
 
 /******************************************************************************************************/
 /******************************************************************************************************/

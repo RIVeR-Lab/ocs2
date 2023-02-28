@@ -51,27 +51,32 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
+GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, 
+                               const RolloutBase& rollout, 
+                               const OptimalControlProblem& optimalControlProblem,
                                const Initializer& initializer)
-    : ddpSettings_(std::move(ddpSettings)), threadPool_(std::max(ddpSettings_.nThreads_, size_t(1)) - 1, ddpSettings_.threadPriority_) {
+  : ddpSettings_(std::move(ddpSettings)), threadPool_(std::max(ddpSettings_.nThreads_, size_t(1)) - 1, ddpSettings_.threadPriority_) 
+{
   Eigen::setNbThreads(1);  // no multithreading within Eigen.
   Eigen::initParallel();
 
   // check OCP
-  if (!optimalControlProblem.stateEqualityConstraintPtr->empty()) {
-    throw std::runtime_error(
-        "[GaussNewtonDDP] DDP does not support intermediate state-only equality constraints (a.k.a. stateEqualityConstraintPtr), instead "
-        "use the Lagrangian method!");
+  if (!optimalControlProblem.stateEqualityConstraintPtr->empty()) 
+  {
+    throw std::runtime_error("[GaussNewtonDDP] DDP does not support intermediate state-only equality constraints (a.k.a. stateEqualityConstraintPtr), "
+                             "instead use the Lagrangian method!");
   }
-  if (!optimalControlProblem.preJumpEqualityConstraintPtr->empty()) {
-    throw std::runtime_error(
-        "[GaussNewtonDDP] DDP does not support prejump equality constraints (a.k.a. preJumpEqualityConstraintPtr), instead use the "
-        "Lagrangian method!");
+  
+  if (!optimalControlProblem.preJumpEqualityConstraintPtr->empty()) 
+  {
+    throw std::runtime_error("[GaussNewtonDDP] DDP does not support prejump equality constraints (a.k.a. preJumpEqualityConstraintPtr), " 
+                             "instead use the Lagrangian method!");
   }
-  if (!optimalControlProblem.finalEqualityConstraintPtr->empty()) {
-    throw std::runtime_error(
-        "[GaussNewtonDDP] DDP does not support final equality constraints (a.k.a. finalEqualityConstraintPtr), instead use the Lagrangian "
-        "method!");
+
+  if (!optimalControlProblem.finalEqualityConstraintPtr->empty()) 
+  {
+    throw std::runtime_error("[GaussNewtonDDP] DDP does not support final equality constraints (a.k.a. finalEqualityConstraintPtr), "
+        "instead use the Lagrangian method!");
   }
 
   // initializer Rollout
@@ -80,13 +85,16 @@ GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rol
   // initialize rollout and OCP instances for multi-thread compuation
   optimalControlProblemStock_.reserve(ddpSettings_.nThreads_);
   dynamicsForwardRolloutPtrStock_.reserve(ddpSettings_.nThreads_);
-  for (size_t i = 0; i < ddpSettings_.nThreads_; i++) {
+  
+  for (size_t i = 0; i < ddpSettings_.nThreads_; i++) 
+  {
     optimalControlProblemStock_.push_back(optimalControlProblem);
     dynamicsForwardRolloutPtrStock_.emplace_back(rollout.clone());
   }  // end of i loop
 
   // search strategy method
-  const auto basicStrategySettings = [&]() {
+  const auto basicStrategySettings = [&]() 
+  {
     search_strategy::Settings s;
     s.displayInfo = ddpSettings_.displayInfo_;
     s.debugPrintRollout = ddpSettings_.debugPrintRollout_;
@@ -94,20 +102,35 @@ GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rol
     s.constraintTolerance = ddpSettings_.constraintTolerance_;
     return s;
   }();
-  auto meritFunc = [this](const PerformanceIndex& p) { return calculateRolloutMerit(p); };
-  switch (ddpSettings_.strategy_) {
-    case search_strategy::Type::LINE_SEARCH: {
+
+  auto meritFunc = [this](const PerformanceIndex& p)
+  { 
+    return calculateRolloutMerit(p); 
+  };
+  
+  switch (ddpSettings_.strategy_) 
+  {
+    case search_strategy::Type::LINE_SEARCH: 
+    {
       std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock;
       std::vector<std::reference_wrapper<OptimalControlProblem>> problemRefStock;
-      for (size_t i = 0; i < ddpSettings_.nThreads_; i++) {
+      
+      for (size_t i = 0; i < ddpSettings_.nThreads_; i++) 
+      {
         rolloutRefStock.emplace_back(*dynamicsForwardRolloutPtrStock_[i]);
         problemRefStock.emplace_back(optimalControlProblemStock_[i]);
       }  // end of i loop
-      searchStrategyPtr_.reset(new LineSearchStrategy(basicStrategySettings, ddpSettings_.lineSearch_, threadPool_,
-                                                      std::move(rolloutRefStock), std::move(problemRefStock), meritFunc));
+      searchStrategyPtr_.reset(new LineSearchStrategy(basicStrategySettings, 
+                                                      ddpSettings_.lineSearch_, 
+                                                      threadPool_,
+                                                      std::move(rolloutRefStock), 
+                                                      std::move(problemRefStock), 
+                                                      meritFunc));
       break;
     }
-    case search_strategy::Type::LEVENBERG_MARQUARDT: {
+    
+    case search_strategy::Type::LEVENBERG_MARQUARDT: 
+    {
       constexpr size_t threadID = 0;
       searchStrategyPtr_.reset(new LevenbergMarquardtStrategy(basicStrategySettings, ddpSettings_.levenbergMarquardt_,
                                                               *dynamicsForwardRolloutPtrStock_[threadID],

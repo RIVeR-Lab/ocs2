@@ -79,6 +79,9 @@ class MRT_ROS_Gazebo_Loop
     void setRobotModelType(std::string robotModelType);
 
     /** NUA TODO: Add description */
+    bool isArmStateInitialized();
+
+    /** NUA TODO: Add description */
     bool isStateInitialized();
 
     /**
@@ -117,6 +120,9 @@ class MRT_ROS_Gazebo_Loop
     void setStateIndexMap();
 
     /** NUA TODO: Add description */
+    void tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg);
+
+    /** NUA TODO: Add description */
     void odometryCallback(const nav_msgs::Odometry::ConstPtr& msg);
 
     /** NUA TODO: Add description */
@@ -136,7 +142,7 @@ class MRT_ROS_Gazebo_Loop
 
     /** NUA TODO: Add description */
     //void publishCommand(const PrimalSolution& primalSolution);
-    void publishCommand(SystemObservation& targetObservation);
+    void publishCommand();
 
     std::string worldFrameName_;
     std::string baseFrameName_;
@@ -167,11 +173,13 @@ class MRT_ROS_Gazebo_Loop
 
     std::vector<std::shared_ptr<DummyObserver>> observers_;
 
+    tf::StampedTransform tf_robot_wrt_world_;
     nav_msgs::Odometry odometryMsg_;
     geometry_msgs::Pose robotBasePoseMsg_;
     sensor_msgs::JointState jointStateMsg_;
     control_msgs::JointTrajectoryControllerState jointTrajectoryControllerStateMsg_;
 
+    ros::Subscriber tfSub_;
     ros::Subscriber odometrySub_;
     ros::Subscriber linkStateSub_;
     ros::Subscriber jointStateSub_;

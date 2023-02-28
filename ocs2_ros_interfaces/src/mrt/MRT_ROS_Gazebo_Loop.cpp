@@ -63,6 +63,7 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   // NUA TODO: Consider localization error
   //odometrySub_ = nh.subscribe("/jackal_velocity_controller/odom", 10, &MRT_ROS_Gazebo_Loop::odometryCallback, this);
   //linkStateSub_ = nh.subscribe("/gazebo/link_states", 10, &MRT_ROS_Gazebo_Loop::linkStateCallback, this);
+  tfSub_ = nh.subscribe("/tf", 10, &MRT_ROS_Gazebo_Loop::tfCallback, this);
   
   //jointStateSub_ = nh.subscribe("/joint_states", 10, &MRT_ROS_Gazebo_Loop::jointStateCallback, this);
   jointTrajectoryPControllerStateSub_ = nh.subscribe("/arm_controller/state", 10, &MRT_ROS_Gazebo_Loop::jointTrajectoryControllerStateCallback, this);
@@ -88,6 +89,14 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
 void MRT_ROS_Gazebo_Loop::setRobotModelType(std::string robotModelType)
 {
   robotModelType_ = robotModelType;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+bool MRT_ROS_Gazebo_Loop::isArmStateInitialized()
+{
+  return initFlagArmState_;
 }
 
 /******************************************************************************************************/
@@ -215,7 +224,7 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
     //targetObservation = forwardSimulation(currentObservation);
 
     // Publish the control command 
-    publishCommand(targetObservation);
+    publishCommand();
 
     time_ += dt_;
 
@@ -240,30 +249,30 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
 /******************************************************************************************************/
 void MRT_ROS_Gazebo_Loop::setStateIndexMap()
 {
-  boost::shared_ptr<control_msgs::JointTrajectoryControllerState const> current_jointTrajectoryControllerStatePtrMsg = ros::topic::waitForMessage<control_msgs::JointTrajectoryControllerState>("/arm_controller/state");
+  boost::shared_ptr<control_msgs::JointTrajectoryControllerState const> jointTrajectoryControllerStatePtrMsg = ros::topic::waitForMessage<control_msgs::JointTrajectoryControllerState>("/arm_controller/state");
   
   int n_joints = dofNames_.size();
   stateIndexMap_.clear();
   int c;
 
-  if (dofNames_.size() != current_jointTrajectoryControllerStatePtrMsg -> joint_names.size())
+  if (dofNames_.size() != jointTrajectoryControllerStatePtrMsg -> joint_names.size())
   {
     throw std::runtime_error("[MRT_ROS_Gazebo_Loop::setStateIndexMap] Error: State dimension mismatch!");
   }
   
   for (int i = 0; i < n_joints; ++i)
   {
-    //std::cout << "[MRT_ROS_Gazebo_Loop::setStateIndexMap] jointTrajectoryControllerStatePtrMsg " << i << ": " << current_jointTrajectoryControllerStatePtrMsg -> joint_names[i] << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::setStateIndexMap] jointTrajectoryControllerStatePtrMsg " << i << ": " << jointTrajectoryControllerStatePtrMsg -> joint_names[i] << std::endl;
     //std::cout << "[MRT_ROS_Gazebo_Loop::setStateIndexMap] dofNames_ " << i << ": " << dofNames_[i] << std::endl;
     //std::cout << "" << std::endl;
 
     c = 0;
-    while (current_jointTrajectoryControllerStatePtrMsg -> joint_names[c] != dofNames_[i] && c < n_joints)
+    while (jointTrajectoryControllerStatePtrMsg -> joint_names[c] != dofNames_[i] && c < n_joints)
     {
       c++;
     }
 
-    if (current_jointTrajectoryControllerStatePtrMsg -> joint_names[c] == dofNames_[i])
+    if (jointTrajectoryControllerStatePtrMsg -> joint_names[c] == dofNames_[i])
     {
       stateIndexMap_.push_back(c);
     }
@@ -274,6 +283,19 @@ void MRT_ROS_Gazebo_Loop::setStateIndexMap()
   //{
   //  std::cout << i << " -> " << stateIndexMap_[i] << std::endl;
   //}
+}
+
+void MRT_ROS_Gazebo_Loop::tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg)
+{
+  //std::cout << "[MRT_ROS_Gazebo_Loop::tfCallback] START" << std::endl;
+
+  //tf2_msgs::TFMessage tf_msg = *msg;
+
+  tfListener_.lookupTransform(worldFrameName_, baseFrameName_, ros::Time(0), tf_robot_wrt_world_);
+
+  initFlagBaseState_ = true;
+
+  //std::cout << "[MRT_ROS_Gazebo_Loop::tfCallback] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -323,46 +345,45 @@ void MRT_ROS_Gazebo_Loop::jointTrajectoryControllerStateCallback(const control_m
 /******************************************************************************************************/
 void MRT_ROS_Gazebo_Loop::updateFullModalState()
 {
-  tf::StampedTransform tf_robot_wrt_world;
-  //geometry_msgs::Pose current_robotBasePoseMsg = robotBasePoseMsg_;
-  control_msgs::JointTrajectoryControllerState current_jointTrajectoryControllerStateMsg;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::updateFullModalState] START" << std::endl;
+
+  tf::StampedTransform tf_robot_wrt_world = tf_robot_wrt_world_;
+  control_msgs::JointTrajectoryControllerState jointTrajectoryControllerStateMsg = jointTrajectoryControllerStateMsg_;
+
+  baseState_.clear();
+  armState_.clear();
 
   // Set mobile base states
   if (mrt_.getBaseStateDim() != 3)
   {
     std::cerr << "[MRT_ROS_Gazebo_Loop::updateFullModalState] ERROR: Base state dimension mismatch!" << std:: endl;
   }
-  
-  try
+  else
   {
-    while(!tfListener_.waitForTransform(worldFrameName_, baseFrameName_, ros::Time::now(), ros::Duration(2.0)));
-    tfListener_.lookupTransform(worldFrameName_, baseFrameName_, ros::Time(0), tf_robot_wrt_world);
-    current_jointTrajectoryControllerStateMsg = jointTrajectoryControllerStateMsg_;
-  }
-  catch (tf::TransformException ex)
-  {
-    ROS_ERROR("%s", ex.what());
-  }
+    tf::Quaternion quat_robot_wrt_world = tf_robot_wrt_world.getRotation();
+    tf::Matrix3x3 matrix_robot_wrt_world = tf::Matrix3x3(quat_robot_wrt_world);
+    double roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world;
+    matrix_robot_wrt_world.getRPY(roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world);
 
-  tf::Quaternion quat_robot_wrt_world = tf_robot_wrt_world.getRotation();
-  tf::Matrix3x3 matrix_robot_wrt_world = tf::Matrix3x3(quat_robot_wrt_world);
-  double roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world;
-  matrix_robot_wrt_world.getRPY(roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world);
-
-  baseState_.push_back(tf_robot_wrt_world.getOrigin().x());
-  baseState_.push_back(tf_robot_wrt_world.getOrigin().y());
-  baseState_.push_back(yaw_robot_wrt_world);
+    baseState_.push_back(tf_robot_wrt_world.getOrigin().x());
+    baseState_.push_back(tf_robot_wrt_world.getOrigin().y());
+    baseState_.push_back(yaw_robot_wrt_world);
+  }
 
   // Set arm states
-  if (mrt_.getArmStateDim() != current_jointTrajectoryControllerStateMsg.joint_names.size())
+  if (mrt_.getArmStateDim() != jointTrajectoryControllerStateMsg.joint_names.size())
   {
     std::cerr << "[MRT_ROS_Gazebo_Loop::updateFullModalState] ERROR: Arm state dimension mismatch!" << std:: endl;
   }
-  
-  for (int i = 0; i < current_jointTrajectoryControllerStateMsg.joint_names.size(); ++i)
+  else
   {
-    armState_.push_back(current_jointTrajectoryControllerStateMsg.actual.positions[stateIndexMap_[i]]);
+    for (int i = 0; i < jointTrajectoryControllerStateMsg.joint_names.size(); ++i)
+    {
+      armState_.push_back(jointTrajectoryControllerStateMsg.actual.positions[stateIndexMap_[i]]);
+    }
   }
+
+  //std::cout << "[MRT_ROS_Gazebo_Loop::updateFullModalState] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -372,60 +393,39 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
 {
   //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] START" << std::endl;
   
-  //geometry_msgs::Pose current_robotBasePoseMsg = robotBasePoseMsg_;
-  control_msgs::JointTrajectoryControllerState current_jointTrajectoryControllerStateMsg = jointTrajectoryControllerStateMsg_;
-
   SystemObservation currentObservation;
   currentObservation.mode = 0;
   currentObservation.time = time_;
   currentObservation.input.setZero(inputDim_);
   currentObservation.state.setZero(stateDim_);
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] inputDim_: " << inputDim_ << std::endl;
-  //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] stateDim_: " << stateDim_ << std::endl;
-
+  // Set current observation input
   if (!initFlag)
   {
     currentObservation.input = currentInput_;
   }
-  
-  tf::StampedTransform tf_robot_wrt_world;
-  try
-  {
-    tfListener_.lookupTransform(worldFrameName_, baseFrameName_, ros::Time(0), tf_robot_wrt_world);
-  }
-  catch (tf::TransformException ex)
-  {
-    ROS_ERROR("%s", ex.what());
-  }
 
-  tf::Quaternion quat_robot_wrt_world = tf_robot_wrt_world.getRotation();
-  tf::Matrix3x3 matrix_robot_wrt_world = tf::Matrix3x3(quat_robot_wrt_world);
-  double roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world;
-  matrix_robot_wrt_world.getRPY(roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world);
+  updateFullModalState();
 
-  int baseOffset = mrt_.getBaseStateDim();
-  if (robotModelType_ != "defaultManipulator")
+  // Set mobile base states
+  if (mrt_.checkModalMode(0) || mrt_.checkModalMode(2))
   {
-    // Set mobile base states
-    //currentObservation.state[0] = current_robotBasePoseMsg.position.x;
-    //currentObservation.state[1] = current_robotBasePoseMsg.position.y;
-    currentObservation.state[0] = tf_robot_wrt_world.getOrigin().x();
-    currentObservation.state[1] = tf_robot_wrt_world.getOrigin().y();
-    currentObservation.state[2] = yaw_robot_wrt_world;
+    currentObservation.state[0] = baseState_[0];
+    currentObservation.state[1] = baseState_[1];
+    currentObservation.state[2] = baseState_[2];
   }
 
   // Set arm states
-  for (int i = 0; i < current_jointTrajectoryControllerStateMsg.joint_names.size(); ++i)
+  int baseOffset = mrt_.getBaseStateDim();
+  if (mrt_.checkModalMode(1) || mrt_.checkModalMode(2))
   {
-    //std::cout << "armJointTrajectoryMsg " << i << " -> " << current_jointTrajectoryControllerStateMsg.joint_names[stateIndexMap_[i]] << std::endl;
-    //std::cout << "dofNames_ " << i << " -> " << dofNames_[i] << std::endl;
-    //std::cout << "----------------" << std::endl;
-
-    currentObservation.state[baseOffset + i] = current_jointTrajectoryControllerStateMsg.actual.positions[stateIndexMap_[i]];
+    for (size_t i = 0; i < armState_.size(); i++)
+    {
+      currentObservation.state[baseOffset + i] = armState_[i];
+    }
   }
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] END" << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] END" << std::endl << std::endl;
 
   return currentObservation;
 }
@@ -433,66 +433,52 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Gazebo_Loop::publishCommand(SystemObservation& targetObservation)
+void MRT_ROS_Gazebo_Loop::publishCommand()
 {
   //std::cout << "OCS2_MRT_Loop::publishCommand -> START" << std::endl;
 
   geometry_msgs::Twist baseTwistMsg;
   trajectory_msgs::JointTrajectory armJointTrajectoryMsg;
 
-  PrimalSolution primalSolution = mrt_.getPolicy();
-  auto nextState = primalSolution.getDesiredState(time_ + dt_);
-
-  /*
-  std::cout << "OCS2_MRT_Loop::publishCommand -> input: " << std::endl;
-  for (size_t i = 0; i < targetObservation.input.size(); i++)
+  // Set mobile base command
+  int baseOffset = mrt_.getBaseStateDim();
+  if (mrt_.checkModalMode(0) || mrt_.checkModalMode(2))
   {
-    std::cout << i << " -> " << targetObservation.input[i] << std::endl;
-    std::cout << i << " -> " << currentInput_[i] << std::endl << std::endl;
-  }
-  */
-
-  /*
-  std::cout << "OCS2_MRT_Loop::publishCommand -> state: " << std::endl;
-  for (size_t i = 0; i < targetObservation.state.size(); i++)
-  {
-    std::cout << i << " -> " << targetObservation.state[i] << std::endl;
-    std::cout << i << " -> " << nextState[i] << std::endl << std::endl;
-  }
-  */
-
-  int baseOffset = 0;
-  if (robotModelType_ != "defaultManipulator")
-  {
-    // Set base command
     baseTwistMsg.linear.x = currentInput_[0];
     baseTwistMsg.angular.z = currentInput_[1];
-
-    baseOffset = 3;
   }
 
   // Set arm command
-  int n_joints = dofNames_.size();
-
-  armJointTrajectoryMsg.joint_names.resize(n_joints);
-  trajectory_msgs::JointTrajectoryPoint jtp;
-  jtp.positions.resize(n_joints);
-  jtp.time_from_start = ros::Duration(dt_);
-
-  for (int i = 0; i < n_joints; ++i)
+  if (mrt_.checkModalMode(1) || mrt_.checkModalMode(2))
   {
-    armJointTrajectoryMsg.joint_names[i] = dofNames_[i];
-    jtp.positions[i] = nextState[baseOffset + i];
-    //jtp.positions[i] = targetObservation.state[i+3];
+    int n_joints = dofNames_.size();
+    armJointTrajectoryMsg.joint_names.resize(n_joints);
+
+    PrimalSolution primalSolution = mrt_.getPolicy();
+    auto nextState = primalSolution.getDesiredState(time_ + dt_);
+    
+    trajectory_msgs::JointTrajectoryPoint jtp;
+    jtp.positions.resize(n_joints);
+    jtp.time_from_start = ros::Duration(dt_);
+
+    for (int i = 0; i < n_joints; ++i)
+    {
+      armJointTrajectoryMsg.joint_names[i] = dofNames_[i];
+      jtp.positions[i] = nextState[baseOffset + i];
+    }
+    armJointTrajectoryMsg.points.push_back(jtp);
   }
-  armJointTrajectoryMsg.points.push_back(jtp);
 
   // Publish command
-  if (robotModelType_ != "defaultManipulator")
+  if (mrt_.checkModalMode(0) || mrt_.checkModalMode(2))
   {
     baseTwistPub_.publish(baseTwistMsg);
   }
-  armJointTrajectoryPub_.publish(armJointTrajectoryMsg);
+
+  if (mrt_.checkModalMode(1) || mrt_.checkModalMode(2))
+  {
+    armJointTrajectoryPub_.publish(armJointTrajectoryMsg);
+  }
 
   //std::cout << "OCS2_MRT_Loop::publishCommand -> END" << std::endl;
 }

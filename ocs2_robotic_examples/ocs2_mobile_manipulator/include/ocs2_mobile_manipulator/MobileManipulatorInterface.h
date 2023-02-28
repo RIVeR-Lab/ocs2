@@ -106,10 +106,14 @@ class MobileManipulatorInterface final : public RobotInterface
                                const std::string& urdfFile,
                                PointsOnRobot::points_radii_t pointsAndRadii = std::vector<std::vector<std::pair<double, double>>>());
 
+    void setMPCProblem(size_t modalMode, PointsOnRobot::points_radii_t& pointsAndRadii);
+
+    /*
     const vector_t& getInitialState()
     { 
       return initialState_;
     }
+    */
 
     ddp::Settings& ddpSettings() 
     { 
@@ -175,6 +179,11 @@ class MobileManipulatorInterface final : public RobotInterface
       pointsOnRobotPtr_ = newPointsOnRobotPtr;
     }
 
+    void createPointsOnRobotPtr(PointsOnRobot::points_radii_t& pointsAndRadii) 
+    { 
+      pointsOnRobotPtr_.reset(new PointsOnRobot(pointsAndRadii));
+    }
+
     /*
     void setEsdfCachingServerPtr(std::shared_ptr<voxblox::EsdfCachingServer> newEsdfCachingServerPtr) 
     { 
@@ -221,23 +230,29 @@ class MobileManipulatorInterface final : public RobotInterface
 
     std::unique_ptr<StateInputCost> getJointLimitSoftConstraint(const PinocchioInterface& pinocchioInterface, const std::string& taskFile);
 
+    const std::string taskFile_;
+    const std::string libraryFolder_;
+    const std::string urdfFile_;
+
+    bool usePreComputation_;
+    bool recompileLibraries_;
+    bool activateSelfCollision_;
+    bool activateExtCollision_;
+
     ddp::Settings ddpSettings_;
     mpc::Settings mpcSettings_;
 
     OptimalControlProblem problem_;
     std::shared_ptr<ReferenceManager> referenceManagerPtr_;
-
     std::unique_ptr<RolloutBase> rolloutPtr_;
     std::unique_ptr<Initializer> initializerPtr_;
 
     std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
     ManipulatorModelInfo manipulatorModelInfo_;
 
-    vector_t initialState_;
+    //vector_t initialState_;
 
     std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_;
-    //std::shared_ptr<voxblox::EsdfCachingServer> esdfCachingServerPtr_;
-    //std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> voxbloxInterpolatorPtr_;
     std::shared_ptr<ExtMapUtility> emuPtr_;
 
     ros::Subscriber sub_tf_msg_;
