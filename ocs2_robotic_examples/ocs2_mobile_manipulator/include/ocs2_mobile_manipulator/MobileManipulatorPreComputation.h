@@ -34,41 +34,44 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/PreComputation.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
-
-#include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
 #include <ocs2_mobile_manipulator/MobileManipulatorPinocchioMapping.h>
+//#include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
+#include <ocs2_mobile_manipulator/RobotModelInfo.h>
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
 /** Callback for caching and reference update */
-class MobileManipulatorPreComputation : public PreComputation {
- public:
-  MobileManipulatorPreComputation(PinocchioInterface pinocchioInterface, const ManipulatorModelInfo& info);
+class MobileManipulatorPreComputation : public PreComputation 
+{
+  public:
+    MobileManipulatorPreComputation(PinocchioInterface pinocchioInterface, const RobotModelInfo& info);
 
-  ~MobileManipulatorPreComputation() override = default;
+    ~MobileManipulatorPreComputation() override = default;
 
-  MobileManipulatorPreComputation(const MobileManipulatorPreComputation& rhs) = delete;
-  MobileManipulatorPreComputation* clone() const override;
+    MobileManipulatorPreComputation(const MobileManipulatorPreComputation& rhs) = delete;
+    
+    MobileManipulatorPreComputation* clone() const override;
 
-  void request(RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) override;
-  void requestFinal(RequestSet request, scalar_t t, const vector_t& x) override;
+    void request(RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) override;
+    
+    void requestFinal(RequestSet request, scalar_t t, const vector_t& x) override;
 
-  PinocchioInterface& getPinocchioInterface() 
-  { 
-    //std::cout << "[MobileManipulatorPreComputation::getPinocchioInterface] START" << std::endl;
-    return pinocchioInterface_; 
-  }
+    PinocchioInterface& getPinocchioInterface() 
+    { 
+      //std::cout << "[MobileManipulatorPreComputation::getPinocchioInterface] START" << std::endl;
+      return pinocchioInterface_; 
+    }
 
-  const PinocchioInterface& getPinocchioInterface() const 
-  { 
-    //std::cout << "[(const)MobileManipulatorPreComputation::getPinocchioInterface] START" << std::endl;
-    return pinocchioInterface_; 
-  }
+    const PinocchioInterface& getPinocchioInterface() const 
+    { 
+      //std::cout << "[(const)MobileManipulatorPreComputation::getPinocchioInterface] START" << std::endl;
+      return pinocchioInterface_; 
+    }
 
- private:
-  PinocchioInterface pinocchioInterface_;
-  MobileManipulatorPinocchioMapping pinocchioMapping_;
+  private:
+    PinocchioInterface pinocchioInterface_;
+    MobileManipulatorPinocchioMapping pinocchioMapping_;
 };
 
 }  // namespace mobile_manipulator

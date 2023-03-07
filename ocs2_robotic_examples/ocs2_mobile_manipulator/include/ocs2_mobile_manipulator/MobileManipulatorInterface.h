@@ -1,31 +1,13 @@
-/******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
- * Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-
- * Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
- * Neither the name of the copyright holder nor the names of its
-  contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-******************************************************************************/
+// LAST UPDATE: 2022.03.04
+//
+// AUTHOR: Neset Unver Akmandor (NUA)
+//
+// E-MAIL: akmandor.n@northeastern.edu
+//
+// DESCRIPTION: TODO...
+//
+// REFERENCES:
+// [1] https://github.com/leggedrobotics/ocs2
 
 #pragma once
 
@@ -34,7 +16,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
 
-#include <pinocchio/fwd.hpp>  // forward declarations must be included first.
+#include <pinocchio/fwd.hpp>  // forward declarations must be included first. NUA NOTE: WHY?
 #include <pinocchio/multibody/joint/joint-composite.hpp>
 #include <pinocchio/multibody/model.hpp>
 
@@ -68,16 +50,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ext_collision/ext_map_utility.h>
 
 #include <ocs2_mobile_manipulator/FactoryFunctions.h>
-#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
+//#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
+#include "ocs2_mobile_manipulator/RobotModelInfo.h"
 #include "ocs2_mobile_manipulator/MobileManipulatorPreComputation.h"
 #include "ocs2_mobile_manipulator/constraint/EndEffectorConstraint.h"
 #include "ocs2_mobile_manipulator/constraint/MobileManipulatorSelfCollisionConstraint.h"
 #include "ocs2_mobile_manipulator/constraint/MobileManipulatorExtCollisionConstraint.h"
 #include "ocs2_mobile_manipulator/cost/QuadraticInputCost.h"
-#include "ocs2_mobile_manipulator/dynamics/DefaultManipulatorDynamics.h"
-#include "ocs2_mobile_manipulator/dynamics/FloatingArmManipulatorDynamics.h"
-#include "ocs2_mobile_manipulator/dynamics/FullyActuatedFloatingArmManipulatorDynamics.h"
-#include "ocs2_mobile_manipulator/dynamics/WheelBasedMobileManipulatorDynamics.h"
+
+//#include "ocs2_mobile_manipulator/dynamics/DefaultManipulatorDynamics.h"
+//#include "ocs2_mobile_manipulator/dynamics/FloatingArmManipulatorDynamics.h"
+//#include "ocs2_mobile_manipulator/dynamics/FullyActuatedFloatingArmManipulatorDynamics.h"
+//#include "ocs2_mobile_manipulator/dynamics/WheelBasedMobileManipulatorDynamics.h"
+
+#include "ocs2_mobile_manipulator/dynamics/MobileBaseDynamics.h"
+#include "ocs2_mobile_manipulator/dynamics/RobotArmDynamics.h"
+#include "ocs2_mobile_manipulator/dynamics/MobileManipulatorDynamics.h"
 
 namespace ocs2 {
 namespace mobile_manipulator {
@@ -105,8 +93,6 @@ class MobileManipulatorInterface final : public RobotInterface
                                const std::string& libraryFolder, 
                                const std::string& urdfFile,
                                PointsOnRobot::points_radii_t pointsAndRadii = std::vector<std::vector<std::pair<double, double>>>());
-
-    void setMPCProblem(size_t modalMode, PointsOnRobot::points_radii_t& pointsAndRadii);
 
     /*
     const vector_t& getInitialState()
@@ -150,9 +136,9 @@ class MobileManipulatorInterface final : public RobotInterface
       return *pinocchioInterfacePtr_; 
     }
 
-    const ManipulatorModelInfo& getManipulatorModelInfo() const 
+    const RobotModelInfo& getRobotModelInfo() const 
     { 
-      return manipulatorModelInfo_; 
+      return robotModelInfo_; 
     }
 
     std::shared_ptr<PointsOnRobot> getPointsOnRobotPtr() 
@@ -184,6 +170,8 @@ class MobileManipulatorInterface final : public RobotInterface
       pointsOnRobotPtr_.reset(new PointsOnRobot(pointsAndRadii));
     }
 
+    void setMPCProblem(size_t modelMode, PointsOnRobot::points_radii_t& pointsAndRadii);
+
     /*
     void setEsdfCachingServerPtr(std::shared_ptr<voxblox::EsdfCachingServer> newEsdfCachingServerPtr) 
     { 
@@ -203,32 +191,15 @@ class MobileManipulatorInterface final : public RobotInterface
     void launchNodes(ros::NodeHandle& nodeHandle);
 
   private:
-    std::unique_ptr<StateInputCost> getQuadraticInputCost(const std::string& taskFile);
-    
-    std::unique_ptr<StateCost> getEndEffectorConstraint(const PinocchioInterface& pinocchioInterface, 
-                                                        const std::string& taskFile,
-                                                        const std::string& prefix, 
-                                                        bool useCaching, 
-                                                        const std::string& libraryFolder,
-                                                        bool recompileLibraries);
-    
-    std::unique_ptr<StateCost> getSelfCollisionConstraint(const PinocchioInterface& pinocchioInterface, 
-                                                          const std::string& taskFile,
-                                                          const std::string& urdfFile, 
-                                                          const std::string& prefix, 
-                                                          bool useCaching,
-                                                          const std::string& libraryFolder, 
-                                                          bool recompileLibraries);
+    std::unique_ptr<StateInputCost> getQuadraticInputCost(size_t modelMode);
 
-    std::unique_ptr<StateCost> getExtCollisionConstraint(const PinocchioInterface& pinocchioInterface,
-                                                         const std::string& taskFile,
-                                                         const std::string& urdfFile, 
-                                                         const std::string& prefix, 
-                                                         bool useCaching,
-                                                         const std::string& libraryFolder, 
-                                                         bool recompileLibraries);
+    std::unique_ptr<StateInputCost> getJointLimitSoftConstraint(size_t modelMode);
+    
+    std::unique_ptr<StateCost> getEndEffectorConstraint(const std::string& prefix);
+    
+    std::unique_ptr<StateCost> getSelfCollisionConstraint(const std::string& prefix);
 
-    std::unique_ptr<StateInputCost> getJointLimitSoftConstraint(const PinocchioInterface& pinocchioInterface, const std::string& taskFile);
+    std::unique_ptr<StateCost> getExtCollisionConstraint(const std::string& prefix, size_t modelMode);
 
     const std::string taskFile_;
     const std::string libraryFolder_;
@@ -242,13 +213,21 @@ class MobileManipulatorInterface final : public RobotInterface
     ddp::Settings ddpSettings_;
     mpc::Settings mpcSettings_;
 
+    //size_t modelBaseStateDim_;
+    //size_t modelArmStateDim_;
+    //size_t modelStateDim_;
+    
+    //size_t modelBaseInputDim_;
+    //size_t modelArmInputDim_;
+    //size_t modelInputDim_;
+
     OptimalControlProblem problem_;
     std::shared_ptr<ReferenceManager> referenceManagerPtr_;
     std::unique_ptr<RolloutBase> rolloutPtr_;
     std::unique_ptr<Initializer> initializerPtr_;
 
     std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
-    ManipulatorModelInfo manipulatorModelInfo_;
+    RobotModelInfo robotModelInfo_;
 
     //vector_t initialState_;
 

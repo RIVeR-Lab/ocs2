@@ -41,12 +41,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace ocs2;
 using namespace mobile_manipulator;
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv) 
+{
   const std::string robotName = "mobile_manipulator";
 
   // Initialize ros node
   ros::init(argc, argv, robotName + "_mrt");
   ros::NodeHandle nodeHandle;
+  
   // Get node parameters
   std::string taskFile, libFolder, urdfFile;
   nodeHandle.getParam("/taskFile", taskFile);
@@ -55,6 +57,7 @@ int main(int argc, char** argv) {
   std::cerr << "Loading task file: " << taskFile << std::endl;
   std::cerr << "Loading library folder: " << libFolder << std::endl;
   std::cerr << "Loading urdf file: " << urdfFile << std::endl;
+  
   // Robot Interface
   mobile_manipulator::MobileManipulatorInterface interface(taskFile, libFolder, urdfFile);
 
@@ -64,25 +67,34 @@ int main(int argc, char** argv) {
   mrt.launchNodes(nodeHandle);
 
   // Visualization
-  std::shared_ptr<mobile_manipulator::MobileManipulatorDummyVisualization> dummyVisualization(
-      new mobile_manipulator::MobileManipulatorDummyVisualization(nodeHandle, interface));
+  std::shared_ptr<mobile_manipulator::MobileManipulatorDummyVisualization> dummyVisualization(new mobile_manipulator::MobileManipulatorDummyVisualization(nodeHandle, interface));
 
   // Dummy MRT
   MRT_ROS_Dummy_Loop dummy(mrt, interface.mpcSettings().mrtDesiredFrequency_, interface.mpcSettings().mpcDesiredFrequency_);
   dummy.subscribeObservers({dummyVisualization});
 
-  // initial state
+  // RobotModelInfo
+  RobotModelInfo robotModelInfo = interface.getRobotModelInfo();
+  
+  auto stateDimBase = robotModelInfo.mobileBase.stateDim;
+  auto stateDimArm = robotModelInfo.robotArm.stateDim;
+  auto stateDim = stateDimBase + stateDimArm;
+
+  auto inputDimBase = robotModelInfo.mobileBase.inputDim;
+  auto inputDimArm = robotModelInfo.robotArm.inputDim;
+  auto inputDim = inputDimBase + inputDimArm;
+  
+  // Initial state
   SystemObservation initObservation;
-  //initObservation.state = interface.getInitialState();
-  initObservation.state.setZero(interface.getManipulatorModelInfo().stateDim);
-  initObservation.input.setZero(interface.getManipulatorModelInfo().inputDim);
+  initObservation.state.setZero(stateDim);
+  initObservation.input.setZero(inputDim);
   initObservation.time = 0.0;
 
-  // initial command
+  // Initial command
   vector_t initTarget(7);
   initTarget.head(3) << 1, 0, 1;
   initTarget.tail(4) << Eigen::Quaternion<scalar_t>(1, 0, 0, 0).coeffs();
-  const vector_t zeroInput = vector_t::Zero(interface.getManipulatorModelInfo().inputDim);
+  const vector_t zeroInput = vector_t::Zero(inputDim);
   const TargetTrajectories initTargetTrajectories({initObservation.time}, {initTarget}, {zeroInput});
 
   // Run dummy (loops while ros is ok)

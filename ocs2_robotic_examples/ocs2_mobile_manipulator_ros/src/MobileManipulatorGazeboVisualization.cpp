@@ -47,8 +47,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_mobile_manipulator/AccessHelperFunctions.h>
 #include <ocs2_mobile_manipulator/FactoryFunctions.h>
-#include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
-#include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
+//#include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
+//#include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
 
 // Custom libraries:
 #include <ocs2_mobile_manipulator_ros/MobileManipulatorGazeboVisualization.h>
@@ -60,8 +60,10 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename It>
-void assignHeader(It firstIt, It lastIt, const std_msgs::Header& header) {
-  for (; firstIt != lastIt; ++firstIt) {
+void assignHeader(It firstIt, It lastIt, const std_msgs::Header& header) 
+{
+  for (; firstIt != lastIt; ++firstIt) 
+  {
     firstIt->header = header;
   }
 }
@@ -70,8 +72,10 @@ void assignHeader(It firstIt, It lastIt, const std_msgs::Header& header) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename It>
-void assignIncreasingId(It firstIt, It lastIt, int startId = 0) {
-  for (; firstIt != lastIt; ++firstIt) {
+void assignIncreasingId(It firstIt, It lastIt, int startId = 0) 
+{
+  for (; firstIt != lastIt; ++firstIt) 
+  {
     firstIt->id = startId++;
   }
 }
@@ -107,7 +111,7 @@ void OCS2_Mobile_Manipulator_Visualization::launchVisualizerNode(ros::NodeHandle
   nodeHandle.getParam("/taskFile", taskFile);
   
   // read manipulator type
-  ManipulatorModelType modelType = mobile_manipulator::loadManipulatorType(taskFile, "model_information.manipulatorModelType");
+  RobotModelType modelType = mobile_manipulator::loadRobotType(taskFile, "model_information.robotModelType");
   
   // read the joints to make fixed
   loadData::loadStdVector<std::string>(taskFile, "model_information.removeJoints", removeJointNames_, false);
@@ -180,7 +184,7 @@ void OCS2_Mobile_Manipulator_Visualization::publishObservation(const ros::Time& 
   geometry_msgs::TransformStamped base_tf;
   base_tf.header.stamp = timeStamp;
   base_tf.header.frame_id = "world";
-  base_tf.child_frame_id = modelInfo_.baseFrame;
+  base_tf.child_frame_id = modelInfo_.mobileBase.baseFrame;
   base_tf.transform.translation = ros_msg_helpers::getVectorMsg(r_world_base);
   base_tf.transform.rotation = ros_msg_helpers::getOrientationMsg(q_world_base);
   tfBroadcaster_.sendTransform(base_tf);      
@@ -189,9 +193,9 @@ void OCS2_Mobile_Manipulator_Visualization::publishObservation(const ros::Time& 
   const auto j_arm = getArmJointAngles(observation.state, modelInfo_);
   std::map<std::string, scalar_t> jointPositions;
 
-  for (size_t i = 0; i < modelInfo_.dofNames.size(); i++) 
+  for (size_t i = 0; i < modelInfo_.robotArm.jointFrameNames.size(); i++) 
   {
-    jointPositions[modelInfo_.dofNames[i]] = j_arm(i);
+    jointPositions[modelInfo_.robotArm.jointFrameNames[i]] = j_arm(i);
   }
 
   for (const auto& name : removeJointNames_) 
@@ -249,7 +253,7 @@ void OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(const ros
   {
     pinocchio::forwardKinematics(model, data, state);
     pinocchio::updateFramePlacements(model, data);
-    const auto eeIndex = model.getBodyId(modelInfo_.eeFrame);
+    const auto eeIndex = model.getBodyId(modelInfo_.robotArm.eeFrame);
     const vector_t eePosition = data.oMf[eeIndex].translation();
     endEffectorTrajectory.push_back(ros_msg_helpers::getPointMsg(eePosition));
   });

@@ -63,7 +63,6 @@ class MRT_ROS_Gazebo_Loop
                         MRT_ROS_Interface& mrt,
                         std::string worldFrameName,
                         std::string baseFrameName,
-                        std::string robotModelName,
                         size_t stateDim,
                         size_t inputDim,
                         std::vector<std::string> dofNames,
@@ -76,7 +75,7 @@ class MRT_ROS_Gazebo_Loop
     virtual ~MRT_ROS_Gazebo_Loop() = default;
 
     /** NUA TODO: Add description */
-    void setRobotModelType(std::string robotModelType);
+    //void setRobotModelType(std::string robotModelType);
 
     /** NUA TODO: Add description */
     bool isArmStateInitialized();
@@ -135,7 +134,7 @@ class MRT_ROS_Gazebo_Loop
     void jointTrajectoryControllerStateCallback(const control_msgs::JointTrajectoryControllerState::ConstPtr& msg);
 
     /** NUA TODO: Add description */
-    void updateFullModalState();
+    void updateFullModelState();
 
     /** NUA TODO: Add description */
     SystemObservation getCurrentObservation(bool initFlag=false);
@@ -146,7 +145,7 @@ class MRT_ROS_Gazebo_Loop
 
     std::string worldFrameName_;
     std::string baseFrameName_;
-    std::string robotModelType_;
+    //std::string robotModelType_;
 
     bool initFlagBaseState_ = false;
     bool initFlagArmState_ = false;

@@ -1,31 +1,13 @@
-/******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
- * Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-
- * Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
- * Neither the name of the copyright holder nor the names of its
-  contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-******************************************************************************/
+// LAST UPDATE: 2022.03.04
+//
+// AUTHOR: Neset Unver Akmandor (NUA)
+//
+// E-MAIL: akmandor.n@northeastern.edu
+//
+// DESCRIPTION: TODO...
+//
+// REFERENCES:
+// [1] https://github.com/leggedrobotics/ocs2
 
 #include "ocs2_mobile_manipulator/FactoryFunctions.h"
 
@@ -50,8 +32,8 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, 
-                                            const ManipulatorModelType& type,
+PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath,
+                                            const RobotModelType& robotModelType,
                                             std::string world_frame_name,
                                             std::string base_frame_name) 
 {
@@ -66,7 +48,7 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath,
   }
   catch (tf::TransformException ex)
   {
-    ROS_INFO("[FactoryFunctions::createPinocchioInterface(3)] Couldn't get transform!");
+    ROS_INFO("[FactoryFunctions::createPinocchioInterface(4)] ERROR: Couldn't get transform!");
     ROS_ERROR("%s", ex.what());
     while(1);
   }
@@ -77,71 +59,65 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath,
 
   tf::matrixTFToEigen(tf::Matrix3x3(transform_base_wrt_world.getRotation()), se3_base_wrt_world.rotation());
 
-  switch (type) 
+  //// NUA TODO: NONE OF THESE FUNCTIONS ARE TESTED YET!
+  switch (robotModelType) 
   {
-    case ManipulatorModelType::DefaultManipulator: 
+    //// NUA TODO: THIS IS NOT TESTED YET!
+    case RobotModelType::MobileBase: 
     {
-      // return pinocchio interface
-      return getPinocchioInterfaceFromUrdfFile(robotUrdfPath, se3_base_wrt_world);
-    }
-
-    case ManipulatorModelType::FloatingArmManipulator: 
-    {
-      // add 6 DoF for the floating base
-      pinocchio::JointModelComposite jointComposite(2);
-      jointComposite.addJoint(pinocchio::JointModelTranslation());
-      jointComposite.addJoint(pinocchio::JointModelSphericalZYX());
-      
-      // return pinocchio interface
-      return getPinocchioInterfaceFromUrdfFile(robotUrdfPath, jointComposite, se3_base_wrt_world);
-    }
-
-    case ManipulatorModelType::FullyActuatedFloatingArmManipulator: 
-    {
-      // add 6 DOF for the fully-actuated free-floating base
-      pinocchio::JointModelComposite jointComposite(2);
-      jointComposite.addJoint(pinocchio::JointModelTranslation());
-      jointComposite.addJoint(pinocchio::JointModelSphericalZYX());
-      
-      // return pinocchio interface
-      return getPinocchioInterfaceFromUrdfFile(robotUrdfPath, jointComposite, se3_base_wrt_world);
-    }
-
-    case ManipulatorModelType::WheelBasedMobileManipulator: 
-    {
-      // add XY-yaw joint for the wheel-base
+      // Add XY-yaw joint for the wheel-base
       pinocchio::JointModelComposite jointComposite(3);
       jointComposite.addJoint(pinocchio::JointModelPX());
       jointComposite.addJoint(pinocchio::JointModelPY());
       jointComposite.addJoint(pinocchio::JointModelRZ());
 
-      // return pinocchio interface
+      //// NUA TODO: THIS NEEDS TO BE TESTED WITH A URDF WITH ONLY ROBOT BASE!
+      // Return pinocchio interface
       return getPinocchioInterfaceFromUrdfFile(robotUrdfPath, jointComposite, se3_base_wrt_world);
     }
+
+    case RobotModelType::RobotArm: 
+    {
+      // Return pinocchio interface
+      return getPinocchioInterfaceFromUrdfFile(robotUrdfPath, se3_base_wrt_world);
+    }
+
+    case RobotModelType::MobileManipulator: 
+    {
+      // Add XY-yaw joint for the wheel-base
+      pinocchio::JointModelComposite jointComposite(3);
+      jointComposite.addJoint(pinocchio::JointModelPX());
+      jointComposite.addJoint(pinocchio::JointModelPY());
+      jointComposite.addJoint(pinocchio::JointModelRZ());
+
+      // Return pinocchio interface
+      return getPinocchioInterfaceFromUrdfFile(robotUrdfPath, jointComposite, se3_base_wrt_world);
+    }
+    
     default:
-      throw std::invalid_argument("Invalid manipulator model type provided.");
+      throw std::invalid_argument("[FactoryFunctions::createPinocchioInterface(4)] ERROR: Invalid robot model type!");
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, 
-                                            const ManipulatorModelType& type,
-                                            const std::vector<std::string>& jointNames,
+PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath,
+                                            const RobotModelType& robotModelType,
+                                            const std::vector<std::string>& removeJointNames,
                                             std::string world_frame_name,
                                             std::string base_frame_name) 
 {
   using joint_pair_t = std::pair<const std::string, std::shared_ptr<::urdf::Joint>>;
 
-  // parse the URDF
+  // Parse the URDF
   const auto urdfTree = ::urdf::parseURDFFile(robotUrdfPath);
   
-  // remove extraneous joints from urdf
+  // Remove extraneous joints from urdf
   ::urdf::ModelInterfaceSharedPtr newModel = std::make_shared<::urdf::ModelInterface>(*urdfTree);
   for (joint_pair_t& jointPair : newModel->joints_) 
   {
-    if (std::find(jointNames.begin(), jointNames.end(), jointPair.first) != jointNames.end()) 
+    if (std::find(removeJointNames.begin(), removeJointNames.end(), jointPair.first) != removeJointNames.end()) 
     {
       jointPair.second->type = urdf::Joint::FIXED;
     }
@@ -158,7 +134,7 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath,
   }
   catch (tf::TransformException ex)
   {
-    ROS_INFO("[FactoryFunctions::createPinocchioInterface(3)] Couldn't get transform!");
+    ROS_INFO("[FactoryFunctions::createPinocchioInterface(5)] ERROR: Couldn't get transform!");
     ROS_ERROR("%s", ex.what());
     while(1);
   }
@@ -170,115 +146,115 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath,
   tf::matrixTFToEigen(tf::Matrix3x3(transform_base_wrt_world.getRotation()), se3_base_wrt_world.rotation());
 
   // resolve for the robot type
-  switch (type) 
+  switch (robotModelType) 
   {
-    case ManipulatorModelType::DefaultManipulator: 
+    case RobotModelType::MobileBase: 
     {
-      // return pinocchio interface
-      return getPinocchioInterfaceFromUrdfModel(newModel, se3_base_wrt_world);
-    }
-
-    case ManipulatorModelType::FloatingArmManipulator: 
-    {
-      // add 6 DoF for the floating base
-      pinocchio::JointModelComposite jointComposite(2);
-      jointComposite.addJoint(pinocchio::JointModelTranslation());
-      jointComposite.addJoint(pinocchio::JointModelSphericalZYX());
-      
-      // return pinocchio interface
-      return getPinocchioInterfaceFromUrdfModel(newModel, jointComposite, se3_base_wrt_world);
-    }
-
-    case ManipulatorModelType::FullyActuatedFloatingArmManipulator: 
-    {
-      // add 6 DOF for the free-floating base
-      pinocchio::JointModelComposite jointComposite(2);
-      jointComposite.addJoint(pinocchio::JointModelTranslation());
-      jointComposite.addJoint(pinocchio::JointModelSphericalZYX());
-      
-      // return pinocchio interface
-      return getPinocchioInterfaceFromUrdfFile(robotUrdfPath, jointComposite, se3_base_wrt_world);
-    }
-
-    case ManipulatorModelType::WheelBasedMobileManipulator: 
-    {
-      // add XY-yaw joint for the wheel-base
+      // Add XY-yaw joint for the wheel-base
       pinocchio::JointModelComposite jointComposite(3);
       jointComposite.addJoint(pinocchio::JointModelPX());
       jointComposite.addJoint(pinocchio::JointModelPY());
       jointComposite.addJoint(pinocchio::JointModelRZ());
 
-      // return pinocchio interface
-      //return getPinocchioInterfaceFromUrdfModel(newModel, jointComposite);
+      //// NUA TODO: THIS NEEDS TO BE TESTED WITH A URDF WITH ONLY ROBOT BASE!
+      // Return pinocchio interface
+      return getPinocchioInterfaceFromUrdfModel(newModel, se3_base_wrt_world);
+    }
+
+    case RobotModelType::RobotArm: 
+    {
+      // Return pinocchio interface
+      return getPinocchioInterfaceFromUrdfModel(newModel, se3_base_wrt_world);
+    }
+
+    case RobotModelType::MobileManipulator: 
+    {
+      // Add XY-yaw joint for the wheel-base
+      pinocchio::JointModelComposite jointComposite(3);
+      jointComposite.addJoint(pinocchio::JointModelPX());
+      jointComposite.addJoint(pinocchio::JointModelPY());
+      jointComposite.addJoint(pinocchio::JointModelRZ());
+
+      // Return pinocchio interface
       return getPinocchioInterfaceFromUrdfModel(newModel, jointComposite, se3_base_wrt_world);
     }
     
     default:
-      throw std::invalid_argument("Invalid manipulator model type provided.");
+      throw std::invalid_argument("[FactoryFunctions::createPinocchioInterface(5)] ERROR: Invalid robot model type!");
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ManipulatorModelInfo createManipulatorModelInfo(const PinocchioInterface& interface, 
-                                                const ManipulatorModelType& type,
-                                                const std::string& baseFrame, 
-                                                const std::string& armBaseFrame,
-                                                const std::string& eeFrame, 
-                                                const std::vector<std::string>& jointParentFrameNames) 
+RobotModelInfo createRobotModelInfo(const PinocchioInterface& interface, 
+                                    const RobotModelType& robotModelType,
+                                    const std::string& baseFrame, 
+                                    const std::string& armBaseFrame,
+                                    const std::string& eeFrame, 
+                                    const std::vector<std::string>& armJointFrameNames,
+                                    const std::vector<std::string>& armJointNames) 
 {
   const auto& model = interface.getModel();
-
-  ManipulatorModelInfo info;
-  info.manipulatorModelType = type;
-  info.stateDim = model.nq;
+  RobotModelInfo info;
+  info.robotModelType = robotModelType;
   
-  // resolve for actuated dof based on type of robot
-  switch (type) 
+  /////// NUA TODO: ADD 6 DOF BASE VERSION!  
+  switch (robotModelType) 
   {
-    case ManipulatorModelType::DefaultManipulator: 
+    case RobotModelType::MobileBase:
     {
-      // for default arm, the state dimension and input dimensions are same.
-      info.inputDim = info.stateDim;
-      info.armDim = info.inputDim;
+      std::cout << "[FactoryFunction::createRobotModelInfo] MobileBase" << std::endl;
+
+      info.modelMode = ModelMode::BaseMotion;
+      info.mobileBase.baseFrame = baseFrame;
+      info.mobileBase.stateDim = 3;
+      info.mobileBase.inputDim = 2;
+      info.robotArm.baseFrame = "";
+      info.robotArm.eeFrame = "";
+      info.robotArm.stateDim = 0;
+      info.robotArm.inputDim = 0;
       break;
     }
-    case ManipulatorModelType::FloatingArmManipulator: 
+
+    case RobotModelType::RobotArm: 
     {
-      // remove the static 6-DOF base joints that are unactuated.
-      info.inputDim = info.stateDim - 6;
-      info.armDim = info.inputDim;
+      std::cout << "[FactoryFunction::createRobotModelInfo] RobotArm" << std::endl;
+
+      info.modelMode = ModelMode::ArmMotion;
+      info.mobileBase.baseFrame = "";
+      info.mobileBase.stateDim = 0;
+      info.mobileBase.inputDim = 0;
+      info.robotArm.baseFrame = armBaseFrame;
+      info.robotArm.eeFrame = eeFrame;
+      info.robotArm.jointFrameNames = armJointFrameNames;
+      info.robotArm.jointNames = armJointNames;
+      //info.robotArm.jointFrameNames = model.names;
+      info.robotArm.stateDim = model.nq;
+      info.robotArm.inputDim = model.njoints;
       break;
     }
-    case ManipulatorModelType::FullyActuatedFloatingArmManipulator: 
+      
+    case RobotModelType::MobileManipulator: 
     {
-      // all states are actuatable
-      info.inputDim = info.stateDim;
-      info.armDim = info.inputDim - 6;
+      std::cout << "[FactoryFunction::createRobotModelInfo] MobileManipulator" << std::endl;
+      info.modelMode = ModelMode::WholeBodyMotion;
+      info.mobileBase.baseFrame = baseFrame;
+      info.mobileBase.stateDim = 3;
+      info.mobileBase.inputDim = 2;
+      info.robotArm.baseFrame = armBaseFrame;
+      info.robotArm.eeFrame = eeFrame;
+      info.robotArm.jointFrameNames = armJointFrameNames;
+      info.robotArm.jointNames = armJointNames;
+      info.robotArm.stateDim = model.nq - info.mobileBase.stateDim;
+      info.robotArm.inputDim = model.njoints - info.mobileBase.inputDim;
       break;
     }
-    case ManipulatorModelType::WheelBasedMobileManipulator: 
-    {
-      // for wheel-based, the input dimension is (v, omega, dq_j) while state dimension is (x, y, psi, q_j).
-      info.inputDim = info.stateDim - 1;
-      info.armDim = info.inputDim - 2;
-      break;
-    }
+
     default:
-      throw std::invalid_argument("Invalid manipulator model type provided.");
+      throw std::invalid_argument("[FactoryFunction::createRobotModelInfo] ERROR: Invalid manipulator model type!");
       break;
   }
-  
-  // store frame names for using later.
-  info.baseFrame = baseFrame;
-  info.armBaseFrame = armBaseFrame;
-  info.eeFrame = eeFrame;
-  info.jointParentFrameNames = jointParentFrameNames;
-
-  // get name of arm joints.
-  const auto& jointNames = model.names;
-  info.dofNames = std::vector<std::string>(jointNames.end() - info.armDim, jointNames.end());
 
   return info;
 }
@@ -286,12 +262,121 @@ ManipulatorModelInfo createManipulatorModelInfo(const PinocchioInterface& interf
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ManipulatorModelType loadManipulatorType(const std::string& configFilePath, const std::string& fieldName) 
+size_t getModelModeInt(RobotModelInfo& robotModelInfo)
+{
+  size_t modelModeInt;
+
+  switch (robotModelInfo.modelMode)
+  {
+    case ModelMode::BaseMotion:
+      modelModeInt = 0;
+      break;
+
+    case ModelMode::ArmMotion:
+      modelModeInt = 1;
+      break;
+
+    case ModelMode::WholeBodyMotion:
+      modelModeInt = 2;
+      break;
+
+    default:
+      std::cerr << "[FactoryFunction::createRobotModelInfo] ERROR: Invalid manipulator model type!";
+      break;
+  }
+  return modelModeInt;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+size_t getStateDimBase(RobotModelInfo& robotModelInfo)
+{
+  return robotModelInfo.mobileBase.stateDim;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+size_t getStateDimArm(RobotModelInfo& robotModelInfo)
+{
+  return robotModelInfo.robotArm.stateDim;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+size_t getStateDim(RobotModelInfo& robotModelInfo)
+{
+  return robotModelInfo.mobileBase.stateDim + robotModelInfo.robotArm.stateDim;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+size_t getInputDimBase(RobotModelInfo& robotModelInfo)
+{
+  return robotModelInfo.mobileBase.inputDim;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+size_t getInputDimArm(RobotModelInfo& robotModelInfo)
+{
+  return robotModelInfo.robotArm.inputDim;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+size_t getInputDim(RobotModelInfo& robotModelInfo)
+{
+  return robotModelInfo.mobileBase.inputDim + robotModelInfo.robotArm.inputDim;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+bool updateModelMode(RobotModelInfo& robotModelInfo, size_t& modelMode)
+{
+  bool result = false;
+  if (robotModelInfo.robotModelType == RobotModelType::MobileManipulator)
+  {
+    switch (modelMode)
+    {
+      case 0:
+        robotModelInfo.modelMode = ModelMode::BaseMotion;
+        result = true;
+        break;
+
+      case 1:
+        robotModelInfo.modelMode = ModelMode::ArmMotion;
+        result = true;
+        break;
+
+      case 2:
+        robotModelInfo.modelMode = ModelMode::WholeBodyMotion;
+        result = true;
+        break;
+
+      default:
+        std::cerr << "[FactoryFunction::updateModelMode] ERROR: Invalid manipulator model type!";
+        break;
+    }
+  }
+  return result;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+RobotModelType loadRobotType(const std::string& configFilePath, const std::string& fieldName) 
 {
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(configFilePath, pt);
   const size_t type = pt.template get<size_t>(fieldName);
-  return static_cast<ManipulatorModelType>(type);
+  return static_cast<RobotModelType>(type);
 }
 
 }  // namespace mobile_manipulator

@@ -35,7 +35,6 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                                          MRT_ROS_Interface& mrt,
                                          std::string worldFrameName,
                                          std::string baseFrameName,
-                                         std::string robotModelType,
                                          size_t stateDim,
                                          size_t inputDim,
                                          std::vector<std::string> dofNames,
@@ -44,7 +43,6 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   : mrt_(mrt), 
     worldFrameName_(worldFrameName),
     baseFrameName_(baseFrameName),
-    robotModelType_(robotModelType),
     stateDim_(stateDim), 
     inputDim_(inputDim), 
     dofNames_(dofNames), 
@@ -86,10 +84,12 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+/*
 void MRT_ROS_Gazebo_Loop::setRobotModelType(std::string robotModelType)
 {
   robotModelType_ = robotModelType;
 }
+*/
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -255,7 +255,7 @@ void MRT_ROS_Gazebo_Loop::setStateIndexMap()
   stateIndexMap_.clear();
   int c;
 
-  if (dofNames_.size() != jointTrajectoryControllerStatePtrMsg -> joint_names.size())
+  if (dofNames_.size() != jointTrajectoryControllerStatePtrMsg->joint_names.size())
   {
     throw std::runtime_error("[MRT_ROS_Gazebo_Loop::setStateIndexMap] Error: State dimension mismatch!");
   }
@@ -278,24 +278,22 @@ void MRT_ROS_Gazebo_Loop::setStateIndexMap()
     }
   }
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::setStateIndexMap] stateIndexMap_:" << std::endl;
-  //for (int i = 0; i < stateIndexMap_.size(); ++i)
-  //{
-  //  std::cout << i << " -> " << stateIndexMap_[i] << std::endl;
-  //}
+  /*
+  std::cout << "[MRT_ROS_Gazebo_Loop::setStateIndexMap] stateIndexMap_:" << std::endl;
+  for (int i = 0; i < stateIndexMap_.size(); ++i)
+  {
+    std::cout << i << " -> " << stateIndexMap_[i] << std::endl;
+  }
+  */
 }
 
 void MRT_ROS_Gazebo_Loop::tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg)
 {
-  //std::cout << "[MRT_ROS_Gazebo_Loop::tfCallback] START" << std::endl;
-
   //tf2_msgs::TFMessage tf_msg = *msg;
 
   tfListener_.lookupTransform(worldFrameName_, baseFrameName_, ros::Time(0), tf_robot_wrt_world_);
 
   initFlagBaseState_ = true;
-
-  //std::cout << "[MRT_ROS_Gazebo_Loop::tfCallback] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -343,10 +341,8 @@ void MRT_ROS_Gazebo_Loop::jointTrajectoryControllerStateCallback(const control_m
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Gazebo_Loop::updateFullModalState()
+void MRT_ROS_Gazebo_Loop::updateFullModelState()
 {
-  //std::cout << "[MRT_ROS_Gazebo_Loop::updateFullModalState] START" << std::endl;
-
   tf::StampedTransform tf_robot_wrt_world = tf_robot_wrt_world_;
   control_msgs::JointTrajectoryControllerState jointTrajectoryControllerStateMsg = jointTrajectoryControllerStateMsg_;
 
@@ -356,7 +352,7 @@ void MRT_ROS_Gazebo_Loop::updateFullModalState()
   // Set mobile base states
   if (mrt_.getBaseStateDim() != 3)
   {
-    std::cerr << "[MRT_ROS_Gazebo_Loop::updateFullModalState] ERROR: Base state dimension mismatch!" << std:: endl;
+    std::cerr << "[MRT_ROS_Gazebo_Loop::updateFullModelState] ERROR: Base state dimension mismatch!" << std::endl;
   }
   else
   {
@@ -373,7 +369,7 @@ void MRT_ROS_Gazebo_Loop::updateFullModalState()
   // Set arm states
   if (mrt_.getArmStateDim() != jointTrajectoryControllerStateMsg.joint_names.size())
   {
-    std::cerr << "[MRT_ROS_Gazebo_Loop::updateFullModalState] ERROR: Arm state dimension mismatch!" << std:: endl;
+    std::cerr << "[MRT_ROS_Gazebo_Loop::updateFullModelState] ERROR: Arm state dimension mismatch!" << std::endl;
   }
   else
   {
@@ -382,8 +378,6 @@ void MRT_ROS_Gazebo_Loop::updateFullModalState()
       armState_.push_back(jointTrajectoryControllerStateMsg.actual.positions[stateIndexMap_[i]]);
     }
   }
-
-  //std::cout << "[MRT_ROS_Gazebo_Loop::updateFullModalState] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -405,7 +399,7 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
     currentObservation.input = currentInput_;
   }
 
-  updateFullModalState();
+  updateFullModelState();
 
   // Set mobile base states
   if (mrt_.checkModalMode(0) || mrt_.checkModalMode(2))

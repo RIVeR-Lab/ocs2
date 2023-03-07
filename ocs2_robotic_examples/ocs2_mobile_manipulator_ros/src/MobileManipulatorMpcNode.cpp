@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 
+#include "ocs2_mobile_manipulator/RobotModelInfo.h"
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
 
 using namespace ocs2;
@@ -71,6 +72,7 @@ int main(int argc, char** argv)
       ROS_WARN("[MobileManipulatorMpcNode::main] collision_points parameter is not of type array.");
     }
     
+    // NUA TODO: Get the point and radii info from task file! Also seperate base and arm!
     std::cout << "[MobileManipulatorMpcNode::main] pointsAndRadii:" << std::endl;
     for (int i = 0; i < collisionPoints.size(); i++) 
     {

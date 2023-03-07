@@ -37,8 +37,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MRT_ROS_Interface::MRT_ROS_Interface(std::string topicPrefix, int modalMode, ros::TransportHints mrtTransportHints)
-  : topicPrefix_(std::move(topicPrefix)), modalMode_(modalMode), mrtTransportHints_(mrtTransportHints)
+MRT_ROS_Interface::MRT_ROS_Interface(std::string topicPrefix, int modelMode, ros::TransportHints mrtTransportHints)
+  : topicPrefix_(std::move(topicPrefix)), modelMode_(modelMode), mrtTransportHints_(mrtTransportHints)
 {
   // Start thread for publishing
 #ifdef PUBLISH_THREAD
@@ -63,7 +63,7 @@ MRT_ROS_Interface::~MRT_ROS_Interface()
 /******************************************************************************************************/
 size_t MRT_ROS_Interface::getModalMode()
 {
-  return modalMode_; 
+  return modelMode_; 
 }
 
 /******************************************************************************************************/
@@ -85,9 +85,9 @@ size_t MRT_ROS_Interface::getArmStateDim()
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::setModalMode(size_t modalMode)
+void MRT_ROS_Interface::setModalMode(size_t modelMode)
 {
-  modalMode_ = modalMode; 
+  modelMode_ = modelMode; 
 }
 
 /******************************************************************************************************/
@@ -109,9 +109,9 @@ void MRT_ROS_Interface::setArmStateDim(size_t armStateDim)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool MRT_ROS_Interface::checkModalMode(size_t modalMode)
+bool MRT_ROS_Interface::checkModalMode(size_t modelMode)
 {
-  if (modalMode_ == modalMode)
+  if (modelMode_ == modelMode)
   {
     return true;
   } 

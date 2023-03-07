@@ -38,7 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_self_collision_visualization/GeometryInterfaceVisualization.h>
 
 #include <ocs2_mobile_manipulator/FactoryFunctions.h>
-#include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
+#include <ocs2_mobile_manipulator/RobotModelInfo.h>
+//#include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
 
 #include <ros/package.h>
@@ -56,25 +57,30 @@ sensor_msgs::JointState lastMsg;
 
 std::unique_ptr<ros::Publisher> pub;
 
-void jointStateCallback(sensor_msgs::JointStateConstPtr msg) {
-  if (lastMsg.position == msg->position) {
+void jointStateCallback(sensor_msgs::JointStateConstPtr msg) 
+{
+  if (lastMsg.position == msg->position) 
+  {
     return;
   }
   lastMsg.position = msg->position;
 
   Eigen::VectorXd q(9);
   q(0) = q(1) = q(2) = 0.0;
-  for (size_t i = 3; i < 9; ++i) {
+  for (size_t i = 3; i < 9; ++i) 
+  {
     q(i) = lastMsg.position[i - 3];
   }
 
   vInterface->publishDistances(q);
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv) 
+{
   // Initialize ros node
   ros::init(argc, argv, "distance_visualization");
   ros::NodeHandle nodeHandle;
+  
   // Get ROS parameters
   std::string urdfPath, taskFile;
   nodeHandle.getParam("/taskFile", taskFile);
@@ -83,23 +89,27 @@ int main(int argc, char** argv) {
   // read the task file
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile, pt);
-  // read manipulator type
-  ManipulatorModelType modelType = mobile_manipulator::loadManipulatorType(taskFile, "model_information.manipulatorModelType");
-  // read the joints to make fixed
+  
+  // Read manipulator type
+  RobotModelType modelType = mobile_manipulator::loadRobotType(taskFile, "model_information.robotModelType");
+  
+  // Read the joints to make fixed
   std::vector<std::string> removeJointNames;
   loadData::loadStdVector<std::string>(taskFile, "model_information.removeJoints", removeJointNames, true);
-  // read the frame names
+  
+  // Read the frame names
   std::string baseFrame;
   loadData::loadPtreeValue<std::string>(pt, baseFrame, "model_information.baseFrame", false);
 
-  // create pinocchio interface
+  // Create pinocchio interface
   pInterface.reset(new PinocchioInterface(::ocs2::mobile_manipulator::createPinocchioInterface(urdfPath, modelType)));
 
   std::cerr << "\n #### Model Information:";
   std::cerr << "\n #### =============================================================================\n";
-  std::cerr << "\n #### model_information.manipulatorModelType: " << static_cast<int>(modelType);
+  std::cerr << "\n #### model_information.robotModelType: " << static_cast<int>(modelType);
   std::cerr << "\n #### model_information.removeJoints: ";
-  for (const auto& name : removeJointNames) {
+  for (const auto& name : removeJointNames) 
+  {
     std::cerr << "\"" << name << "\" ";
   }
   std::cerr << "\n #### model_information.baseFrame: \"" << baseFrame << "\"";
@@ -108,18 +118,21 @@ int main(int argc, char** argv) {
   std::vector<std::pair<std::string, std::string>> selfCollisionLinkPairs;
   loadData::loadStdVectorOfPair(taskFile, "selfCollision.collisionObjectPairs", selfCollisionObjectPairs);
   loadData::loadStdVectorOfPair(taskFile, "selfCollision.collisionLinkPairs", selfCollisionLinkPairs);
-  for (const auto& element : selfCollisionObjectPairs) {
+  
+  for (const auto& element : selfCollisionObjectPairs) 
+  {
     std::cerr << "[" << element.first << ", " << element.second << "]; ";
   }
   std::cerr << std::endl;
+  
   std::cerr << "Loaded collision link pairs: ";
-  for (const auto& element : selfCollisionLinkPairs) {
+  for (const auto& element : selfCollisionLinkPairs) 
+  {
     std::cerr << "[" << element.first << ", " << element.second << "]; ";
   }
   std::cerr << std::endl;
 
   gInterface.reset(new PinocchioGeometryInterface(*pInterface, selfCollisionLinkPairs, selfCollisionObjectPairs));
-
   vInterface.reset(new GeometryInterfaceVisualization(*pInterface, *gInterface, nodeHandle, baseFrame));
 
   ros::Subscriber sub = nodeHandle.subscribe("joint_states", 1, &jointStateCallback);

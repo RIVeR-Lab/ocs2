@@ -1,31 +1,13 @@
-/******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
- * Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-
- * Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
- * Neither the name of the copyright holder nor the names of its
-  contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-******************************************************************************/
+// LAST UPDATE: 2022.03.04
+//
+// AUTHOR: Neset Unver Akmandor (NUA)
+//
+// E-MAIL: akmandor.n@northeastern.edu
+//
+// DESCRIPTION: TODO...
+//
+// REFERENCES:
+// [1] https://github.com/leggedrobotics/ocs2
 
 #pragma once
 
@@ -43,50 +25,93 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/automatic_differentiation/Types.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 
-#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
+//#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
+#include "ocs2_mobile_manipulator/RobotModelInfo.h"
 
 namespace ocs2 {
 namespace mobile_manipulator {
 
 /** Create a MobileManipulatorModel PinocchioInterface from a URDF
+ * NUA TODO: UPDATE!
  * @param [in] robotUrdfPath: The robot URDF path.
- * @param [in] type: Type of robot model (fixed-arm or wheel-based)
  * @return PinocchioInterface
  */
-PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, 
-                                            const ManipulatorModelType& type,
+PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath,
+                                            const RobotModelType& robotModelType,
                                             std::string world_frame_name = "world",
                                             std::string base_frame_name = "base_link");
 
 /** Create a MobileManipulatorModel PinocchioInterface from a URDF
+ * NUA TODO: UPDATE!
  * @param [in] robotUrdfPath: The robot URDF path.
  * @param [in] type: Type of robot model (fixed-arm or wheel-based)
  * @param [in] jointNames: The joint names from URDF to make fixed/unactuated.
  * @return PinocchioInterface
  */
-PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath, 
-                                            const ManipulatorModelType& type,
-                                            const std::vector<std::string>& jointNames,
+PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath,
+                                            const RobotModelType& robotModelType,
+                                            const std::vector<std::string>& jointNamesRemoved,
                                             std::string world_frame_name = "world",
                                             std::string base_frame_name = "base_link");
 
 /**
- * Create a scalar-typed ManipulatorModelInfo.
+ * Create a scalar-typed RobotModelInfo.
+ * NUA TODO: UPDATE!
  * @param [in] interface: Pinocchio interface
- * @param [in] type: Type of template model (default-arm or wheel-based or floating-arm)
  * @param [in] baseFrame: Name of the root frame.
  * @param [in] eeFrame: Name of the end-effector frame.
- * @return ManipulatorModelInfo
+ * @return RobotModelInfo
  */
-ManipulatorModelInfo createManipulatorModelInfo(const PinocchioInterface& interface, 
-                                                const ManipulatorModelType& type,
-                                                const std::string& baseFrame, 
-                                                const std::string& armBaseFrame,
-                                                const std::string& eeFrame,
-                                                const std::vector<std::string>& jointParentFrameNames);
+RobotModelInfo createRobotModelInfo(const PinocchioInterface& interface, 
+                                    const RobotModelType& robotModelType,
+                                    const std::string& baseFrame, 
+                                    const std::string& armBaseFrame,
+                                    const std::string& eeFrame,
+                                    const std::vector<std::string>& jointFrameNames,
+                                    const std::vector<std::string>& jointNames);
+
+/**
+ * NUA TODO: UPDATE!
+ */
+bool updateModelMode(RobotModelInfo& robotModelInfo, size_t& modelMode);
+
+/**
+ * NUA TODO: UPDATE!
+ */
+size_t getModelModeInt(RobotModelInfo& robotModelInfo);
+
+/**
+ * NUA TODO: UPDATE!
+ */
+size_t getStateDimBase(RobotModelInfo& robotModelInfo);
+
+/**
+ * NUA TODO: UPDATE!
+ */
+size_t getStateDimArm(RobotModelInfo& robotModelInfo);
+
+/**
+ * NUA TODO: UPDATE!
+ */
+size_t getStateDim(RobotModelInfo& robotModelInfo);
+
+/**
+ * NUA TODO: UPDATE!
+ */
+size_t getInputDimBase(RobotModelInfo& robotModelInfo);
+
+/**
+ * NUA TODO: UPDATE!
+ */
+size_t getInputDimArm(RobotModelInfo& robotModelInfo);
+
+/**
+ * NUA TODO: UPDATE!
+ */
+size_t getInputDim(RobotModelInfo& robotModelInfo);
 
 /** Load ManipulatorModelType for a config file */
-ManipulatorModelType loadManipulatorType(const std::string& configFilePath, const std::string& fieldName = "manipulatorModelType");
+RobotModelType loadRobotType(const std::string& configFilePath, const std::string& fieldName = "robotModelType");
 
 }  // namespace mobile_manipulator
 }  // namespace ocs2

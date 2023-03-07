@@ -28,12 +28,16 @@ class MobileManipulatorExtCollisionConstraint final : public ExtCollisionConstra
                                             ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
                                             std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
                                             ocs2::scalar_t maxDistance,
-                                            std::shared_ptr<ExtMapUtility> emuPtr)
+                                            std::shared_ptr<ExtMapUtility> emuPtr,
+                                            size_t modalMode,
+                                            size_t stateDim)
       : ExtCollisionConstraint(mapping, 
                                std::move(extCollisionPinocchioGeometryInterface), 
                                pointsOnRobotPtr,
                                maxDistance,
-                               emuPtr) {}
+                               emuPtr,
+                               modalMode,
+                               stateDim) {}
     
     ~MobileManipulatorExtCollisionConstraint() override = default;
     
@@ -46,8 +50,6 @@ class MobileManipulatorExtCollisionConstraint final : public ExtCollisionConstra
 
     const PinocchioInterface& getPinocchioInterface(const PreComputation& preComputation) const override 
     {
-      //std::cout << "[MobileManipulatorExtCollisionConstraint::getPinocchioInterface] START" << std::endl;
-      
       return cast<MobileManipulatorPreComputation>(preComputation).getPinocchioInterface();
     }
 };

@@ -41,21 +41,24 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MobileManipulatorPreComputation::MobileManipulatorPreComputation(PinocchioInterface pinocchioInterface, const ManipulatorModelInfo& info)
-    : pinocchioInterface_(std::move(pinocchioInterface)), pinocchioMapping_(info) {}
+MobileManipulatorPreComputation::MobileManipulatorPreComputation(PinocchioInterface pinocchioInterface, const RobotModelInfo& info)
+  : pinocchioInterface_(std::move(pinocchioInterface)), pinocchioMapping_(info) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MobileManipulatorPreComputation* MobileManipulatorPreComputation::clone() const {
-  return new MobileManipulatorPreComputation(pinocchioInterface_, pinocchioMapping_.getManipulatorModelInfo());
+MobileManipulatorPreComputation* MobileManipulatorPreComputation::clone() const 
+{
+  return new MobileManipulatorPreComputation(pinocchioInterface_, pinocchioMapping_.getRobotModelInfo());
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MobileManipulatorPreComputation::request(RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) {
-  if (!request.containsAny(Request::Cost + Request::Constraint + Request::SoftConstraint)) {
+void MobileManipulatorPreComputation::request(RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) 
+{
+  if (!request.containsAny(Request::Cost + Request::Constraint + Request::SoftConstraint)) 
+  {
     return;
   }
 
@@ -63,12 +66,15 @@ void MobileManipulatorPreComputation::request(RequestSet request, scalar_t t, co
   auto& data = pinocchioInterface_.getData();
   const auto q = pinocchioMapping_.getPinocchioJointPosition(x);
 
-  if (request.contains(Request::Approximation)) {
+  if (request.contains(Request::Approximation)) 
+  {
     pinocchio::forwardKinematics(model, data, q);
     pinocchio::updateFramePlacements(model, data);
     pinocchio::computeJointJacobians(model, data);
     pinocchio::updateGlobalPlacements(model, data);
-  } else {
+  } 
+  else 
+  {
     pinocchio::forwardKinematics(model, data, q);
     pinocchio::updateFramePlacements(model, data);
   }
@@ -77,8 +83,10 @@ void MobileManipulatorPreComputation::request(RequestSet request, scalar_t t, co
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MobileManipulatorPreComputation::requestFinal(RequestSet request, scalar_t t, const vector_t& x) {
-  if (!request.containsAny(Request::Cost + Request::Constraint + Request::SoftConstraint)) {
+void MobileManipulatorPreComputation::requestFinal(RequestSet request, scalar_t t, const vector_t& x) 
+{
+  if (!request.containsAny(Request::Cost + Request::Constraint + Request::SoftConstraint)) 
+  {
     return;
   }
 
@@ -86,11 +94,14 @@ void MobileManipulatorPreComputation::requestFinal(RequestSet request, scalar_t 
   auto& data = pinocchioInterface_.getData();
   const auto q = pinocchioMapping_.getPinocchioJointPosition(x);
 
-  if (request.contains(Request::Approximation)) {
+  if (request.contains(Request::Approximation)) 
+  {
     pinocchio::forwardKinematics(model, data, q);
     pinocchio::updateFramePlacements(model, data);
     pinocchio::computeJointJacobians(model, data);
-  } else {
+  } 
+  else 
+  {
     pinocchio::forwardKinematics(model, data, q);
     pinocchio::updateFramePlacements(model, data);
   }

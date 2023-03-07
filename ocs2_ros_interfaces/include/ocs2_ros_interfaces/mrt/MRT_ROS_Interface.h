@@ -67,7 +67,7 @@ class MRT_ROS_Interface : public MRT_BASE
      * @param [in] mrtTransportHints: ROS transmission protocol.
      */
     explicit MRT_ROS_Interface(std::string topicPrefix = "anonymousRobot",
-                               int modalMode = 2,
+                               int modelMode = 2,
                                ::ros::TransportHints mrtTransportHints = ::ros::TransportHints().tcpNoDelay());
 
     /**
@@ -81,13 +81,13 @@ class MRT_ROS_Interface : public MRT_BASE
 
     size_t getArmStateDim();
 
-    void setModalMode(size_t modalMode);
+    void setModalMode(size_t modelMode);
 
     void setBaseStateDim(size_t baseStateDim);
     
     void setArmStateDim(size_t armStateDim);
 
-    bool checkModalMode(size_t modalMode);
+    bool checkModalMode(size_t modelMode);
 
     void resetMpcNode(const TargetTrajectories& initTargetTrajectories) override;
 
@@ -144,9 +144,9 @@ class MRT_ROS_Interface : public MRT_BASE
   private:
     std::string topicPrefix_;
 
-    int modalMode_ = 2;     // 0: base, 1: arm, 2: arm+base
-    int baseStateDim_ = 3;
-    int armStateDim_ = 6;
+    int modelMode_;     // 0: base, 1: arm, 2: arm+base
+    int baseStateDim_;
+    int armStateDim_;
 
     // Subscribers
     ros::Subscriber mpcPolicySubscriber_;

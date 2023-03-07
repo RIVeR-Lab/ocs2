@@ -21,9 +21,16 @@ ExtCollisionConstraint::ExtCollisionConstraint(const PinocchioStateInputMapping<
                                                ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
                                                std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
                                                ocs2::scalar_t maxDistance,
-                                               std::shared_ptr<ExtMapUtility> emuPtr)
+                                               std::shared_ptr<ExtMapUtility> emuPtr,
+                                               size_t modalMode,
+                                               size_t stateDim)
   : StateConstraint(ConstraintOrder::Linear),
-    extCollision_(std::move(extCollisionPinocchioGeometryInterface), pointsOnRobotPtr, maxDistance, emuPtr),
+    extCollision_(std::move(extCollisionPinocchioGeometryInterface), 
+                  pointsOnRobotPtr, 
+                  maxDistance, 
+                  emuPtr, 
+                  modalMode, 
+                  stateDim),
     mappingPtr_(mapping.clone()) {}
 
 /******************************************************************************************************/

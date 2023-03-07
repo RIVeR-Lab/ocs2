@@ -64,6 +64,8 @@ size_t EndEffectorConstraint::getNumConstraints(scalar_t time) const
 /******************************************************************************************************/
 vector_t EndEffectorConstraint::getValue(scalar_t time, const vector_t& state, const PreComputation& preComputation) const 
 {
+  //std::cout << "[EndEffectorConstraint::getValue] END" << std:: endl;
+
   // PinocchioEndEffectorKinematics requires pre-computation with shared PinocchioInterface.
   if (pinocchioEEKinPtr_ != nullptr) 
   {
@@ -76,6 +78,20 @@ vector_t EndEffectorConstraint::getValue(scalar_t time, const vector_t& state, c
   vector_t constraint(6);
   constraint.head<3>() = endEffectorKinematicsPtr_->getPosition(state).front() - desiredPositionOrientation.first;
   constraint.tail<3>() = endEffectorKinematicsPtr_->getOrientationError(state, {desiredPositionOrientation.second}).front();
+
+  // NUA NOTE: These constraints should not be negative, however they can be with the above implementation!
+  //           This can be fixed while integrating these constraints to the cost function later (since it was 
+  //           also working well without my edit), but I haven't verified that yet!
+  for (size_t i = 0; i < constraint.size(); i++)
+  {
+    if (constraint[i] < 0)
+    {
+      constraint[i] = abs(constraint[i]);
+    }
+  }
+
+  //std::cout << "[EndEffectorConstraint::getValue] END" << std:: endl << std::endl;
+
   return constraint;
 }
 

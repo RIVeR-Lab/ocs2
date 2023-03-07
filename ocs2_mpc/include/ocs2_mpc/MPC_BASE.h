@@ -54,13 +54,13 @@ class MPC_BASE
     /** Destructor. */
     virtual ~MPC_BASE() = default;
 
-    int getModalMode();
+    int getModelMode();
 
     int getBaseStateDim();
 
     int getArmStateDim();
 
-    void setModalMode(int modalMode);
+    void setModelMode(int modelMode);
 
     void setBaseStateDim(int baseStateDim);
     
@@ -120,7 +120,7 @@ class MPC_BASE
 
     benchmark::RepeatedTimer mpcTimer_;
 
-    int modalMode_ = 2;     // 0: base, 1: arm, 2: arm+base
+    int modelMode_ = 2;     // 0: base, 1: arm, 2: arm+base
     int baseStateDim_ = 3;
     int armStateDim_ = 6;
 };

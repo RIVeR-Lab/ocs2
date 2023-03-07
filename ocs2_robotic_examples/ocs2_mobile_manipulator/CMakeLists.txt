@@ -92,6 +92,10 @@ add_library(${PROJECT_NAME}
   src/MobileManipulatorPreComputation.cpp
   src/MobileManipulatorPinocchioMapping.cpp
   src/constraint/EndEffectorConstraint.cpp
+  src/constraint/BodyPoseConstraint.cpp
+  src/dynamics/MobileBaseDynamics.cpp
+  src/dynamics/RobotArmDynamics.cpp
+  src/dynamics/MobileManipulatorDynamics.cpp
   src/dynamics/WheelBasedMobileManipulatorDynamics.cpp
   src/dynamics/DefaultManipulatorDynamics.cpp
   src/dynamics/FloatingArmManipulatorDynamics.cpp

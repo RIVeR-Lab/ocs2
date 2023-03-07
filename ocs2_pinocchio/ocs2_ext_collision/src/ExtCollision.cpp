@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.02.14
+// LAST UPDATE: 2022.03.04
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -27,15 +27,23 @@ namespace ocs2 {
 ExtCollision::ExtCollision(ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
                            std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
                            ocs2::scalar_t maxDistance,
-                           std::shared_ptr<ExtMapUtility> emuPtr)
+                           std::shared_ptr<ExtMapUtility> emuPtr,
+                           size_t modalMode,
+                           size_t stateDim)
   : extCollisionPinocchioGeometryInterface_(std::move(extCollisionPinocchioGeometryInterface)), 
     pointsOnRobotPtr_(pointsOnRobotPtr),
     maxDistance_(maxDistance),
     distances_(pointsOnRobotPtr->getNumOfPoints()),
     emuPtr_(emuPtr),
-    gradientsVoxblox_(pointsOnRobotPtr->getNumOfPoints(), pointsOnRobotPtr->getNumOfPoints() * 3),
-    gradients_(pointsOnRobotPtr->getNumOfPoints(), 9) {}  // NUA TODO: 9 IS THE NUMBER OF STATES, BE CAREFUL WHEN GENERALIZATION!!!
+    modalMode_(modalMode)
+{
+  //updateModalDim(modalMode, armStateDim);
 
+  gradientsVoxblox_.resize(pointsOnRobotPtr->getNumOfPoints(), pointsOnRobotPtr->getNumOfPoints() * 3);
+  gradients_.resize(pointsOnRobotPtr->getNumOfPoints(), stateDim); 
+}
+
+/////// NUA TODO: IMPLEMENTATION IS NOT COMPLETE!
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -118,6 +126,7 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
   return violations;
 }
 
+/////// NUA TODO: IMPLEMENTATION IS NOT COMPLETE!
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -191,52 +200,57 @@ size_t ExtCollision::getNumPointsOnRobot() const
   return pointsOnRobotPtr_->getNumOfPoints();
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 /*
-void ExtCollision::setDistanceAndGradient() const
+void ExtCollision::updateModalDim(size_t modalMode, size_t armStateDim)
 {
-  if (pointsOnRobotPtr_) 
-  { 
-    int numPoints = pointsOnRobotPtr_->getNumOfPoints();
-
-    violations.resize(numPoints);
-    gradientsVoxblox_.setZero();
-
-    Eigen::VectorXd positionPointsOnRobot = pointsOnRobotPtr_->getPointsPositionCppAd(state);
-    Eigen::MatrixXd jacobianPointsOnRobot = pointsOnRobotPtr_->getPointsJacobianCppAd(state);
-    Eigen::VectorXd radii = pointsOnRobotPtr_->getRadii();
-    
-    assert(positionPointsOnRobot.size() % 3 == 0);
-    
-    float distance;
-    Eigen::Vector3f gradientVoxblox;
-    for (int i = 0; i < numPoints; i++)
-    {
-      Eigen::Ref<Eigen::Matrix<scalar_t, 3, 1>> position = positionPointsOnRobot.segment<3>(i * 3);
-      
-      std::cout << "[ExtCollision::getValue] " << i << ": (" << position(0) << ", " << position(1) << ", " << position(2) << ") -> " << distance << std::endl;
-      if (voxbloxInterpolatorPtr_->getInterpolatedDistanceGradient(position.cast<float>(), &distance, &gradientVoxblox)) 
-      {
-        distances_[i] = distance - radii(i);
-        gradientsVoxblox_.block<1, 3>(i, 3 * i) = gradientVoxblox.transpose().cast<double>();
-
-        std::cout << "[ExtCollision::getValue] (" << position(0) << ", " << position(1) << ", " << position(2) << ") -> " << distance << std::endl;
-      } 
-      else 
-      {
-        distances_[i] = maxDistance_ - radii(i);
-      }
-    }
-
-    violations = distances_;
-
-    assert(gradients_.rows() == gradientsVoxblox_.rows());
-    assert(gradients_.cols() == jacobianPointsOnRobot.cols());
-    gradients_ = gradientsVoxblox_ * jacobianPointsOnRobot;
-  }
-  else
+  // NUA TODO: ADD 6 DOF BASE VERSION!
+  switch (modalMode)
   {
-    std::cout << "[ExtCollision::getValue] No points on robot!" << std::endl;
-    violations = vector_t::Zero(1);
+    case 0:
+      modalBaseStateDim_ = 3;
+      modalArmStateDim_ = 0;
+      modalStateDim_ = modalBaseStateDim_ + modalArmStateDim_;
+      
+      modalBaseInputDim_ = 2;
+      modalArmInputDim_ = 0;
+      modalInputDim_ = modalBaseInputDim_ + modalArmInputDim_;
+      break;
+
+    case 1:
+      modalBaseStateDim_ = 0;
+      modalArmStateDim_ = armStateDim;
+      modalStateDim_ = modalBaseStateDim_ + modalArmStateDim_;
+
+      modalBaseInputDim_ = 0;
+      modalArmInputDim_ = armStateDim;
+      modalInputDim_ = modalBaseInputDim_ + modalArmInputDim_;
+      break;
+    
+    case 2:
+      modalBaseStateDim_ = 3;
+      modalArmStateDim_ = armStateDim;
+      modalStateDim_ = modalBaseStateDim_ + modalArmStateDim_;
+
+      modalBaseInputDim_ = 2;
+      modalArmInputDim_ = armStateDim;
+      modalInputDim_ = modalBaseInputDim_ + modalArmInputDim_;
+      break;
+
+    default:
+      modalBaseStateDim_ = 3;
+      modalArmStateDim_ = armStateDim;
+      modalStateDim_ = modalBaseStateDim_ + modalArmStateDim_;
+
+      modalBaseInputDim_ = 2;
+      modalArmInputDim_ = armStateDim;
+      modalInputDim_ = modalBaseInputDim_ + modalArmInputDim_;
+
+      std::cout << "[ExtCollision::updateModalDim] WARNING: Undefined modal mode: " << modalMode << std:: endl;
+
+      break;
   }
 }
 */

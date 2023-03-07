@@ -34,24 +34,32 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace mobile_manipulator {
 
-class QuadraticInputCost final : public QuadraticStateInputCost {
- public:
-  QuadraticInputCost(matrix_t R, size_t stateDim)
+class QuadraticInputCost final : public QuadraticStateInputCost 
+{
+  public:
+    QuadraticInputCost(matrix_t R, size_t stateDim)
       : QuadraticStateInputCost(matrix_t::Zero(stateDim, stateDim), std::move(R)), stateDim_(stateDim) {}
 
-  ~QuadraticInputCost() override = default;
+    ~QuadraticInputCost() override = default;
 
-  QuadraticInputCost(const QuadraticInputCost& rhs) = default;
-  QuadraticInputCost* clone() const override { return new QuadraticInputCost(*this); }
+    QuadraticInputCost(const QuadraticInputCost& rhs) = default;
+    
+    QuadraticInputCost* clone() const override 
+    { 
+      return new QuadraticInputCost(*this); 
+    }
 
-  std::pair<vector_t, vector_t> getStateInputDeviation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                       const TargetTrajectories& targetTrajectories) const override {
-    const vector_t inputDeviation = input - targetTrajectories.getDesiredInput(time);
-    return {vector_t::Zero(stateDim_), inputDeviation};
-  }
+    std::pair<vector_t, vector_t> getStateInputDeviation(scalar_t time, 
+                                                         const vector_t& state, 
+                                                         const vector_t& input,
+                                                         const TargetTrajectories& targetTrajectories) const override 
+    {
+      const vector_t inputDeviation = input - targetTrajectories.getDesiredInput(time);
+      return {vector_t::Zero(stateDim_), inputDeviation};
+    }
 
- private:
-  const size_t stateDim_;
+  private:
+    const size_t stateDim_;
 };
 
 }  // namespace mobile_manipulator

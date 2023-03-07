@@ -34,7 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 
-#include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
+//#include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
+#include <ocs2_mobile_manipulator/RobotModelInfo.h>
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
 #include <ocs2_self_collision_visualization/GeometryInterfaceVisualization.h>
 
@@ -45,7 +46,7 @@ class OCS2_Mobile_Manipulator_Visualization final : public DummyObserver
 {
   public:
     OCS2_Mobile_Manipulator_Visualization(ros::NodeHandle& nodeHandle, const MobileManipulatorInterface& interface)
-      : pinocchioInterface_(interface.getPinocchioInterface()), modelInfo_(interface.getManipulatorModelInfo()) 
+      : pinocchioInterface_(interface.getPinocchioInterface()), modelInfo_(interface.getRobotModelInfo()) 
     {
       launchVisualizerNode(nodeHandle);
     }
@@ -58,11 +59,13 @@ class OCS2_Mobile_Manipulator_Visualization final : public DummyObserver
     void launchVisualizerNode(ros::NodeHandle& nodeHandle);
 
     void publishObservation(const ros::Time& timeStamp, const SystemObservation& observation);
+    
     void publishTargetTrajectories(const ros::Time& timeStamp, const TargetTrajectories& targetTrajectories);
+    
     void publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy);
 
     PinocchioInterface pinocchioInterface_;
-    const ManipulatorModelInfo modelInfo_;
+    const RobotModelInfo modelInfo_;
     std::vector<std::string> removeJointNames_;
 
     std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;

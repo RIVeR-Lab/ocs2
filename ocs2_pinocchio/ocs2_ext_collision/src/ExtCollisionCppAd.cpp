@@ -1,31 +1,13 @@
-/******************************************************************************
-Copyright (c) 2020, Neset Unver Akmandor. All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
- * Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-
- * Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
- * Neither the name of the copyright holder nor the names of its
-  contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-******************************************************************************/
+// LAST UPDATE: 2022.03.04
+//
+// AUTHOR: Neset Unver Akmandor (NUA)
+//
+// E-MAIL: akmandor.n@northeastern.edu
+//
+// DESCRIPTION: TODO...
+//
+// REFERENCES:
+// [1] https://github.com/leggedrobotics/ocs2
 
 #include <pinocchio/fwd.hpp>
 
@@ -44,6 +26,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 ExtCollisionCppAd::ExtCollisionCppAd(const PinocchioInterface& pinocchioInterface, 
                                      ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface,
+                                     size_t modalMode,
                                      std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
                                      ocs2::scalar_t maxDistance,
                                      std::shared_ptr<ExtMapUtility> emuPtr,
@@ -52,12 +35,11 @@ ExtCollisionCppAd::ExtCollisionCppAd(const PinocchioInterface& pinocchioInterfac
                                      bool recompileLibraries, 
                                      bool verbose)
   : extCollisionPinocchioGeometryInterface_(std::move(extCollisionPinocchioGeometryInterface)), 
+    modalMode_(modalMode),
     pointsOnRobotPtr_(pointsOnRobotPtr),
     maxDistance_(maxDistance),
     distances_(pointsOnRobotPtr->getNumOfPoints()),
     emuPtr_(emuPtr)
-    //gradientsVoxblox_(pointsOnRobotPtr->getNumOfPoints(), pointsOnRobotPtr->getNumOfPoints() * 3),
-    //gradients_(pointsOnRobotPtr->getNumOfPoints(), 9)
 {
   std::cout << "[ExtCollisionCppAd::ExtCollisionCppAd] START" << std::endl;
 
@@ -66,17 +48,11 @@ ExtCollisionCppAd::ExtCollisionCppAd(const PinocchioInterface& pinocchioInterfac
 
   if (recompileLibraries) 
   {
-    //cppAdInterface_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
-
     cppAdInterfaceDistanceCalculation_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
-    //cppAdInterfaceLinkPoints_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
   } 
   else 
   {
-    //cppAdInterface_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
-
     cppAdInterfaceDistanceCalculation_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
-    //cppAdInterfaceLinkPoints_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
   }
 
   std::cout << "[ExtCollisionCppAd::ExtCollisionCppAd] END" << std::endl;
@@ -87,22 +63,31 @@ ExtCollisionCppAd::ExtCollisionCppAd(const PinocchioInterface& pinocchioInterfac
 /******************************************************************************************************/
 ExtCollisionCppAd::ExtCollisionCppAd(const ExtCollisionCppAd& rhs)
   : extCollisionPinocchioGeometryInterface_(rhs.extCollisionPinocchioGeometryInterface_),
-    //cppAdInterface_(new CppAdInterface(*rhs.cppAdInterface_)),
     cppAdInterfaceDistanceCalculation_(new CppAdInterface(*rhs.cppAdInterfaceDistanceCalculation_)),
-    //cppAdInterfaceLinkPoints_(new CppAdInterface(*rhs.cppAdInterfaceLinkPoints_)),
+    modalMode_(rhs.modalMode_),
     pointsOnRobotPtr_(rhs.pointsOnRobotPtr_),
     maxDistance_(rhs.maxDistance_),
     distances_(rhs.distances_),
     emuPtr_(rhs.emuPtr_){}
-    //gradientsVoxblox_(rhs.gradientsVoxblox_),
-    //gradients_(rhs.gradients_){}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 size_t ExtCollisionCppAd::getNumPointsOnRobot() const
 {
-  return pointsOnRobotPtr_->getNumOfPoints();
+  size_t numPoints = pointsOnRobotPtr_->getNumOfPoints();
+
+  /////// NUA TODO: ADD 6 DOF BASE VERSION!
+  if (modalMode_ == 0)
+  {
+    numPoints = 1;
+  }
+  else if (modalMode_ == 1)
+  {
+    numPoints--;
+  }
+
+  return numPoints;
 }
 
 /******************************************************************************************************/
@@ -113,22 +98,14 @@ vector_t ExtCollisionCppAd::getValue(const PinocchioInterface& pinocchioInterfac
 {
   vector_t violations;
 
-  //Eigen::VectorXd points = pointsOnRobotPtr_->getPointsPositionCppAd(state);
-  
   if (pointsOnRobotPtr_) 
   { 
-    //int numPoints = pointsOnRobotPtr_->getNumOfPoints();
-
-    //violations.resize(numPoints);
-    //gradientsVoxblox_.setZero();
-
     updateDistances(state);
 
     violations = distances_;
 
     //assert(gradients_.rows() == gradientsVoxblox_.rows());
     //assert(gradients_.cols() == jacobianPointsOnRobot.cols());
-    //gradients_ = gradientsVoxblox_ * jacobianPointsOnRobot;
   }
   else
   {
@@ -202,15 +179,26 @@ std::pair<vector_t, matrix_t> ExtCollisionCppAd::getLinearApproximation(const Pi
 void ExtCollisionCppAd::updateDistances(const vector_t& q) const
 {
   int numPoints = pointsOnRobotPtr_->getNumOfPoints();
-
   Eigen::VectorXd positionPointsOnRobot = pointsOnRobotPtr_->getPointsPositionCppAd(q);
-  //Eigen::MatrixXd jacobianPointsOnRobot = pointsOnRobotPtr_->getPointsJacobianCppAd(q);
   Eigen::VectorXd radii = pointsOnRobotPtr_->getRadii();
+
+  /////// NUA TODO: ADD 6 DOF BASE VERSION!
+  if (modalMode_ == 0)
+  {
+    numPoints = 1;
+    positionPointsOnRobot = positionPointsOnRobot.segment(0, 3);
+    radii = radii.segment(0, 1);
+  }
+  else if (modalMode_ == 1)
+  {
+    numPoints--;
+    positionPointsOnRobot = positionPointsOnRobot.segment(3, numPoints*3);
+    radii = radii.segment(1, numPoints);
+  }
   
   assert(positionPointsOnRobot.size() % 3 == 0);
   
   float distance;
-  Eigen::Vector3f gradientVoxblox;
 
   //vector<geometry_msgs::Point> p0_vec;
   //vector<geometry_msgs::Point> p1_vec;
@@ -241,51 +229,6 @@ void ExtCollisionCppAd::updateDistances(const vector_t& q) const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ad_vector_t ExtCollisionCppAd::computeLinkPointsAd(PinocchioInterfaceCppAd& pinocchioInterfaceAd, 
-                                                   const ad_vector_t& state,
-                                                   const ad_vector_t& points) const 
-{
-  // NUA LEFT HERE: UPDATE THE FUNCTION LIKE YOU DO TO CALCULATE POINTS ON ROBOT
-
-  const auto& geometryModel = extCollisionPinocchioGeometryInterface_.getGeometryModel();
-  const auto& model = pinocchioInterfaceAd.getModel();
-  auto& data = pinocchioInterfaceAd.getData();
-
-  pinocchio::forwardKinematics(model, data, state);
-  pinocchio::updateGlobalPlacements(model, data);
-
-  ad_vector_t pointsInLinkFrames = ad_vector_t::Zero(points.size());
-  for (size_t i = 0; i < points.size() / numberOfParamsPerResult_; ++i) 
-  {
-    const auto& collisionPair = geometryModel.collisionPairs[i];
-    const auto& joint1 = geometryModel.geometryObjects[collisionPair.first].parentJoint;
-    const auto& joint2 = geometryModel.geometryObjects[collisionPair.second].parentJoint;
-
-    const auto joint1Position = data.oMi[joint1].translation();
-    const auto joint1Orientation = matrixToQuaternion(data.oMi[joint1].rotation());
-    const quaternion_t joint1OrientationInverse = joint1Orientation.conjugate();
-    const vector3_t joint1PositionInverse = joint1OrientationInverse * -joint1Position;
-
-    const auto joint2Position = data.oMi[joint2].translation();
-    const auto joint2Orientation = matrixToQuaternion(data.oMi[joint2].rotation());
-    const quaternion_t joint2OrientationInverse = joint2Orientation.conjugate();
-    const vector3_t joint2PositionInverse = joint2OrientationInverse * -joint2Position;
-
-    const ad_vector_t point1 = points.segment(i * numberOfParamsPerResult_, 3);
-    const ad_vector_t point2 = points.segment(i * numberOfParamsPerResult_ + 3, 3);
-
-    pointsInLinkFrames.segment<3>(i * numberOfParamsPerResult_) = joint1PositionInverse;
-    pointsInLinkFrames.segment<3>(i * numberOfParamsPerResult_).noalias() += joint1OrientationInverse * point1;
-    pointsInLinkFrames.segment<3>(i * numberOfParamsPerResult_ + 3) = joint2PositionInverse;
-    pointsInLinkFrames.segment<3>(i * numberOfParamsPerResult_ + 3).noalias() += joint2OrientationInverse * point2;
-    pointsInLinkFrames[i * numberOfParamsPerResult_ + 6] = CppAD::CondExpGt(points[i * numberOfParamsPerResult_ + 6], ad_scalar_t(0.0), ad_scalar_t(1.0), ad_scalar_t(-1.0));
-  }
-  return pointsInLinkFrames;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 ad_vector_t ExtCollisionCppAd::distanceCalculationAd(PinocchioInterfaceCppAd& pinocchioInterfaceAd, 
                                                      const ad_vector_t& state,
                                                      const ad_vector_t& points) const 
@@ -306,8 +249,6 @@ ad_vector_t ExtCollisionCppAd::distanceCalculationAd(PinocchioInterfaceCppAd& pi
   transform_Base_wrt_World_cppAd.topLeftCorner(3,3) = data.oMf[pointsOnRobotPtr_->getFrameIds()[0]].rotation();
   transform_Base_wrt_World_cppAd.topRightCorner(3,1) = data.oMf[pointsOnRobotPtr_->getFrameIds()[0]].translation();
 
-  //ad_vector_t results = ad_vector_t::Zero(points.size() / numberOfParamsPerResult_);
-
   Eigen::Matrix<ad_scalar_t, -1, 1> results(points.size() / numberOfParamsPerResult_, 1);
 
   for (size_t i = 0; i < points.size() / numberOfParamsPerResult_; ++i) 
@@ -317,22 +258,6 @@ ad_vector_t ExtCollisionCppAd::distanceCalculationAd(PinocchioInterfaceCppAd& pi
 
     const ad_vector_t p0_wrt_base_cppAd = transform_Base_wrt_World_cppAd.inverse() * p0_wrt_World_cppAd;
     const ad_vector_t p1_wrt_base_cppAd = transform_Base_wrt_World_cppAd.inverse() * p1_wrt_World_cppAd;
-
-    /*
-    const auto& collisionPair = geometryModel.collisionPairs[i];
-    const auto& joint1 = geometryModel.geometryObjects[collisionPair.first].parentJoint;
-    const auto& joint2 = geometryModel.geometryObjects[collisionPair.second].parentJoint;
-
-    const ad_vector_t point1 = points.segment(i * numberOfParamsPerResult_, 3);
-    const auto joint1Position = data.oMi[joint1].translation();
-    const auto joint1Orientation = matrixToQuaternion(data.oMi[joint1].rotation());
-    const ad_vector_t point1InWorld = joint1Position + joint1Orientation * point1;
-
-    const ad_vector_t point2 = points.segment(i * numberOfParamsPerResult_ + 3, 3);
-    const auto joint2Position = data.oMi[joint2].translation();
-    const auto joint2Orientation = matrixToQuaternion(data.oMi[joint2].rotation());
-    const ad_vector_t point2InWorld = joint2Position + joint2Orientation * point2;
-    */
 
     results(i, 1) = points[i * numberOfParamsPerResult_ + 6] * (p1_wrt_base_cppAd - p0_wrt_base_cppAd).norm() - radii(i);
   }
@@ -351,18 +276,6 @@ void ExtCollisionCppAd::setADInterfaces(PinocchioInterfaceCppAd& pinocchioInterf
   const size_t stateDim = pinocchioInterfaceAd.getModel().nq;
   const size_t numDistanceResults = distances_.size();
 
-  /*
-  auto stateAndClosestPointsToLinkFrame = [&, this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
-    Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, -1> matrixResult = computeLinkPointsAd(pinocchioInterfaceAd, x, p);
-    y = Eigen::Map<Eigen::Matrix<ad_scalar_t, -1, 1>>(matrixResult.data(), matrixResult.size());
-  };
-  
-  cppAdInterfaceLinkPoints_.reset(new CppAdInterface(stateAndClosestPointsToLinkFrame, 
-                                                     stateDim,
-                                                     numDistanceResults * numberOfParamsPerResult_, 
-                                                     modelName + "_links_intermediate",
-                                                     modelFolder));
-  */
   auto stateAndClosestPointsToDistance = [&, this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) 
   {
     Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, -1> matrixResult = distanceCalculationAd(pinocchioInterfaceAd, x, p);
