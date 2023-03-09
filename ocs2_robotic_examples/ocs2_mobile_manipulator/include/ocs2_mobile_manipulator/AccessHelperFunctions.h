@@ -14,7 +14,8 @@
 #include <Eigen/Core>
 
 //#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
-#include "ocs2_mobile_manipulator/RobotModelInfo.h"
+//#include "ocs2_mobile_manipulator/RobotModelInfo.h"
+#include "ocs2_core/dynamics/MultiModelFunctions.h"
 
 namespace ocs2 {
 namespace mobile_manipulator {

@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_core)
 
 find_package(catkin REQUIRED COMPONENTS
+  tf_conversions
   cmake_modules
   ocs2_thirdparty
 )
@@ -97,6 +98,7 @@ add_library(${PROJECT_NAME}
   src/dynamics/SystemDynamicsBaseAD.cpp
   src/dynamics/SystemDynamicsLinearizer.cpp
   src/dynamics/TransferFunctionBase.cpp
+  src/dynamics/MultiModelFunctions.cpp
   src/integration/SensitivityIntegrator.cpp
   src/integration/SensitivityIntegratorImpl.cpp
   src/integration/Integrator.cpp

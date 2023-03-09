@@ -32,7 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
 
 //#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
-#include "ocs2_mobile_manipulator/RobotModelInfo.h"
+//#include "ocs2_mobile_manipulator/RobotModelInfo.h"
+#include "ocs2_core/dynamics/RobotModelInfo.h"
 
 namespace ocs2 {
 namespace mobile_manipulator {

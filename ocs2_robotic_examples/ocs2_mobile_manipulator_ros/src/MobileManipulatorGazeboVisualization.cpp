@@ -43,6 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_core/misc/LoadStdVectorOfPair.h>
+#include <ocs2_core/dynamics/MultiModelFunctions.h>
 #include <ocs2_ros_interfaces/common/RosMsgHelpers.h>
 
 #include <ocs2_mobile_manipulator/AccessHelperFunctions.h>

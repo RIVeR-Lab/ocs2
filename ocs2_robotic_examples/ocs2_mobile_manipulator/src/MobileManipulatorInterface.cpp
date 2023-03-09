@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.03.07
+// LAST UPDATE: 2022.03.09
 //
 // AUTHOR: Neset Unver Akmandor  (NUA)
 //
@@ -113,13 +113,12 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   std::cerr << *pinocchioInterfacePtr_;
 
   // Set Robot Model Info
-  robotModelInfo_ = mobile_manipulator::createRobotModelInfo(*pinocchioInterfacePtr_, 
-                                                             robotModelType,
-                                                             baseFrame, 
-                                                             armBaseFrame, 
-                                                             eeFrame,
-                                                             armJointFrameNames,
-                                                             armJointNames);
+  robotModelInfo_ = createRobotModelInfo(robotModelType,
+                                         baseFrame, 
+                                         armBaseFrame, 
+                                         eeFrame,
+                                         armJointFrameNames,
+                                         armJointNames);
 
   // Set Model Settings
   std::cerr << "\n #### Model Settings:";

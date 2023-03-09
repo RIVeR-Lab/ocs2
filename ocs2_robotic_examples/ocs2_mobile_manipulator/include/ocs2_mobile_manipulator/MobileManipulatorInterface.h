@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.03.04
+// LAST UPDATE: 2022.03.09
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -29,6 +29,7 @@
 #include <ocs2_core/penalties/Penalties.h>
 #include <ocs2_core/soft_constraint/StateInputSoftBoxConstraint.h>
 #include <ocs2_core/soft_constraint/StateSoftConstraint.h>
+#include "ocs2_core/dynamics/MultiModelFunctions.h"
 
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
@@ -51,7 +52,7 @@
 
 #include <ocs2_mobile_manipulator/FactoryFunctions.h>
 //#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
-#include "ocs2_mobile_manipulator/RobotModelInfo.h"
+
 #include "ocs2_mobile_manipulator/MobileManipulatorPreComputation.h"
 #include "ocs2_mobile_manipulator/constraint/EndEffectorConstraint.h"
 #include "ocs2_mobile_manipulator/constraint/MobileManipulatorSelfCollisionConstraint.h"
