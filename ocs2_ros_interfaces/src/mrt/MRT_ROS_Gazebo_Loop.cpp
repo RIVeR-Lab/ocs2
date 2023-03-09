@@ -214,6 +214,8 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
     currentPolicy = mrt_.getPolicy();
     currentInput_ = currentPolicy.getDesiredInput(time_);
 
+    //std::cout << "[OCS2_MRT_Loop::mrtLoop] currentInput size: " << currentInput_.size() << std::endl;
+
     // Update observers for visualization
     for (auto& observer : observers_) 
     {
@@ -366,6 +368,8 @@ void MRT_ROS_Gazebo_Loop::updateFullModelState()
     baseState_.push_back(yaw_robot_wrt_world);
   }
 
+  //std::cerr << "[MRT_ROS_Gazebo_Loop::updateFullModelState] mrt_.getArmStateDim(): " << mrt_.getArmStateDim() << std::endl;
+
   // Set arm states
   if (mrt_.getArmStateDim() != jointTrajectoryControllerStateMsg.joint_names.size())
   {
@@ -386,6 +390,8 @@ void MRT_ROS_Gazebo_Loop::updateFullModelState()
 SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
 {
   //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] START" << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] inputDim_: " << inputDim_ << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] stateDim_: " << stateDim_ << std::endl;
   
   SystemObservation currentObservation;
   currentObservation.mode = 0;
@@ -402,7 +408,7 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
   updateFullModelState();
 
   // Set mobile base states
-  if (mrt_.checkModalMode(0) || mrt_.checkModalMode(2))
+  if (mrt_.checkModelMode(0) || mrt_.checkModelMode(2))
   {
     currentObservation.state[0] = baseState_[0];
     currentObservation.state[1] = baseState_[1];
@@ -411,8 +417,10 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
 
   // Set arm states
   int baseOffset = mrt_.getBaseStateDim();
-  if (mrt_.checkModalMode(1) || mrt_.checkModalMode(2))
+  if (mrt_.checkModelMode(1) || mrt_.checkModelMode(2))
   {
+    //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] baseOffset: " << baseOffset << std::endl;
+
     for (size_t i = 0; i < armState_.size(); i++)
     {
       currentObservation.state[baseOffset + i] = armState_[i];
@@ -436,14 +444,14 @@ void MRT_ROS_Gazebo_Loop::publishCommand()
 
   // Set mobile base command
   int baseOffset = mrt_.getBaseStateDim();
-  if (mrt_.checkModalMode(0) || mrt_.checkModalMode(2))
+  if (mrt_.checkModelMode(0) || mrt_.checkModelMode(2))
   {
     baseTwistMsg.linear.x = currentInput_[0];
     baseTwistMsg.angular.z = currentInput_[1];
   }
 
   // Set arm command
-  if (mrt_.checkModalMode(1) || mrt_.checkModalMode(2))
+  if (mrt_.checkModelMode(1) || mrt_.checkModelMode(2))
   {
     int n_joints = dofNames_.size();
     armJointTrajectoryMsg.joint_names.resize(n_joints);
@@ -464,12 +472,12 @@ void MRT_ROS_Gazebo_Loop::publishCommand()
   }
 
   // Publish command
-  if (mrt_.checkModalMode(0) || mrt_.checkModalMode(2))
+  if (mrt_.checkModelMode(0) || mrt_.checkModelMode(2))
   {
     baseTwistPub_.publish(baseTwistMsg);
   }
 
-  if (mrt_.checkModalMode(1) || mrt_.checkModalMode(2))
+  if (mrt_.checkModelMode(1) || mrt_.checkModelMode(2))
   {
     armJointTrajectoryPub_.publish(armJointTrajectoryMsg);
   }

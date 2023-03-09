@@ -64,13 +64,13 @@ template <typename SCALAR>
 auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const
   -> vector_t 
 {
-  auto stateDim = modelInfo_.mobileBase.stateDim + modelInfo_.robotArm.stateDim;
-  vector_t vPinocchio = vector_t::Zero(stateDim);
+  auto modeStateDim = modelInfo_.modeStateDim;
+  vector_t vPinocchio = vector_t::Zero(modeStateDim);
 
-  // Set velocity model based on model type
-  switch (modelInfo_.robotModelType) 
+  // Set velocity model based on model mode
+  switch (modelInfo_.modelMode) 
   {
-    case RobotModelType::MobileBase:
+    case ModelMode::BaseMotion:
     {
       const auto theta = state(2);
       const auto v = input(0);  // forward velocity in base frame
@@ -78,13 +78,13 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointVelocity(con
       break;
     }
 
-    case RobotModelType::RobotArm:
+    case ModelMode::ArmMotion:
     {
       vPinocchio = input;
       break;
     }
 
-    case RobotModelType::MobileManipulator:
+    case ModelMode::WholeBodyMotion:
     {
       const auto theta = state(2);
       const auto v = input(0);  // forward velocity in base frame
@@ -95,7 +95,6 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointVelocity(con
     default: 
       throw std::runtime_error("[MobileManipulatorPinocchioMapping::getPinocchioJointVelocity] ERROR: Invalid manipulator model type!");
   }
-
   return vPinocchio;
 }
 
@@ -107,9 +106,9 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getOcs2Jacobian(const vector_
   -> std::pair<matrix_t, matrix_t> 
 {
   // Set jacobian model based on model type
-  switch (modelInfo_.robotModelType) 
+  switch (modelInfo_.modelMode) 
   {
-    case RobotModelType::MobileBase:
+    case ModelMode::BaseMotion:
     {
       const auto stateDim = 3;
       const auto inputDim = 2;
@@ -117,7 +116,7 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getOcs2Jacobian(const vector_
       assert(Jq.rows() == stateDim);
       assert(Jq.cols() == stateDim);
       assert(Jv.rows() == stateDim);
-      assert(Jv.cols() == inputDim);
+      assert(Jv.cols() == stateDim);
 
       matrix_t dfdu(stateDim, inputDim);
       Eigen::Matrix<SCALAR, stateDim, inputDim> dxdu_base;
@@ -132,7 +131,7 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getOcs2Jacobian(const vector_
       return {Jq, dfdu};
     }
       
-    case RobotModelType::RobotArm:
+    case ModelMode::ArmMotion:
     {
       const auto stateDim = modelInfo_.robotArm.stateDim;
       const auto inputDim = modelInfo_.robotArm.inputDim;
@@ -140,33 +139,33 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getOcs2Jacobian(const vector_
       assert(Jq.rows() == stateDim);
       assert(Jq.cols() == stateDim);
       assert(Jv.rows() == stateDim);
-      assert(Jv.cols() == inputDim);
+      assert(Jv.cols() == stateDim);
 
       return {Jq, Jv};
     }
 
-    case RobotModelType::MobileManipulator:
+    case ModelMode::WholeBodyMotion:
     {
+      const auto modeStateDim = modelInfo_.modeStateDim;
+      const auto modeInputDim = modelInfo_.modeInputDim;
+
+      assert(Jq.rows() == modeStateDim);
+      assert(Jq.cols() == modeStateDim);
+      assert(Jv.rows() == modeStateDim);
+      assert(Jv.cols() == modeStateDim);
+
+      matrix_t dfdu(modeStateDim, modeInputDim);
+
       const auto stateDimBase = 3;
-      const auto stateDimArm = modelInfo_.robotArm.stateDim;
-      const auto stateDim = stateDimBase + stateDimArm;
-      
       const auto inputDimBase = 2;
-      const auto inputDimArm = modelInfo_.robotArm.inputDim;
-      const auto inputDim = inputDimBase + inputDimArm;
+      const auto stateDimArm = modelInfo_.robotArm.stateDim;
 
-      assert(Jq.rows() == stateDim);
-      assert(Jq.cols() == stateDim);
-      assert(Jv.rows() == stateDim);
-      assert(Jv.cols() == inputDim);
-
-      matrix_t dfdu(stateDim, inputDim);
       Eigen::Matrix<SCALAR, stateDimBase, inputDimBase> dxdu_base;
-      
+    
       const SCALAR theta = state(2);
       dxdu_base << cos(theta), SCALAR(0),
-                   sin(theta), SCALAR(0),
-                   SCALAR(0), SCALAR(1.0);
+                    sin(theta), SCALAR(0),
+                    SCALAR(0), SCALAR(1.0);
       
       dfdu.template leftCols<inputDimBase>() = Jv.template leftCols<stateDimBase>() * dxdu_base;
       dfdu.template rightCols(stateDimArm) = Jv.template rightCols(stateDimArm);

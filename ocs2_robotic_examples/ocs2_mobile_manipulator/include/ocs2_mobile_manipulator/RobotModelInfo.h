@@ -57,9 +57,11 @@ struct  RobotArm
 struct RobotModelInfo
 {
   RobotModelType robotModelType;
-  ModelMode modelMode;                            // mode of the robot model
   MobileBase mobileBase;
   RobotArm robotArm;
+  ModelMode modelMode;                            // mode of the robot model
+  size_t modeStateDim;
+  size_t modeInputDim;
 };
 
 /**

@@ -75,19 +75,19 @@ class MRT_ROS_Interface : public MRT_BASE
      */
     ~MRT_ROS_Interface() override;
 
-    size_t getModalMode();
+    size_t getModelMode();
 
     size_t getBaseStateDim();
 
     size_t getArmStateDim();
 
-    void setModalMode(size_t modelMode);
+    void setModelMode(size_t modelMode);
 
     void setBaseStateDim(size_t baseStateDim);
     
     void setArmStateDim(size_t armStateDim);
 
-    bool checkModalMode(size_t modelMode);
+    bool checkModelMode(size_t modelMode);
 
     void resetMpcNode(const TargetTrajectories& initTargetTrajectories) override;
 

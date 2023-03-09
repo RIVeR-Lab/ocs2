@@ -98,6 +98,11 @@ size_t getStateDim(RobotModelInfo& robotModelInfo);
 /**
  * NUA TODO: UPDATE!
  */
+size_t getModeStateDim(RobotModelInfo& robotModelInfo);
+
+/**
+ * NUA TODO: UPDATE!
+ */
 size_t getInputDimBase(RobotModelInfo& robotModelInfo);
 
 /**
@@ -109,6 +114,11 @@ size_t getInputDimArm(RobotModelInfo& robotModelInfo);
  * NUA TODO: UPDATE!
  */
 size_t getInputDim(RobotModelInfo& robotModelInfo);
+
+/**
+ * NUA TODO: UPDATE!
+ */
+size_t getModeInputDim(RobotModelInfo& robotModelInfo);
 
 /** Load ManipulatorModelType for a config file */
 RobotModelType loadRobotType(const std::string& configFilePath, const std::string& fieldName = "robotModelType");

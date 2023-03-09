@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.03.04
+// LAST UPDATE: 2022.03.07
 //
 // AUTHOR: Neset Unver Akmandor  (NUA)
 //
@@ -42,7 +42,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   if (boost::filesystem::exists(urdfFilePath)) 
   {
     std::cerr << "[MobileManipulatorInterface::MobileManipulatorInterface] Loading Pinocchio model from: " << urdfFilePath << std::endl;
-  } 
+  }
   else 
   {
     throw std::invalid_argument("[MobileManipulatorInterface::MobileManipulatorInterface] URDF file not found: " + urdfFilePath.string());
@@ -167,9 +167,14 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
   }
   else
   {
+    std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getEndEffectorConstraint" << std::endl;
+
     problem_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint("endEffector"));
     problem_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint("finalEndEffector"));
   }
+
+  //std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE INF" << std::endl;
+  //while(1);
 
   // Self-collision avoidance constraint
   if (activateSelfCollision_) 
@@ -326,28 +331,37 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
 /******************************************************************************************************/
 std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCost(size_t modelMode) 
 {
-  const size_t modelStateDim = getStateDim(robotModelInfo_);
-  const size_t modelInputDim = getInputDim(robotModelInfo_);
-  const size_t modelBaseInputDim = getInputDimBase(robotModelInfo_);
-  const size_t modelArmInputDim = getInputDimArm(robotModelInfo_);
+  const size_t modeStateDim = getModeStateDim(robotModelInfo_);
+  const size_t modeInputDim = getModeInputDim(robotModelInfo_);
+  
+  std::cout << "[MobileManipulatorInterface::setMPCProblem] modelMode: " << modelMode << std::endl;
+  std::cout << "[MobileManipulatorInterface::setMPCProblem] modelStateDim: " << modeStateDim << std::endl;
+  std::cout << "[MobileManipulatorInterface::setMPCProblem] modelInputDim: " << modeInputDim << std::endl;
 
-  matrix_t R = matrix_t::Zero(modelInputDim, modelInputDim);
+  matrix_t R = matrix_t::Zero(modeInputDim, modeInputDim);
 
   // Input cost of mobile base
   if (modelMode == 0 || modelMode == 2) 
   {
-    matrix_t R_base = matrix_t::Zero(modelBaseInputDim, modelBaseInputDim);
+    const size_t inputDimBase = getInputDimBase(robotModelInfo_);
+
+    std::cout << "[MobileManipulatorInterface::setMPCProblem] inputDimBase: " << inputDimBase << std::endl;
+
+    matrix_t R_base = matrix_t::Zero(inputDimBase, inputDimBase);
     loadData::loadEigenMatrix(taskFile_, "inputCost.R.base", R_base);
-    R.topLeftCorner(modelBaseInputDim, modelBaseInputDim) = R_base;
+    R.topLeftCorner(inputDimBase, inputDimBase) = R_base;
   }
 
   // Input cost of arm
   if (modelMode == 1 || modelMode == 2) 
   {
-    // arm joints DOFs input costs
-    matrix_t R_arm = matrix_t::Zero(modelArmInputDim, modelArmInputDim);
+    const size_t inputDimArm = getInputDimArm(robotModelInfo_);
+
+    std::cout << "[MobileManipulatorInterface::setMPCProblem] inputDimArm: " << inputDimArm << std::endl;
+
+    matrix_t R_arm = matrix_t::Zero(inputDimArm, inputDimArm);
     loadData::loadEigenMatrix(taskFile_, "inputCost.R.arm", R_arm);
-    R.bottomRightCorner(modelArmInputDim, modelArmInputDim) = R_arm;
+    R.bottomRightCorner(inputDimArm, inputDimArm) = R_arm;
   }
 
   std::cerr << "\n #### Input Cost Settings: ";
@@ -355,7 +369,7 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCos
   std::cerr << "inputCost.R:  \n" << R << '\n';
   std::cerr << " #### =============================================================================\n";
 
-  return std::unique_ptr<StateInputCost>(new QuadraticInputCost(std::move(R), modelStateDim));
+  return std::unique_ptr<StateInputCost>(new QuadraticInputCost(std::move(R), modeStateDim));
 }
 
 /******************************************************************************************************/
@@ -369,90 +383,81 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftCon
   bool activateJointPositionLimit = true;
   loadData::loadPtreeValue(pt, activateJointPositionLimit, "jointPositionLimits.activate", true);
 
-  const int modelBaseStateDim = getStateDimBase(robotModelInfo_);
-  const int modelArmStateDim = getStateDimArm(robotModelInfo_);
-  const int modelStateDim = getStateDim(robotModelInfo_);
-
-  const int modelBaseInputDim = getInputDimBase(robotModelInfo_);
-  const int modelArmInputDim = getInputDimArm(robotModelInfo_);
-  const int modelInputDim = getInputDim(robotModelInfo_);
-
-  const auto& model = pinocchioInterfacePtr_->getModel();
+  const size_t modeStateDim = getModeStateDim(robotModelInfo_);
+  const size_t modeInputDim = getModeInputDim(robotModelInfo_);
 
   // Load position limits
   std::vector<StateInputSoftBoxConstraint::BoxConstraint> stateLimits;
-  if (activateJointPositionLimit) 
+  if (activateJointPositionLimit & modelMode != 0) 
   {
+    const auto& model = pinocchioInterfacePtr_->getModel();
+    const size_t stateDimArm = getStateDimArm(robotModelInfo_);
+
+    // Arm joint DOF limits from the parsed URDF      
+    const vector_t lowerBound = model.lowerPositionLimit.tail(stateDimArm);
+    const vector_t upperBound = model.upperPositionLimit.tail(stateDimArm);
     scalar_t muPositionLimits = 1e-2;
     scalar_t deltaPositionLimits = 1e-3;
 
-    stateLimits.reserve(modelStateDim);
-
-    if (modelMode == 1 || modelMode == 2)
+    std::cerr << "\n #### ArmJointPositionLimits Settings: ";
+    std::cerr << "\n #### =============================================================================\n";
+    std::cerr << " #### lowerBound: " << lowerBound.transpose() << '\n';
+    std::cerr << " #### upperBound: " << upperBound.transpose() << '\n';
+    loadData::loadPtreeValue(pt, muPositionLimits, "jointPositionLimits.mu", true);
+    loadData::loadPtreeValue(pt, deltaPositionLimits, "jointPositionLimits.delta", true);
+    std::cerr << " #### =============================================================================\n";
+    
+    stateLimits.reserve(modeStateDim);
+    const size_t stateOffset = modeStateDim - stateDimArm;
+    for (int i = 0; i < stateDimArm; ++i) 
     {
-      // Arm joint DOF limits from the parsed URDF      
-      const vector_t lowerBound = model.lowerPositionLimit.tail(modelArmStateDim);
-      const vector_t upperBound = model.upperPositionLimit.tail(modelArmStateDim);
-
-      std::cerr << "\n #### ArmJointPositionLimits Settings: ";
-      std::cerr << "\n #### =============================================================================\n";
-      std::cerr << " #### lowerBound: " << lowerBound.transpose() << '\n';
-      std::cerr << " #### upperBound: " << upperBound.transpose() << '\n';
-      loadData::loadPtreeValue(pt, muPositionLimits, "jointPositionLimits.mu", true);
-      loadData::loadPtreeValue(pt, deltaPositionLimits, "jointPositionLimits.delta", true);
-      std::cerr << " #### =============================================================================\n";
-      
-      for (int i = 0; i < modelArmStateDim; ++i) 
-      {
-        StateInputSoftBoxConstraint::BoxConstraint boxConstraint;
-        boxConstraint.index = modelBaseStateDim + i;
-        boxConstraint.lowerBound = lowerBound(i);
-        boxConstraint.upperBound = upperBound(i);
-        boxConstraint.penaltyPtr.reset(new RelaxedBarrierPenalty({muPositionLimits, deltaPositionLimits}));
-        stateLimits.push_back(std::move(boxConstraint));
-      }
-    }
-    else
-    {
-      // No joint position limit for the mobile base
-      stateLimits.clear();
+      StateInputSoftBoxConstraint::BoxConstraint boxConstraint;
+      boxConstraint.index = stateOffset + i;
+      boxConstraint.lowerBound = lowerBound(i);
+      boxConstraint.upperBound = upperBound(i);
+      boxConstraint.penaltyPtr.reset(new RelaxedBarrierPenalty({muPositionLimits, deltaPositionLimits}));
+      stateLimits.push_back(std::move(boxConstraint));
     }
   }
 
   // Load velocity limits
   std::vector<StateInputSoftBoxConstraint::BoxConstraint> inputLimits;
   {
-    vector_t lowerBound = vector_t::Zero(modelInputDim);
-    vector_t upperBound = vector_t::Zero(modelInputDim);
-    scalar_t muVelocityLimits = 1e-2;
-    scalar_t deltaVelocityLimits = 1e-3;
+    vector_t lowerBound = vector_t::Zero(modeInputDim);
+    vector_t upperBound = vector_t::Zero(modeInputDim);
 
     if (modelMode == 0 || modelMode == 2)
     {
+      const size_t inputDimBase = getInputDimBase(robotModelInfo_);
+
       // Mobile base joint DOFs velocity limits
-      vector_t lowerBoundBase = vector_t::Zero(modelBaseInputDim);
-      vector_t upperBoundBase = vector_t::Zero(modelBaseInputDim);
+      vector_t lowerBoundBase = vector_t::Zero(inputDimBase);
+      vector_t upperBoundBase = vector_t::Zero(inputDimBase);
       
       loadData::loadEigenMatrix(taskFile_, "jointVelocityLimits.lowerBound.base", lowerBoundBase);
       loadData::loadEigenMatrix(taskFile_, "jointVelocityLimits.upperBound.base", upperBoundBase);
       
-      lowerBound.head(modelBaseInputDim) = lowerBoundBase;
-      upperBound.head(modelBaseInputDim) = upperBoundBase;
+      lowerBound.head(inputDimBase) = lowerBoundBase;
+      upperBound.head(inputDimBase) = upperBoundBase;
     }
 
     if (modelMode == 1 || modelMode == 2)
     {
+      const size_t inputDimArm = getInputDimArm(robotModelInfo_);
+
       // Arm joint DOFs velocity limits
-      vector_t lowerBoundArm = vector_t::Zero(modelArmInputDim);
-      vector_t upperBoundArm = vector_t::Zero(modelArmInputDim);
+      vector_t lowerBoundArm = vector_t::Zero(inputDimArm);
+      vector_t upperBoundArm = vector_t::Zero(inputDimArm);
       
       loadData::loadEigenMatrix(taskFile_, "jointVelocityLimits.lowerBound.arm", lowerBoundArm);
       loadData::loadEigenMatrix(taskFile_, "jointVelocityLimits.upperBound.arm", upperBoundArm);
       
-      lowerBound.tail(modelArmInputDim) = lowerBoundArm;
-      upperBound.tail(modelArmInputDim) = upperBoundArm;
+      lowerBound.tail(inputDimArm) = lowerBoundArm;
+      upperBound.tail(inputDimArm) = upperBoundArm;
     }
 
+    scalar_t muVelocityLimits = 1e-2;
+    scalar_t deltaVelocityLimits = 1e-3;
     std::cerr << "\n #### JointVelocityLimits Settings: ";
     std::cerr << "\n #### =============================================================================\n";
     std::cerr << " #### 'lowerBound':  " << lowerBound.transpose() << std::endl;
@@ -461,8 +466,8 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftCon
     loadData::loadPtreeValue(pt, deltaVelocityLimits, "jointVelocityLimits.delta", true);
     std::cerr << " #### =============================================================================\n";
 
-    inputLimits.reserve(modelInputDim);
-    for (int i = 0; i < modelInputDim; ++i) 
+    inputLimits.reserve(modeInputDim);
+    for (int i = 0; i < modeInputDim; ++i) 
     {
       StateInputSoftBoxConstraint::BoxConstraint boxConstraint;
       boxConstraint.index = i;
@@ -474,7 +479,7 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftCon
   }
 
   auto boxConstraints = std::unique_ptr<StateInputSoftBoxConstraint>(new StateInputSoftBoxConstraint(stateLimits, inputLimits));
-  boxConstraints -> initializeOffset(0.0, vector_t::Zero(modelStateDim), vector_t::Zero(modelInputDim));
+  boxConstraints -> initializeOffset(0.0, vector_t::Zero(modeStateDim), vector_t::Zero(modeInputDim));
 
   return boxConstraints;
 }
@@ -489,13 +494,8 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile_, pt);
 
-  const int modelBaseStateDim = getStateDimBase(robotModelInfo_);
-  const int modelArmStateDim = getStateDimArm(robotModelInfo_);
-  const int modelStateDim = getStateDim(robotModelInfo_);
-
-  const int modelBaseInputDim = getInputDimBase(robotModelInfo_);
-  const int modelArmInputDim = getInputDimArm(robotModelInfo_);
-  const int modelInputDim = getInputDim(robotModelInfo_);
+  const int stateDim = getStateDim(robotModelInfo_);
+  const int inputDim = getInputDim(robotModelInfo_);
 
   scalar_t muPosition = 1.0;
   scalar_t muOrientation = 1.0;
@@ -507,7 +507,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
 
   if (referenceManagerPtr_ == nullptr) 
   {
-    throw std::runtime_error("[getEndEffectorConstraint] referenceManagerPtr_ should be set first!");
+    throw std::runtime_error("[MobileManipulatorInterface::getEndEffectorConstraint] ERROR: referenceManagerPtr_ should be set first!");
   }
 
   std::unique_ptr<StateConstraint> constraint;
@@ -519,16 +519,20 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
   } 
   else 
   {
+    std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] BEFORE pinocchioMappingCppAd" << std::endl;
     MobileManipulatorPinocchioMappingCppAd pinocchioMappingCppAd(robotModelInfo_);
+
+    std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] BEFORE eeKinematics" << std::endl;
     PinocchioEndEffectorKinematicsCppAd eeKinematics(*pinocchioInterfacePtr_,
                                                      pinocchioMappingCppAd, 
                                                      {robotModelInfo_.robotArm.eeFrame},
-                                                     modelStateDim, 
-                                                     modelInputDim,
+                                                     stateDim, 
+                                                     inputDim,
                                                      "end_effector_kinematics", 
                                                      libraryFolder_, 
                                                      recompileLibraries_, 
                                                      false);
+    std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] AFTER eeKinematics" << std::endl;
     constraint.reset(new EndEffectorConstraint(eeKinematics, *referenceManagerPtr_));
   }
 
@@ -548,14 +552,15 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
 {
   std::cout << "[MobileManipulatorInterface::getSelfCollisionConstraint] START" << std::endl;
 
-  std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
-  std::vector<std::pair<std::string, std::string>> collisionLinkPairs;
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(taskFile_, pt);
+
   scalar_t mu = 1e-2;
   scalar_t delta = 1e-3;
   scalar_t minimumDistance = 0.2;
+  std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
+  std::vector<std::pair<std::string, std::string>> collisionLinkPairs;
 
-  boost::property_tree::ptree pt;
-  boost::property_tree::read_info(taskFile_, pt);
   std::cerr << "\n #### SelfCollision Settings: ";
   std::cerr << "\n #### =============================================================================\n";
   loadData::loadPtreeValue(pt, mu, prefix + ".mu", true);
