@@ -112,7 +112,7 @@ void OCS2_Mobile_Manipulator_Visualization::launchVisualizerNode(ros::NodeHandle
   nodeHandle.getParam("/taskFile", taskFile);
   
   // read manipulator type
-  RobotModelType modelType = mobile_manipulator::loadRobotType(taskFile, "model_information.robotModelType");
+  RobotModelType modelType = loadRobotType(taskFile, "model_information.robotModelType");
   
   // read the joints to make fixed
   loadData::loadStdVector<std::string>(taskFile, "model_information.removeJoints", removeJointNames_, false);

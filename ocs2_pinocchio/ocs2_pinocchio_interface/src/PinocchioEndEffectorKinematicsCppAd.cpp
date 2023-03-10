@@ -176,7 +176,7 @@ PinocchioEndEffectorKinematicsCppAd* PinocchioEndEffectorKinematicsCppAd::clone(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-const std::vector<std::string>& PinocchioEndEffectorKinematicsCppAd::getIds() const 
+const std::vector<std::string>& PinocchioEndEffectorKinematicsCppAd::getEndEffectorFrameNames() const 
 {
   return endEffectorFrameNames_;
 }

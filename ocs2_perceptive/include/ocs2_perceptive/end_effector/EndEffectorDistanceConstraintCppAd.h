@@ -45,51 +45,80 @@ namespace ocs2 {
 /**
  * End-effector distance constraint Function.
  */
-class EndEffectorDistanceConstraintCppAd final : public ocs2::StateInputConstraint {
- public:
-  struct Config {
-    Config(scalar_t weightParam = 1.0, bool generateModelParam = true, bool verboseParam = true)
+class EndEffectorDistanceConstraintCppAd final : public ocs2::StateInputConstraint 
+{
+  public:
+    struct Config 
+    {
+      Config(scalar_t weightParam = 1.0, bool generateModelParam = true, bool verboseParam = true)
         : weight(weightParam), generateModel(generateModelParam), verbose(verboseParam) {}
-    scalar_t weight;
-    bool generateModel;
-    bool verbose;
-  };
+      scalar_t weight;
+      bool generateModel;
+      bool verbose;
+    };
 
-  /** Constructor */
-  EndEffectorDistanceConstraintCppAd(size_t stateDim, size_t inputDim, Config config,
-                                     std::unique_ptr<EndEffectorKinematics<ad_scalar_t>> adKinematicsPtr);
+    /** Constructor */
+    EndEffectorDistanceConstraintCppAd(size_t stateDim, 
+                                       size_t inputDim, 
+                                       Config config,
+                                       std::unique_ptr<EndEffectorKinematics<ad_scalar_t>> adKinematicsPtr);
 
-  /** Default destructor */
-  ~EndEffectorDistanceConstraintCppAd() override = default;
+    /** Default destructor */
+    ~EndEffectorDistanceConstraintCppAd() override = default;
 
-  void set(scalar_t clearance, const DistanceTransformInterface& distanceTransform);
-  void set(vector_t clearances, const DistanceTransformInterface& distanceTransform);
+    void set(scalar_t clearance, const DistanceTransformInterface& distanceTransform);
+    
+    void set(vector_t clearances, const DistanceTransformInterface& distanceTransform);
 
-  EndEffectorDistanceConstraintCppAd* clone() const override { return new EndEffectorDistanceConstraintCppAd(*this); }
-  size_t getNumConstraints(scalar_t time) const override { return adKinematicsPtr_->getIds().size(); }
-  const std::vector<std::string>& getIDs() const { return adKinematicsPtr_->getIds(); }
+    EndEffectorDistanceConstraintCppAd* clone() const override 
+    { 
+      return new EndEffectorDistanceConstraintCppAd(*this); 
+    }
+    
+    size_t getNumConstraints(scalar_t time) const override 
+    { 
+      return adKinematicsPtr_->getEndEffectorFrameNames().size(); 
+    }
+    
+    const std::vector<std::string>& getIDs() const 
+    { 
+      return adKinematicsPtr_->getEndEffectorFrameNames(); 
+    }
 
-  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) const override;
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                           const PreComputation& preComp) const override;
-  VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                 const PreComputation& preComp) const override;
+    vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) const override;
+    
+    VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, 
+                                                             const vector_t& state, 
+                                                             const vector_t& input,
+                                                             const PreComputation& preComp) const override;
+    
+    VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, 
+                                                                   const vector_t& state, 
+                                                                   const vector_t& input,
+                                                                   const PreComputation& preComp) const override;
 
-  EndEffectorKinematics<ad_scalar_t>& getKinematicsAD() { return *adKinematicsPtr_; }
-  std::pair<size_t, size_t> getStateInputDimensions() const { return {stateDim_, inputDim_}; }
+    EndEffectorKinematics<ad_scalar_t>& getKinematicsAD() 
+    { 
+      return *adKinematicsPtr_; 
+    }
 
- private:
-  EndEffectorDistanceConstraintCppAd(const EndEffectorDistanceConstraintCppAd& other);
+    std::pair<size_t, size_t> getStateInputDimensions() const 
+    { 
+      return {stateDim_, inputDim_}; 
+    }
 
-  const size_t stateDim_;
-  const size_t inputDim_;
-  const Config config_;
+  private:
+    EndEffectorDistanceConstraintCppAd(const EndEffectorDistanceConstraintCppAd& other);
 
-  std::unique_ptr<EndEffectorKinematics<ad_scalar_t>> adKinematicsPtr_;
-  std::unique_ptr<CppAdInterface> kinematicsModelPtr_;
+    const size_t stateDim_;
+    const size_t inputDim_;
+    const Config config_;
 
-  vector_t clearances_;
-  const DistanceTransformInterface* distanceTransformPtr_ = nullptr;
+    std::unique_ptr<EndEffectorKinematics<ad_scalar_t>> adKinematicsPtr_;
+    std::unique_ptr<CppAdInterface> kinematicsModelPtr_;
+
+    vector_t clearances_;
+    const DistanceTransformInterface* distanceTransformPtr_ = nullptr;
 };
 
 }  // namespace ocs2

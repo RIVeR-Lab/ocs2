@@ -31,19 +31,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/init.h>
 #include <ros/package.h>
 
-#include <ocs2_core/dynamics/MultiModelFunctions.h>
+//#include <ocs2_core/dynamics/MultiModelFunctions.h>
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
-//#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
-//#include "ocs2_mobile_manipulator/RobotModelInfo.h"
-
-// Custom libraries:
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Gazebo_Loop.h>
 #include <ocs2_mobile_manipulator_ros/MobileManipulatorGazeboVisualization.h>
-//#include <ocs2_mobile_manipulator_interface.h>
-//#include <ocs2_mobile_manipulator_visualization.h>
-//#include <ocs2_mrt_loop.h>
 
 using namespace ocs2;
 using namespace mobile_manipulator;
@@ -133,7 +126,7 @@ int main(int argc, char** argv)
   auto inputDimArm = robotModelInfo.robotArm.inputDim;
   auto inputDim = inputDimBase + inputDimArm;
 
-  std::cout << "[MobileManipulatorGazeboMRT::main] robotModelType: " << modelTypeEnumToString(robotModelInfo.robotModelType) << std::endl;
+  //std::cout << "[MobileManipulatorGazeboMRT::main] robotModelType: " << modelTypeEnumToString(robotModelInfo.robotModelType) << std::endl;
   std::cout << "[MobileManipulatorGazeboMRT::main] stateDim: " << stateDim << std::endl;
   std::cout << "[MobileManipulatorGazeboMRT::main] inputDim: " << inputDim << std::endl;
   std::cout << "[MobileManipulatorGazeboMRT::main] stateDimArm: " << stateDimArm << std::endl;
@@ -148,12 +141,10 @@ int main(int argc, char** argv)
     std::cout << i << ": " << robotModelInfo.robotArm.jointNames[i] << std::endl;
   }
 
-  size_t modelMode = getModelModeInt(robotModelInfo);
+  //size_t modelMode = getModelModeInt(robotModelInfo);
 
   // MRT
-  MRT_ROS_Interface mrt(robotName, modelMode);
-  mrt.setBaseStateDim(stateDimBase);
-  mrt.setArmStateDim(stateDimArm);
+  MRT_ROS_Interface mrt(robotModelInfo, robotName);
   mrt.initRollout(&interface.getRollout());
   mrt.launchNodes(nodeHandle);
 

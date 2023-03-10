@@ -41,7 +41,7 @@ EndEffectorLinearConstraint::EndEffectorLinearConstraint(const EndEffectorKinema
       endEffectorKinematicsPtr_(endEffectorKinematics.clone()),
       numConstraints_(numConstraints),
       config_(std::move(config)) {
-  if (endEffectorKinematicsPtr_->getIds().size() != 1) {
+  if (endEffectorKinematicsPtr_->getEndEffectorFrameNames().size() != 1) {
     throw std::runtime_error("[EndEffectorLinearConstraint] this class only accepts a single end-effector!");
   }
 }

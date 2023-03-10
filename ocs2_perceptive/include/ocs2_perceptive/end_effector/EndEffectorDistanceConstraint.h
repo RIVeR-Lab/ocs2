@@ -44,43 +44,69 @@ namespace ocs2 {
 /**
  * End-effector distance constraint Function.
  */
-class EndEffectorDistanceConstraint final : public ocs2::StateConstraint {
- public:
-  /** Constructor */
-  EndEffectorDistanceConstraint(size_t stateDim, scalar_t weight, std::unique_ptr<EndEffectorKinematics<scalar_t>> kinematicsPtr);
+class EndEffectorDistanceConstraint final : public ocs2::StateConstraint
+{
+  public:
+    /** Constructor */
+    EndEffectorDistanceConstraint(size_t stateDim, 
+                                  scalar_t weight, 
+                                  std::unique_ptr<EndEffectorKinematics<scalar_t>> kinematicsPtr);
 
-  /** Constructor */
-  EndEffectorDistanceConstraint(size_t stateDim, scalar_t weight, std::unique_ptr<EndEffectorKinematics<scalar_t>> kinematicsPtr,
-                                scalar_array_t clearances);
+    /** Constructor */
+    EndEffectorDistanceConstraint(size_t stateDim, 
+                                  scalar_t weight, std::unique_ptr<EndEffectorKinematics<scalar_t>> kinematicsPtr,
+                                  scalar_array_t clearances);
 
-  /** Default destructor */
-  ~EndEffectorDistanceConstraint() override = default;
+    /** Default destructor */
+    ~EndEffectorDistanceConstraint() override = default;
 
-  void set(const DistanceTransformInterface& distanceTransform);
-  void set(scalar_t clearance, const DistanceTransformInterface& distanceTransform);
-  void set(const scalar_array_t& clearances, const DistanceTransformInterface& distanceTransform);
+    void set(const DistanceTransformInterface& distanceTransform);
+    
+    void set(scalar_t clearance, const DistanceTransformInterface& distanceTransform);
+    
+    void set(const scalar_array_t& clearances, const DistanceTransformInterface& distanceTransform);
 
-  EndEffectorDistanceConstraint* clone() const override { return new EndEffectorDistanceConstraint(*this); }
-  size_t getNumConstraints(scalar_t time) const override { return kinematicsPtr_->getIds().size(); }
-  const std::vector<std::string>& getIDs() const { return kinematicsPtr_->getIds(); }
+    EndEffectorDistanceConstraint* clone() const override 
+    { 
+      return new EndEffectorDistanceConstraint(*this); 
+    }
+    
+    size_t getNumConstraints(scalar_t time) const override 
+    { 
+      return kinematicsPtr_->getEndEffectorFrameNames().size(); 
+    }
+    
+    const std::vector<std::string>& getIDs() const 
+    { 
+      return kinematicsPtr_->getEndEffectorFrameNames(); 
+    }
 
-  vector_t getValue(scalar_t time, const vector_t& state, const PreComputation& preComp) const override;
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state,
-                                                           const PreComputation& preComp) const override;
+    vector_t getValue(scalar_t time, const vector_t& state, const PreComputation& preComp) const override;
+    
+    VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, 
+                                                            const vector_t& state,
+                                                            const PreComputation& preComp) const override;
 
-  size_t getStateDimensions() const { return stateDim_; }
-  EndEffectorKinematics<scalar_t>& getKinematics() { return *kinematicsPtr_; }
+    size_t getStateDimensions() const 
+    { 
+      return stateDim_; 
+    }
+    
+    EndEffectorKinematics<scalar_t>& getKinematics() 
+    { 
+      return *kinematicsPtr_; 
+    }
 
- private:
-  EndEffectorDistanceConstraint(const EndEffectorDistanceConstraint& other);
+  private:
+    EndEffectorDistanceConstraint(const EndEffectorDistanceConstraint& other);
 
-  const size_t stateDim_;
-  const scalar_t weight_;
+    const size_t stateDim_;
+    const scalar_t weight_;
 
-  std::unique_ptr<EndEffectorKinematics<scalar_t>> kinematicsPtr_;
+    std::unique_ptr<EndEffectorKinematics<scalar_t>> kinematicsPtr_;
 
-  scalar_array_t clearances_;
-  const DistanceTransformInterface* distanceTransformPtr_ = nullptr;
+    scalar_array_t clearances_;
+    const DistanceTransformInterface* distanceTransformPtr_ = nullptr;
 };
 
 }  // namespace ocs2

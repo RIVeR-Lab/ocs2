@@ -241,6 +241,64 @@ bool updateModelMode(RobotModelInfo& robotModelInfo, size_t& modelMode)
   return result;
 }
 
+/**
+ * @brief Returns a string for a RobotModelType for retrieving data from a .info file
+ */
+static std::string modelTypeEnumToString(RobotModelType robotModelType) 
+{
+  std::string robotModelTypeString;
+
+  switch (robotModelType) 
+  {
+    case RobotModelType::MobileBase: 
+      robotModelTypeString = "mobileBase";
+      break;
+
+    case RobotModelType::RobotArm: 
+      robotModelTypeString = "robotArm";
+      break;
+
+    case RobotModelType::MobileManipulator: 
+      robotModelTypeString = "mobileManipulator";
+      break;
+
+    default:
+      throw std::invalid_argument("[MultiModelFunctions::modelTypeEnumToString] Error: Invalid robot model!");
+      break;
+  }
+
+  return robotModelTypeString;
+}
+
+/**
+ * @brief Returns a string for a ModelMode
+ */
+static std::string modelModeEnumToString(ModelMode& modelMode) 
+{
+  std::string modeModelString;
+
+  switch (modelMode) 
+  {
+    case ModelMode::BaseMotion: 
+      modeModelString = "baseMotion";
+      break;
+
+    case ModelMode::ArmMotion: 
+      modeModelString = "armMotion";
+      break;
+
+    case ModelMode::WholeBodyMotion: 
+      modeModelString = "wholeBodyMotion";
+      break;
+
+    default:
+      throw std::invalid_argument("[MultiModelFunctions::modelModeEnumToString] Error: Invalid model mode!");
+      break;
+  }
+
+  return modeModelString;
+}
+
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/

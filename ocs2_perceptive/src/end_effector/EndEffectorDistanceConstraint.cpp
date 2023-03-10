@@ -36,11 +36,11 @@ namespace ocs2 {
 /******************************************************************************************************/
 EndEffectorDistanceConstraint::EndEffectorDistanceConstraint(size_t stateDim, scalar_t weight,
                                                              std::unique_ptr<EndEffectorKinematics<scalar_t>> kinematicsPtr)
-    : StateConstraint(ConstraintOrder::Linear),
-      stateDim_(stateDim),
-      weight_(weight),
-      kinematicsPtr_(std::move(kinematicsPtr)),
-      clearances_(kinematicsPtr_->getIds().size(), 0.0) {}
+  : StateConstraint(ConstraintOrder::Linear),
+    stateDim_(stateDim),
+    weight_(weight),
+    kinematicsPtr_(std::move(kinematicsPtr)),
+    clearances_(kinematicsPtr_->getEndEffectorFrameNames().size(), 0.0) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -48,12 +48,14 @@ EndEffectorDistanceConstraint::EndEffectorDistanceConstraint(size_t stateDim, sc
 EndEffectorDistanceConstraint::EndEffectorDistanceConstraint(size_t stateDim, scalar_t weight,
                                                              std::unique_ptr<EndEffectorKinematics<scalar_t>> kinematicsPtr,
                                                              scalar_array_t clearances)
-    : StateConstraint(ConstraintOrder::Linear),
-      stateDim_(stateDim),
-      weight_(weight),
-      kinematicsPtr_(std::move(kinematicsPtr)),
-      clearances_(std::move(clearances)) {
-  if (clearances_.size() != kinematicsPtr_->getIds().size()) {
+  : StateConstraint(ConstraintOrder::Linear),
+    stateDim_(stateDim),
+    weight_(weight),
+    kinematicsPtr_(std::move(kinematicsPtr)),
+    clearances_(std::move(clearances)) 
+{
+  if (clearances_.size() != kinematicsPtr_->getEndEffectorFrameNames().size()) 
+  {
     throw std::runtime_error("[EndEffectorDistanceConstraint] clearances.size() != kinematicsPtr->getIds().size()");
   }
 }
@@ -62,32 +64,35 @@ EndEffectorDistanceConstraint::EndEffectorDistanceConstraint(size_t stateDim, sc
 /******************************************************************************************************/
 /******************************************************************************************************/
 EndEffectorDistanceConstraint::EndEffectorDistanceConstraint(const EndEffectorDistanceConstraint& other)
-    : StateConstraint(other),
-      stateDim_(other.stateDim_),
-      weight_(other.weight_),
-      kinematicsPtr_(other.kinematicsPtr_->clone()),
-      clearances_(other.clearances_) {}
+  : StateConstraint(other),
+    stateDim_(other.stateDim_),
+    weight_(other.weight_),
+    kinematicsPtr_(other.kinematicsPtr_->clone()),
+    clearances_(other.clearances_) {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void EndEffectorDistanceConstraint::set(const DistanceTransformInterface& distanceTransform) {
+void EndEffectorDistanceConstraint::set(const DistanceTransformInterface& distanceTransform) 
+{
   distanceTransformPtr_ = &distanceTransform;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void EndEffectorDistanceConstraint::set(scalar_t clearance, const DistanceTransformInterface& distanceTransform) {
-  clearances_.assign(kinematicsPtr_->getIds().size(), clearance);
+void EndEffectorDistanceConstraint::set(scalar_t clearance, const DistanceTransformInterface& distanceTransform) 
+{
+  clearances_.assign(kinematicsPtr_->getEndEffectorFrameNames().size(), clearance);
   distanceTransformPtr_ = &distanceTransform;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void EndEffectorDistanceConstraint::set(const scalar_array_t& clearances, const DistanceTransformInterface& distanceTransform) {
-  assert(clearances.size() == kinematicsPtr_->getIds().size());
+void EndEffectorDistanceConstraint::set(const scalar_array_t& clearances, const DistanceTransformInterface& distanceTransform) 
+{
+  assert(clearances.size() == kinematicsPtr_->getEndEffectorFrameNames().size());
   clearances_ = clearances;
   distanceTransformPtr_ = &distanceTransform;
 }
@@ -95,16 +100,19 @@ void EndEffectorDistanceConstraint::set(const scalar_array_t& clearances, const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t EndEffectorDistanceConstraint::getValue(scalar_t time, const vector_t& state, const PreComputation& preComp) const {
-  if (distanceTransformPtr_ == nullptr) {
+vector_t EndEffectorDistanceConstraint::getValue(scalar_t time, const vector_t& state, const PreComputation& preComp) const 
+{
+  if (distanceTransformPtr_ == nullptr) 
+  {
     throw std::runtime_error("[EndEffectorDistanceConstraint] First, set the distance-transform by calling set()!");
   }
 
-  const auto numEEs = kinematicsPtr_->getIds().size();
+  const auto numEEs = kinematicsPtr_->getEndEffectorFrameNames().size();
   const auto eePositions = kinematicsPtr_->getPosition(state);
 
   vector_t g(numEEs);
-  for (size_t i = 0; i < numEEs; i++) {
+  for (size_t i = 0; i < numEEs; i++) 
+  {
     g(i) = weight_ * (distanceTransformPtr_->getValue(eePositions[i]) - clearances_[i]);
   }  // end of i loop
 
@@ -120,7 +128,7 @@ VectorFunctionLinearApproximation EndEffectorDistanceConstraint::getLinearApprox
     throw std::runtime_error("[EndEffectorDistanceConstraint] First, set the distance-transform by calling set()!");
   }
 
-  const auto numEEs = kinematicsPtr_->getIds().size();
+  const auto numEEs = kinematicsPtr_->getEndEffectorFrameNames().size();
   const auto eePosLinApprox = kinematicsPtr_->getPositionLinearApproximation(state);
 
   VectorFunctionLinearApproximation approx = VectorFunctionLinearApproximation::Zero(numEEs, stateDim_, 0);

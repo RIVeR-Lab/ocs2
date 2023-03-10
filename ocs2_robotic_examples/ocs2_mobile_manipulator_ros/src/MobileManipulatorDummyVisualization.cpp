@@ -45,9 +45,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ros_interfaces/common/RosMsgHelpers.h>
 
 #include <ocs2_mobile_manipulator/AccessHelperFunctions.h>
-//#include <ocs2_mobile_manipulator/FactoryFunctions.h>
-//#include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
-//#include <ocs2_mobile_manipulator/RobotModelInfo.h>
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
 #include <ocs2_mobile_manipulator_ros/MobileManipulatorDummyVisualization.h>
 
@@ -109,7 +106,7 @@ void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& 
   nodeHandle.getParam("/taskFile", taskFile);
   
   // Read manipulator type
-  RobotModelType modelType = mobile_manipulator::loadRobotType(taskFile, "model_information.robotModelType");
+  RobotModelType modelType = loadRobotType(taskFile, "model_information.robotModelType");
   
   // Read the joints to make fixed
   loadData::loadStdVector<std::string>(taskFile, "model_information.removeJoints", removeJointNames_, false);

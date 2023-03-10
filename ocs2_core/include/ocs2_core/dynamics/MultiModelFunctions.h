@@ -13,23 +13,13 @@
 
 #include <string>
 #include <vector>
-
-//#include <tf_conversions/tf_eigen.h>
-//#include <tf/message_filter.h>
-//#include <tf/transform_broadcaster.h>
-
 #include <urdf_parser/urdf_parser.h>
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/automatic_differentiation/Types.h>
-//#include <ocs2_pinocchio_interface/PinocchioInterface.h>
-
-//#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
-//#include "ocs2_mobile_manipulator/RobotModelInfo.h"
 #include "ocs2_core/dynamics/RobotModelInfo.h"
 
 namespace ocs2 {
-//namespace mobile_manipulator {
 
 /**
  * Create a scalar-typed RobotModelInfo.
@@ -96,8 +86,17 @@ size_t getInputDim(RobotModelInfo& robotModelInfo);
  */
 size_t getModeInputDim(RobotModelInfo& robotModelInfo);
 
+/**
+ * NUA TODO: UPDATE!
+ */
+static std::string modelTypeEnumToString(RobotModelType& robotModelType);
+
+/**
+ * NUA TODO: UPDATE!
+ */
+static std::string modelModeEnumToString(ModelMode modelMode);
+
 /** Load ManipulatorModelType for a config file */
 RobotModelType loadRobotType(const std::string& configFilePath, const std::string& fieldName = "robotModelType");
 
-//}  // namespace mobile_manipulator
 }  // namespace ocs2

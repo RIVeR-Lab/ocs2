@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.03.04
+// LAST UPDATE: 2022.03.09
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -15,7 +15,6 @@
 #include <vector>
 
 namespace ocs2 {
-//namespace mobile_manipulator {
 
 /**
  * @brief Defines robot models.
@@ -64,63 +63,4 @@ struct RobotModelInfo
   size_t modeInputDim;
 };
 
-/**
- * @brief Returns a string for a RobotModelType for retrieving data from a .info file
- */
-static std::string modelTypeEnumToString(RobotModelType robotModelType) 
-{
-  std::string robotModelTypeString;
-
-  switch (robotModelType) 
-  {
-    case RobotModelType::MobileBase: 
-      robotModelTypeString = "mobileBase";
-      break;
-
-    case RobotModelType::RobotArm: 
-      robotModelTypeString = "robotArm";
-      break;
-
-    case RobotModelType::MobileManipulator: 
-      robotModelTypeString = "mobileManipulator";
-      break;
-
-    default:
-      throw std::invalid_argument("[RobotModelInfo::modelTypeEnumToString] Error: Invalid robot model!");
-      break;
-  }
-
-  return robotModelTypeString;
-}
-
-/**
- * @brief Returns a string for a ModelMode
- */
-static std::string modelModeEnumToString(ModelMode modelMode) 
-{
-  std::string modeModelString;
-
-  switch (modelMode) 
-  {
-    case ModelMode::BaseMotion: 
-      modeModelString = "baseMotion";
-      break;
-
-    case ModelMode::ArmMotion: 
-      modeModelString = "armMotion";
-      break;
-
-    case ModelMode::WholeBodyMotion: 
-      modeModelString = "wholeBodyMotion";
-      break;
-
-    default:
-      throw std::invalid_argument("[RobotModelInfo::modelModeEnumToString] Error: Invalid model mode!");
-      break;
-  }
-
-  return modeModelString;
-}
-
-//}  // namespace mobile_manipulator
 }  // namespace ocs2

@@ -51,8 +51,6 @@
 #include <ocs2_ext_collision/ext_map_utility.h>
 
 #include <ocs2_mobile_manipulator/FactoryFunctions.h>
-//#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
-
 #include "ocs2_mobile_manipulator/MobileManipulatorPreComputation.h"
 #include "ocs2_mobile_manipulator/constraint/EndEffectorConstraint.h"
 #include "ocs2_mobile_manipulator/constraint/MobileManipulatorSelfCollisionConstraint.h"

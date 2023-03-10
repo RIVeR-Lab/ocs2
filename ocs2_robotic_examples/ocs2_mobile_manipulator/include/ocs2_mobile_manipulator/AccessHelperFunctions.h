@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.03.06
+// LAST UPDATE: 2022.03.09
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -13,8 +13,6 @@
 
 #include <Eigen/Core>
 
-//#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
-//#include "ocs2_mobile_manipulator/RobotModelInfo.h"
 #include "ocs2_core/dynamics/MultiModelFunctions.h"
 
 namespace ocs2 {

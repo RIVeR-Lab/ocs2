@@ -84,7 +84,7 @@ class PinocchioEndEffectorKinematics final : public EndEffectorKinematics<scalar
     }
 
     /** Get end-effector IDs (names) */
-    const std::vector<std::string>& getIds() const override;
+    const std::vector<std::string>& getEndEffectorFrameNames() const override;
 
     /** Get the end effector position vectors.
      * @note requires pinocchioInterface to be updated with:

@@ -32,17 +32,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/misc/LoadData.h>
 #include <ocs2_core/misc/LoadStdVectorOfPair.h>
-//#include <ocs2_core/dynamics/MultiModelFunctions.h>
-
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
-
 #include <ocs2_self_collision/PinocchioGeometryInterface.h>
 #include <ocs2_self_collision_visualization/GeometryInterfaceVisualization.h>
-
-//#include <ocs2_mobile_manipulator/FactoryFunctions.h>
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
-//#include <ocs2_mobile_manipulator/RobotModelInfo.h>
-//#include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
 
 #include <ros/package.h>
 #include <ros/ros.h>
@@ -93,7 +86,7 @@ int main(int argc, char** argv)
   boost::property_tree::read_info(taskFile, pt);
   
   // Read manipulator type
-  RobotModelType modelType = mobile_manipulator::loadRobotType(taskFile, "model_information.robotModelType");
+  RobotModelType modelType = loadRobotType(taskFile, "model_information.robotModelType");
   
   // Read the joints to make fixed
   std::vector<std::string> removeJointNames;

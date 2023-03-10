@@ -41,12 +41,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/ros.h>
 #include <ros/transport_hints.h>
 
-// MPC messages
+#include <ocs2_core/dynamics/MultiModelFunctions.h>
 #include <ocs2_msgs/mpc_flattened_controller.h>
 #include <ocs2_msgs/reset.h>
-
 #include <ocs2_mpc/MRT_BASE.h>
-
 #include "ocs2_ros_interfaces/common/RosMsgConversions.h"
 
 #define PUBLISH_THREAD
@@ -67,7 +65,15 @@ class MRT_ROS_Interface : public MRT_BASE
      * @param [in] mrtTransportHints: ROS transmission protocol.
      */
     explicit MRT_ROS_Interface(std::string topicPrefix = "anonymousRobot",
-                               int modelMode = 2,
+                               ::ros::TransportHints mrtTransportHints = ::ros::TransportHints().tcpNoDelay());
+
+    /**
+     * Constructor
+     *
+     * @param [in] NUA TODO: COMPLETE!
+     */
+    explicit MRT_ROS_Interface(RobotModelInfo& robotModelInfo,
+                               std::string topicPrefix = "anonymousRobot",
                                ::ros::TransportHints mrtTransportHints = ::ros::TransportHints().tcpNoDelay());
 
     /**
@@ -75,6 +81,9 @@ class MRT_ROS_Interface : public MRT_BASE
      */
     ~MRT_ROS_Interface() override;
 
+    RobotModelInfo getRobotModelInfo();
+
+    /*
     size_t getModelMode();
 
     size_t getBaseStateDim();
@@ -88,6 +97,7 @@ class MRT_ROS_Interface : public MRT_BASE
     void setArmStateDim(size_t armStateDim);
 
     bool checkModelMode(size_t modelMode);
+    */
 
     void resetMpcNode(const TargetTrajectories& initTargetTrajectories) override;
 
@@ -144,9 +154,10 @@ class MRT_ROS_Interface : public MRT_BASE
   private:
     std::string topicPrefix_;
 
-    int modelMode_;     // 0: base, 1: arm, 2: arm+base
-    int baseStateDim_;
-    int armStateDim_;
+    RobotModelInfo robotModelInfo_;
+    //int modelMode_;     // 0: base, 1: arm, 2: arm+base
+    //int baseStateDim_;
+    //int armStateDim_;
 
     // Subscribers
     ros::Subscriber mpcPolicySubscriber_;

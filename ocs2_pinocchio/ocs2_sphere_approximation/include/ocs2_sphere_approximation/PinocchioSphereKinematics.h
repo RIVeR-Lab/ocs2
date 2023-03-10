@@ -54,96 +54,110 @@ namespace ocs2 {
  *   const auto pos = kinematics.getPosition(x);
  * \endcode
  */
-class PinocchioSphereKinematics final : public EndEffectorKinematics<scalar_t> {
- public:
-  using EndEffectorKinematics<scalar_t>::vector3_t;
-  using EndEffectorKinematics<scalar_t>::matrix3x_t;
-  using EndEffectorKinematics<scalar_t>::quaternion_t;
+class PinocchioSphereKinematics final : public EndEffectorKinematics<scalar_t> 
+{
+  public:
+    using EndEffectorKinematics<scalar_t>::vector3_t;
+    using EndEffectorKinematics<scalar_t>::matrix3x_t;
+    using EndEffectorKinematics<scalar_t>::quaternion_t;
 
-  /** Constructor
-   * @param [in] pinocchioSphereInterface: pinocchio sphere interface.
-   * @param [in] mapping: mapping from OCS2 to pinocchio state.
-   */
-  PinocchioSphereKinematics(PinocchioSphereInterface pinocchioSphereInterface, const PinocchioStateInputMapping<scalar_t>& mapping);
+    /** Constructor
+     * @param [in] pinocchioSphereInterface: pinocchio sphere interface.
+     * @param [in] mapping: mapping from OCS2 to pinocchio state.
+     */
+    PinocchioSphereKinematics(PinocchioSphereInterface pinocchioSphereInterface, const PinocchioStateInputMapping<scalar_t>& mapping);
 
-  ~PinocchioSphereKinematics() override = default;
-  PinocchioSphereKinematics* clone() const override;
-  PinocchioSphereKinematics& operator=(const PinocchioSphereKinematics&) = delete;
+    ~PinocchioSphereKinematics() override = default;
+    
+    PinocchioSphereKinematics* clone() const override;
+    
+    PinocchioSphereKinematics& operator=(const PinocchioSphereKinematics&) = delete;
 
-  /** Set the pinocchio interface for caching.
-   * @note The pinocchio interface must be set before calling the getters.
-   * @param [in] pinocchioInterface: pinocchio interface on which computations are expected. It will keep a pointer for the getters.
-   */
-  void setPinocchioInterface(const PinocchioInterface& pinocchioInterface) {
-    pinocchioInterfacePtr_ = &pinocchioInterface;
-    mappingPtr_->setPinocchioInterface(pinocchioInterface);
-  }
+    /** Set the pinocchio interface for caching.
+     * @note The pinocchio interface must be set before calling the getters.
+     * @param [in] pinocchioInterface: pinocchio interface on which computations are expected. It will keep a pointer for the getters.
+     */
+    void setPinocchioInterface(const PinocchioInterface& pinocchioInterface) 
+    {
+      pinocchioInterfacePtr_ = &pinocchioInterface;
+      mappingPtr_->setPinocchioInterface(pinocchioInterface);
+    }
 
-  /** Get the pinocchio sphere interface **/
-  const PinocchioSphereInterface& getPinocchioSphereInterface() const { return pinocchioSphereInterface_; };
+    /** Get the pinocchio sphere interface **/
+    const PinocchioSphereInterface& getPinocchioSphereInterface() const 
+    { 
+      return pinocchioSphereInterface_; 
+    };
 
-  /** Get IDs (names) of the links which the spheres approximate */
-  const std::vector<std::string>& getIds() const override { return linkIds_; };
+    /** Get IDs (names) of the links which the spheres approximate */
+    const std::vector<std::string>& getEndEffectorFrameNames() const override 
+    { 
+      return linkIds_; 
+    };
 
-  /** Get the sphere center position vectors.
-   * @note requires pinocchioInterface to be updated with:
-   *       pinocchio::forwardKinematics(model, data, q)
-   *       pinocchio::updateFramePlacements(model, data)
-   */
-  std::vector<vector3_t> getPosition(const vector_t& state) const override;
+    /** Get the sphere center position vectors.
+     * @note requires pinocchioInterface to be updated with:
+     *       pinocchio::forwardKinematics(model, data, q)
+     *       pinocchio::updateFramePlacements(model, data)
+     */
+    std::vector<vector3_t> getPosition(const vector_t& state) const override;
 
-  /** Get the sphere center velocity vectors.
-   * @note requires pinocchioInterface to be updated with:
-   *       pinocchio::forwardKinematics(model, data, q, v)
-   */
-  std::vector<vector3_t> getVelocity(const vector_t& state, const vector_t& input) const override {
-    throw std::runtime_error("[PinocchioSphereKinematics] getVelocity() is not implemented");
-  };
+    /** Get the sphere center velocity vectors.
+     * @note requires pinocchioInterface to be updated with:
+     *       pinocchio::forwardKinematics(model, data, q, v)
+     */
+    std::vector<vector3_t> getVelocity(const vector_t& state, const vector_t& input) const override 
+    {
+      throw std::runtime_error("[PinocchioSphereKinematics] getVelocity() is not implemented");
+    };
 
-  /** Get the sphere center orientation error.
-   * @note requires pinocchioInterface to be updated with:
-   *       pinocchio::forwardKinematics(model, data, q)
-   *       pinocchio::updateFramePlacements(model, data)
-   */
-  std::vector<vector3_t> getOrientationError(const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) const override {
-    throw std::runtime_error("[PinocchioSphereKinematics] getOrientationError() is not implemented");
-  };
+    /** Get the sphere center orientation error.
+     * @note requires pinocchioInterface to be updated with:
+     *       pinocchio::forwardKinematics(model, data, q)
+     *       pinocchio::updateFramePlacements(model, data)
+     */
+    std::vector<vector3_t> getOrientationError(const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) const override 
+    {
+      throw std::runtime_error("[PinocchioSphereKinematics] getOrientationError() is not implemented");
+    };
 
-  /** Get the sphere center position linear approximation.
-   * @note requires pinocchioInterface to be updated with:
-   *       pinocchio::forwardKinematics(model, data, q)
-   *       pinocchio::updateFramePlacements(model, data)
-   *       pinocchio::computeJointJacobians(model, data)
-   */
-  std::vector<VectorFunctionLinearApproximation> getPositionLinearApproximation(const vector_t& state) const override;
+    /** Get the sphere center position linear approximation.
+     * @note requires pinocchioInterface to be updated with:
+     *       pinocchio::forwardKinematics(model, data, q)
+     *       pinocchio::updateFramePlacements(model, data)
+     *       pinocchio::computeJointJacobians(model, data)
+     */
+    std::vector<VectorFunctionLinearApproximation> getPositionLinearApproximation(const vector_t& state) const override;
 
-  /** Get the sphere center velocity linear approximation
-   * @note requires pinocchioInterface to be updated with:
-   *       pinocchio::computeForwardKinematicsDerivatives(model, data, q, v, a)
-   */
-  std::vector<VectorFunctionLinearApproximation> getVelocityLinearApproximation(const vector_t& state,
-                                                                                const vector_t& input) const override {
-    throw std::runtime_error("[PinocchioSphereKinematics] getVelocityLinearApproximation() is not implemented");
-  };
+    /** Get the sphere center velocity linear approximation
+     * @note requires pinocchioInterface to be updated with:
+     *       pinocchio::computeForwardKinematicsDerivatives(model, data, q, v, a)
+     */
+    std::vector<VectorFunctionLinearApproximation> getVelocityLinearApproximation(const vector_t& state,
+                                                                                  const vector_t& input) const override 
+    {
+      throw std::runtime_error("[PinocchioSphereKinematics] getVelocityLinearApproximation() is not implemented");
+    };
 
-  /** Get the sphere center orientation error linear approximation.
-   * @note requires pinocchioInterface to be updated with:
-   *       pinocchio::forwardKinematics(model, data, q)
-   *       pinocchio::updateFramePlacements(model, data)
-   *       pinocchio::computeJointJacobians(model, data)
-   */
-  std::vector<VectorFunctionLinearApproximation> getOrientationErrorLinearApproximation(
-      const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) const override {
-    throw std::runtime_error("[PinocchioSphereKinematics] getOrientationErrorLinearApproximation() is not implemented");
-  };
+    /** Get the sphere center orientation error linear approximation.
+     * @note requires pinocchioInterface to be updated with:
+     *       pinocchio::forwardKinematics(model, data, q)
+     *       pinocchio::updateFramePlacements(model, data)
+     *       pinocchio::computeJointJacobians(model, data)
+     */
+    std::vector<VectorFunctionLinearApproximation> getOrientationErrorLinearApproximation(const vector_t& state, 
+                                                                                          const std::vector<quaternion_t>& referenceOrientations) const override 
+    {
+      throw std::runtime_error("[PinocchioSphereKinematics] getOrientationErrorLinearApproximation() is not implemented");
+    };
 
- private:
-  PinocchioSphereKinematics(const PinocchioSphereKinematics& rhs);
+  private:
+    PinocchioSphereKinematics(const PinocchioSphereKinematics& rhs);
 
-  const PinocchioInterface* pinocchioInterfacePtr_;
-  std::unique_ptr<PinocchioStateInputMapping<scalar_t>> mappingPtr_;
-  PinocchioSphereInterface pinocchioSphereInterface_;
-  std::vector<std::string> linkIds_;
+    const PinocchioInterface* pinocchioInterfacePtr_;
+    std::unique_ptr<PinocchioStateInputMapping<scalar_t>> mappingPtr_;
+    PinocchioSphereInterface pinocchioSphereInterface_;
+    std::vector<std::string> linkIds_;
 };
 
 }  // namespace ocs2

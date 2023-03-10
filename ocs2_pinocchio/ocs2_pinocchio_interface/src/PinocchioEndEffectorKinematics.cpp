@@ -76,7 +76,7 @@ PinocchioEndEffectorKinematics* PinocchioEndEffectorKinematics::clone() const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-const std::vector<std::string>& PinocchioEndEffectorKinematics::getIds() const 
+const std::vector<std::string>& PinocchioEndEffectorKinematics::getEndEffectorFrameNames() const 
 {
   return endEffectorIds_;
 }

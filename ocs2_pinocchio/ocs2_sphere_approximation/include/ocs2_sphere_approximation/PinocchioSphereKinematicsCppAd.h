@@ -46,76 +46,101 @@ namespace ocs2 {
  *
  * @note See also PinocchioSphereKinematics, which uses analytical computation and caching.
  */
-class PinocchioSphereKinematicsCppAd final : public EndEffectorKinematics<scalar_t> {
- public:
-  using EndEffectorKinematics<scalar_t>::vector3_t;
-  using EndEffectorKinematics<scalar_t>::matrix3x_t;
-  using EndEffectorKinematics<scalar_t>::quaternion_t;
+class PinocchioSphereKinematicsCppAd final : public EndEffectorKinematics<scalar_t> 
+{
+  public:
+    using EndEffectorKinematics<scalar_t>::vector3_t;
+    using EndEffectorKinematics<scalar_t>::matrix3x_t;
+    using EndEffectorKinematics<scalar_t>::quaternion_t;
 
-  struct SphereApproxParam {
-    SphereApproxParam(vector3_t placementTranslation, quaternion_t placementOrientation, std::vector<vector3_t> sphereCentersToObjectCenter)
+    struct SphereApproxParam 
+    {
+      SphereApproxParam(vector3_t placementTranslation, quaternion_t placementOrientation, std::vector<vector3_t> sphereCentersToObjectCenter)
         : placementTranslation(std::move(placementTranslation)),
           placementOrientation(std::move(placementOrientation)),
           sphereCentersToObjectCenter(std::move(sphereCentersToObjectCenter)) {}
-    vector3_t placementTranslation;
-    quaternion_t placementOrientation;
-    std::vector<vector3_t> sphereCentersToObjectCenter;
-  };
+      vector3_t placementTranslation;
+      quaternion_t placementOrientation;
+      std::vector<vector3_t> sphereCentersToObjectCenter;
+    };
 
-  /** Constructor
-   * @param [in] pinocchioInterface pinocchio interface.
-   * @param [in] pinocchioSphereInterface pinocchio sphere interface
-   * @param [in] mapping mapping from OCS2 to pinocchio state.
-   * @param [in] stateDim : size of state vector
-   * @param [in] inputDim : size of input vector
-   * @param [in] modelName : name of the generate model library
-   * @param [in] modelFolder : folder to save the model library files to
-   * @param [in] recompileLibraries : If true, the model library will be newly compiled. If false, an existing library will be loaded if
-   *                                  available.
-   * @param [in] verbose : print information.
-   */
-  PinocchioSphereKinematicsCppAd(const PinocchioInterface& pinocchioInterface, PinocchioSphereInterface pinocchioSphereInterface,
-                                 const PinocchioStateInputMapping<ad_scalar_t>& mapping, size_t stateDim, size_t inputDim,
-                                 const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2", bool recompileLibraries = true,
-                                 bool verbose = false);
+    /** Constructor
+     * @param [in] pinocchioInterface pinocchio interface.
+     * @param [in] pinocchioSphereInterface pinocchio sphere interface
+     * @param [in] mapping mapping from OCS2 to pinocchio state.
+     * @param [in] stateDim : size of state vector
+     * @param [in] inputDim : size of input vector
+     * @param [in] modelName : name of the generate model library
+     * @param [in] modelFolder : folder to save the model library files to
+     * @param [in] recompileLibraries : If true, the model library will be newly compiled. If false, an existing library will be loaded if
+     *                                  available.
+     * @param [in] verbose : print information.
+     */
+    PinocchioSphereKinematicsCppAd(const PinocchioInterface& pinocchioInterface, 
+                                   PinocchioSphereInterface pinocchioSphereInterface,
+                                   const PinocchioStateInputMapping<ad_scalar_t>& mapping, 
+                                   size_t stateDim, 
+                                   size_t inputDim,
+                                   const std::string& modelName, 
+                                   const std::string& modelFolder = "/tmp/ocs2", 
+                                   bool recompileLibraries = true,
+                                   bool verbose = false);
 
-  ~PinocchioSphereKinematicsCppAd() override = default;
-  PinocchioSphereKinematicsCppAd* clone() const override;
-  PinocchioSphereKinematicsCppAd& operator=(const PinocchioSphereKinematicsCppAd&) = delete;
+    ~PinocchioSphereKinematicsCppAd() override = default;
+    
+    PinocchioSphereKinematicsCppAd* clone() const override;
+    
+    PinocchioSphereKinematicsCppAd& operator=(const PinocchioSphereKinematicsCppAd&) = delete;
 
-  const PinocchioSphereInterface& getPinocchioSphereInterface() const { return pinocchioSphereInterface_; };
+    const PinocchioSphereInterface& getPinocchioSphereInterface() const 
+    { 
+      return pinocchioSphereInterface_; 
+    };
 
-  const std::vector<std::string>& getIds() const override { return linkIds_; };
+    const std::vector<std::string>& getEndEffectorFrameNames() const override 
+    { 
+      return linkIds_; 
+    };
 
-  std::vector<vector3_t> getPosition(const vector_t& state) const override;
-  std::vector<vector3_t> getVelocity(const vector_t& state, const vector_t& input) const override {
-    throw std::runtime_error("[PinocchioSphereKinematicsCppAd] getVelocity() is not implemented");
-  };
-  std::vector<vector3_t> getOrientationError(const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) const override {
-    throw std::runtime_error("[PinocchioSphereKinematicsCppAd] getOrientationError() is not implemented");
-  };
+    std::vector<vector3_t> getPosition(const vector_t& state) const override;
+    std::vector<vector3_t> getVelocity(const vector_t& state, const vector_t& input) const override 
+    {
+      throw std::runtime_error("[PinocchioSphereKinematicsCppAd] getVelocity() is not implemented");
+    };
 
-  std::vector<VectorFunctionLinearApproximation> getPositionLinearApproximation(const vector_t& state) const override;
-  std::vector<VectorFunctionLinearApproximation> getVelocityLinearApproximation(const vector_t& state,
-                                                                                const vector_t& input) const override {
-    throw std::runtime_error("[PinocchioSphereKinematicsCppAd] getVelocityLinearApproximation() is not implemented");
-  };
-  std::vector<VectorFunctionLinearApproximation> getOrientationErrorLinearApproximation(
-      const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) const override {
-    throw std::runtime_error("[PinocchioSphereKinematicsCppAd] getOrientationErrorLinearApproximation() is not implemented");
-  };
+    std::vector<vector3_t> getOrientationError(const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) const override 
+    {
+      throw std::runtime_error("[PinocchioSphereKinematicsCppAd] getOrientationError() is not implemented");
+    };
 
- private:
-  PinocchioSphereKinematicsCppAd(const PinocchioSphereKinematicsCppAd& rhs);
+    std::vector<VectorFunctionLinearApproximation> getPositionLinearApproximation(const vector_t& state) const override;
 
-  std::vector<SphereApproxParam> createSphereApproxParams() const;
-  ad_vector_t getPositionCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd, const PinocchioStateInputMapping<ad_scalar_t>& mapping,
-                               const std::vector<SphereApproxParam>& sphereApproxParams, const ad_vector_t& state);
+    std::vector<VectorFunctionLinearApproximation> getVelocityLinearApproximation(const vector_t& state,
+                                                                                  const vector_t& input) const override 
+    {
+      throw std::runtime_error("[PinocchioSphereKinematicsCppAd] getVelocityLinearApproximation() is not implemented");
+    };
 
-  std::unique_ptr<CppAdInterface> positionCppAdInterfacePtr_;
+    std::vector<VectorFunctionLinearApproximation> getOrientationErrorLinearApproximation(const vector_t& state, 
+                                                                                          const std::vector<quaternion_t>& referenceOrientations) const override 
+    {
+      throw std::runtime_error("[PinocchioSphereKinematicsCppAd] getOrientationErrorLinearApproximation() is not implemented");
+    };
 
-  PinocchioSphereInterface pinocchioSphereInterface_;
-  std::vector<std::string> linkIds_;
+  private:
+    PinocchioSphereKinematicsCppAd(const PinocchioSphereKinematicsCppAd& rhs);
+
+    std::vector<SphereApproxParam> createSphereApproxParams() const;
+    
+    ad_vector_t getPositionCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd, 
+                                 const PinocchioStateInputMapping<ad_scalar_t>& mapping,
+                                 const std::vector<SphereApproxParam>& sphereApproxParams, 
+                                 const ad_vector_t& state);
+
+    std::unique_ptr<CppAdInterface> positionCppAdInterfacePtr_;
+
+    PinocchioSphereInterface pinocchioSphereInterface_;
+    std::vector<std::string> linkIds_;
 };
 
 }  // namespace ocs2

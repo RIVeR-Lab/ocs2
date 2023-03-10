@@ -352,7 +352,7 @@ void MRT_ROS_Gazebo_Loop::updateFullModelState()
   armState_.clear();
 
   // Set mobile base states
-  if (mrt_.getBaseStateDim() != 3)
+  if (mrt_.getRobotModelInfo().mobileBase.stateDim != 3)
   {
     std::cerr << "[MRT_ROS_Gazebo_Loop::updateFullModelState] ERROR: Base state dimension mismatch!" << std::endl;
   }
@@ -371,7 +371,7 @@ void MRT_ROS_Gazebo_Loop::updateFullModelState()
   //std::cerr << "[MRT_ROS_Gazebo_Loop::updateFullModelState] mrt_.getArmStateDim(): " << mrt_.getArmStateDim() << std::endl;
 
   // Set arm states
-  if (mrt_.getArmStateDim() != jointTrajectoryControllerStateMsg.joint_names.size())
+  if (mrt_.getRobotModelInfo().robotArm.stateDim != jointTrajectoryControllerStateMsg.joint_names.size())
   {
     std::cerr << "[MRT_ROS_Gazebo_Loop::updateFullModelState] ERROR: Arm state dimension mismatch!" << std::endl;
   }
@@ -408,7 +408,7 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
   updateFullModelState();
 
   // Set mobile base states
-  if (mrt_.checkModelMode(0) || mrt_.checkModelMode(2))
+  if (mrt_.getRobotModelInfo().modelMode == ModelMode::BaseMotion || mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
   {
     currentObservation.state[0] = baseState_[0];
     currentObservation.state[1] = baseState_[1];
@@ -416,8 +416,8 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
   }
 
   // Set arm states
-  int baseOffset = mrt_.getBaseStateDim();
-  if (mrt_.checkModelMode(1) || mrt_.checkModelMode(2))
+  int baseOffset = mrt_.getRobotModelInfo().mobileBase.stateDim;
+  if (mrt_.getRobotModelInfo().modelMode == ModelMode::ArmMotion || mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
   {
     //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] baseOffset: " << baseOffset << std::endl;
 
@@ -443,15 +443,15 @@ void MRT_ROS_Gazebo_Loop::publishCommand()
   trajectory_msgs::JointTrajectory armJointTrajectoryMsg;
 
   // Set mobile base command
-  int baseOffset = mrt_.getBaseStateDim();
-  if (mrt_.checkModelMode(0) || mrt_.checkModelMode(2))
+  int baseOffset = mrt_.getRobotModelInfo().mobileBase.stateDim;
+  if (mrt_.getRobotModelInfo().modelMode == ModelMode::BaseMotion || mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
   {
     baseTwistMsg.linear.x = currentInput_[0];
     baseTwistMsg.angular.z = currentInput_[1];
   }
 
   // Set arm command
-  if (mrt_.checkModelMode(1) || mrt_.checkModelMode(2))
+  if (mrt_.getRobotModelInfo().modelMode == ModelMode::ArmMotion || mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
   {
     int n_joints = dofNames_.size();
     armJointTrajectoryMsg.joint_names.resize(n_joints);
@@ -472,12 +472,12 @@ void MRT_ROS_Gazebo_Loop::publishCommand()
   }
 
   // Publish command
-  if (mrt_.checkModelMode(0) || mrt_.checkModelMode(2))
+  if (mrt_.getRobotModelInfo().modelMode == ModelMode::BaseMotion || mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
   {
     baseTwistPub_.publish(baseTwistMsg);
   }
 
-  if (mrt_.checkModelMode(1) || mrt_.checkModelMode(2))
+  if (mrt_.getRobotModelInfo().modelMode == ModelMode::ArmMotion || mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
   {
     armJointTrajectoryPub_.publish(armJointTrajectoryMsg);
   }

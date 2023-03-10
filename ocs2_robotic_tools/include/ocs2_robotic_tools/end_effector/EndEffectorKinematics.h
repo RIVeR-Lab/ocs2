@@ -55,7 +55,7 @@ class EndEffectorKinematics
     EndEffectorKinematics& operator=(const EndEffectorKinematics&) = delete;
 
     /** Get end-effector IDs (names) */
-    virtual const std::vector<std::string>& getIds() const = 0;
+    virtual const std::vector<std::string>& getEndEffectorFrameNames() const = 0;
 
     /**
      * Get end-effector position vectors in world frame
@@ -114,8 +114,8 @@ class EndEffectorKinematics
      * @param [in] referenceOrientation: reference quaternion
      * @return array of orientation error linear approximations
      */
-    virtual std::vector<VectorFunctionLinearApproximation> getOrientationErrorLinearApproximation(
-        const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) const = 0;
+    virtual std::vector<VectorFunctionLinearApproximation> getOrientationErrorLinearApproximation(const vector_t& state, 
+                                                                                                  const std::vector<quaternion_t>& referenceOrientations) const = 0;
 
   protected:
     EndEffectorKinematics(const EndEffectorKinematics&) = default;

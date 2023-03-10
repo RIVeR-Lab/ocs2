@@ -33,11 +33,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <vector>
 
+#include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
 #include <ocs2_robotic_tools/end_effector/EndEffectorKinematics.h>
-
-#include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 
 namespace ocs2 {
 
@@ -111,7 +110,7 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
     
     PinocchioEndEffectorKinematicsCppAd& operator=(const PinocchioEndEffectorKinematicsCppAd&) = delete;
 
-    const std::vector<std::string>& getIds() const override;
+    const std::vector<std::string>& getEndEffectorFrameNames() const override;
 
     std::vector<vector3_t> getPosition(const vector_t& state) const override;
     

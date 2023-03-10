@@ -59,7 +59,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   
   /// Resolve meta-information about the model
   // Read robot type
-  RobotModelType robotModelType = mobile_manipulator::loadRobotType(taskFile_, "model_information.robotModelType");
+  RobotModelType robotModelType = loadRobotType(taskFile_, "model_information.robotModelType");
 
   // Read the joints to make fixed
   std::vector<std::string> removeJointNames;

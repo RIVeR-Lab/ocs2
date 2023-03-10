@@ -37,8 +37,24 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MRT_ROS_Interface::MRT_ROS_Interface(std::string topicPrefix, int modelMode, ros::TransportHints mrtTransportHints)
-  : topicPrefix_(std::move(topicPrefix)), modelMode_(modelMode), mrtTransportHints_(mrtTransportHints)
+MRT_ROS_Interface::MRT_ROS_Interface(std::string topicPrefix, ros::TransportHints mrtTransportHints)
+  : topicPrefix_(std::move(topicPrefix)), mrtTransportHints_(mrtTransportHints)
+{
+  // Start thread for publishing
+#ifdef PUBLISH_THREAD
+  // Close old thread if it is already running
+  shutdownPublisher();
+  terminateThread_ = false;
+  readyToPublish_ = false;
+  publisherWorker_ = std::thread(&MRT_ROS_Interface::publisherWorkerThread, this);
+#endif
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+MRT_ROS_Interface::MRT_ROS_Interface(RobotModelInfo& robotModelInfo, std::string topicPrefix, ros::TransportHints mrtTransportHints)
+  : robotModelInfo_(robotModelInfo), topicPrefix_(std::move(topicPrefix)), mrtTransportHints_(mrtTransportHints)
 {
   // Start thread for publishing
 #ifdef PUBLISH_THREAD
@@ -61,64 +77,9 @@ MRT_ROS_Interface::~MRT_ROS_Interface()
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t MRT_ROS_Interface::getModelMode()
+RobotModelInfo MRT_ROS_Interface::getRobotModelInfo()
 {
-  return modelMode_; 
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-size_t MRT_ROS_Interface::getBaseStateDim()
-{
-  return baseStateDim_; 
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-size_t MRT_ROS_Interface::getArmStateDim()
-{
-  return armStateDim_; 
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void MRT_ROS_Interface::setModelMode(size_t modelMode)
-{
-  modelMode_ = modelMode; 
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void MRT_ROS_Interface::setBaseStateDim(size_t baseStateDim)
-{
-  baseStateDim_ = baseStateDim; 
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-void MRT_ROS_Interface::setArmStateDim(size_t armStateDim)
-{
-  armStateDim_ = armStateDim; 
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
-bool MRT_ROS_Interface::checkModelMode(size_t modelMode)
-{
-  if (modelMode_ == modelMode)
-  {
-    return true;
-  } 
-  else
-  {
-    return false;
-  }
+  return robotModelInfo_;
 }
 
 /******************************************************************************************************/
@@ -178,7 +139,8 @@ void MRT_ROS_Interface::publisherWorkerThread()
 
     msgReady_.wait(lk, [&] { return (readyToPublish_ || terminateThread_); });
 
-    if (terminateThread_) {
+    if (terminateThread_) 
+    {
       break;
     }
 
@@ -196,21 +158,28 @@ void MRT_ROS_Interface::publisherWorkerThread()
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller& msg, CommandData& commandData,
-                                      PrimalSolution& primalSolution, PerformanceIndex& performanceIndices) 
+void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller& msg, 
+                                      CommandData& commandData,
+                                      PrimalSolution& primalSolution, 
+                                      PerformanceIndex& performanceIndices) 
 {
   commandData.mpcInitObservation_ = ros_msg_conversions::readObservationMsg(msg.initObservation);
   commandData.mpcTargetTrajectories_ = ros_msg_conversions::readTargetTrajectoriesMsg(msg.planTargetTrajectories);
   performanceIndices = ros_msg_conversions::readPerformanceIndicesMsg(msg.performanceIndices);
 
   const size_t N = msg.timeTrajectory.size();
-  if (N == 0) {
+  if (N == 0) 
+  {
     throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] controller message is empty!");
   }
-  if (msg.stateTrajectory.size() != N && msg.inputTrajectory.size() != N) {
+
+  if (msg.stateTrajectory.size() != N && msg.inputTrajectory.size() != N) 
+  {
     throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] state and input trajectories must have same length!");
   }
-  if (msg.data.size() != N) {
+
+  if (msg.data.size() != N) 
+  {
     throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] Data has the wrong length!");
   }
 
@@ -223,14 +192,14 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
   primalSolution.timeTrajectory_.reserve(N);
   primalSolution.stateTrajectory_.reserve(N);
   primalSolution.inputTrajectory_.reserve(N);
-  for (size_t i = 0; i < N; i++) {
+  
+  for (size_t i = 0; i < N; i++) 
+  {
     stateDim[i] = msg.stateTrajectory[i].value.size();
     inputDim[i] = msg.inputTrajectory[i].value.size();
     primalSolution.timeTrajectory_.emplace_back(msg.timeTrajectory[i]);
-    primalSolution.stateTrajectory_.emplace_back(
-        Eigen::Map<const Eigen::VectorXf>(msg.stateTrajectory[i].value.data(), stateDim[i]).cast<scalar_t>());
-    primalSolution.inputTrajectory_.emplace_back(
-        Eigen::Map<const Eigen::VectorXf>(msg.inputTrajectory[i].value.data(), inputDim[i]).cast<scalar_t>());
+    primalSolution.stateTrajectory_.emplace_back(Eigen::Map<const Eigen::VectorXf>(msg.stateTrajectory[i].value.data(), stateDim[i]).cast<scalar_t>());
+    primalSolution.inputTrajectory_.emplace_back(Eigen::Map<const Eigen::VectorXf>(msg.inputTrajectory[i].value.data(), inputDim[i]).cast<scalar_t>());
   }
 
   primalSolution.postEventIndices_.reserve(msg.postEventIndices.size());

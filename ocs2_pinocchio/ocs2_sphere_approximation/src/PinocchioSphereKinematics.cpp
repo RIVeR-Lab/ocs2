@@ -47,12 +47,15 @@ namespace ocs2 {
 /******************************************************************************************************/
 PinocchioSphereKinematics::PinocchioSphereKinematics(PinocchioSphereInterface pinocchioSphereInterface,
                                                      const PinocchioStateInputMapping<scalar_t>& mapping)
-    : pinocchioInterfacePtr_(nullptr), pinocchioSphereInterface_(std::move(pinocchioSphereInterface)), mappingPtr_(mapping.clone()) {
+  : pinocchioInterfacePtr_(nullptr), pinocchioSphereInterface_(std::move(pinocchioSphereInterface)), mappingPtr_(mapping.clone()) 
+{
   linkIds_.resize(pinocchioSphereInterface_.getNumSpheresInTotal());
   const std::vector<std::string>& collisionLinkOfEachPrimitiveShape = pinocchioSphereInterface_.getCollisionLinkOfEachPrimitveShape();
   const auto numSpheres = pinocchioSphereInterface_.getNumSpheres();
   size_t count = 0;
-  for (size_t i = 0; i < pinocchioSphereInterface.getNumPrimitiveShapes(); i++) {
+  
+  for (size_t i = 0; i < pinocchioSphereInterface.getNumPrimitiveShapes(); i++) 
+  {
     std::fill(linkIds_.begin() + count, linkIds_.begin() + count + numSpheres[i], collisionLinkOfEachPrimitiveShape[i]);
     count += numSpheres[i];
   }
@@ -62,7 +65,7 @@ PinocchioSphereKinematics::PinocchioSphereKinematics(PinocchioSphereInterface pi
 /******************************************************************************************************/
 /******************************************************************************************************/
 PinocchioSphereKinematics::PinocchioSphereKinematics(const PinocchioSphereKinematics& rhs)
-    : EndEffectorKinematics<scalar_t>(rhs),
+  : EndEffectorKinematics<scalar_t>(rhs),
       pinocchioInterfacePtr_(nullptr),
       mappingPtr_(rhs.mappingPtr_->clone()),
       pinocchioSphereInterface_(rhs.pinocchioSphereInterface_),
@@ -71,15 +74,18 @@ PinocchioSphereKinematics::PinocchioSphereKinematics(const PinocchioSphereKinema
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PinocchioSphereKinematics* PinocchioSphereKinematics::clone() const {
+PinocchioSphereKinematics* PinocchioSphereKinematics::clone() const 
+{
   return new PinocchioSphereKinematics(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-auto PinocchioSphereKinematics::getPosition(const vector_t& state) const -> std::vector<vector3_t> {
-  if (pinocchioInterfacePtr_ == nullptr) {
+auto PinocchioSphereKinematics::getPosition(const vector_t& state) const -> std::vector<vector3_t> 
+{
+  if (pinocchioInterfacePtr_ == nullptr) 
+  {
     throw std::runtime_error("[PinocchioSphereKinematics] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
   }
 
@@ -89,8 +95,10 @@ auto PinocchioSphereKinematics::getPosition(const vector_t& state) const -> std:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::vector<VectorFunctionLinearApproximation> PinocchioSphereKinematics::getPositionLinearApproximation(const vector_t& state) const {
-  if (pinocchioInterfacePtr_ == nullptr) {
+std::vector<VectorFunctionLinearApproximation> PinocchioSphereKinematics::getPositionLinearApproximation(const vector_t& state) const 
+{
+  if (pinocchioInterfacePtr_ == nullptr) 
+  {
     throw std::runtime_error("[PinocchioSphereKinematics] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
   }
 
@@ -110,13 +118,15 @@ std::vector<VectorFunctionLinearApproximation> PinocchioSphereKinematics::getPos
   const auto numSpheres = pinocchioSphereInterface_.getNumSpheres();
 
   size_t count = 0;
-  for (size_t i = 0; i < numPrimitiveShapes; i++) {
+  for (size_t i = 0; i < numPrimitiveShapes; i++) 
+  {
     const auto& parentJointId = geometryModel.geometryObjects[geomObjIds[i]].parentJoint;
     const vector3_t& jointPosition = data.oMi[parentJointId].translation();
     matrix_t jointJacobian = matrix_t::Zero(6, model.nv);
     pinocchio::getJointJacobian(model, data, parentJointId, rf, jointJacobian);
 
-    for (size_t j = 0; j < numSpheres[i]; j++) {
+    for (size_t j = 0; j < numSpheres[i]; j++) 
+    {
       VectorFunctionLinearApproximation pos;
       pos.f = sphereCentersInWorldFrame[count + j];
       const vector3_t sphereCenterOffset = sphereCentersInWorldFrame[count + j] - jointPosition;

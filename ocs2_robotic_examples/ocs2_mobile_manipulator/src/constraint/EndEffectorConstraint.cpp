@@ -46,7 +46,7 @@ EndEffectorConstraint::EndEffectorConstraint(const EndEffectorKinematics<scalar_
 {
   //std::cout << "[EndEffectorConstraint::EndEffectorConstraint] START " << std::endl;
 
-  if (endEffectorKinematics.getIds().size() != 1) 
+  if (endEffectorKinematics.getEndEffectorFrameNames().size() != 1) 
   {
     throw std::runtime_error("[EndEffectorConstraint] endEffectorKinematics has wrong number of end effector IDs.");
   }
