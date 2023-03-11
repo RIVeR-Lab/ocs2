@@ -192,6 +192,8 @@ ad_vector_t PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(PinocchioInter
   auto& data = pinocchioInterfaceCppAd.getData();
   const ad_vector_t q = mapping.getPinocchioJointPosition(state);
 
+  auto fullState = data.joints;
+
   pinocchio::forwardKinematics(model, data, q);
   pinocchio::updateFramePlacements(model, data);
 
@@ -202,6 +204,10 @@ ad_vector_t PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(PinocchioInter
     positions.segment<3>(3 * i) = data.oMf[frameId].translation();
   }
 
+  //positions[0] = fullState.size();
+  //positions[1] = fullState.size();
+  //positions[2] = fullState.size();
+
   return positions;
 }
 
@@ -210,13 +216,22 @@ ad_vector_t PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(PinocchioInter
 /******************************************************************************************************/
 auto PinocchioEndEffectorKinematicsCppAd::getPosition(const vector_t& state) const -> std::vector<vector3_t> 
 {
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPosition] START" << std::endl;
+
   const vector_t positionValues = positionCppAdInterfacePtr_->getFunctionValue(state);
+
+  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPosition] fullState size: " << positionValues[0] << std::endl;
 
   std::vector<vector3_t> positions;
   for (int i = 0; i < endEffectorFrameIds_.size(); i++) 
   {
     positions.emplace_back(positionValues.segment<3>(3 * i));
   }
+
+  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPosition] BEFORE INF" << std::endl << std::endl;
+  //while(1);
+
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPosition] END" << std::endl;
 
   return positions;
 }

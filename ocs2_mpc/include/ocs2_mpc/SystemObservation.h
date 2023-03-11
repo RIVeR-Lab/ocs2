@@ -38,10 +38,12 @@ namespace ocs2 {
 /**
  * This class contains the observation information.
  */
-struct SystemObservation {
+struct SystemObservation 
+{
   size_t mode = 0;
   scalar_t time = 0.0;
   vector_t state;
+  vector_t full_state;
   vector_t input;
 
   friend void swap(SystemObservation& a, SystemObservation& b) noexcept;

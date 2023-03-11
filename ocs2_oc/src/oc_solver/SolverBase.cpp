@@ -48,13 +48,13 @@ SolverBase::SolverBase() : referenceManagerPtr_(new ReferenceManager) {}
 /******************************************************************************************************/
 void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime) 
 {
-  //std::cout << "[SolverBase::run] START" << std::endl;
+  std::cout << "[SolverBase::run] START" << std::endl;
 
   preRun(initTime, initState, finalTime);
   runImpl(initTime, initState, finalTime);
   postRun();
 
-  //std::cout << "[SolverBase::run] END" << std::endl;
+  std::cout << "[SolverBase::run] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -108,13 +108,19 @@ void SolverBase::preRun(scalar_t initTime, const vector_t& initState, scalar_t f
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SolverBase::postRun() {
-  if (!synchronizedModules_.empty() || !augmentedLagrangianObservers_.empty()) {
+void SolverBase::postRun() 
+{
+  if (!synchronizedModules_.empty() || !augmentedLagrangianObservers_.empty()) 
+  {
     const auto solution = primalSolution(getFinalTime());
-    for (auto& module : synchronizedModules_) {
+    
+    for (auto& module : synchronizedModules_) 
+    {
       module->postSolverRun(solution);
     }
-    for (auto& observer : augmentedLagrangianObservers_) {
+    
+    for (auto& observer : augmentedLagrangianObservers_) 
+    {
       observer->extractTermMetrics(getOptimalControlProblem(), solution, getSolutionMetrics());
       observer->extractTermMultipliers(getOptimalControlProblem(), getDualSolution());
     }

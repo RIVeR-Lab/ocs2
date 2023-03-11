@@ -79,6 +79,8 @@ SLQ::SLQ(ddp::Settings ddpSettings,
 /******************************************************************************************************/
 void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDataContainer& primalData) 
 {
+  //std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] START" << std::endl;
+
   // create alias
   const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
   const auto& stateTrajectory = primalData.primalSolution.stateTrajectory_;
@@ -130,6 +132,8 @@ void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalData
   };
 
   runParallel(task, settings().nThreads_);
+
+  //std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] END" << std::endl;
 }
 
 /******************************************************************************************************/

@@ -35,18 +35,27 @@ namespace ros_msg_conversions {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ocs2_msgs::mpc_observation createObservationMsg(const SystemObservation& observation) {
+ocs2_msgs::mpc_observation createObservationMsg(const SystemObservation& observation) 
+{
   ocs2_msgs::mpc_observation observationMsg;
 
   observationMsg.time = observation.time;
 
   observationMsg.state.value.resize(observation.state.rows());
-  for (size_t i = 0; i < observation.state.rows(); i++) {
+  for (size_t i = 0; i < observation.state.rows(); i++) 
+  {
     observationMsg.state.value[i] = static_cast<float>(observation.state(i));
   }
 
+  observationMsg.full_state.value.resize(observation.full_state.rows());
+  for (size_t i = 0; i < observation.full_state.rows(); i++) 
+  {
+    observationMsg.full_state.value[i] = static_cast<float>(observation.full_state(i));
+  }
+
   observationMsg.input.value.resize(observation.input.rows());
-  for (size_t i = 0; i < observation.input.rows(); i++) {
+  for (size_t i = 0; i < observation.input.rows(); i++) 
+  {
     observationMsg.input.value[i] = static_cast<float>(observation.input(i));
   }
 
@@ -58,13 +67,17 @@ ocs2_msgs::mpc_observation createObservationMsg(const SystemObservation& observa
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-SystemObservation readObservationMsg(const ocs2_msgs::mpc_observation& observationMsg) {
+SystemObservation readObservationMsg(const ocs2_msgs::mpc_observation& observationMsg) 
+{
   SystemObservation observation;
 
   observation.time = observationMsg.time;
 
   const auto& state = observationMsg.state.value;
   observation.state = Eigen::Map<const Eigen::VectorXf>(state.data(), state.size()).cast<scalar_t>();
+
+  const auto& full_state = observationMsg.full_state.value;
+  observation.full_state = Eigen::Map<const Eigen::VectorXf>(full_state.data(), full_state.size()).cast<scalar_t>();
 
   const auto& input = observationMsg.input.value;
   observation.input = Eigen::Map<const Eigen::VectorXf>(input.data(), input.size()).cast<scalar_t>();
@@ -153,7 +166,8 @@ PerformanceIndex readPerformanceIndicesMsg(const ocs2_msgs::mpc_performance_indi
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ocs2_msgs::mpc_target_trajectories createTargetTrajectoriesMsg(const TargetTrajectories& targetTrajectories) {
+ocs2_msgs::mpc_target_trajectories createTargetTrajectoriesMsg(const TargetTrajectories& targetTrajectories) 
+{
   ocs2_msgs::mpc_target_trajectories targetTrajectoriesMsg;
   const auto& timeTrajectory = targetTrajectories.timeTrajectory;
   const auto& stateTrajectory = targetTrajectories.stateTrajectory;
