@@ -130,6 +130,15 @@ inline ModelData approximateFinalLQ(OptimalControlProblem& problem, const scalar
 scalar_t computeCost(const OptimalControlProblem& problem, const scalar_t& time, const vector_t& state, const vector_t& input);
 
 /**
+ * Compute the total intermediate cost (i.e. cost + softConstraints). It is assumed that the precomputation request is already made.
+ */
+scalar_t computeCost(const OptimalControlProblem& problem,
+                     const scalar_t& time, 
+                     const vector_t& state, 
+                     const vector_t& full_state, 
+                     const vector_t& input);
+
+/**
  * Compute the quadratic approximation of the total intermediate cost (i.e. cost + softConstraints). It is assumed that the precomputation
  * request is already made.
  */
@@ -175,6 +184,27 @@ ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlPr
  */
 MetricsCollection computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
                                              const vector_t& input, const MultiplierCollection& multipliers);
+
+/**
+ * Compute the intermediate-time MetricsCollection (i.e. cost, softConstraints, and constraints).
+ *
+ * @note It is assumed that the precomputation request is already made.
+ * problem.preComputationPtr->request(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x, u)
+ *
+ * @param [in] problem: The optimal control probelm
+ * @param [in] time: The current time.
+ * @param [in] state: The current state.
+ * @param [in] state: The current full state.
+ * @param [in] input: The current input.
+ * @param [in] multipliers: The current multipliers associated to the equality and inequality Lagrangians.
+ * @return The output MetricsCollection.
+ */
+MetricsCollection computeIntermediateMetrics(OptimalControlProblem& problem, 
+                                             const scalar_t time, 
+                                             const vector_t& state,
+                                             const vector_t& full_state,
+                                             const vector_t& input, 
+                                             const MultiplierCollection& multipliers);
 
 /**
  * Compute the event-time MetricsCollection based on pre-jump state value (i.e. cost, softConstraints, and constraints).

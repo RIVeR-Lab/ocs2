@@ -83,22 +83,6 @@ class MRT_ROS_Interface : public MRT_BASE
 
     RobotModelInfo getRobotModelInfo();
 
-    /*
-    size_t getModelMode();
-
-    size_t getBaseStateDim();
-
-    size_t getArmStateDim();
-
-    void setModelMode(size_t modelMode);
-
-    void setBaseStateDim(size_t baseStateDim);
-    
-    void setArmStateDim(size_t armStateDim);
-
-    bool checkModelMode(size_t modelMode);
-    */
-
     void resetMpcNode(const TargetTrajectories& initTargetTrajectories) override;
 
     /**
@@ -155,10 +139,7 @@ class MRT_ROS_Interface : public MRT_BASE
     std::string topicPrefix_;
 
     RobotModelInfo robotModelInfo_;
-    //int modelMode_;     // 0: base, 1: arm, 2: arm+base
-    //int baseStateDim_;
-    //int armStateDim_;
-
+    
     // Subscribers
     ros::Subscriber mpcPolicySubscriber_;
     ros::Subscriber sub_tf_;

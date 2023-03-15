@@ -46,14 +46,42 @@ StateCostCollection* StateCostCollection::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t StateCostCollection::getValue(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories,
-                                       const PreComputation& preComp) const {
+scalar_t StateCostCollection::getValue(scalar_t time, 
+                                       const vector_t& state, 
+                                       const TargetTrajectories& targetTrajectories,
+                                       const PreComputation& preComp) const 
+{
   scalar_t cost = 0.0;
 
   // accumulate cost terms
-  for (const auto& costTerm : this->terms_) {
-    if (costTerm->isActive(time)) {
+  for (const auto& costTerm : this->terms_) 
+  {
+    if (costTerm->isActive(time)) 
+    {
       cost += costTerm->getValue(time, state, targetTrajectories, preComp);
+    }
+  }
+
+  return cost;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t StateCostCollection::getValue(scalar_t time, 
+                                       const vector_t& state, 
+                                       const vector_t& full_state, 
+                                       const TargetTrajectories& targetTrajectories,
+                                       const PreComputation& preComp) const 
+{
+  scalar_t cost = 0.0;
+
+  // accumulate cost terms
+  for (const auto& costTerm : this->terms_) 
+  {
+    if (costTerm->isActive(time)) 
+    {
+      cost += costTerm->getValue(time, state, full_state, targetTrajectories, preComp);
     }
   }
 

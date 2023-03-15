@@ -34,18 +34,10 @@ namespace ocs2 {
 MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                                          MRT_ROS_Interface& mrt,
                                          std::string worldFrameName,
-                                         std::string baseFrameName,
-                                         size_t stateDim,
-                                         size_t inputDim,
-                                         std::vector<std::string> dofNames,
                                          scalar_t mrtDesiredFrequency,
                                          scalar_t mpcDesiredFrequency)
   : mrt_(mrt), 
     worldFrameName_(worldFrameName),
-    baseFrameName_(baseFrameName),
-    stateDim_(stateDim), 
-    inputDim_(inputDim), 
-    dofNames_(dofNames), 
     mrtDesiredFrequency_(mrtDesiredFrequency), 
     mpcDesiredFrequency_(mpcDesiredFrequency)
 {
@@ -253,11 +245,12 @@ void MRT_ROS_Gazebo_Loop::setStateIndexMap()
 {
   boost::shared_ptr<control_msgs::JointTrajectoryControllerState const> jointTrajectoryControllerStatePtrMsg = ros::topic::waitForMessage<control_msgs::JointTrajectoryControllerState>("/arm_controller/state");
   
-  int n_joints = dofNames_.size();
+  auto jointNames = mrt_.getRobotModelInfo().robotArm.jointNames;
+  int n_joints = jointNames.size();
   stateIndexMap_.clear();
   int c;
 
-  if (dofNames_.size() != jointTrajectoryControllerStatePtrMsg->joint_names.size())
+  if (n_joints != jointTrajectoryControllerStatePtrMsg->joint_names.size())
   {
     throw std::runtime_error("[MRT_ROS_Gazebo_Loop::setStateIndexMap] Error: State dimension mismatch!");
   }
@@ -265,16 +258,16 @@ void MRT_ROS_Gazebo_Loop::setStateIndexMap()
   for (int i = 0; i < n_joints; ++i)
   {
     //std::cout << "[MRT_ROS_Gazebo_Loop::setStateIndexMap] jointTrajectoryControllerStatePtrMsg " << i << ": " << jointTrajectoryControllerStatePtrMsg -> joint_names[i] << std::endl;
-    //std::cout << "[MRT_ROS_Gazebo_Loop::setStateIndexMap] dofNames_ " << i << ": " << dofNames_[i] << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::setStateIndexMap] jointNames " << i << ": " << jointNames[i] << std::endl;
     //std::cout << "" << std::endl;
 
     c = 0;
-    while (jointTrajectoryControllerStatePtrMsg -> joint_names[c] != dofNames_[i] && c < n_joints)
+    while (jointTrajectoryControllerStatePtrMsg -> joint_names[c] != jointNames[i] && c < n_joints)
     {
       c++;
     }
 
-    if (jointTrajectoryControllerStatePtrMsg -> joint_names[c] == dofNames_[i])
+    if (jointTrajectoryControllerStatePtrMsg -> joint_names[c] == jointNames[i])
     {
       stateIndexMap_.push_back(c);
     }
@@ -293,7 +286,7 @@ void MRT_ROS_Gazebo_Loop::tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg)
 {
   //tf2_msgs::TFMessage tf_msg = *msg;
 
-  tfListener_.lookupTransform(worldFrameName_, baseFrameName_, ros::Time(0), tf_robot_wrt_world_);
+  tfListener_.lookupTransform(worldFrameName_, mrt_.getRobotModelInfo().mobileBase.baseFrame, ros::Time(0), tf_robot_wrt_world_);
 
   initFlagBaseState_ = true;
 }
@@ -348,8 +341,8 @@ void MRT_ROS_Gazebo_Loop::updateFullModelState()
   tf::StampedTransform tf_robot_wrt_world = tf_robot_wrt_world_;
   control_msgs::JointTrajectoryControllerState jointTrajectoryControllerStateMsg = jointTrajectoryControllerStateMsg_;
 
-  baseState_.clear();
-  armState_.clear();
+  stateBase_.clear();
+  stateArm_.clear();
 
   // Set mobile base states
   if (mrt_.getRobotModelInfo().mobileBase.stateDim != 3)
@@ -363,9 +356,9 @@ void MRT_ROS_Gazebo_Loop::updateFullModelState()
     double roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world;
     matrix_robot_wrt_world.getRPY(roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world);
 
-    baseState_.push_back(tf_robot_wrt_world.getOrigin().x());
-    baseState_.push_back(tf_robot_wrt_world.getOrigin().y());
-    baseState_.push_back(yaw_robot_wrt_world);
+    stateBase_.push_back(tf_robot_wrt_world.getOrigin().x());
+    stateBase_.push_back(tf_robot_wrt_world.getOrigin().y());
+    stateBase_.push_back(yaw_robot_wrt_world);
   }
 
   //std::cerr << "[MRT_ROS_Gazebo_Loop::updateFullModelState] mrt_.getArmStateDim(): " << mrt_.getArmStateDim() << std::endl;
@@ -379,7 +372,7 @@ void MRT_ROS_Gazebo_Loop::updateFullModelState()
   {
     for (int i = 0; i < jointTrajectoryControllerStateMsg.joint_names.size(); ++i)
     {
-      armState_.push_back(jointTrajectoryControllerStateMsg.actual.positions[stateIndexMap_[i]]);
+      stateArm_.push_back(jointTrajectoryControllerStateMsg.actual.positions[stateIndexMap_[i]]);
     }
   }
 }
@@ -393,11 +386,16 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
   //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] inputDim_: " << inputDim_ << std::endl;
   //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] stateDim_: " << stateDim_ << std::endl;
   
+  auto fullStateDim = mrt_.getRobotModelInfo().mobileBase.stateDim + mrt_.getRobotModelInfo().robotArm.stateDim;
+  auto modeStateDim = mrt_.getRobotModelInfo().modeStateDim;
+  auto modeInputDim = mrt_.getRobotModelInfo().modeInputDim;
+
   SystemObservation currentObservation;
   currentObservation.mode = 0;
   currentObservation.time = time_;
-  currentObservation.input.setZero(inputDim_);
-  currentObservation.state.setZero(stateDim_);
+  currentObservation.input.setZero(modeInputDim);
+  currentObservation.state.setZero(modeStateDim);
+  currentObservation.full_state.setZero(fullStateDim);
 
   // Set current observation input
   if (!initFlag)
@@ -407,23 +405,46 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
 
   updateFullModelState();
 
-  // Set mobile base states
-  if (mrt_.getRobotModelInfo().modelMode == ModelMode::BaseMotion || mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+  // Set full_state of mobile base
+  if (mrt_.getRobotModelInfo().robotModelType == RobotModelType::MobileBase || 
+      mrt_.getRobotModelInfo().robotModelType == RobotModelType::MobileManipulator)
   {
-    currentObservation.state[0] = baseState_[0];
-    currentObservation.state[1] = baseState_[1];
-    currentObservation.state[2] = baseState_[2];
+    currentObservation.full_state[0] = stateBase_[0];
+    currentObservation.full_state[1] = stateBase_[1];
+    currentObservation.full_state[2] = stateBase_[2];
   }
 
-  // Set arm states
+  // Set state of mobile base
+  if (mrt_.getRobotModelInfo().modelMode == ModelMode::BaseMotion || 
+      mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+  {
+    currentObservation.state[0] = stateBase_[0];
+    currentObservation.state[1] = stateBase_[1];
+    currentObservation.state[2] = stateBase_[2];
+  }
+
+  // Set full state of arm
   int baseOffset = mrt_.getRobotModelInfo().mobileBase.stateDim;
-  if (mrt_.getRobotModelInfo().modelMode == ModelMode::ArmMotion || mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+  if (mrt_.getRobotModelInfo().robotModelType == RobotModelType::RobotArm || 
+      mrt_.getRobotModelInfo().robotModelType == RobotModelType::MobileManipulator)
   {
     //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] baseOffset: " << baseOffset << std::endl;
 
-    for (size_t i = 0; i < armState_.size(); i++)
+    for (size_t i = 0; i < stateArm_.size(); i++)
     {
-      currentObservation.state[baseOffset + i] = armState_[i];
+      currentObservation.full_state[baseOffset + i] = stateArm_[i];
+    }
+  }
+
+  // Set state of arm state
+  if (mrt_.getRobotModelInfo().modelMode == ModelMode::ArmMotion || 
+      mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+  {
+    //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] baseOffset: " << baseOffset << std::endl;
+
+    for (size_t i = 0; i < stateArm_.size(); i++)
+    {
+      currentObservation.state[baseOffset + i] = stateArm_[i];
     }
   }
 
@@ -444,16 +465,18 @@ void MRT_ROS_Gazebo_Loop::publishCommand()
 
   // Set mobile base command
   int baseOffset = mrt_.getRobotModelInfo().mobileBase.stateDim;
-  if (mrt_.getRobotModelInfo().modelMode == ModelMode::BaseMotion || mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+  if (mrt_.getRobotModelInfo().modelMode == ModelMode::BaseMotion || 
+      mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
   {
     baseTwistMsg.linear.x = currentInput_[0];
     baseTwistMsg.angular.z = currentInput_[1];
   }
 
   // Set arm command
-  if (mrt_.getRobotModelInfo().modelMode == ModelMode::ArmMotion || mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+  if (mrt_.getRobotModelInfo().modelMode == ModelMode::ArmMotion || 
+      mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
   {
-    int n_joints = dofNames_.size();
+    int n_joints = mrt_.getRobotModelInfo().robotArm.jointNames.size();
     armJointTrajectoryMsg.joint_names.resize(n_joints);
 
     PrimalSolution primalSolution = mrt_.getPolicy();
@@ -465,19 +488,21 @@ void MRT_ROS_Gazebo_Loop::publishCommand()
 
     for (int i = 0; i < n_joints; ++i)
     {
-      armJointTrajectoryMsg.joint_names[i] = dofNames_[i];
+      armJointTrajectoryMsg.joint_names[i] = mrt_.getRobotModelInfo().robotArm.jointNames[i];
       jtp.positions[i] = nextState[baseOffset + i];
     }
     armJointTrajectoryMsg.points.push_back(jtp);
   }
 
   // Publish command
-  if (mrt_.getRobotModelInfo().modelMode == ModelMode::BaseMotion || mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+  if (mrt_.getRobotModelInfo().modelMode == ModelMode::BaseMotion || 
+      mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
   {
     baseTwistPub_.publish(baseTwistMsg);
   }
 
-  if (mrt_.getRobotModelInfo().modelMode == ModelMode::ArmMotion || mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+  if (mrt_.getRobotModelInfo().modelMode == ModelMode::ArmMotion || 
+      mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
   {
     armJointTrajectoryPub_.publish(armJointTrajectoryMsg);
   }

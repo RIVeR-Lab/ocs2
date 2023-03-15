@@ -184,36 +184,6 @@ const std::vector<std::string>& PinocchioEndEffectorKinematicsCppAd::getEndEffec
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ad_vector_t PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
-                                                                  const PinocchioStateInputMapping<ad_scalar_t>& mapping,
-                                                                  const ad_vector_t& state) 
-{
-  const auto& model = pinocchioInterfaceCppAd.getModel();
-  auto& data = pinocchioInterfaceCppAd.getData();
-  const ad_vector_t q = mapping.getPinocchioJointPosition(state);
-
-  auto fullState = data.joints;
-
-  pinocchio::forwardKinematics(model, data, q);
-  pinocchio::updateFramePlacements(model, data);
-
-  ad_vector_t positions(3 * endEffectorFrameIds_.size());
-  for (int i = 0; i < endEffectorFrameIds_.size(); i++) 
-  {
-    const size_t frameId = endEffectorFrameIds_[i];
-    positions.segment<3>(3 * i) = data.oMf[frameId].translation();
-  }
-
-  //positions[0] = fullState.size();
-  //positions[1] = fullState.size();
-  //positions[2] = fullState.size();
-
-  return positions;
-}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 auto PinocchioEndEffectorKinematicsCppAd::getPosition(const vector_t& state) const -> std::vector<vector3_t> 
 {
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPosition] START" << std::endl;

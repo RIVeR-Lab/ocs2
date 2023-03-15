@@ -34,34 +34,42 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /** Quadratic state-only cost term */
-class QuadraticStateCost : public StateCost {
- public:
-  /**
-   * Constructor for the quadratic cost function defined as the following:
-   * \f$ \l = 0.5(x-x_{n})' Q (x-x_{n}) \f$.
-   * @param [in] Q: \f$ Q \f$
-   */
-  explicit QuadraticStateCost(matrix_t Q);
-  ~QuadraticStateCost() override = default;
-  QuadraticStateCost* clone() const override;
+class QuadraticStateCost : public StateCost 
+{
+  public:
+    /**
+     * Constructor for the quadratic cost function defined as the following:
+     * \f$ \l = 0.5(x-x_{n})' Q (x-x_{n}) \f$.
+     * @param [in] Q: \f$ Q \f$
+     */
+    explicit QuadraticStateCost(matrix_t Q);
+    ~QuadraticStateCost() override = default;
+    QuadraticStateCost* clone() const override;
 
-  /** Get cost term value */
-  scalar_t getValue(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories, const PreComputation&) const final;
+    /** Get cost term value */
+    scalar_t getValue(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories, const PreComputation&) const final;
 
-  /** Get cost term quadratic approximation */
-  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                 const TargetTrajectories& targetTrajectories,
-                                                                 const PreComputation&) const final;
+    /** Get cost term value */
+    scalar_t getValue(scalar_t time, 
+                      const vector_t& state, 
+                      const vector_t& full_state, 
+                      const TargetTrajectories& targetTrajectories, 
+                      const PreComputation&) const final;
 
- protected:
-  QuadraticStateCost(const QuadraticStateCost& rhs) = default;
+    /** Get cost term quadratic approximation */
+    ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                  const TargetTrajectories& targetTrajectories,
+                                                                  const PreComputation&) const final;
 
-  /** Computes the state deviation for the nominal state.
-   * This method can be overwritten if desiredTrajectory has a different dimensions. */
-  virtual vector_t getStateDeviation(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories) const;
+  protected:
+    QuadraticStateCost(const QuadraticStateCost& rhs) = default;
 
- private:
-  matrix_t Q_;
+    /** Computes the state deviation for the nominal state.
+     * This method can be overwritten if desiredTrajectory has a different dimensions. */
+    virtual vector_t getStateDeviation(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories) const;
+
+  private:
+    matrix_t Q_;
 };
 
 }  // namespace ocs2

@@ -949,6 +949,7 @@ void GaussNewtonDDP::initializeDualSolutionAndMetrics()
   computeRolloutMetrics(optimalControlProblemStock_[0], 
                         nominalPrimalData_.primalSolution, 
                         nominalDualData_.dualSolution,
+                        initFullState_,
                         nominalPrimalData_.problemMetrics);
   std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] END computeRolloutMetrics" << std::endl;
 
@@ -1010,15 +1011,20 @@ void GaussNewtonDDP::takePrimalDualStep(scalar_t lqModelExpectedCost)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime,
-                             const ControllerBase* externalControllerPtr) {
+void GaussNewtonDDP::runImpl(scalar_t initTime, 
+                             const vector_t& initState, 
+                             scalar_t finalTime,
+                             const ControllerBase* externalControllerPtr) 
+{
   // Use the input controller if it is not empty otherwise use the internal controller. In the later case two scenarios are
   // possible: either the internal controller is already set (such as the MPC case where the warm starting option is set true)
   // or the internal controller is empty in which instead of performing a rollout the operating trajectories will be used.
-  if (externalControllerPtr != nullptr) {
+  if (externalControllerPtr != nullptr) 
+  {
     // ensure initial controllers are of the right type, then assign
     const LinearController* linearControllerPtr = dynamic_cast<const LinearController*>(externalControllerPtr);
-    if (linearControllerPtr == nullptr) {
+    if (linearControllerPtr == nullptr) 
+    {
       throw std::runtime_error("[GaussNewtonDDP::run] controller must be a LinearController type!");
     }
     optimizedPrimalSolution_.controllerPtr_.reset(linearControllerPtr->clone());
@@ -1053,7 +1059,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 /******************************************************************************************************/
 void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) 
 {
-  std::cout << "[GaussNewtonDDP::runImpl] START" << std::endl;
+  //std::cout << "[GaussNewtonDDP::runImpl(3)] START" << std::endl;
 
   if (ddpSettings_.displayInfo_) 
   {
@@ -1095,9 +1101,9 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
   initializationTimer_.startTimer();
   bool initialSolutionExists = initializePrimalSolution();  // true if the rollout is not purely from the Initializer
 
-  std::cout << "[GaussNewtonDDP::runImpl] START initializeDualSolutionAndMetrics" << std::endl;
+  //std::cout << "[GaussNewtonDDP::runImpl(3)] START initializeDualSolutionAndMetrics" << std::endl;
   initializeDualSolutionAndMetrics();
-  std::cout << "[GaussNewtonDDP::runImpl] END initializeDualSolutionAndMetrics" << std::endl;
+  //std::cout << "[GaussNewtonDDP::runImpl(3)] END initializeDualSolutionAndMetrics" << std::endl;
 
   performanceIndexHistory_.push_back(performanceIndex_);
   initializationTimer_.endTimer();
@@ -1123,11 +1129,11 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     }
 
     // nominal --> nominal: constructs the LQ problem around the nominal trajectories
-    std::cout << "[GaussNewtonDDP::runImpl] START approximateOptimalControlProblem" << std::endl;
+    //std::cout << "[GaussNewtonDDP::runImpl(3)] START approximateOptimalControlProblem" << std::endl;
     linearQuadraticApproximationTimer_.startTimer();
     approximateOptimalControlProblem();
     linearQuadraticApproximationTimer_.endTimer();
-    std::cout << "[GaussNewtonDDP::runImpl] END approximateOptimalControlProblem" << std::endl;
+    //std::cout << "[GaussNewtonDDP::runImpl(3)] END approximateOptimalControlProblem" << std::endl;
 
     // nominal --> nominal: solves the LQ problem
     backwardPassTimer_.startTimer();
@@ -1159,7 +1165,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     std::tie(isConverged, convergenceInfo) = searchStrategyPtr_->checkConvergence(!initialSolutionExists, *std::prev(performanceIndexHistory_.end(), 2), performanceIndexHistory_.back());
     initialSolutionExists = true;
 
-    //std::cout << "[GaussNewtonDDP::runImpl] convergenceInfo: " << std::endl;
+    //std::cout << "[GaussNewtonDDP::runImpl(3)] convergenceInfo: " << std::endl;
     //std::cout << convergenceInfo << std::endl;
 
     if (isConverged || (totalNumIterations_ - initIteration) == ddpSettings_.maxNumIterations_) 
@@ -1191,17 +1197,185 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 
     printRolloutInfo();
 
-    if (isConverged) {
+    if (isConverged) 
+    {
       std::cerr << convergenceInfo << std::endl;
-    } else if (totalNumIterations_ - initIteration == ddpSettings_.maxNumIterations_) {
+    } 
+    else if (totalNumIterations_ - initIteration == ddpSettings_.maxNumIterations_) 
+    {
       std::cerr << "The algorithm has terminated as: \n";
       std::cerr << "    * The maximum number of iterations (i.e., " << ddpSettings_.maxNumIterations_ << ") has reached." << std::endl;
-    } else {
+    } 
+    else 
+    {
       std::cerr << "The algorithm has terminated for an unknown reason!" << std::endl;
     }
   }
 
-  std::cout << "[GaussNewtonDDP::runImpl] END" << std::endl << std::endl;
+  //std::cout << "[GaussNewtonDDP::runImpl(3)] END" << std::endl << std::endl;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const vector_t& initFullState, scalar_t finalTime) 
+{
+  std::cout << "[GaussNewtonDDP::runImpl] START(4)" << std::endl;
+
+  if (ddpSettings_.displayInfo_) 
+  {
+    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+    std::cerr << "\n+++++++++++++ " + ddp::toAlgorithmName(ddpSettings_.algorithm_) + " solver is initialized ++++++++++++++";
+    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+    std::cerr << "\nSolver starts from initial time " << initTime << " to final time " << finalTime << ".\n";
+    std::cerr << getReferenceManager().getModeSchedule();
+  }
+
+  // set cost desired trajectories
+  for (auto& ocp : optimalControlProblemStock_) 
+  {
+    ocp.targetTrajectoriesPtr = &this->getReferenceManager().getTargetTrajectories();
+  }
+
+  // initialize parameters
+  initTime_ = initTime;
+  initState_ = initState;
+  initFullState_ = initFullState;
+  finalTime_ = finalTime;
+  performanceIndexHistory_.clear();
+  const auto initIteration = totalNumIterations_;
+
+  initializeConstraintPenalties();  // initialize penalty coefficients
+
+  // display
+  if (ddpSettings_.displayInfo_) 
+  {
+    std::cerr << "\n###################";
+    std::cerr << "\n#### Initial Rollout";
+    std::cerr << "\n###################\n";
+  }
+
+  // swap primal and dual data to cache
+  nominalDualData_.swap(cachedDualData_);
+  nominalPrimalData_.swap(cachedPrimalData_);
+
+  // optimized --> nominal: initializes the nominal primal and dual solutions based on the optimized ones
+  initializationTimer_.startTimer();
+  bool initialSolutionExists = initializePrimalSolution();  // true if the rollout is not purely from the Initializer
+
+  std::cout << "[GaussNewtonDDP::runImpl(4)] START initializeDualSolutionAndMetrics" << std::endl;
+  initializeDualSolutionAndMetrics();
+  std::cout << "[GaussNewtonDDP::runImpl(4)] END initializeDualSolutionAndMetrics" << std::endl;
+
+  performanceIndexHistory_.push_back(performanceIndex_);
+  initializationTimer_.endTimer();
+
+  // display
+  if (ddpSettings_.displayInfo_) {
+    std::cerr << performanceIndex_ << '\n';
+  }
+
+  // convergence variables of the main loop
+  bool isConverged = false;
+  std::string convergenceInfo;
+
+  //int ctr = 0;
+  // DDP main loop
+  while (true) 
+  {
+    if (ddpSettings_.displayInfo_) 
+    {
+      std::cerr << "\n###################";
+      std::cerr << "\n#### Iteration " << (totalNumIterations_ - initIteration);
+      std::cerr << "\n###################\n";
+    }
+
+    // nominal --> nominal: constructs the LQ problem around the nominal trajectories
+    std::cout << "[GaussNewtonDDP::runImpl(4)] START approximateOptimalControlProblem" << std::endl;
+    linearQuadraticApproximationTimer_.startTimer();
+    approximateOptimalControlProblem();
+    linearQuadraticApproximationTimer_.endTimer();
+    std::cout << "[GaussNewtonDDP::runImpl(4)] END approximateOptimalControlProblem" << std::endl;
+
+    // nominal --> nominal: solves the LQ problem
+    backwardPassTimer_.startTimer();
+    avgTimeStepBP_ = solveSequentialRiccatiEquations(nominalPrimalData_.modelDataFinalTime.cost);
+    backwardPassTimer_.endTimer();
+
+    // calculate controller and store the result in unoptimizedController_
+    computeControllerTimer_.startTimer();
+    calculateController();
+    computeControllerTimer_.endTimer();
+    
+
+    // the expected cost/merit calculated by the Riccati solution is not reliable
+    const auto lqModelExpectedCost = initialSolutionExists ? nominalDualData_.valueFunctionTrajectory.front().f : performanceIndex_.merit;
+
+    // nominal --> optimized: based on the current LQ solution updates the optimized primal and dual solutions
+    takePrimalDualStep(lqModelExpectedCost);
+
+    // iteration info
+    ++totalNumIterations_;
+    performanceIndexHistory_.push_back(performanceIndex_);
+
+    // display
+    if (ddpSettings_.displayInfo_) 
+    {
+      printRolloutInfo();
+    }
+
+    // check convergence
+    std::tie(isConverged, convergenceInfo) = searchStrategyPtr_->checkConvergence(!initialSolutionExists, *std::prev(performanceIndexHistory_.end(), 2), performanceIndexHistory_.back());
+    initialSolutionExists = true;
+
+    //std::cout << "[GaussNewtonDDP::runImpl(4)] convergenceInfo: " << std::endl;
+    //std::cout << convergenceInfo << std::endl;
+
+    if (isConverged || (totalNumIterations_ - initIteration) == ddpSettings_.maxNumIterations_) 
+    {
+      break;
+    } 
+    else 
+    {
+      // update the constraint penalty coefficients
+      updateConstraintPenalties(performanceIndex_.equalityConstraintsSSE);
+
+      // optimized --> nominal: use the optimized solution as the nominal for the next iteration
+      nominalDualData_.swap(cachedDualData_);
+      nominalPrimalData_.swap(cachedPrimalData_);
+      optimizedDualSolution_.swap(nominalDualData_.dualSolution);
+      optimizedPrimalSolution_.swap(nominalPrimalData_.primalSolution);
+      optimizedProblemMetrics_.swap(nominalPrimalData_.problemMetrics);
+    }
+    //ctr++;
+  }  // end of while loop
+
+  // display
+  if (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_) {
+    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+    std::cerr << "\n++++++++++++++ " + ddp::toAlgorithmName(ddpSettings_.algorithm_) + " solver has terminated +++++++++++++";
+    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+    std::cerr << "Time Period:          [" << initTime_ << " ," << finalTime_ << "]\n";
+    std::cerr << "Number of Iterations: " << (totalNumIterations_ - initIteration) << " out of " << ddpSettings_.maxNumIterations_ << "\n";
+
+    printRolloutInfo();
+
+    if (isConverged) 
+    {
+      std::cerr << convergenceInfo << std::endl;
+    } 
+    else if (totalNumIterations_ - initIteration == ddpSettings_.maxNumIterations_) 
+    {
+      std::cerr << "The algorithm has terminated as: \n";
+      std::cerr << "    * The maximum number of iterations (i.e., " << ddpSettings_.maxNumIterations_ << ") has reached." << std::endl;
+    } 
+    else 
+    {
+      std::cerr << "The algorithm has terminated for an unknown reason!" << std::endl;
+    }
+  }
+
+  std::cout << "[GaussNewtonDDP::runImpl(4)] END" << std::endl << std::endl;
 }
 
 }  // namespace ocs2

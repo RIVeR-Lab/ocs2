@@ -280,7 +280,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   mpcTimer_.startTimer();
 
   // run MPC
-  bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state);
+  bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state, currentObservation.full_state);
   if (!controllerIsUpdated) 
   {
     return;

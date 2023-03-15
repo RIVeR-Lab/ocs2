@@ -146,4 +146,54 @@ bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState)
   return true;
 }
 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState, const vector_t& currentFullState) 
+{
+  //std::cout << "[MPC_BASE::run] START" << std::endl;
+
+  // check if the current time exceeds the solver final limit
+  if (!initRun_ && currentTime >= getSolverPtr()->getFinalTime()) 
+  {
+    std::cerr << "WARNING: The MPC time-horizon is smaller than the MPC starting time.\n";
+    std::cerr << "currentTime: " << currentTime << "\t Controller finalTime: " << getSolverPtr()->getFinalTime() << '\n';
+    return false;
+  }
+
+  const scalar_t finalTime = currentTime + mpcSettings_.timeHorizon_;
+
+  // display
+  if (mpcSettings_.debugPrint_) 
+  {
+    std::cerr << "\n#####################################################";
+    std::cerr << "\n#####################################################";
+    std::cerr << "\n#####################################################";
+    std::cerr << "\n### MPC is called at time:  " << currentTime << " [s].";
+    std::cerr << "\n### MPC final Time:         " << finalTime << " [s].";
+    std::cerr << "\n### MPC time horizon:       " << mpcSettings_.timeHorizon_ << " [s].\n";
+    mpcTimer_.startTimer();
+  }
+
+  // calculate the MPC policy
+  calculateController(currentTime, currentState, currentFullState, finalTime);
+
+  // set initRun flag to false
+  initRun_ = false;
+
+  // display
+  if (mpcSettings_.debugPrint_) 
+  {
+    mpcTimer_.endTimer();
+    std::cerr << "\n### MPC Benchmarking";
+    std::cerr << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
+    std::cerr << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].";
+    std::cerr << "\n###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+  }
+
+  //std::cout << "[MPC_BASE::run] END" << std::endl;
+
+  return true;
+}
+
 }  // namespace ocs2

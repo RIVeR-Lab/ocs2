@@ -52,48 +52,57 @@ namespace ocs2 {
  *   A few commonly-used penalty functions have been provided by the toolbox such as Relaxed-Barrier and Squared-Hinge
  *   penalty functions.
  */
-class StateSoftConstraint final : public StateCost {
- public:
-  /**
-   * Constructor.
-   * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.
-   * @param [in] penaltyPtrArray: An array of pointers to the penalty function on the constraint.
-   */
-  StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr, std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrArray);
+class StateSoftConstraint final : public StateCost 
+{
+  public:
+    /**
+     * Constructor.
+     * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.
+     * @param [in] penaltyPtrArray: An array of pointers to the penalty function on the constraint.
+     */
+    StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr, std::vector<std::unique_ptr<PenaltyBase>> penaltyPtrArray);
 
-  /**
-   * Constructor.
-   * @note This allows a varying number of constraints and uses the same penalty function for each constraint.
-   * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.
-   * @param [in] penaltyFunction: A pointer to the penalty function on the constraint.
-   */
-  StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr, std::unique_ptr<PenaltyBase> penaltyFunction);
+    /**
+     * Constructor.
+     * @note This allows a varying number of constraints and uses the same penalty function for each constraint.
+     * @param [in] constraintPtr: A pointer to the constraint which will be enforced as soft constraints.
+     * @param [in] penaltyFunction: A pointer to the penalty function on the constraint.
+     */
+    StateSoftConstraint(std::unique_ptr<StateConstraint> constraintPtr, std::unique_ptr<PenaltyBase> penaltyFunction);
 
-  ~StateSoftConstraint() override = default;
+    ~StateSoftConstraint() override = default;
 
-  /** Gets the wrapped constraint. */
-  template <typename Derived = StateConstraint>
-  Derived& get() {
-    static_assert(std::is_base_of<StateConstraint, Derived>::value, "Template argument must derive from StateConstraint");
-    return dynamic_cast<Derived&>(*constraintPtr_);
-  }
+    /** Gets the wrapped constraint. */
+    template <typename Derived = StateConstraint>
+    Derived& get() {
+      static_assert(std::is_base_of<StateConstraint, Derived>::value, "Template argument must derive from StateConstraint");
+      return dynamic_cast<Derived&>(*constraintPtr_);
+    }
 
-  StateSoftConstraint* clone() const override;
+    StateSoftConstraint* clone() const override;
 
-  bool isActive(scalar_t time) const override;
+    bool isActive(scalar_t time) const override;
 
-  scalar_t getValue(scalar_t time, const vector_t& state, const TargetTrajectories& /* targetTrajectories */,
-                    const PreComputation& preComp) const override;
+    scalar_t getValue(scalar_t time, 
+                      const vector_t& state, 
+                      const TargetTrajectories& /* targetTrajectories */,
+                      const PreComputation& preComp) const override;
 
-  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                 const TargetTrajectories& /* targetTrajectories */,
-                                                                 const PreComputation& preComp) const override;
+    scalar_t getValue(scalar_t time, 
+                      const vector_t& state, 
+                      const vector_t& full_state, 
+                      const TargetTrajectories& /* targetTrajectories */,
+                      const PreComputation& preComp) const override;
 
- private:
-  StateSoftConstraint(const StateSoftConstraint& other);
+    ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
+                                                                  const TargetTrajectories& /* targetTrajectories */,
+                                                                  const PreComputation& preComp) const override;
 
-  std::unique_ptr<StateConstraint> constraintPtr_;
-  MultidimensionalPenalty penalty_;
+  private:
+    StateSoftConstraint(const StateSoftConstraint& other);
+
+    std::unique_ptr<StateConstraint> constraintPtr_;
+    MultidimensionalPenalty penalty_;
 };
 
 }  // namespace ocs2

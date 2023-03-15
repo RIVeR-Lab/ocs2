@@ -75,6 +75,18 @@ scalar_t StateSoftConstraint::getValue(scalar_t time, const vector_t& state, con
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+scalar_t StateSoftConstraint::getValue(scalar_t time, 
+                                       const vector_t& state, 
+                                       const vector_t& full_state, 
+                                       const TargetTrajectories&,
+                                       const PreComputation& preComp) const 
+{
+  return penalty_.getValue(time, constraintPtr_->getValue(time, state, preComp));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 ScalarFunctionQuadraticApproximation StateSoftConstraint::getQuadraticApproximation(scalar_t time, const vector_t& state,
                                                                                     const TargetTrajectories&,
                                                                                     const PreComputation& preComp) const {

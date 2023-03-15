@@ -54,8 +54,7 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
     using EndEffectorKinematics<scalar_t>::vector3_t;
     using EndEffectorKinematics<scalar_t>::matrix3x_t;
     using EndEffectorKinematics<scalar_t>::quaternion_t;
-    using update_pinocchio_interface_callback =
-        std::function<void(const ad_vector_t& state, PinocchioInterfaceTpl<ad_scalar_t>& pinocchioInterface)>;
+    using update_pinocchio_interface_callback = std::function<void(const ad_vector_t& state, PinocchioInterfaceTpl<ad_scalar_t>& pinocchioInterface)>;
 
     /** Constructor
      * @param [in] pinocchioInterface pinocchio interface.

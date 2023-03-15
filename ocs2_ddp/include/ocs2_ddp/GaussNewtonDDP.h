@@ -337,6 +337,8 @@ class GaussNewtonDDP : public SolverBase {
 
   void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override;
 
+  void runImpl(scalar_t initTime, const vector_t& initState, const vector_t& initFullState, scalar_t finalTime) override;
+
   void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const ControllerBase* externalControllerPtr) override;
 
   void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const PrimalSolution& primalSolution) override;
@@ -356,6 +358,7 @@ class GaussNewtonDDP : public SolverBase {
   scalar_t initTime_ = 0.0;
   scalar_t finalTime_ = 0.0;
   vector_t initState_;
+  vector_t initFullState_;
 
   std::unique_ptr<SearchStrategyBase> searchStrategyPtr_;
   std::vector<OptimalControlProblem> optimalControlProblemStock_;

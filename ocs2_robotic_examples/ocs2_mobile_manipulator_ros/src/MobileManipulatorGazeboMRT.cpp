@@ -157,10 +157,6 @@ int main(int argc, char** argv)
   MRT_ROS_Gazebo_Loop mrt_loop(nodeHandle, 
                                mrt, 
                                "world",
-                               baseFrameName,
-                               stateDim, 
-                               inputDim, 
-                               robotModelInfo.robotArm.jointNames, 
                                interface.mpcSettings().mrtDesiredFrequency_, 
                                interface.mpcSettings().mpcDesiredFrequency_);
   mrt_loop.subscribeObservers({ocs2_mm_visu});

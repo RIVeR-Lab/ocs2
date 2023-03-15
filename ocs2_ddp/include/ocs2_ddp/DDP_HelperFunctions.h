@@ -54,6 +54,21 @@ void computeRolloutMetrics(OptimalControlProblem& problem, const PrimalSolution&
                            ProblemMetrics& problemMetrics);
 
 /**
+ * Computes cost, soft constraints and constraints values of each point in the the primalSolution rollout.
+ *
+ * @param [in] problem: A reference to the optimal control problem.
+ * @param [in] primalSolution: The primal solution.
+ * @param [in] dualSolution: Const reference view to the dual solution
+ * @param [in] initFullState: Current full state
+ * @param [out] problemMetrics: The cost, soft constraints and constraints values of the rollout.
+ */
+void computeRolloutMetrics(OptimalControlProblem& problem, 
+                           const PrimalSolution& primalSolution, 
+                           DualSolutionConstRef dualSolution,
+                           const vector_t& initFullState,
+                           ProblemMetrics& problemMetrics);
+
+/**
  * Calculates the PerformanceIndex associated to the given ProblemMetrics.
  *
  * @param [in] timeTrajectory: Time stamp of the rollout.

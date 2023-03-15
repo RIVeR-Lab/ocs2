@@ -62,10 +62,6 @@ class MRT_ROS_Gazebo_Loop
     MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                         MRT_ROS_Interface& mrt,
                         std::string worldFrameName,
-                        std::string baseFrameName,
-                        size_t stateDim,
-                        size_t inputDim,
-                        std::vector<std::string> dofNames,
                         scalar_t mrtDesiredFrequency,
                         scalar_t mpcDesiredFrequency = -1);
 
@@ -144,15 +140,9 @@ class MRT_ROS_Gazebo_Loop
     void publishCommand();
 
     std::string worldFrameName_;
-    std::string baseFrameName_;
-    //std::string robotModelType_;
 
     bool initFlagBaseState_ = false;
     bool initFlagArmState_ = false;
-
-    size_t stateDim_;
-    size_t inputDim_;
-    std::vector<std::string> dofNames_;
 
     std::vector<int> stateIndexMap_;
 
@@ -165,8 +155,8 @@ class MRT_ROS_Gazebo_Loop
 
     vector_t currentInput_;
 
-    std::vector<double> baseState_;
-    std::vector<double> armState_;
+    std::vector<double> stateBase_;
+    std::vector<double> stateArm_;
 
     tf::TransformListener tfListener_;
 

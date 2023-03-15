@@ -78,6 +78,16 @@ class SolverBase {
   void run(scalar_t initTime, const vector_t& initState, scalar_t finalTime);
 
   /**
+   * The main routine of solver which runs the optimizer for a given initial state, initial time, and final time.
+   *
+   * @param [in] initTime: The initial time.
+   * @param [in] initState: The initial state.
+   * @param [in] initState: The initial full state.
+   * @param [in] finalTime: The final time.
+   */
+  void run(scalar_t initTime, const vector_t& initState, const vector_t& initFullState, scalar_t finalTime);
+
+  /**
    * The main routine of solver which runs the optimizer for a given initial state, initial time, final time, and
    * initial controller.
    *
@@ -256,6 +266,8 @@ class SolverBase {
 
  private:
   virtual void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) = 0;
+
+  virtual void runImpl(scalar_t initTime, const vector_t& initState, const vector_t& initFullState, scalar_t finalTime) = 0;
 
   virtual void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const ControllerBase* externalControllerPtr) = 0;
 

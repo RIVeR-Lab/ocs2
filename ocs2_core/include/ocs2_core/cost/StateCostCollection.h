@@ -44,24 +44,37 @@ namespace ocs2 {
  * summed cost values and quadratic approximations. Each cost term can be accessed through its
  * string name and can be activated or deactivated.
  */
-class StateCostCollection : public Collection<StateCost> {
- public:
-  StateCostCollection() = default;
-  virtual ~StateCostCollection() = default;
-  virtual StateCostCollection* clone() const;
+class StateCostCollection : public Collection<StateCost> 
+{
+  public:
+    StateCostCollection() = default;
+    
+    virtual ~StateCostCollection() = default;
+    
+    virtual StateCostCollection* clone() const;
 
-  /** Get state-only cost value */
-  virtual scalar_t getValue(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories,
-                            const PreComputation& preComp) const;
+    /** Get state-only cost value */
+    virtual scalar_t getValue(scalar_t time, 
+                              const vector_t& state, 
+                              const TargetTrajectories& targetTrajectories,
+                              const PreComputation& preComp) const;
 
-  /** Get state-only cost quadratic approximation */
-  virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                         const TargetTrajectories& targetTrajectories,
-                                                                         const PreComputation& preComp) const;
+    /** Get state-only cost value */
+    virtual scalar_t getValue(scalar_t time, 
+                              const vector_t& state, 
+                              const vector_t& full_state, 
+                              const TargetTrajectories& targetTrajectories,
+                              const PreComputation& preComp) const;
 
- protected:
-  /** Copy constructor */
-  StateCostCollection(const StateCostCollection& other);
+    /** Get state-only cost quadratic approximation */
+    virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, 
+                                                                           const vector_t& state,
+                                                                           const TargetTrajectories& targetTrajectories,
+                                                                           const PreComputation& preComp) const;
+
+  protected:
+    /** Copy constructor */
+    StateCostCollection(const StateCostCollection& other);
 };
 
 }  // namespace ocs2

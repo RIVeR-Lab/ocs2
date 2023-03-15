@@ -188,7 +188,7 @@ void approximateFinalLQ(OptimalControlProblem& problem, const scalar_t& time, co
 /******************************************************************************************************/
 scalar_t computeCost(const OptimalControlProblem& problem, const scalar_t& time, const vector_t& state, const vector_t& input) 
 {
-  std::cout << "[LinearQuadraticApproximator::computeCost] START" << std::endl;
+  //std::cout << "[LinearQuadraticApproximator::computeCost(4)] START" << std::endl;
 
   const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
   const auto& preComputation = *problem.preComputationPtr;
@@ -199,7 +199,43 @@ scalar_t computeCost(const OptimalControlProblem& problem, const scalar_t& time,
   cost += problem.stateCostPtr->getValue(time, state, targetTrajectories, preComputation);
   cost += problem.stateSoftConstraintPtr->getValue(time, state, targetTrajectories, preComputation);
 
-  std::cout << "[LinearQuadraticApproximator::computeCost] END" << std::endl;
+  //std::cout << "[LinearQuadraticApproximator::computeCost(4)] END" << std::endl;
+
+  return cost;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+scalar_t computeCost(const OptimalControlProblem& problem, 
+                     const scalar_t& time, 
+                     const vector_t& state, 
+                     const vector_t& full_state, 
+                     const vector_t& input) 
+{
+  std::cout << "[LinearQuadraticApproximator::computeCost(5)] START" << std::endl;
+
+  const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
+  const auto& preComputation = *problem.preComputationPtr;
+
+  // Compute and sum all costs
+  std::cout << "[LinearQuadraticApproximator::computeCost(5)] START costPtr" << std::endl;
+  auto cost = problem.costPtr->getValue(time, state, input, targetTrajectories, preComputation);
+  std::cout << "[LinearQuadraticApproximator::computeCost(5)] END costPtr" << std::endl;
+  
+  std::cout << "[LinearQuadraticApproximator::computeCost(5)] START softConstraintPtr" << std::endl;
+  cost += problem.softConstraintPtr->getValue(time, state, input, targetTrajectories, preComputation);
+  std::cout << "[LinearQuadraticApproximator::computeCost(5)] END softConstraintPtr" << std::endl;
+
+  std::cout << "[LinearQuadraticApproximator::computeCost(5)] START stateCostPtr" << std::endl;
+  cost += problem.stateCostPtr->getValue(time, state, targetTrajectories, preComputation);
+  std::cout << "[LinearQuadraticApproximator::computeCost(5)] END stateCostPtr" << std::endl;
+
+  std::cout << "[LinearQuadraticApproximator::computeCost(5)] START stateSoftConstraintPtr" << std::endl;
+  cost += problem.stateSoftConstraintPtr->getValue(time, state, full_state, targetTrajectories, preComputation);
+  std::cout << "[LinearQuadraticApproximator::computeCost(5)] END stateSoftConstraintPtr" << std::endl;
+
+  std::cout << "[LinearQuadraticApproximator::computeCost(5)] END" << std::endl;
 
   return cost;
 }
@@ -310,42 +346,92 @@ MetricsCollection computeIntermediateMetrics(OptimalControlProblem& problem,
                                              const vector_t& input, 
                                              const MultiplierCollection& multipliers) 
 {
-  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] START" << std::endl;
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(5)] START" << std::endl;
   auto& preComputation = *problem.preComputationPtr;
 
   MetricsCollection metrics;
 
   // Cost
-  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] START computeCost" << std::endl;
-  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] state size: " << state.size() << std::endl;
-  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] input size: " << input.size() << std::endl;
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(5)] START computeCost" << std::endl;
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(5)] state size: " << state.size() << std::endl;
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(5)] input size: " << input.size() << std::endl;
   metrics.cost = computeCost(problem, time, state, input);
-  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] END computeCost" << std::endl;
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(5)] END computeCost" << std::endl;
 
   // Equality constraints
-  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] START stateEqualityConstraintPtr" << std::endl;
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(5)] START stateEqualityConstraintPtr" << std::endl;
   metrics.stateEqConstraint = problem.stateEqualityConstraintPtr->getValue(time, state, preComputation);
   metrics.stateInputEqConstraint = problem.equalityConstraintPtr->getValue(time, state, input, preComputation);
-  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] END stateEqualityConstraintPtr" << std::endl;
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(5)] END stateEqualityConstraintPtr" << std::endl;
 
   // Lagrangians
-  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] START stateEqLagrangian" << std::endl;
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(5)] START stateEqLagrangian" << std::endl;
   metrics.stateEqLagrangian = problem.stateEqualityLagrangianPtr->getValue(time, state, multipliers.stateEq, preComputation);
-  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] END stateEqLagrangian" << std::endl;
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(5)] END stateEqLagrangian" << std::endl;
 
-  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] START stateIneqLagrangian" << std::endl;
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(5)] START stateIneqLagrangian" << std::endl;
   metrics.stateIneqLagrangian = problem.stateInequalityLagrangianPtr->getValue(time, state, multipliers.stateIneq, preComputation);
-  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] END stateIneqLagrangian" << std::endl;
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(5)] END stateIneqLagrangian" << std::endl;
 
-  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] START stateInputEqLagrangian" << std::endl;
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(5)] START stateInputEqLagrangian" << std::endl;
   metrics.stateInputEqLagrangian = problem.equalityLagrangianPtr->getValue(time, state, input, multipliers.stateInputEq, preComputation);
-  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] END stateInputEqLagrangian" << std::endl;
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(5)] END stateInputEqLagrangian" << std::endl;
 
-  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] START stateInputIneqLagrangian" << std::endl;
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(5)] START stateInputIneqLagrangian" << std::endl;
   metrics.stateInputIneqLagrangian = problem.inequalityLagrangianPtr->getValue(time, state, input, multipliers.stateInputIneq, preComputation);
-  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] END stateInputIneqLagrangian" << std::endl;
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(5)] END stateInputIneqLagrangian" << std::endl;
 
-  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics] END" << std::endl;
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(5)] END" << std::endl;
+
+  return metrics;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+MetricsCollection computeIntermediateMetrics(OptimalControlProblem& problem, 
+                                             const scalar_t time, 
+                                             const vector_t& state,
+                                             const vector_t& full_state,
+                                             const vector_t& input, 
+                                             const MultiplierCollection& multipliers) 
+{
+  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] START" << std::endl;
+  auto& preComputation = *problem.preComputationPtr;
+
+  MetricsCollection metrics;
+
+  // Cost
+  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] START computeCost" << std::endl;
+  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] state size: " << state.size() << std::endl;
+  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] input size: " << input.size() << std::endl;
+  metrics.cost = computeCost(problem, time, state, full_state, input);
+  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] END computeCost" << std::endl;
+
+  // Equality constraints
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] START stateEqualityConstraintPtr" << std::endl;
+  metrics.stateEqConstraint = problem.stateEqualityConstraintPtr->getValue(time, state, preComputation);
+  metrics.stateInputEqConstraint = problem.equalityConstraintPtr->getValue(time, state, input, preComputation);
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] END stateEqualityConstraintPtr" << std::endl;
+
+  // Lagrangians
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] START stateEqLagrangian" << std::endl;
+  metrics.stateEqLagrangian = problem.stateEqualityLagrangianPtr->getValue(time, state, multipliers.stateEq, preComputation);
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] END stateEqLagrangian" << std::endl;
+
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] START stateIneqLagrangian" << std::endl;
+  metrics.stateIneqLagrangian = problem.stateInequalityLagrangianPtr->getValue(time, state, multipliers.stateIneq, preComputation);
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] END stateIneqLagrangian" << std::endl;
+
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] START stateInputEqLagrangian" << std::endl;
+  metrics.stateInputEqLagrangian = problem.equalityLagrangianPtr->getValue(time, state, input, multipliers.stateInputEq, preComputation);
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] END stateInputEqLagrangian" << std::endl;
+
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] START stateInputIneqLagrangian" << std::endl;
+  metrics.stateInputIneqLagrangian = problem.inequalityLagrangianPtr->getValue(time, state, input, multipliers.stateInputIneq, preComputation);
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] END stateInputIneqLagrangian" << std::endl;
+
+  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] END" << std::endl;
 
   return metrics;
 }

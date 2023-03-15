@@ -80,6 +80,17 @@ class MPC_BASE
      */
     virtual bool run(scalar_t currentTime, const vector_t& currentState);
 
+    /**
+     * NUA TODO: Of course there is no need to provide state when full state is given, 
+     *           but when to use which is not obvious from the code yet!
+     * The main routine of MPC which runs MPC for the given state, full_state and time.
+     *
+     * @param [in] currentTime: The given time.
+     * @param [in] currentState: The given state.
+     * @param [in] currentFullState: The given full state.
+     */
+    virtual bool run(scalar_t currentTime, const vector_t& currentState, const vector_t& currentFullState);
+
     /** Gets a pointer to the underlying solver used in the MPC. */
     virtual SolverBase* getSolverPtr() = 0;
 
@@ -107,6 +118,16 @@ class MPC_BASE
      * @param [in] finalTime: Final time. This value can be adjusted by the optimizer.
      */
     virtual void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) = 0;
+
+    /**
+     * Solves the optimal control problem for the given state and time period ([initTime,finalTime]).
+     *
+     * @param [out] initTime: Initial time. This value can be adjusted by the optimizer.
+     * @param [in] initState: Initial state.
+     * @param [in] initState: Initial full state.
+     * @param [in] finalTime: Final time. This value can be adjusted by the optimizer.
+     */
+    virtual void calculateController(scalar_t initTime, const vector_t& initState, const vector_t& initFullState, scalar_t finalTime) = 0;
 
     /** Whether this is the first iteration of MPC or not. */
     bool isFirstMpcRun() const 
