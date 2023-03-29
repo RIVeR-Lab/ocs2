@@ -70,8 +70,24 @@ class LevenbergMarquardtStrategy final : public SearchStrategyBase {
 
   void reset() override;
 
-  bool run(const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState, const scalar_t expectedCost,
-           const LinearController& unoptimizedController, const DualSolution& dualSolution, const ModeSchedule& modeSchedule,
+  bool run(const std::pair<scalar_t, 
+           scalar_t>& timePeriod, 
+           const vector_t& initState, 
+           const scalar_t expectedCost,
+           const LinearController& unoptimizedController, 
+           const DualSolution& dualSolution, 
+           const ModeSchedule& modeSchedule,
+           search_strategy::SolutionRef solution) override;
+
+  //// NUA NOTE: NOT FUNCTIONAL (initFullState)!
+  bool run(const std::pair<scalar_t, 
+           scalar_t>& timePeriod, 
+           const vector_t& initState, 
+           const vector_t& initFullState, 
+           const scalar_t expectedCost,
+           const LinearController& unoptimizedController, 
+           const DualSolution& dualSolution, 
+           const ModeSchedule& modeSchedule,
            search_strategy::SolutionRef solution) override;
 
   std::pair<bool, std::string> checkConvergence(bool unreliableControllerIncrement, const PerformanceIndex& previousPerformanceIndex,

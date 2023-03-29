@@ -65,6 +65,9 @@ class StateConstraint
     /** Get the constraint vector value */
     virtual vector_t getValue(scalar_t time, const vector_t& state, const PreComputation& preComp) const = 0;
 
+    /** Get the constraint vector value */
+    virtual vector_t getValue(scalar_t time, const vector_t& state, const vector_t& full_state, const PreComputation& preComp) const = 0;
+
     /** Get the constraint linear approximation */
     virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, 
                                                                      const vector_t& state,
@@ -72,17 +75,47 @@ class StateConstraint
     {
       if (order_ == ConstraintOrder::Linear) 
       {
-        throw std::runtime_error("[StateConstraint] Linear approximation not implemented!");
+        throw std::runtime_error("[StateConstraint::getLinearApproximation] Linear approximation not implemented!");
       } 
       else 
       {
-        throw std::runtime_error("[StateConstraint] The class only provides Quadratic approximation! call getQuadraticApproximation()");
+        throw std::runtime_error("[StateConstraint::getLinearApproximation] The class only provides Quadratic approximation! call getQuadraticApproximation()");
+      }
+    }
+
+    virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, 
+                                                                     const vector_t& state,
+                                                                     const vector_t& fullState,
+                                                                     const PreComputation& preComp) const 
+    {
+      if (order_ == ConstraintOrder::Linear) 
+      {
+        throw std::runtime_error("[StateConstraint::getLinearApproximation] Linear approximation not implemented!");
+      } 
+      else 
+      {
+        throw std::runtime_error("[StateConstraint::getLinearApproximation] The class only provides Quadratic approximation! call getQuadraticApproximation()");
       }
     }
 
     /** Get the constraint quadratic approximation */
     virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, 
                                                                            const vector_t& state,
+                                                                           const PreComputation& preComp) const 
+    {
+      if (order_ == ConstraintOrder::Quadratic) 
+      {
+        throw std::runtime_error("[StateConstraint] Quadratic approximation not implemented!");
+      } 
+      else 
+      {
+        throw std::runtime_error("[StateConstraint] The class only provides Linear approximation! call getLinearApproximation()");
+      }
+    }
+
+    virtual VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, 
+                                                                           const vector_t& state,
+                                                                           const vector_t& fullState,
                                                                            const PreComputation& preComp) const 
     {
       if (order_ == ConstraintOrder::Quadratic) 

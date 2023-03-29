@@ -102,10 +102,12 @@ bool MRT_ROS_Gazebo_Loop::isStateInitialized()
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Gazebo_Loop::run(const TargetTrajectories& initTargetTrajectories) 
+void MRT_ROS_Gazebo_Loop::run(vector_t initTarget) 
 {
   ROS_INFO_STREAM("[MRT_ROS_Gazebo_Loop::run] Waiting for the initial policy ...");
-  SystemObservation initObservation;
+  
+  SystemObservation initObservation = getCurrentObservation(true);
+  const TargetTrajectories initTargetTrajectories({0}, {initTarget}, {initObservation.input});
 
   // Reset MPC node
   mrt_.resetMpcNode(initTargetTrajectories);

@@ -66,6 +66,18 @@ vector_t SelfCollisionConstraint::getValue(scalar_t time, const vector_t& state,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+vector_t SelfCollisionConstraint::getValue(scalar_t time, 
+                                           const vector_t& state, 
+                                           const vector_t& full_state, 
+                                           const PreComputation& preComputation) const 
+{
+  const auto& pinocchioInterface = getPinocchioInterface(preComputation);
+  return selfCollision_.getValue(pinocchioInterface);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 VectorFunctionLinearApproximation SelfCollisionConstraint::getLinearApproximation(scalar_t time, const vector_t& state,
                                                                                   const PreComputation& preComputation) const {
   const auto& pinocchioInterface = getPinocchioInterface(preComputation);

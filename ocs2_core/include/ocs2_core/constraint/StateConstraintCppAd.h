@@ -60,6 +60,9 @@ class StateConstraintCppAd : public StateConstraint {
 
   /** Constraint evaluation */
   vector_t getValue(scalar_t time, const vector_t& state, const PreComputation& preComputation) const override;
+
+  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& full_state, const PreComputation& preComputation) const override;
+
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state,
                                                            const PreComputation& preComputation) const override;
   VectorFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,

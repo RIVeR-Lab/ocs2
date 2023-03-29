@@ -43,23 +43,34 @@ class QuadraticStateCost : public StateCost
      * @param [in] Q: \f$ Q \f$
      */
     explicit QuadraticStateCost(matrix_t Q);
+    
     ~QuadraticStateCost() override = default;
+    
     QuadraticStateCost* clone() const override;
-
-    /** Get cost term value */
-    scalar_t getValue(scalar_t time, const vector_t& state, const TargetTrajectories& targetTrajectories, const PreComputation&) const final;
 
     /** Get cost term value */
     scalar_t getValue(scalar_t time, 
                       const vector_t& state, 
-                      const vector_t& full_state, 
+                      const TargetTrajectories& targetTrajectories, 
+                      const PreComputation&) const final;
+
+    scalar_t getValue(scalar_t time, 
+                      const vector_t& state, 
+                      const vector_t& fullState, 
                       const TargetTrajectories& targetTrajectories, 
                       const PreComputation&) const final;
 
     /** Get cost term quadratic approximation */
-    ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                  const TargetTrajectories& targetTrajectories,
-                                                                  const PreComputation&) const final;
+    ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, 
+                                                                   const vector_t& state,
+                                                                   const TargetTrajectories& targetTrajectories,
+                                                                   const PreComputation&) const final;
+
+    ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, 
+                                                                   const vector_t& state,
+                                                                   const vector_t& fullState,
+                                                                   const TargetTrajectories& targetTrajectories,
+                                                                   const PreComputation&) const final;
 
   protected:
     QuadraticStateCost(const QuadraticStateCost& rhs) = default;

@@ -95,6 +95,8 @@ class ExtCollisionConstraintCppAd final : public StateConstraint
     /** Get the extrenal-collision distance values */
     vector_t getValue(scalar_t time, const vector_t& state, const PreComputation&) const override;
 
+    vector_t getValue(scalar_t time, const vector_t& state, const vector_t& full_state, const PreComputation&) const override;
+
     /** Get the external collision distance approximation */
     VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const PreComputation&) const override;
 

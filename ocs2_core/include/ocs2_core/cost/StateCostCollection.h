@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <iostream>
 #include <ocs2_core/Types.h>
 #include <ocs2_core/misc/Collection.h>
 #include <ocs2_core/reference/TargetTrajectories.h>
@@ -59,16 +60,21 @@ class StateCostCollection : public Collection<StateCost>
                               const TargetTrajectories& targetTrajectories,
                               const PreComputation& preComp) const;
 
-    /** Get state-only cost value */
     virtual scalar_t getValue(scalar_t time, 
                               const vector_t& state, 
-                              const vector_t& full_state, 
+                              const vector_t& fullState, 
                               const TargetTrajectories& targetTrajectories,
                               const PreComputation& preComp) const;
 
     /** Get state-only cost quadratic approximation */
     virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, 
                                                                            const vector_t& state,
+                                                                           const TargetTrajectories& targetTrajectories,
+                                                                           const PreComputation& preComp) const;
+
+    virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, 
+                                                                           const vector_t& state,
+                                                                           const vector_t& fullState,
                                                                            const TargetTrajectories& targetTrajectories,
                                                                            const PreComputation& preComp) const;
 

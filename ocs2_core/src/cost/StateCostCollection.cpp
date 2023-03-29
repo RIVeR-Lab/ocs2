@@ -39,7 +39,8 @@ StateCostCollection::StateCostCollection(const StateCostCollection& other) : Col
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-StateCostCollection* StateCostCollection::clone() const {
+StateCostCollection* StateCostCollection::clone() const 
+{
   return new StateCostCollection(*this);
 }
 
@@ -70,10 +71,11 @@ scalar_t StateCostCollection::getValue(scalar_t time,
 /******************************************************************************************************/
 scalar_t StateCostCollection::getValue(scalar_t time, 
                                        const vector_t& state, 
-                                       const vector_t& full_state, 
+                                       const vector_t& fullState, 
                                        const TargetTrajectories& targetTrajectories,
                                        const PreComputation& preComp) const 
 {
+  //std::cout << "[StateCostCollection::getValue(5)] START" << std::endl;
   scalar_t cost = 0.0;
 
   // accumulate cost terms
@@ -81,9 +83,13 @@ scalar_t StateCostCollection::getValue(scalar_t time,
   {
     if (costTerm->isActive(time)) 
     {
-      cost += costTerm->getValue(time, state, full_state, targetTrajectories, preComp);
+      //std::cout << "[StateCostCollection::getValue(5)] state size: " << state.size() << std::endl;
+      //std::cout << "[StateCostCollection::getValue(5)] fullState size: " << fullState.size() << std::endl;
+      cost += costTerm->getValue(time, state, fullState, targetTrajectories, preComp);
     }
   }
+
+  //std::cout << "[StateCostCollection::getValue(5)] END" << std::endl;
 
   return cost;
 }
@@ -91,21 +97,25 @@ scalar_t StateCostCollection::getValue(scalar_t time,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximation(scalar_t time, const vector_t& state,
+ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximation(scalar_t time, 
+                                                                                    const vector_t& state,
                                                                                     const TargetTrajectories& targetTrajectories,
-                                                                                    const PreComputation& preComp) const {
-  const auto firstActive =
-      std::find_if(terms_.begin(), terms_.end(), [time](const std::unique_ptr<StateCost>& costTerm) { return costTerm->isActive(time); });
+                                                                                    const PreComputation& preComp) const 
+{
+  const auto firstActive = std::find_if(terms_.begin(), terms_.end(), [time](const std::unique_ptr<StateCost>& costTerm) { return costTerm->isActive(time); });
 
   // No active terms (or terms is empty).
-  if (firstActive == terms_.end()) {
+  if (firstActive == terms_.end()) 
+  {
     return ScalarFunctionQuadraticApproximation::Zero(state.rows());
   }
 
   // Initialize with first active term, accumulate potentially other active terms.
   auto cost = (*firstActive)->getQuadraticApproximation(time, state, targetTrajectories, preComp);
-  std::for_each(std::next(firstActive), terms_.end(), [&](const std::unique_ptr<StateCost>& costTerm) {
-    if (costTerm->isActive(time)) {
+  std::for_each(std::next(firstActive), terms_.end(), [&](const std::unique_ptr<StateCost>& costTerm) 
+  {
+    if (costTerm->isActive(time)) 
+    {
       const auto costTermApproximation = costTerm->getQuadraticApproximation(time, state, targetTrajectories, preComp);
       cost.f += costTermApproximation.f;
       cost.dfdx += costTermApproximation.dfdx;
@@ -117,6 +127,53 @@ ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximat
   cost.dfdu = vector_t();
   cost.dfduu = matrix_t();
   cost.dfdux = matrix_t();
+
+  return cost;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximation(scalar_t time, 
+                                                                                    const vector_t& state,
+                                                                                    const vector_t& fullState,
+                                                                                    const TargetTrajectories& targetTrajectories,
+                                                                                    const PreComputation& preComp) const 
+{
+  std::cout << "[StateCostCollection::getQuadraticApproximation(5)] START" << std::endl;
+
+  const auto firstActive = std::find_if(terms_.begin(), terms_.end(), [time](const std::unique_ptr<StateCost>& costTerm) 
+  { 
+    return costTerm->isActive(time); 
+  });
+
+  // No active terms (or terms is empty).
+  if (firstActive == terms_.end()) 
+  {
+    return ScalarFunctionQuadraticApproximation::Zero(state.rows());
+  }
+
+  std::cout << "[StateCostCollection::getQuadraticApproximation(5)] START getQuadraticApproximation" << std::endl;
+  // Initialize with first active term, accumulate potentially other active terms.
+  auto cost = (*firstActive)->getQuadraticApproximation(time, state, fullState, targetTrajectories, preComp);
+  std::for_each(std::next(firstActive), terms_.end(), [&](const std::unique_ptr<StateCost>& costTerm) 
+  {
+    if (costTerm->isActive(time)) 
+    {
+      const auto costTermApproximation = costTerm->getQuadraticApproximation(time, state, fullState, targetTrajectories, preComp);
+      cost.f += costTermApproximation.f;
+      cost.dfdx += costTermApproximation.dfdx;
+      cost.dfdxx += costTermApproximation.dfdxx;
+    }
+  });
+  std::cout << "[StateCostCollection::getQuadraticApproximation(5)] END getQuadraticApproximation" << std::endl;
+
+  // Make sure that input derivatives are empty
+  cost.dfdu = vector_t();
+  cost.dfduu = matrix_t();
+  cost.dfdux = matrix_t();
+
+  std::cout << "[StateCostCollection::getQuadraticApproximation(5)] END" << std::endl;
 
   return cost;
 }

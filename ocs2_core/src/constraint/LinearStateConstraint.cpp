@@ -63,6 +63,15 @@ vector_t LinearStateConstraint::getValue(scalar_t t, const vector_t& x, const Pr
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+vector_t LinearStateConstraint::getValue(scalar_t t, const vector_t& x, const vector_t& x_full, const PreComputation&) const {
+  vector_t g = h_;
+  g.noalias() += F_ * x;
+  return g;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 VectorFunctionLinearApproximation LinearStateConstraint::getLinearApproximation(scalar_t t, const vector_t& x,
                                                                                 const PreComputation&) const {
   VectorFunctionLinearApproximation g;

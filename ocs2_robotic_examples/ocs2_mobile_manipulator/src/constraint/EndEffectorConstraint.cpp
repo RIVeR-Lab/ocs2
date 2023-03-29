@@ -60,15 +60,22 @@ EndEffectorConstraint::EndEffectorConstraint(const EndEffectorKinematics<scalar_
 /******************************************************************************************************/
 size_t EndEffectorConstraint::getNumConstraints(scalar_t time) const 
 {
+  // xyz + rpy
   return 6;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t EndEffectorConstraint::getValue(scalar_t time, const vector_t& state, const PreComputation& preComputation) const 
+vector_t EndEffectorConstraint::getValue(scalar_t time, 
+                                         const vector_t& state, 
+                                         const PreComputation& preComputation) const 
 {
-  //std::cout << "[EndEffectorConstraint::getValue] END" << std:: endl;
+  std::cout << "[EndEffectorConstraint::getValue(3)] END" << std:: endl;
+
+  // NUA TODO: CLEAR THESE WHEN BE SURE THAT MULTI-MODEL IS WORKING!
+  //std::cout << "[EndEffectorConstraint::getValue(3)] BEFORE INF" << std:: endl;
+  //while(1);
 
   // PinocchioEndEffectorKinematics requires pre-computation with shared PinocchioInterface.
   if (pinocchioEEKinPtr_ != nullptr) 
@@ -94,7 +101,49 @@ vector_t EndEffectorConstraint::getValue(scalar_t time, const vector_t& state, c
     }
   }
 
-  //std::cout << "[EndEffectorConstraint::getValue] END" << std:: endl << std::endl;
+  std::cout << "[EndEffectorConstraint::getValue(3)] END" << std:: endl << std::endl;
+
+  return constraint;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+vector_t EndEffectorConstraint::getValue(scalar_t time, 
+                                         const vector_t& state, 
+                                         const vector_t& fullState, 
+                                         const PreComputation& preComputation) const 
+{
+  std::cout << "[EndEffectorConstraint::getValue(4)] START" << std:: endl;
+
+  // PinocchioEndEffectorKinematics requires pre-computation with shared PinocchioInterface.
+  if (pinocchioEEKinPtr_ != nullptr) 
+  {
+    const auto& preCompMM = cast<MobileManipulatorPreComputation>(preComputation);
+    pinocchioEEKinPtr_->setPinocchioInterface(preCompMM.getPinocchioInterface());
+  }
+
+  const auto desiredPositionOrientation = interpolateEndEffectorPose(time);
+
+  vector_t constraint(6);
+  constraint.head<3>() = endEffectorKinematicsPtr_->getPosition(state, fullState).front() - desiredPositionOrientation.first;
+  //constraint.head<3>() = endEffectorKinematicsPtr_->getPosition(fullState).front() - desiredPositionOrientation.first;
+
+  constraint.tail<3>() = endEffectorKinematicsPtr_->getOrientationError(state, fullState, {desiredPositionOrientation.second}).front();
+  //constraint.tail<3>() = endEffectorKinematicsPtr_->getOrientationError(fullState, {desiredPositionOrientation.second}).front();
+
+  // NUA NOTE: These constraints should not be negative, however they can be with the above implementation!
+  //           This can be fixed while integrating these constraints to the cost function later (since it was 
+  //           also working well without my edit), but I haven't verified that yet!
+  for (size_t i = 0; i < constraint.size(); i++)
+  {
+    if (constraint[i] < 0)
+    {
+      constraint[i] = abs(constraint[i]);
+    }
+  }
+
+  std::cout << "[EndEffectorConstraint::getValue(4)] END" << std:: endl << std::endl;
 
   return constraint;
 }
@@ -106,6 +155,12 @@ VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(
                                                                                 const vector_t& state,
                                                                                 const PreComputation& preComputation) const 
 {
+  std::cout << "[EndEffectorConstraint::getLinearApproximation(3)] START" << std:: endl;
+
+  // NUA TODO: CLEAR THESE WHEN BE SURE THAT MULTI-MODEL IS WORKING!
+  //std::cout << "[EndEffectorConstraint::getLinearApproximation(3)] BEFORE INF" << std:: endl;
+  //while(1);
+
   // PinocchioEndEffectorKinematics requires pre-computation with shared PinocchioInterface.
   if (pinocchioEEKinPtr_ != nullptr) 
   {
@@ -124,6 +179,42 @@ VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(
   const auto eeOrientationError = endEffectorKinematicsPtr_->getOrientationErrorLinearApproximation(state, {desiredPositionOrientation.second}).front();
   approximation.f.tail<3>() = eeOrientationError.f;
   approximation.dfdx.bottomRows<3>() = eeOrientationError.dfdx;
+
+  std::cout << "[EndEffectorConstraint::getLinearApproximation(3)] END" << std:: endl;
+
+  return approximation;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(scalar_t time, 
+                                                                                const vector_t& state,
+                                                                                const vector_t& fullState,
+                                                                                const PreComputation& preComputation) const 
+{
+  std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] START" << std:: endl;
+
+  // PinocchioEndEffectorKinematics requires pre-computation with shared PinocchioInterface.
+  if (pinocchioEEKinPtr_ != nullptr) 
+  {
+    const auto& preCompMM = cast<MobileManipulatorPreComputation>(preComputation);
+    pinocchioEEKinPtr_->setPinocchioInterface(preCompMM.getPinocchioInterface());
+  }
+
+  const auto desiredPositionOrientation = interpolateEndEffectorPose(time);
+
+  auto approximation = VectorFunctionLinearApproximation(6, state.rows(), 0);
+
+  const auto eePosition = endEffectorKinematicsPtr_->getPositionLinearApproximation(state, fullState).front();
+  approximation.f.head<3>() = eePosition.f - desiredPositionOrientation.first;
+  approximation.dfdx.topRows<3>() = eePosition.dfdx;
+
+  const auto eeOrientationError = endEffectorKinematicsPtr_->getOrientationErrorLinearApproximation(state, fullState, {desiredPositionOrientation.second}).front();
+  approximation.f.tail<3>() = eeOrientationError.f;
+  approximation.dfdx.bottomRows<3>() = eeOrientationError.dfdx;
+
+  std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] END" << std:: endl;
 
   return approximation;
 }

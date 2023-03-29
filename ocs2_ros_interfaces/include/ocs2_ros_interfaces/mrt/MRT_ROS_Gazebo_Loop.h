@@ -85,7 +85,8 @@ class MRT_ROS_Gazebo_Loop
        * @param [in] initTargetTrajectories: The initial TargetTrajectories.
        */
     //void run(const SystemObservation& initObservation, const TargetTrajectories& initTargetTrajectories);
-    void run(const TargetTrajectories& initTargetTrajectories);
+    //void run(const TargetTrajectories& initTargetTrajectories);
+    void run(vector_t initTarget);
 
     /**
      * Subscribe a set of observers to the dummy loop. Observers are updated in the provided order at the end of each timestep.

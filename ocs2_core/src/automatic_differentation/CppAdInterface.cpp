@@ -36,31 +36,45 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CppAdInterface::CppAdInterface(ad_parameterized_function_t adFunction, size_t variableDim, size_t parameterDim, std::string modelName,
-                               std::string folderName, std::vector<std::string> compileFlags)
+CppAdInterface::CppAdInterface(ad_parameterized_function_t adFunction, 
+                               size_t variableDim, 
+                               size_t parameterDim, 
+                               std::string modelName,
+                               std::string folderName, 
+                               std::vector<std::string> compileFlags)
     : adFunction_(std::move(adFunction)),
       variableDim_(variableDim),
       parameterDim_(parameterDim),
       modelName_(std::move(modelName)),
       folderName_(std::move(folderName)),
-      compileFlags_(std::move(compileFlags)) {
+      compileFlags_(std::move(compileFlags)) 
+{
   setFolderNames();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-CppAdInterface::CppAdInterface(ad_function_t adFunction, size_t variableDim, std::string modelName, std::string folderName,
+CppAdInterface::CppAdInterface(ad_function_t adFunction, 
+                               size_t variableDim, 
+                               std::string modelName, 
+                               std::string folderName,
                                std::vector<std::string> compileFlags)
-    : CppAdInterface([adFunction](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) { adFunction(x, y); }, variableDim, 0,
-                     std::move(modelName), std::move(folderName), std::move(compileFlags)){};
+  : CppAdInterface([adFunction](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) { adFunction(x, y); }, 
+                   variableDim, 
+                   0,
+                   std::move(modelName), 
+                   std::move(folderName), 
+                   std::move(compileFlags)){};
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
 CppAdInterface::CppAdInterface(const CppAdInterface& rhs)
-    : CppAdInterface(rhs.adFunction_, rhs.variableDim_, rhs.parameterDim_, rhs.modelName_, rhs.folderName_, rhs.compileFlags_) {
-  if (isLibraryAvailable()) {
+  : CppAdInterface(rhs.adFunction_, rhs.variableDim_, rhs.parameterDim_, rhs.modelName_, rhs.folderName_, rhs.compileFlags_) 
+{
+  if (isLibraryAvailable()) 
+  {
     loadModels(false);
   }
 }
@@ -68,24 +82,30 @@ CppAdInterface::CppAdInterface(const CppAdInterface& rhs)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CppAdInterface::createModels(ApproximationOrder approximationOrder, bool verbose) {
+void CppAdInterface::createModels(ApproximationOrder approximationOrder, bool verbose) 
+{
   createFolderStructure();
 
   // set and declare independent variables and start tape recording
   ad_vector_t xp(variableDim_ + parameterDim_);
+  
   xp.setOnes();  // Ones are better than zero, to prevent devision by zero in taping
   CppAD::Independent(xp);
 
   // Split in variables and parameters
   ad_vector_t x = xp.segment(0, variableDim_);
   ad_vector_t p = xp.segment(variableDim_, parameterDim_);
+
   // dependent variable vector
   ad_vector_t y;
+  
   // the model equation
   adFunction_(x, p, y);
   rangeDim_ = y.rows();
+  
   // create f: xp -> y and stop tape recording
   ad_fun_t fun(xp, y);
+
   // Optimize the operation sequence
   fun.optimize();
 
@@ -99,7 +119,8 @@ void CppAdInterface::createModels(ApproximationOrder approximationOrder, bool ve
   CppAD::cg::DynamicModelLibraryProcessor<scalar_t> libraryProcessor(libraryCSourceGen, libraryName_ + tmpName_);
   setCompilerOptions(gccCompiler);
 
-  if (verbose) {
+  if (verbose) 
+  {
     std::cerr << "[CppAdInterface] Compiling Shared Library: "
               << libraryName_ + tmpName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION << std::endl;
   }
@@ -115,6 +136,7 @@ void CppAdInterface::createModels(ApproximationOrder approximationOrder, bool ve
     std::cerr << "[CppAdInterface] Renaming " << libraryName_ + tmpName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION << " to "
               << libraryName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION << std::endl;
   }
+
   boost::filesystem::rename(libraryName_ + tmpName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION,
                             libraryName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION);
 }
@@ -122,8 +144,10 @@ void CppAdInterface::createModels(ApproximationOrder approximationOrder, bool ve
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CppAdInterface::loadModels(bool verbose) {
-  if (verbose) {
+void CppAdInterface::loadModels(bool verbose) 
+{
+  if (verbose) 
+  {
     std::cerr << "[CppAdInterface] Loading Shared Library: " << libraryName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION
               << std::endl;
   }
@@ -137,10 +161,14 @@ void CppAdInterface::loadModels(bool verbose) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CppAdInterface::loadModelsIfAvailable(ApproximationOrder approximationOrder, bool verbose) {
-  if (isLibraryAvailable()) {
+void CppAdInterface::loadModelsIfAvailable(ApproximationOrder approximationOrder, bool verbose) 
+{
+  if (isLibraryAvailable()) 
+  {
     loadModels(verbose);
-  } else {
+  } 
+  else 
+  {
     createModels(approximationOrder, verbose);
   }
 }
@@ -148,7 +176,8 @@ void CppAdInterface::loadModelsIfAvailable(ApproximationOrder approximationOrder
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t CppAdInterface::getFunctionValue(const vector_t& x, const vector_t& p) const {
+vector_t CppAdInterface::getFunctionValue(const vector_t& x, const vector_t& p) const 
+{
   vector_t xp(variableDim_ + parameterDim_);
   xp << x, p;
 
@@ -162,7 +191,8 @@ vector_t CppAdInterface::getFunctionValue(const vector_t& x, const vector_t& p) 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t CppAdInterface::getJacobian(const vector_t& x, const vector_t& p) const {
+matrix_t CppAdInterface::getJacobian(const vector_t& x, const vector_t& p) const 
+{
   // Concatenate input
   vector_t xp(variableDim_ + parameterDim_);
   xp << x, p;
@@ -172,13 +202,15 @@ matrix_t CppAdInterface::getJacobian(const vector_t& x, const vector_t& p) const
   CppAD::cg::ArrayView<scalar_t> sparseJacobianArrayView(sparseJacobian);
   size_t const* rows;
   size_t const* cols;
+  
   // Call this particular SparseJacobian. Other CppAd functions allocate internal vectors that are incompatible with multithreading.
   model_->SparseJacobian(xpArrayView, sparseJacobianArrayView, &rows, &cols);
 
   // Write sparse elements into Eigen type. Only jacobian w.r.t. variables was requested, so cols should not contain elements corresponding
   // to parameters.
   matrix_t jacobian = matrix_t::Zero(model_->Range(), variableDim_);
-  for (size_t i = 0; i < nnzJacobian_; i++) {
+  for (size_t i = 0; i < nnzJacobian_; i++) 
+  {
     jacobian(rows[i], cols[i]) = sparseJacobian[i];
   }
 
@@ -288,10 +320,14 @@ matrix_t CppAdInterface::getHessian(const vector_t& w, const vector_t& x, const 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CppAdInterface::setFolderNames() {
-  if (!folderName_.empty()) {
+void CppAdInterface::setFolderNames() 
+{
+  if (!folderName_.empty()) 
+  {
     libraryFolder_ = folderName_ + "/" + modelName_ + "/cppad_generated";
-  } else {
+  } 
+  else 
+  {
     libraryFolder_ = modelName_ + "/cppad_generated";
   }
   tmpName_ = getUniqueTemporaryName();

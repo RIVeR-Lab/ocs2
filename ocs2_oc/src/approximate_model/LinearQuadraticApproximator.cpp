@@ -45,7 +45,7 @@ void approximateIntermediateLQ(OptimalControlProblem& problem,
                                const MultiplierCollection& multipliers, 
                                ModelData& modelData) 
 {
-  //std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ] START" << std::endl;
+  std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(6)] START" << std::endl;
 
   auto& preComputation = *problem.preComputationPtr;
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Constraint + Request::Dynamics + Request::Approximation;
@@ -104,7 +104,80 @@ void approximateIntermediateLQ(OptimalControlProblem& problem,
   }
   //std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ] END Lagrangians" << std::endl;
 
-  //std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ] END" << std::endl << std::endl;
+  std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(6)] END" << std::endl << std::endl;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void approximateIntermediateLQ(OptimalControlProblem& problem, 
+                               const scalar_t time, 
+                               const vector_t& state, 
+                               const vector_t& fullState, 
+                               const vector_t& input,
+                               const MultiplierCollection& multipliers, 
+                               ModelData& modelData) 
+{
+  std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] START" << std::endl;
+
+  auto& preComputation = *problem.preComputationPtr;
+  constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Constraint + Request::Dynamics + Request::Approximation;
+  preComputation.request(request, time, state, input);
+
+  modelData.time = time;
+  modelData.stateDim = state.rows();
+  modelData.inputDim = input.rows();
+  modelData.dynamicsBias.setZero(state.rows());
+
+  // Dynamics
+  modelData.dynamicsCovariance = problem.dynamicsPtr->dynamicsCovariance(time, state, input);
+  modelData.dynamics = problem.dynamicsPtr->linearApproximation(time, state, input, preComputation);
+
+  // Cost
+  std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] START Cost" << std::endl;
+  modelData.cost = ocs2::approximateCost(problem, time, state, fullState, input);
+  std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] END Cost" << std::endl;
+
+  // Equality constraints
+  std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] START Equality constraints" << std::endl;
+  modelData.stateEqConstraint = problem.stateEqualityConstraintPtr->getLinearApproximation(time, state, preComputation);
+  modelData.stateInputEqConstraint = problem.equalityConstraintPtr->getLinearApproximation(time, state, input, preComputation);
+  std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] END Equality constraints" << std::endl;
+
+  // Lagrangians
+  std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] START Lagrangians" << std::endl;
+  if (!problem.stateEqualityLagrangianPtr->empty()) 
+  {
+    //std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] stateEqualityLagrangianPtr" << std::endl;
+    auto approx = problem.stateEqualityLagrangianPtr->getQuadraticApproximation(time, state, multipliers.stateEq, preComputation);
+    modelData.cost.f += approx.f;
+    modelData.cost.dfdx += approx.dfdx;
+    modelData.cost.dfdxx += approx.dfdxx;
+  }
+  
+  if (!problem.stateInequalityLagrangianPtr->empty()) 
+  {
+    //std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] stateInequalityLagrangianPtr" << std::endl;
+    auto approx = problem.stateInequalityLagrangianPtr->getQuadraticApproximation(time, state, multipliers.stateIneq, preComputation);
+    modelData.cost.f += approx.f;
+    modelData.cost.dfdx += approx.dfdx;
+    modelData.cost.dfdxx += approx.dfdxx;
+  }
+
+  if (!problem.equalityLagrangianPtr->empty()) 
+  {
+    //std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] equalityLagrangianPtr" << std::endl;
+    modelData.cost += problem.equalityLagrangianPtr->getQuadraticApproximation(time, state, input, multipliers.stateInputEq, preComputation);
+  }
+
+  if (!problem.inequalityLagrangianPtr->empty()) 
+  {
+    //std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] inequalityLagrangianPtr" << std::endl;
+    modelData.cost += problem.inequalityLagrangianPtr->getQuadraticApproximation(time, state, input, multipliers.stateInputIneq, preComputation);
+  }
+  std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] END Lagrangians" << std::endl;
+
+  std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] END" << std::endl << std::endl;
 }
 
 /******************************************************************************************************/
@@ -148,8 +221,14 @@ void approximatePreJumpLQ(OptimalControlProblem& problem, const scalar_t& time, 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void approximateFinalLQ(OptimalControlProblem& problem, const scalar_t& time, const vector_t& state,
-                        const MultiplierCollection& multipliers, ModelData& modelData) {
+void approximateFinalLQ(OptimalControlProblem& problem, 
+                        const scalar_t& time, 
+                        const vector_t& state,
+                        const MultiplierCollection& multipliers, 
+                        ModelData& modelData) 
+{
+  std::cout << "[LinearQuadraticApproximator::approximateFinalLQ(5)] START" << std::endl << std::endl;
+
   auto& preComputation = *problem.preComputationPtr;
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Constraint + Request::Approximation;
   preComputation.requestFinal(request, time, state);
@@ -181,6 +260,58 @@ void approximateFinalLQ(OptimalControlProblem& problem, const scalar_t& time, co
     modelData.cost.dfdx += approx.dfdx;
     modelData.cost.dfdxx += approx.dfdxx;
   }
+
+  std::cout << "[LinearQuadraticApproximator::approximateFinalLQ(5)] END" << std::endl << std::endl;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void approximateFinalLQ(OptimalControlProblem& problem, 
+                        const scalar_t& time, 
+                        const vector_t& state,
+                        const vector_t& fullState,
+                        const MultiplierCollection& multipliers, 
+                        ModelData& modelData) 
+{
+  std::cout << "[LinearQuadraticApproximator::approximateFinalLQ(6)] START" << std::endl << std::endl;
+
+  auto& preComputation = *problem.preComputationPtr;
+  constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Constraint + Request::Approximation;
+  preComputation.requestFinal(request, time, state);
+
+  modelData.time = time;
+  modelData.stateDim = state.rows();
+  modelData.inputDim = 0;
+  modelData.dynamicsBias = vector_t();
+
+  // Dynamics
+  modelData.dynamics = VectorFunctionLinearApproximation();
+
+  // state equality constraint
+  modelData.stateEqConstraint = problem.finalEqualityConstraintPtr->getLinearApproximation(time, state, preComputation);
+
+  // Final cost
+  modelData.cost = approximateFinalCost(problem, time, state, fullState);
+
+  // Lagrangians
+  if (!problem.finalEqualityLagrangianPtr->empty()) 
+  {
+    auto approx = problem.finalEqualityLagrangianPtr->getQuadraticApproximation(time, state, multipliers.stateEq, preComputation);
+    modelData.cost.f += approx.f;
+    modelData.cost.dfdx += approx.dfdx;
+    modelData.cost.dfdxx += approx.dfdxx;
+  }
+
+  if (!problem.finalInequalityLagrangianPtr->empty()) 
+  {
+    auto approx = problem.finalInequalityLagrangianPtr->getQuadraticApproximation(time, state, multipliers.stateIneq, preComputation);
+    modelData.cost.f += approx.f;
+    modelData.cost.dfdx += approx.dfdx;
+    modelData.cost.dfdxx += approx.dfdxx;
+  }
+
+  std::cout << "[LinearQuadraticApproximator::approximateFinalLQ(6)] END" << std::endl << std::endl;
 }
 
 /******************************************************************************************************/
@@ -210,7 +341,7 @@ scalar_t computeCost(const OptimalControlProblem& problem, const scalar_t& time,
 scalar_t computeCost(const OptimalControlProblem& problem, 
                      const scalar_t& time, 
                      const vector_t& state, 
-                     const vector_t& full_state, 
+                     const vector_t& fullState, 
                      const vector_t& input) 
 {
   std::cout << "[LinearQuadraticApproximator::computeCost(5)] START" << std::endl;
@@ -232,7 +363,7 @@ scalar_t computeCost(const OptimalControlProblem& problem,
   std::cout << "[LinearQuadraticApproximator::computeCost(5)] END stateCostPtr" << std::endl;
 
   std::cout << "[LinearQuadraticApproximator::computeCost(5)] START stateSoftConstraintPtr" << std::endl;
-  cost += problem.stateSoftConstraintPtr->getValue(time, state, full_state, targetTrajectories, preComputation);
+  cost += problem.stateSoftConstraintPtr->getValue(time, state, fullState, targetTrajectories, preComputation);
   std::cout << "[LinearQuadraticApproximator::computeCost(5)] END stateSoftConstraintPtr" << std::endl;
 
   std::cout << "[LinearQuadraticApproximator::computeCost(5)] END" << std::endl;
@@ -248,6 +379,7 @@ ScalarFunctionQuadraticApproximation approximateCost(const OptimalControlProblem
                                                      const vector_t& state,
                                                      const vector_t& input) 
 {
+  std::cout << "[LinearQuadraticApproximator::approximateCost(4)] START" << std::endl;
   const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
   const auto& preComputation = *problem.preComputationPtr;
 
@@ -275,6 +407,60 @@ ScalarFunctionQuadraticApproximation approximateCost(const OptimalControlProblem
     cost.dfdx += stateCost.dfdx;
     cost.dfdxx += stateCost.dfdxx;
   }
+
+  std::cout << "[LinearQuadraticApproximator::approximateCost(4)] END" << std::endl;
+
+  return cost;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation approximateCost(const OptimalControlProblem& problem, 
+                                                     const scalar_t& time, 
+                                                     const vector_t& state,
+                                                     const vector_t& fullState,
+                                                     const vector_t& input) 
+{
+  std::cout << "[LinearQuadraticApproximator::approximateCost(5)] START" << std::endl;
+
+  const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
+  const auto& preComputation = *problem.preComputationPtr;
+
+  std::cout << "[LinearQuadraticApproximator::approximateCost(5)] START costPtr" << std::endl;
+  // get the state-input cost approximations
+  auto cost = problem.costPtr->getQuadraticApproximation(time, state, input, targetTrajectories, preComputation);
+  std::cout << "[LinearQuadraticApproximator::approximateCost(5)] END costPtr" << std::endl;
+
+  std::cout << "[LinearQuadraticApproximator::approximateCost(5)] START softConstraintPtr" << std::endl;
+  if (!problem.softConstraintPtr->empty()) 
+  {
+    cost += problem.softConstraintPtr->getQuadraticApproximation(time, state, input, targetTrajectories, preComputation);
+  }
+  std::cout << "[LinearQuadraticApproximator::approximateCost(5)] END softConstraintPtr" << std::endl;
+
+  std::cout << "[LinearQuadraticApproximator::approximateCost(5)] START stateCostPtr" << std::endl;
+  // get the state only cost approximations
+  if (!problem.stateCostPtr->empty()) 
+  {
+    auto stateCost = problem.stateCostPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
+    cost.f += stateCost.f;
+    cost.dfdx += stateCost.dfdx;
+    cost.dfdxx += stateCost.dfdxx;
+  }
+  std::cout << "[LinearQuadraticApproximator::approximateCost(5)] END stateCostPtr" << std::endl;
+
+  std::cout << "[LinearQuadraticApproximator::approximateCost(5)] START stateSoftConstraintPtr" << std::endl;
+  if (!problem.stateSoftConstraintPtr->empty()) 
+  {
+    auto stateCost = problem.stateSoftConstraintPtr->getQuadraticApproximation(time, state, fullState, targetTrajectories, preComputation);
+    cost.f += stateCost.f;
+    cost.dfdx += stateCost.dfdx;
+    cost.dfdxx += stateCost.dfdxx;
+  }
+  std::cout << "[LinearQuadraticApproximator::approximateCost(5)] END stateSoftConstraintPtr" << std::endl;
+
+  std::cout << "[LinearQuadraticApproximator::approximateCost(5)] END" << std::endl;
 
   return cost;
 }
@@ -311,7 +497,10 @@ ScalarFunctionQuadraticApproximation approximateEventCost(const OptimalControlPr
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t computeFinalCost(const OptimalControlProblem& problem, const scalar_t& time, const vector_t& state) {
+scalar_t computeFinalCost(const OptimalControlProblem& problem, 
+                          const scalar_t& time, 
+                          const vector_t& state) 
+{
   const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
   const auto& preComputation = *problem.preComputationPtr;
 
@@ -324,14 +513,68 @@ scalar_t computeFinalCost(const OptimalControlProblem& problem, const scalar_t& 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlProblem& problem, const scalar_t& time,
-                                                          const vector_t& state) {
+scalar_t computeFinalCost(const OptimalControlProblem& problem, 
+                          const scalar_t& time, 
+                          const vector_t& state, 
+                          const vector_t& fullState) 
+{
+  std::cout << "[LinearQuadraticApproximator::computeFinalCost(4)] START" << std::endl;
+
+  const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
+  const auto& preComputation = *problem.preComputationPtr;
+
+  //auto cost = problem.finalCostPtr->getValue(time, state, targetTrajectories, preComputation);
+  auto cost = problem.finalCostPtr->getValue(time, state, fullState, targetTrajectories, preComputation);
+
+  std::cout << "[LinearQuadraticApproximator::computeFinalCost(4)] cost: " << cost << std::endl;
+
+  //cost += problem.finalSoftConstraintPtr->getValue(time, state, targetTrajectories, preComputation);
+  cost += problem.finalSoftConstraintPtr->getValue(time, state, fullState, targetTrajectories, preComputation);
+
+  std::cout << "[LinearQuadraticApproximator::computeFinalCost(4)] cost: " << cost << std::endl;
+
+  //while(1);
+
+  std::cout << "[LinearQuadraticApproximator::computeFinalCost(4)] END" << std::endl;
+
+  return cost;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlProblem& problem, 
+                                                          const scalar_t& time,
+                                                          const vector_t& state) 
+{
   const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
   const auto& preComputation = *problem.preComputationPtr;
 
   auto cost = problem.finalCostPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
-  if (!problem.finalSoftConstraintPtr->empty()) {
+  if (!problem.finalSoftConstraintPtr->empty()) 
+  {
     cost += problem.finalSoftConstraintPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
+  }
+
+  return cost;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlProblem& problem, 
+                                                          const scalar_t& time,
+                                                          const vector_t& state,
+                                                          const vector_t& fullState) 
+{
+  const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
+  const auto& preComputation = *problem.preComputationPtr;
+
+  auto cost = problem.finalCostPtr->getQuadraticApproximation(time, state, fullState, targetTrajectories, preComputation);
+  
+  if (!problem.finalSoftConstraintPtr->empty()) 
+  {
+    cost += problem.finalSoftConstraintPtr->getQuadraticApproximation(time, state, fullState, targetTrajectories, preComputation);
   }
 
   return cost;
@@ -392,7 +635,7 @@ MetricsCollection computeIntermediateMetrics(OptimalControlProblem& problem,
 MetricsCollection computeIntermediateMetrics(OptimalControlProblem& problem, 
                                              const scalar_t time, 
                                              const vector_t& state,
-                                             const vector_t& full_state,
+                                             const vector_t& fullState,
                                              const vector_t& input, 
                                              const MultiplierCollection& multipliers) 
 {
@@ -405,7 +648,7 @@ MetricsCollection computeIntermediateMetrics(OptimalControlProblem& problem,
   std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] START computeCost" << std::endl;
   std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] state size: " << state.size() << std::endl;
   std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] input size: " << input.size() << std::endl;
-  metrics.cost = computeCost(problem, time, state, full_state, input);
+  metrics.cost = computeCost(problem, time, state, fullState, input);
   std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] END computeCost" << std::endl;
 
   // Equality constraints
@@ -461,21 +704,70 @@ MetricsCollection computePreJumpMetrics(OptimalControlProblem& problem, const sc
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MetricsCollection computeFinalMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
-                                      const MultiplierCollection& multipliers) {
+MetricsCollection computeFinalMetrics(OptimalControlProblem& problem, 
+                                      const scalar_t time, 
+                                      const vector_t& state,
+                                      const MultiplierCollection& multipliers) 
+{
+  std::cout << "[LinearQuadraticApproximator::computeFinalMetrics(4)] START" << std::endl;
+
   auto& preComputation = *problem.preComputationPtr;
 
   MetricsCollection metrics;
 
+  std::cout << "[LinearQuadraticApproximator::computeFinalMetrics(4)] START Cost " << std::endl;
   // Cost
   metrics.cost = computeFinalCost(problem, time, state);
+  std::cout << "[LinearQuadraticApproximator::computeFinalMetrics(4)] END Cost " << std::endl;
 
+  std::cout << "[LinearQuadraticApproximator::computeFinalMetrics(4)] START Equality " << std::endl;
   // Equality constraint
   metrics.stateEqConstraint = problem.finalEqualityConstraintPtr->getValue(time, state, preComputation);
+  std::cout << "[LinearQuadraticApproximator::computeFinalMetrics(4)] END Equality " << std::endl;
 
+  std::cout << "[LinearQuadraticApproximator::computeFinalMetrics(4)] START Lagrangians " << std::endl;
   // Lagrangians
   metrics.stateEqLagrangian = problem.finalEqualityLagrangianPtr->getValue(time, state, multipliers.stateEq, preComputation);
   metrics.stateIneqLagrangian = problem.finalInequalityLagrangianPtr->getValue(time, state, multipliers.stateIneq, preComputation);
+  std::cout << "[LinearQuadraticApproximator::computeFinalMetrics(4)] END Lagrangians " << std::endl;
+
+  std::cout << "[LinearQuadraticApproximator::computeFinalMetrics(4)] END" << std::endl;
+
+  return metrics;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+MetricsCollection computeFinalMetrics(OptimalControlProblem& problem, 
+                                      const scalar_t time, 
+                                      const vector_t& state, 
+                                      const vector_t& fullState,
+                                      const MultiplierCollection& multipliers) 
+{
+  //std::cout << "[LinearQuadraticApproximator::computeFinalMetrics(5)] START" << std::endl;
+
+  auto& preComputation = *problem.preComputationPtr;
+
+  MetricsCollection metrics;
+
+  //std::cout << "[LinearQuadraticApproximator::computeFinalMetrics(5)] START Cost " << std::endl;
+  // Cost
+  metrics.cost = computeFinalCost(problem, time, state, fullState);
+  //std::cout << "[LinearQuadraticApproximator::computeFinalMetrics(5)] END Cost " << std::endl;
+
+  //std::cout << "[LinearQuadraticApproximator::computeFinalMetrics(5)] START Equality " << std::endl;
+  // Equality constraint
+  metrics.stateEqConstraint = problem.finalEqualityConstraintPtr->getValue(time, state, preComputation);
+  //std::cout << "[LinearQuadraticApproximator::computeFinalMetrics(5)] END Equality " << std::endl;
+
+  //std::cout << "[LinearQuadraticApproximator::computeFinalMetrics(5)] START Lagrangians " << std::endl;
+  // Lagrangians
+  metrics.stateEqLagrangian = problem.finalEqualityLagrangianPtr->getValue(time, state, multipliers.stateEq, preComputation);
+  metrics.stateIneqLagrangian = problem.finalInequalityLagrangianPtr->getValue(time, state, multipliers.stateIneq, preComputation);
+  //std::cout << "[LinearQuadraticApproximator::computeFinalMetrics(5)] END Lagrangians " << std::endl;
+
+  //std::cout << "[LinearQuadraticApproximator::computeFinalMetrics(5)] END" << std::endl;
 
   return metrics;
 }

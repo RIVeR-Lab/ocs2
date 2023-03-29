@@ -37,30 +37,40 @@ namespace ocs2 {
  * Mapping between OCS2 and pinocchio state and input
  */
 template <typename SCALAR>
-class PinocchioStateInputMapping {
- public:
-  using vector_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>;
-  using matrix_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, Eigen::Dynamic>;
+class PinocchioStateInputMapping 
+{
+  public:
+    using vector_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>;
+    using matrix_t = Eigen::Matrix<SCALAR, Eigen::Dynamic, Eigen::Dynamic>;
 
-  PinocchioStateInputMapping() = default;
-  virtual ~PinocchioStateInputMapping() = default;
-  PinocchioStateInputMapping<SCALAR>& operator=(const PinocchioStateInputMapping<SCALAR>& rhs) = delete;
-  virtual PinocchioStateInputMapping<SCALAR>* clone() const = 0;
+    PinocchioStateInputMapping() = default;
+    
+    virtual ~PinocchioStateInputMapping() = default;
+    
+    PinocchioStateInputMapping<SCALAR>& operator=(const PinocchioStateInputMapping<SCALAR>& rhs) = delete;
+    
+    virtual PinocchioStateInputMapping<SCALAR>* clone() const = 0;
 
-  /** Get the pinocchio joint configuration from OCS2 state and input vectors. */
-  virtual vector_t getPinocchioJointPosition(const vector_t& state) const = 0;
+    /** Get the pinocchio joint configuration from OCS2 state and input vectors. */
+    virtual vector_t getPinocchioJointPosition(const vector_t& state) const = 0;
 
-  /** Get the pinocchio joint velocity from OCS2 state and input vectors. */
-  virtual vector_t getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const = 0;
+    virtual vector_t getPinocchioJointPosition(const vector_t& state, const vector_t& fullState) const = 0;
 
-  /** Mapps pinocchio jacobians dfdq, dfdv to OCS2 jacobians dfdx, dfdu. */
-  virtual std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const = 0;
+    /** Get the pinocchio joint velocity from OCS2 state and input vectors. */
+    virtual vector_t getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const = 0;
 
-  /** If the mapping requires PinocchioInterface, use this method and set an updated PinocchioInterface. */
-  virtual void setPinocchioInterface(const PinocchioInterfaceTpl<SCALAR>& pinocchioInterface) {}
+    virtual vector_t getPinocchioJointVelocity(const vector_t& state, const vector_t& fullState, const vector_t& input) const = 0;
 
- protected:
-  PinocchioStateInputMapping(const PinocchioStateInputMapping<SCALAR>& rhs) = default;
+    /** Mapps pinocchio jacobians dfdq, dfdv to OCS2 jacobians dfdx, dfdu. */
+    virtual std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const = 0;
+
+    virtual std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const vector_t& fullState, const matrix_t& Jq, const matrix_t& Jv) const = 0;
+
+    /** If the mapping requires PinocchioInterface, use this method and set an updated PinocchioInterface. */
+    virtual void setPinocchioInterface(const PinocchioInterfaceTpl<SCALAR>& pinocchioInterface) {}
+
+  protected:
+    PinocchioStateInputMapping(const PinocchioStateInputMapping<SCALAR>& rhs) = default;
 };
 
 }  // namespace ocs2

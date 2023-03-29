@@ -95,6 +95,19 @@ auto PinocchioSphereKinematics::getPosition(const vector_t& state) const -> std:
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+auto PinocchioSphereKinematics::getPosition(const vector_t& state, const vector_t& fullState) const -> std::vector<vector3_t> 
+{
+  if (pinocchioInterfacePtr_ == nullptr) 
+  {
+    throw std::runtime_error("[PinocchioSphereKinematics] pinocchioInterfacePtr_ is not set. Use setPinocchioInterface()");
+  }
+
+  return pinocchioSphereInterface_.computeSphereCentersInWorldFrame(*pinocchioInterfacePtr_);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 std::vector<VectorFunctionLinearApproximation> PinocchioSphereKinematics::getPositionLinearApproximation(const vector_t& state) const 
 {
   if (pinocchioInterfacePtr_ == nullptr) 

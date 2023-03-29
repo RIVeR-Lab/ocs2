@@ -102,6 +102,13 @@ class PinocchioSphereKinematics final : public EndEffectorKinematics<scalar_t>
      */
     std::vector<vector3_t> getPosition(const vector_t& state) const override;
 
+    /** Get the sphere center position vectors.
+     * @note requires pinocchioInterface to be updated with:
+     *       pinocchio::forwardKinematics(model, data, q)
+     *       pinocchio::updateFramePlacements(model, data)
+     */
+    std::vector<vector3_t> getPosition(const vector_t& state, const vector_t& fullState) const override;
+
     /** Get the sphere center velocity vectors.
      * @note requires pinocchioInterface to be updated with:
      *       pinocchio::forwardKinematics(model, data, q, v)
@@ -121,6 +128,13 @@ class PinocchioSphereKinematics final : public EndEffectorKinematics<scalar_t>
       throw std::runtime_error("[PinocchioSphereKinematics] getOrientationError() is not implemented");
     };
 
+    std::vector<vector3_t> getOrientationError(const vector_t& state, 
+                                               const vector_t& fullState, 
+                                               const std::vector<quaternion_t>& referenceOrientations) const override 
+    {
+      throw std::runtime_error("[PinocchioSphereKinematics] getOrientationError() is not implemented");
+    };
+
     /** Get the sphere center position linear approximation.
      * @note requires pinocchioInterface to be updated with:
      *       pinocchio::forwardKinematics(model, data, q)
@@ -128,6 +142,9 @@ class PinocchioSphereKinematics final : public EndEffectorKinematics<scalar_t>
      *       pinocchio::computeJointJacobians(model, data)
      */
     std::vector<VectorFunctionLinearApproximation> getPositionLinearApproximation(const vector_t& state) const override;
+
+    std::vector<VectorFunctionLinearApproximation> getPositionLinearApproximation(const vector_t& state,
+                                                                                  const vector_t& fullState) const override;
 
     /** Get the sphere center velocity linear approximation
      * @note requires pinocchioInterface to be updated with:
@@ -146,6 +163,13 @@ class PinocchioSphereKinematics final : public EndEffectorKinematics<scalar_t>
      *       pinocchio::computeJointJacobians(model, data)
      */
     std::vector<VectorFunctionLinearApproximation> getOrientationErrorLinearApproximation(const vector_t& state, 
+                                                                                          const std::vector<quaternion_t>& referenceOrientations) const override 
+    {
+      throw std::runtime_error("[PinocchioSphereKinematics] getOrientationErrorLinearApproximation() is not implemented");
+    };
+
+    std::vector<VectorFunctionLinearApproximation> getOrientationErrorLinearApproximation(const vector_t& state, 
+                                                                                          const vector_t& fullState, 
                                                                                           const std::vector<quaternion_t>& referenceOrientations) const override 
     {
       throw std::runtime_error("[PinocchioSphereKinematics] getOrientationErrorLinearApproximation() is not implemented");

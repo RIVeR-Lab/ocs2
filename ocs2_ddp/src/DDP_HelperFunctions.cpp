@@ -130,7 +130,7 @@ void computeRolloutMetrics(OptimalControlProblem& problem,
                            const vector_t& initFullState,
                            ProblemMetrics& problemMetrics) 
 {
-  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics(5)] START" << std::endl;
+  //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics(5)] START" << std::endl;
 
   const auto& tTrajectory = primalSolution.timeTrajectory_;
   const auto& xTrajectory = primalSolution.stateTrajectory_;
@@ -144,20 +144,26 @@ void computeRolloutMetrics(OptimalControlProblem& problem,
   auto nextPostEventIndexItr = postEventIndices.begin();
   const auto request = Request::Cost + Request::Constraint + Request::SoftConstraint;
   
-  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics(5)] tTrajectory.size(): " << tTrajectory.size() << std::endl;
-
   for (size_t k = 0; k < tTrajectory.size(); k++) 
   {
     // intermediate time cost and constraints
     problem.preComputationPtr->request(request, tTrajectory[k], xTrajectory[k], uTrajectory[k]);
 
     //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] START computeIntermediateMetrics" << std::endl;
+    /*
+    problemMetrics.intermediates.push_back(computeIntermediateMetrics(problem, 
+                                                                      tTrajectory[k], 
+                                                                      xTrajectory[k],
+                                                                      uTrajectory[k],
+                                                                      dualSolution.intermediates[k]));
+    */
     problemMetrics.intermediates.push_back(computeIntermediateMetrics(problem, 
                                                                       tTrajectory[k], 
                                                                       xTrajectory[k],
                                                                       initFullState, 
                                                                       uTrajectory[k],
                                                                       dualSolution.intermediates[k]));
+    
     //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END computeIntermediateMetrics" << std::endl;
 
     // event time cost and constraints
@@ -166,9 +172,9 @@ void computeRolloutMetrics(OptimalControlProblem& problem,
       const auto m = dualSolution.preJumps[std::distance(postEventIndices.begin(), nextPostEventIndexItr)];
       problem.preComputationPtr->requestPreJump(request, tTrajectory[k], xTrajectory[k]);
 
-      std::cout << "[DDP_HelperFunctions::computeRolloutMetrics(5)] START computePreJumpMetrics" << std::endl;
+      //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics(5)] START computePreJumpMetrics" << std::endl;
       problemMetrics.preJumps.push_back(computePreJumpMetrics(problem, tTrajectory[k], xTrajectory[k], m));
-      std::cout << "[DDP_HelperFunctions::computeRolloutMetrics(5)] END computePreJumpMetrics" << std::endl;
+      //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics(5)] END computePreJumpMetrics" << std::endl;
 
       nextPostEventIndexItr++;
     }
@@ -177,13 +183,24 @@ void computeRolloutMetrics(OptimalControlProblem& problem,
   // final time cost and constraints
   if (!tTrajectory.empty()) 
   {
-    std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] START computeFinalMetrics" << std::endl;
+    //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] START computeFinalMetrics" << std::endl;
     problem.preComputationPtr->requestFinal(request, tTrajectory.back(), xTrajectory.back());
-    problemMetrics.final = computeFinalMetrics(problem, tTrajectory.back(), xTrajectory.back(), dualSolution.final);
-    std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END computeFinalMetrics" << std::endl;
+    /*
+    problemMetrics.final = computeFinalMetrics(problem, 
+                                               tTrajectory.back(), 
+                                               xTrajectory.back(),
+                                               dualSolution.final);
+    */
+    problemMetrics.final = computeFinalMetrics(problem, 
+                                               tTrajectory.back(), 
+                                               xTrajectory.back(),
+                                               initFullState, 
+                                               dualSolution.final);
+    
+    //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END computeFinalMetrics" << std::endl;
   }
 
-  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END" << std::endl;
+  //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END" << std::endl;
 }
 
 /******************************************************************************************************/

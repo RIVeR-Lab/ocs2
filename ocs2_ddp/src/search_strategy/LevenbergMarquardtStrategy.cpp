@@ -59,10 +59,14 @@ void LevenbergMarquardtStrategy::reset() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState,
-                                     const scalar_t expectedCost, const LinearController& unoptimizedController,
-                                     const DualSolution& dualSolution, const ModeSchedule& modeSchedule,
-                                     search_strategy::SolutionRef solution) {
+bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod, 
+                                     const vector_t& initState,
+                                     const scalar_t expectedCost, 
+                                     const LinearController& unoptimizedController,
+                                     const DualSolution& dualSolution, 
+                                     const ModeSchedule& modeSchedule,
+                                     search_strategy::SolutionRef solution) 
+{
   constexpr size_t taskId = 0;
 
   // previous merit and the expected reduction
@@ -72,7 +76,8 @@ bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePe
   // stepsize
   const scalar_t stepLength = numerics::almost_eq(expectedReduction, 0.0) ? 0.0 : 1.0;
 
-  try {
+  try 
+  {
     // compute primal solution
     solution.primalSolution.modeSchedule_ = modeSchedule;
     incrementController(stepLength, unoptimizedController, getLinearController(solution.primalSolution));
@@ -80,12 +85,14 @@ bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePe
 
     // adjust dual solution only if it is required
     const DualSolution* adjustedDualSolutionPtr = &dualSolution;
-    if (!dualSolution.timeTrajectory.empty()) {
+    if (!dualSolution.timeTrajectory.empty()) 
+    {
       // trajectory spreading
       constexpr bool debugPrint = false;
       TrajectorySpreading trajectorySpreading(debugPrint);
       const auto status = trajectorySpreading.set(modeSchedule, solution.primalSolution.modeSchedule_, dualSolution.timeTrajectory);
-      if (status.willTruncate || status.willPerformTrajectorySpreading) {
+      if (status.willTruncate || status.willPerformTrajectorySpreading) 
+      {
         trajectorySpread(trajectorySpreading, dualSolution, tempDualSolution_);
         adjustedDualSolutionPtr = &tempDualSolution_;
       }
@@ -109,8 +116,11 @@ bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePe
       std::cerr << infoDisplay.str();
     }
 
-  } catch (const std::exception& error) {
-    if (baseSettings_.displayInfo) {
+  } 
+  catch (const std::exception& error) 
+  {
+    if (baseSettings_.displayInfo) 
+    {
       std::cerr << "    [Thread " << taskId << "] rollout with step length " << stepLength << " is terminated: " << error.what() << "\n";
     }
     solution.performanceIndex.merit = std::numeric_limits<scalar_t>::max();
@@ -122,12 +132,14 @@ bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePe
   const auto pho = reductionToPredictedReduction(actualReduction, expectedReduction);
 
   // display
-  if (baseSettings_.displayInfo) {
+  if (baseSettings_.displayInfo) 
+  {
     std::cerr << "Actual Reduction: " << actualReduction << ",   Predicted Reduction: " << expectedReduction << "\n";
   }
 
   // adjust riccatiMultipleAdaptiveRatio and riccatiMultiple
-  if (pho < 0.25) {
+  if (pho < 0.25) 
+  {
     // increase riccatiMultipleAdaptiveRatio
     lmModule_.riccatiMultipleAdaptiveRatio = std::max(1.0, lmModule_.riccatiMultipleAdaptiveRatio) * settings_.riccatiMultipleDefaultRatio;
 
@@ -135,7 +147,9 @@ bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePe
     const auto riccatiMultipleTemp = lmModule_.riccatiMultipleAdaptiveRatio * lmModule_.riccatiMultiple;
     lmModule_.riccatiMultiple = std::max(riccatiMultipleTemp, settings_.riccatiMultipleDefaultFactor);
 
-  } else if (pho > 0.75) {
+  } 
+  else if (pho > 0.75) 
+  {
     // decrease riccatiMultipleAdaptiveRatio
     lmModule_.riccatiMultipleAdaptiveRatio = std::min(1.0, lmModule_.riccatiMultipleAdaptiveRatio) / settings_.riccatiMultipleDefaultRatio;
 
@@ -143,7 +157,159 @@ bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePe
     const auto riccatiMultipleTemp = lmModule_.riccatiMultipleAdaptiveRatio * lmModule_.riccatiMultiple;
     lmModule_.riccatiMultiple = (riccatiMultipleTemp > settings_.riccatiMultipleDefaultFactor) ? riccatiMultipleTemp : 0.0;
 
+  } 
+  else 
+  {
+    lmModule_.riccatiMultipleAdaptiveRatio = 1.0;
+    // lmModule_.riccatiMultiple will not change.
+  }
+
+  // display
+  if (baseSettings_.displayInfo) {
+    std::stringstream displayInfo;
+    if (lmModule_.numSuccessiveRejections == 0) {
+      displayInfo << "The step is accepted with pho: " << pho << ". ";
+    } else {
+      displayInfo << "The step is rejected with pho: " << pho << " (" << lmModule_.numSuccessiveRejections << " out of "
+                  << settings_.maxNumSuccessiveRejections << "). ";
+    }
+
+    if (numerics::almost_eq(lmModule_.riccatiMultipleAdaptiveRatio, 1.0)) {
+      displayInfo << "The Riccati multiple is kept constant: ";
+    } else if (lmModule_.riccatiMultipleAdaptiveRatio < 1.0) {
+      displayInfo << "The Riccati multiple is decreased to: ";
+    } else {
+      displayInfo << "The Riccati multiple is increased to: ";
+    }
+    displayInfo << lmModule_.riccatiMultiple << ", with ratio: " << lmModule_.riccatiMultipleAdaptiveRatio << ".\n";
+
+    std::cerr << displayInfo.str();
+  }
+
+  // max accepted number of successive rejections
+  if (lmModule_.numSuccessiveRejections > settings_.maxNumSuccessiveRejections) {
+    throw std::runtime_error("The maximum number of successive solution rejections has been reached!");
+  }
+
+  // accept or reject the step and modify numSuccessiveRejections
+  if (pho >= settings_.minAcceptedPho) {
+    // accept the solution
+    lmModule_.numSuccessiveRejections = 0;
+    return true;
+
   } else {
+    // reject the solution
+    ++lmModule_.numSuccessiveRejections;
+    return false;
+  }
+}
+
+//// NUA NOTE: NOT FUNCTIONAL (initFullState)!
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+bool LevenbergMarquardtStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod, 
+                                     const vector_t& initState,
+                                     const vector_t& initFullState,
+                                     const scalar_t expectedCost, 
+                                     const LinearController& unoptimizedController,
+                                     const DualSolution& dualSolution, 
+                                     const ModeSchedule& modeSchedule,
+                                     search_strategy::SolutionRef solution) 
+{
+  constexpr size_t taskId = 0;
+
+  // previous merit and the expected reduction
+  const auto prevMerit = solution.performanceIndex.merit;
+  const auto expectedReduction = solution.performanceIndex.merit - expectedCost;
+
+  // stepsize
+  const scalar_t stepLength = numerics::almost_eq(expectedReduction, 0.0) ? 0.0 : 1.0;
+
+  try 
+  {
+    // compute primal solution
+    solution.primalSolution.modeSchedule_ = modeSchedule;
+    incrementController(stepLength, unoptimizedController, getLinearController(solution.primalSolution));
+    solution.avgTimeStep = rolloutTrajectory(rolloutRef_, timePeriod.first, initState, timePeriod.second, solution.primalSolution);
+
+    // adjust dual solution only if it is required
+    const DualSolution* adjustedDualSolutionPtr = &dualSolution;
+    if (!dualSolution.timeTrajectory.empty()) 
+    {
+      // trajectory spreading
+      constexpr bool debugPrint = false;
+      TrajectorySpreading trajectorySpreading(debugPrint);
+      const auto status = trajectorySpreading.set(modeSchedule, solution.primalSolution.modeSchedule_, dualSolution.timeTrajectory);
+      if (status.willTruncate || status.willPerformTrajectorySpreading) 
+      {
+        trajectorySpread(trajectorySpreading, dualSolution, tempDualSolution_);
+        adjustedDualSolutionPtr = &tempDualSolution_;
+      }
+    }
+
+    // initialize dual solution
+    initializeDualSolution(optimalControlProblemRef_, solution.primalSolution, *adjustedDualSolutionPtr, solution.dualSolution);
+
+    // compute problem metrics
+    computeRolloutMetrics(optimalControlProblemRef_, solution.primalSolution, solution.dualSolution, solution.problemMetrics);
+
+    // compute performanceIndex
+    solution.performanceIndex = computeRolloutPerformanceIndex(solution.primalSolution.timeTrajectory_, solution.problemMetrics);
+    solution.performanceIndex.merit = meritFunc_(solution.performanceIndex);
+
+    // display
+    if (baseSettings_.displayInfo) {
+      std::stringstream infoDisplay;
+      infoDisplay << "    [Thread " << taskId << "] - step length " << stepLength << '\n';
+      infoDisplay << std::setw(4) << solution.performanceIndex << "\n\n";
+      std::cerr << infoDisplay.str();
+    }
+
+  } 
+  catch (const std::exception& error) 
+  {
+    if (baseSettings_.displayInfo) 
+    {
+      std::cerr << "    [Thread " << taskId << "] rollout with step length " << stepLength << " is terminated: " << error.what() << "\n";
+    }
+    solution.performanceIndex.merit = std::numeric_limits<scalar_t>::max();
+    solution.performanceIndex.cost = std::numeric_limits<scalar_t>::max();
+  }
+
+  // compute pho (the ratio between actual reduction and predicted reduction)
+  const auto actualReduction = prevMerit - solution.performanceIndex.merit;
+  const auto pho = reductionToPredictedReduction(actualReduction, expectedReduction);
+
+  // display
+  if (baseSettings_.displayInfo) 
+  {
+    std::cerr << "Actual Reduction: " << actualReduction << ",   Predicted Reduction: " << expectedReduction << "\n";
+  }
+
+  // adjust riccatiMultipleAdaptiveRatio and riccatiMultiple
+  if (pho < 0.25) 
+  {
+    // increase riccatiMultipleAdaptiveRatio
+    lmModule_.riccatiMultipleAdaptiveRatio = std::max(1.0, lmModule_.riccatiMultipleAdaptiveRatio) * settings_.riccatiMultipleDefaultRatio;
+
+    // increase riccatiMultiple
+    const auto riccatiMultipleTemp = lmModule_.riccatiMultipleAdaptiveRatio * lmModule_.riccatiMultiple;
+    lmModule_.riccatiMultiple = std::max(riccatiMultipleTemp, settings_.riccatiMultipleDefaultFactor);
+
+  } 
+  else if (pho > 0.75) 
+  {
+    // decrease riccatiMultipleAdaptiveRatio
+    lmModule_.riccatiMultipleAdaptiveRatio = std::min(1.0, lmModule_.riccatiMultipleAdaptiveRatio) / settings_.riccatiMultipleDefaultRatio;
+
+    // decrease riccatiMultiple
+    const auto riccatiMultipleTemp = lmModule_.riccatiMultipleAdaptiveRatio * lmModule_.riccatiMultiple;
+    lmModule_.riccatiMultiple = (riccatiMultipleTemp > settings_.riccatiMultipleDefaultFactor) ? riccatiMultipleTemp : 0.0;
+
+  } 
+  else 
+  {
     lmModule_.riccatiMultipleAdaptiveRatio = 1.0;
     // lmModule_.riccatiMultiple will not change.
   }

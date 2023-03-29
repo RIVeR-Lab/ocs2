@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <iostream>
 #include <memory>
 
 #include <ocs2_core/Types.h>
@@ -90,13 +91,20 @@ class StateSoftConstraint final : public StateCost
 
     scalar_t getValue(scalar_t time, 
                       const vector_t& state, 
-                      const vector_t& full_state, 
+                      const vector_t& fullState, 
                       const TargetTrajectories& /* targetTrajectories */,
                       const PreComputation& preComp) const override;
 
-    ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                  const TargetTrajectories& /* targetTrajectories */,
-                                                                  const PreComputation& preComp) const override;
+    ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, 
+                                                                   const vector_t& state,
+                                                                   const TargetTrajectories& /* targetTrajectories */,
+                                                                   const PreComputation& preComp) const override;
+
+    ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, 
+                                                                   const vector_t& state,
+                                                                   const vector_t& fullState,
+                                                                   const TargetTrajectories& /* targetTrajectories */,
+                                                                   const PreComputation& preComp) const override;
 
   private:
     StateSoftConstraint(const StateSoftConstraint& other);

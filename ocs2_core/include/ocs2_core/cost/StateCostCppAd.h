@@ -43,6 +43,7 @@ class StateCostCppAd : public StateCost
 {
   public:
     StateCostCppAd() = default;
+    
     ~StateCostCppAd() override = default;
 
     /** Initialize the CppAd interface
@@ -53,12 +54,18 @@ class StateCostCppAd : public StateCost
      * @param recompileLibraries : If true, always compile the model library, else try to load existing library if available.
      * @param verbose : Print information.
      */
-    void initialize(size_t stateDim, size_t parameterDim, const std::string& modelName, const std::string& modelFolder = "/tmp/ocs2",
-                    bool recompileLibraries = true, bool verbose = true);
+    void initialize(size_t stateDim, 
+                    size_t parameterDim, 
+                    const std::string& modelName, 
+                    const std::string& modelFolder = "/tmp/ocs2",
+                    bool recompileLibraries = true, 
+                    bool verbose = true);
 
     /* Get the parameter vector */
-    virtual vector_t getParameters(scalar_t time, const TargetTrajectories& targetTrajectories,
-                                  const PreComputation& /* preComputation */) const {
+    virtual vector_t getParameters(scalar_t time, 
+                                   const TargetTrajectories& targetTrajectories,
+                                   const PreComputation& /* preComputation */) const 
+    {
       return vector_t(0);
     };
 
@@ -70,12 +77,18 @@ class StateCostCppAd : public StateCost
 
     scalar_t getValue(scalar_t time, 
                       const vector_t& state, 
-                      const vector_t& full_state, 
+                      const vector_t& fullState, 
                       const TargetTrajectories& targetTrajectories,
                       const PreComputation& preComp) const override;
 
     ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, 
                                                                    const vector_t& state,
+                                                                   const TargetTrajectories& targetTrajectories,
+                                                                   const PreComputation& preComp) const override;
+
+    ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, 
+                                                                   const vector_t& state,
+                                                                   const vector_t& fullState,
                                                                    const TargetTrajectories& targetTrajectories,
                                                                    const PreComputation& preComp) const override;
 

@@ -103,6 +103,9 @@ class PinocchioSphereKinematicsCppAd final : public EndEffectorKinematics<scalar
     };
 
     std::vector<vector3_t> getPosition(const vector_t& state) const override;
+
+    std::vector<vector3_t> getPosition(const vector_t& state, const vector_t& fullState) const override;
+
     std::vector<vector3_t> getVelocity(const vector_t& state, const vector_t& input) const override 
     {
       throw std::runtime_error("[PinocchioSphereKinematicsCppAd] getVelocity() is not implemented");
@@ -113,7 +116,17 @@ class PinocchioSphereKinematicsCppAd final : public EndEffectorKinematics<scalar
       throw std::runtime_error("[PinocchioSphereKinematicsCppAd] getOrientationError() is not implemented");
     };
 
+    std::vector<vector3_t> getOrientationError(const vector_t& state, 
+                                               const vector_t& fullState,
+                                               const std::vector<quaternion_t>& referenceOrientations) const override 
+    {
+      throw std::runtime_error("[PinocchioSphereKinematicsCppAd] getOrientationError() is not implemented");
+    };
+
     std::vector<VectorFunctionLinearApproximation> getPositionLinearApproximation(const vector_t& state) const override;
+
+    std::vector<VectorFunctionLinearApproximation> getPositionLinearApproximation(const vector_t& state,
+                                                                                  const vector_t& fullState) const override;
 
     std::vector<VectorFunctionLinearApproximation> getVelocityLinearApproximation(const vector_t& state,
                                                                                   const vector_t& input) const override 
@@ -122,6 +135,13 @@ class PinocchioSphereKinematicsCppAd final : public EndEffectorKinematics<scalar
     };
 
     std::vector<VectorFunctionLinearApproximation> getOrientationErrorLinearApproximation(const vector_t& state, 
+                                                                                          const std::vector<quaternion_t>& referenceOrientations) const override 
+    {
+      throw std::runtime_error("[PinocchioSphereKinematicsCppAd] getOrientationErrorLinearApproximation() is not implemented");
+    };
+
+    std::vector<VectorFunctionLinearApproximation> getOrientationErrorLinearApproximation(const vector_t& state, 
+                                                                                          const vector_t& fullState, 
                                                                                           const std::vector<quaternion_t>& referenceOrientations) const override 
     {
       throw std::runtime_error("[PinocchioSphereKinematicsCppAd] getOrientationErrorLinearApproximation() is not implemented");

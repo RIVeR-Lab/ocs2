@@ -86,6 +86,41 @@ vector_t BodyPoseConstraint::getValue(scalar_t time, const vector_t& state, cons
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+vector_t BodyPoseConstraint::getValue(scalar_t time, 
+                                      const vector_t& state, 
+                                      const vector_t& full_state, 
+                                      const PreComputation& preComputation) const 
+{
+  std::cout << "[BodyPoseConstraint::getValue] WARNING: Undefined modal mode: " << modalMode_ << std:: endl;
+
+  vector_t constraint(numConst_);
+
+  if (modalMode_ == 0)
+  {
+    const auto targetPositionOrientation = interpolateTargetBodyPose(time);
+
+    for (size_t i = 0; i < numPosConst_; i++)
+    {
+      constraint[i] = abs(state[i] - targetPositionOrientation.first[i]);
+    }
+
+    auto target_euler = targetPositionOrientation.second.toRotationMatrix().eulerAngles(0, 1, 2);
+    constraint[numPosConst_] = abs(state[numPosConst_] - target_euler[2]);
+  }
+  else
+  {
+    std::cout << "[BodyPoseConstraint::getValue] WARNING: Undefined modal mode: " << modalMode_ << std:: endl;
+    constraint.setZero();
+  }
+
+  std::cout << "[BodyPoseConstraint::getValue] END" << std:: endl;
+
+  return constraint;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 VectorFunctionLinearApproximation BodyPoseConstraint::getLinearApproximation(scalar_t time, 
                                                                              const vector_t& state,
                                                                              const PreComputation& preComputation) const 

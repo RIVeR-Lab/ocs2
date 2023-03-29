@@ -39,7 +39,8 @@ QuadraticStateCost::QuadraticStateCost(matrix_t Q) : Q_(std::move(Q)) {}
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-QuadraticStateCost* QuadraticStateCost::clone() const {
+QuadraticStateCost* QuadraticStateCost::clone() const 
+{
   return new QuadraticStateCost(*this);
 }
 
@@ -60,7 +61,7 @@ scalar_t QuadraticStateCost::getValue(scalar_t time,
 /******************************************************************************************************/
 scalar_t QuadraticStateCost::getValue(scalar_t time, 
                                       const vector_t& state, 
-                                      const vector_t& full_state, 
+                                      const vector_t& fullState, 
                                       const TargetTrajectories& targetTrajectories,
                                       const PreComputation&) const 
 {
@@ -71,9 +72,29 @@ scalar_t QuadraticStateCost::getValue(scalar_t time,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ScalarFunctionQuadraticApproximation QuadraticStateCost::getQuadraticApproximation(scalar_t time, const vector_t& state,
+ScalarFunctionQuadraticApproximation QuadraticStateCost::getQuadraticApproximation(scalar_t time, 
+                                                                                   const vector_t& state,
                                                                                    const TargetTrajectories& targetTrajectories,
-                                                                                   const PreComputation&) const {
+                                                                                   const PreComputation&) const 
+{
+  const vector_t xDeviation = getStateDeviation(time, state, targetTrajectories);
+
+  ScalarFunctionQuadraticApproximation Phi;
+  Phi.dfdxx = Q_;
+  Phi.dfdx.noalias() = Q_ * xDeviation;
+  Phi.f = 0.5 * xDeviation.dot(Phi.dfdx);
+  return Phi;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+ScalarFunctionQuadraticApproximation QuadraticStateCost::getQuadraticApproximation(scalar_t time, 
+                                                                                   const vector_t& state,
+                                                                                   const vector_t& fullState,
+                                                                                   const TargetTrajectories& targetTrajectories,
+                                                                                   const PreComputation&) const 
+{
   const vector_t xDeviation = getStateDeviation(time, state, targetTrajectories);
 
   ScalarFunctionQuadraticApproximation Phi;

@@ -76,6 +76,19 @@ vector_t StateConstraintCppAd::getValue(scalar_t time, const vector_t& state, co
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+vector_t StateConstraintCppAd::getValue(scalar_t time, 
+                                        const vector_t& state, 
+                                        const vector_t& full_state,
+                                        const PreComputation& preComputation) const 
+{
+  vector_t tapedTimeState(1 + state.rows());
+  tapedTimeState << time, state;
+  return adInterfacePtr_->getFunctionValue(tapedTimeState, getParameters(time, preComputation));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 VectorFunctionLinearApproximation StateConstraintCppAd::getLinearApproximation(scalar_t time, const vector_t& state,
                                                                                const PreComputation& preComputation) const {
   VectorFunctionLinearApproximation constraint;

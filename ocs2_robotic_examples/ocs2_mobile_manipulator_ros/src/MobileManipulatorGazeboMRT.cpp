@@ -176,14 +176,15 @@ int main(int argc, char** argv)
   vector_t initTarget(7);
   initTarget.head(3) << -0.2, 0, 0.8;
   initTarget.tail(4) << Eigen::Quaternion<scalar_t>(0, 0, 1, 0).coeffs();
-  const vector_t zeroInput = vector_t::Zero(inputDim);
-  const TargetTrajectories initTargetTrajectories({initObservation.time}, {initTarget}, {zeroInput});
+  //const vector_t zeroInput = vector_t::Zero(inputDim);
+  //const TargetTrajectories initTargetTrajectories({initObservation.time}, {initTarget}, {zeroInput});
 
   //std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE INF" << std::endl;
   //while(1);
 
   // Run mrt_loop (loops while ros is ok)
-  mrt_loop.run(initTargetTrajectories);
+  mrt_loop.run(initTarget);
+  //mrt_loop.run(initTargetTrajectories);
   //mrt_loop.runSinglePolicy(initObservation, initTargetTrajectories);
 
   // Successful exit

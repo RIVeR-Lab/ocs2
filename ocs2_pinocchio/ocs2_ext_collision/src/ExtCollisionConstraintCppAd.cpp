@@ -120,6 +120,22 @@ vector_t ExtCollisionConstraintCppAd::getValue(scalar_t time, const vector_t& st
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+vector_t ExtCollisionConstraintCppAd::getValue(scalar_t time, 
+                                               const vector_t& state, 
+                                               const vector_t& full_state, 
+                                               const PreComputation&) const 
+{
+  const auto q = mappingPtr_->getPinocchioJointPosition(state);
+  const auto& model = pinocchioInterface_.getModel();
+  auto& data = pinocchioInterface_.getData();
+  pinocchio::forwardKinematics(model, data, q);
+
+  return extCollisionCppAd_.getValue(pinocchioInterface_, state);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 VectorFunctionLinearApproximation ExtCollisionConstraintCppAd::getLinearApproximation(scalar_t time, 
                                                                                       const vector_t& state,
                                                                                       const PreComputation&) const 

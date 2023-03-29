@@ -63,6 +63,11 @@ class MobileManipulatorPinocchioMappingTpl final : public PinocchioStateInputMap
     MobileManipulatorPinocchioMappingTpl<SCALAR>* clone() const override;
 
     /**
+     * Returns the mobile manipulator model info.
+     */
+    const RobotModelInfo& getRobotModelInfo() const;
+
+    /**
      * Computes the vector of generalized coordinates (qPinocchio) used by pinocchio functions from the robot state.
      *
      * @param [in] state: system state vector
@@ -70,6 +75,8 @@ class MobileManipulatorPinocchioMappingTpl final : public PinocchioStateInputMap
      * parameterization of the base orientation
      */
     vector_t getPinocchioJointPosition(const vector_t& state) const override;
+
+    vector_t getPinocchioJointPosition(const vector_t& state, const vector_t& fullState) const override;
 
     /**
      * Computes the vector of generalized velocities (vPinocchio) used by pinocchio functions from the robot state and input.
@@ -79,6 +86,9 @@ class MobileManipulatorPinocchioMappingTpl final : public PinocchioStateInputMap
      * @return pinocchio joint velocities, which are also the time derivatives of the pinocchio joint positions
      */
     vector_t getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const override;
+
+    //// NUA NOTE: DO WE NEED THIS?
+    vector_t getPinocchioJointVelocity(const vector_t& state, const vector_t& fullState, const vector_t& input) const override;
 
     /**
      * Maps pinocchio jacobians dfdq, dfdv to OCS2 jacobians dfdx, dfdu.
@@ -90,13 +100,8 @@ class MobileManipulatorPinocchioMappingTpl final : public PinocchioStateInputMap
      */
     std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const override;
 
-    /**
-     * Returns the mobile manipulator model info.
-     */
-    const RobotModelInfo& getRobotModelInfo() const 
-    { 
-      return modelInfo_; 
-    }
+    //// NUA NOTE: DO WE NEED THIS?
+    std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const vector_t& fullState, const matrix_t& Jq, const matrix_t& Jv) const override;
 
   private:
     MobileManipulatorPinocchioMappingTpl(const MobileManipulatorPinocchioMappingTpl& rhs) = default;

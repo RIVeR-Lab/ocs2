@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <vector>
 
+#include "ocs2_core/dynamics/MultiModelFunctions.h"
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
@@ -57,11 +58,9 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
     using update_pinocchio_interface_callback = std::function<void(const ad_vector_t& state, PinocchioInterfaceTpl<ad_scalar_t>& pinocchioInterface)>;
 
     /** Constructor
+     * NUA TODO: UPDATE!
      * @param [in] pinocchioInterface pinocchio interface.
      * @param [in] mapping mapping from OCS2 to pinocchio state.
-     * @param [in] endEffectorFrameNames array of end effector names.
-     * @param [in] stateDim : size of state vector
-     * @param [in] inputDim : size of input vector
      * @param [in] modelName : name of the generate model library
      * @param [in] modelFolder : folder to save the model library files to
      * @param [in] recompileLibraries : If true, the model library will be newly compiled. If false, an existing library will be loaded if
@@ -70,20 +69,16 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
      */
     PinocchioEndEffectorKinematicsCppAd(const PinocchioInterface& pinocchioInterface, 
                                         const PinocchioStateInputMapping<ad_scalar_t>& mapping,
-                                        std::vector<std::string> endEffectorFrameNames, 
-                                        size_t stateDim, 
-                                        size_t inputDim,
+                                        RobotModelInfo robotModelInfo,
                                         const std::string& modelName, 
                                         const std::string& modelFolder = "/tmp/ocs2",
                                         bool recompileLibraries = true, 
                                         bool verbose = false);
 
     /** Constructor
+     * NUA TODO: UPDATE!
      * @param [in] pinocchioInterface pinocchio interface.
      * @param [in] mapping mapping from OCS2 to pinocchio state.
-     * @param [in] endEffectorFrameNames array of end effector names.
-     * @param [in] stateDim : size of state vector
-     * @param [in] inputDim : size of input vector
      * @param [in] updateCallback : In the cases that PinocchioStateInputMapping requires some additional update calls on PinocchioInterface,
      *                              use this callback.
      * @param [in] modelName : name of the generate model library
@@ -94,9 +89,7 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
      */
     PinocchioEndEffectorKinematicsCppAd(const PinocchioInterface& pinocchioInterface, 
                                         const PinocchioStateInputMapping<ad_scalar_t>& mapping,
-                                        std::vector<std::string> endEffectorFrameNames, 
-                                        size_t stateDim, 
-                                        size_t inputDim,
+                                        RobotModelInfo robotModelInfo,
                                         update_pinocchio_interface_callback updateCallback, 
                                         const std::string& modelName,
                                         const std::string& modelFolder = "/tmp/ocs2", 
@@ -112,17 +105,30 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
     const std::vector<std::string>& getEndEffectorFrameNames() const override;
 
     std::vector<vector3_t> getPosition(const vector_t& state) const override;
+
+    std::vector<vector3_t> getPosition(const vector_t& state, const vector_t& fullState) const override;
     
     std::vector<vector3_t> getVelocity(const vector_t& state, const vector_t& input) const override;
     
     std::vector<vector3_t> getOrientationError(const vector_t& state, const std::vector<quaternion_t>& referenceOrientations) const override;
 
+    std::vector<vector3_t> getOrientationError(const vector_t& state, 
+                                               const vector_t& fullState,
+                                               const std::vector<quaternion_t>& referenceOrientations) const override;
+
     std::vector<VectorFunctionLinearApproximation> getPositionLinearApproximation(const vector_t& state) const override;
+
+    std::vector<VectorFunctionLinearApproximation> getPositionLinearApproximation(const vector_t& state,
+                                                                                  const vector_t& fullState) const override;
     
     std::vector<VectorFunctionLinearApproximation> getVelocityLinearApproximation(const vector_t& state,
                                                                                   const vector_t& input) const override;
     
     std::vector<VectorFunctionLinearApproximation> getOrientationErrorLinearApproximation(const vector_t& state, 
+                                                                                          const std::vector<quaternion_t>& referenceOrientations) const override;
+
+    std::vector<VectorFunctionLinearApproximation> getOrientationErrorLinearApproximation(const vector_t& state,
+                                                                                          const vector_t& fullState,
                                                                                           const std::vector<quaternion_t>& referenceOrientations) const override;
 
   private:
@@ -131,6 +137,11 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
     ad_vector_t getPositionCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd, 
                                  const PinocchioStateInputMapping<ad_scalar_t>& mapping,
                                  const ad_vector_t& state);
+
+    ad_vector_t getPositionCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd, 
+                                 const PinocchioStateInputMapping<ad_scalar_t>& mapping,
+                                 const ad_vector_t& state,
+                                 const ad_vector_t& fullState);
 
     ad_vector_t getVelocityCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd, 
                                  const PinocchioStateInputMapping<ad_scalar_t>& mapping,
@@ -142,11 +153,21 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
                                         const ad_vector_t& state,
                                         const ad_vector_t& params);
 
+    /*
+    ad_vector_t getTMPOrientationErrorCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
+                                        const PinocchioStateInputMapping<ad_scalar_t>& mapping, 
+                                        const ad_vector_t& state,
+                                        const ad_vector_t& params);
+    */
+
     std::unique_ptr<CppAdInterface> positionCppAdInterfacePtr_;
     std::unique_ptr<CppAdInterface> velocityCppAdInterfacePtr_;
     std::unique_ptr<CppAdInterface> orientationErrorCppAdInterfacePtr_;
+    //std::unique_ptr<CppAdInterface> TMPorientationErrorCppAdInterfacePtr_;
+
+    RobotModelInfo robotModelInfo_;
     
-    const std::vector<std::string> endEffectorFrameNames_;
+    std::vector<std::string> endEffectorFrameNames_;
     std::vector<size_t> endEffectorFrameIds_;
 };
 

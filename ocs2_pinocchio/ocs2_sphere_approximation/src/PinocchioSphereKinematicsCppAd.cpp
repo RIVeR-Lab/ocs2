@@ -44,10 +44,14 @@ namespace ocs2 {
 /******************************************************************************************************/
 PinocchioSphereKinematicsCppAd::PinocchioSphereKinematicsCppAd(const PinocchioInterface& pinocchioInterface,
                                                                PinocchioSphereInterface pinocchioSphereInterface,
-                                                               const PinocchioStateInputMapping<ad_scalar_t>& mapping, size_t stateDim,
-                                                               size_t inputDim, const std::string& modelName,
-                                                               const std::string& modelFolder, bool recompileLibraries, bool verbose)
-    : pinocchioSphereInterface_(std::move(pinocchioSphereInterface)) 
+                                                               const PinocchioStateInputMapping<ad_scalar_t>& mapping, 
+                                                               size_t stateDim,
+                                                               size_t inputDim, 
+                                                               const std::string& modelName,
+                                                               const std::string& modelFolder, 
+                                                               bool recompileLibraries, 
+                                                               bool verbose)
+  : pinocchioSphereInterface_(std::move(pinocchioSphereInterface)) 
 {
   const std::vector<SphereApproxParam> sphereApproxParams = createSphereApproxParams();
 
@@ -161,7 +165,44 @@ auto PinocchioSphereKinematicsCppAd::getPosition(const vector_t& state) const ->
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+auto PinocchioSphereKinematicsCppAd::getPosition(const vector_t& state, const vector_t& fullState) const -> std::vector<vector3_t> 
+{
+  const vector_t positionValues = positionCppAdInterfacePtr_->getFunctionValue(state);
+
+  std::vector<vector3_t> positions;
+  positions.reserve(linkIds_.size());
+  for (int i = 0; i < linkIds_.size(); i++) 
+  {
+    positions.emplace_back(positionValues.segment<3>(3 * i));
+  }
+  return positions;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 std::vector<VectorFunctionLinearApproximation> PinocchioSphereKinematicsCppAd::getPositionLinearApproximation(const vector_t& state) const 
+{
+  const vector_t positionValues = positionCppAdInterfacePtr_->getFunctionValue(state);
+  const matrix_t positionJacobian = positionCppAdInterfacePtr_->getJacobian(state);
+
+  std::vector<VectorFunctionLinearApproximation> positions;
+  positions.reserve(linkIds_.size());
+  for (int i = 0; i < linkIds_.size(); i++) 
+  {
+    VectorFunctionLinearApproximation pos;
+    pos.f = positionValues.segment<3>(3 * i);
+    pos.dfdx = positionJacobian.block(3 * i, 0, 3, state.rows());
+    positions.emplace_back(std::move(pos));
+  }
+  return positions;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::vector<VectorFunctionLinearApproximation> PinocchioSphereKinematicsCppAd::getPositionLinearApproximation(const vector_t& state,
+                                                                                                              const vector_t& fullState) const 
 {
   const vector_t positionValues = positionCppAdInterfacePtr_->getFunctionValue(state);
   const matrix_t positionJacobian = positionCppAdInterfacePtr_->getJacobian(state);

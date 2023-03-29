@@ -86,8 +86,35 @@ class SearchStrategyBase {
    * @param [out] solution: Output of search (primalSolution, performanceIndex, problemMetrics, avgTimeStep)
    * @return whether the search was successful or failed.
    */
-  virtual bool run(const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState, const scalar_t expectedCost,
-                   const LinearController& unoptimizedController, const DualSolution& dualSolution, const ModeSchedule& modeSchedule,
+  virtual bool run(const std::pair<scalar_t, scalar_t>& timePeriod, 
+                   const vector_t& initState, 
+                   const scalar_t expectedCost,
+                   const LinearController& unoptimizedController, 
+                   const DualSolution& dualSolution, 
+                   const ModeSchedule& modeSchedule,
+                   search_strategy::SolutionRef solution) = 0;
+
+  /**
+   * Finds the optimal trajectories, controller, and performance index based on the given controller and its increment.
+   *
+   * @param [in] timePeriod: Initial and final times pair.
+   * @param [in] initState: Initial state
+   * @param [in] initFullState: Initial full state
+   * @param [in] expectedCost: The expected cost based on the LQ model optimization.
+   * @param [in] unoptimizedController: The unoptimized controller which search will be performed.
+   * @param [in] dualSolution: The dual solution.
+   * @param [in] ModeSchedule The current mode schedule.
+   * @param [in/out]
+   * @param [out] solution: Output of search (primalSolution, performanceIndex, problemMetrics, avgTimeStep)
+   * @return whether the search was successful or failed.
+   */
+  virtual bool run(const std::pair<scalar_t, scalar_t>& timePeriod, 
+                   const vector_t& initState, 
+                   const vector_t& initFullState, 
+                   const scalar_t expectedCost,
+                   const LinearController& unoptimizedController, 
+                   const DualSolution& dualSolution, 
+                   const ModeSchedule& modeSchedule,
                    search_strategy::SolutionRef solution) = 0;
 
   /**

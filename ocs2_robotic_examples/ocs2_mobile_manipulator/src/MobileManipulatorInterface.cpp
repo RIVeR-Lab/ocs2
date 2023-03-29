@@ -175,6 +175,8 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
   //std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE INF" << std::endl;
   //while(1);
 
+  //// NUA TODO: COMPLETE IT!
+  activateSelfCollision_ = false;
   // Self-collision avoidance constraint
   if (activateSelfCollision_) 
   {
@@ -184,6 +186,8 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
     }
   }
 
+  //// NUA TODO: COMPLETE IT!
+  activateExtCollision_ = false;
   // External-collision avoidance constraint
   if (activateExtCollision_) 
   {
@@ -494,7 +498,8 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
   boost::property_tree::read_info(taskFile_, pt);
 
   const int stateDim = getStateDim(robotModelInfo_);
-  const int inputDim = getInputDim(robotModelInfo_);
+  const int modeStateDim = getModeStateDim(robotModelInfo_);
+  const int modeInputDim = getModeInputDim(robotModelInfo_);
 
   scalar_t muPosition = 1.0;
   scalar_t muOrientation = 1.0;
@@ -524,9 +529,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
     std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] BEFORE eeKinematics" << std::endl;
     PinocchioEndEffectorKinematicsCppAd eeKinematics(*pinocchioInterfacePtr_,
                                                      pinocchioMappingCppAd, 
-                                                     {robotModelInfo_.robotArm.eeFrame},
-                                                     stateDim, 
-                                                     inputDim,
+                                                     robotModelInfo_,
                                                      "end_effector_kinematics", 
                                                      libraryFolder_, 
                                                      recompileLibraries_, 

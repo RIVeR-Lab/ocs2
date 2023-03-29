@@ -59,14 +59,22 @@ class StateCost
     /** Get cost term value */
     virtual scalar_t getValue(scalar_t time, 
                               const vector_t& state,
-                              const vector_t& full_state, 
+                              const vector_t& fullState, 
                               const TargetTrajectories& targetTrajectories,
                               const PreComputation& preComp) const = 0;
 
     /** Get cost term quadratic approximation */
-    virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, const vector_t& state,
-                                                                          const TargetTrajectories& targetTrajectories,
-                                                                          const PreComputation& preComp) const = 0;
+    virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, 
+                                                                           const vector_t& state,
+                                                                           const TargetTrajectories& targetTrajectories,
+                                                                           const PreComputation& preComp) const = 0;
+
+    /** Get cost term quadratic approximation */
+    virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t time, 
+                                                                           const vector_t& state,
+                                                                           const vector_t& fullState,
+                                                                           const TargetTrajectories& targetTrajectories,
+                                                                           const PreComputation& preComp) const = 0;
 
   protected:
     StateCost(const StateCost& rhs) = default;

@@ -72,8 +72,23 @@ class LineSearchStrategy final : public SearchStrategyBase {
 
   void reset() override {}
 
-  bool run(const std::pair<scalar_t, scalar_t>& timePeriod, const vector_t& initState, const scalar_t expectedCost,
-           const LinearController& unoptimizedController, const DualSolution& dualSolution, const ModeSchedule& modeSchedule,
+  bool run(const std::pair<scalar_t, 
+           scalar_t>& timePeriod, 
+           const vector_t& initState, 
+           const scalar_t expectedCost,
+           const LinearController& unoptimizedController, 
+           const DualSolution& dualSolution, 
+           const ModeSchedule& modeSchedule,
+           search_strategy::SolutionRef solution) override;
+
+  bool run(const std::pair<scalar_t, 
+           scalar_t>& timePeriod, 
+           const vector_t& initState, 
+           const vector_t& initFullState, 
+           const scalar_t expectedCost,
+           const LinearController& unoptimizedController, 
+           const DualSolution& dualSolution, 
+           const ModeSchedule& modeSchedule,
            search_strategy::SolutionRef solution) override;
 
   std::pair<bool, std::string> checkConvergence(bool unreliableControllerIncrement, const PerformanceIndex& previousPerformanceIndex,
@@ -99,11 +114,15 @@ class LineSearchStrategy final : public SearchStrategyBase {
   /** Computes the solution on a thread and a given stepLength  */
   void computeSolution(size_t taskId, scalar_t stepLength, search_strategy::Solution& solution);
 
+  void computeSolution(size_t taskId, scalar_t stepLength, const vector_t& initFullState, search_strategy::Solution& solution);
+
   /**
    * Defines line search task on a thread with various learning rates and choose the largest acceptable step-size.
    * The class computes the nominal controller and the nominal trajectories as well the corresponding performance indices.
    */
   void lineSearchTask(const size_t taskId);
+
+  void lineSearchTask(const size_t taskId, const vector_t& initFullState);
 
   /** Prints to output. */
   void printString(const std::string& text) const;

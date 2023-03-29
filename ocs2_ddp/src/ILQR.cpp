@@ -35,25 +35,35 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ILQR::ILQR(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
+ILQR::ILQR(ddp::Settings ddpSettings, 
+           const RolloutBase& rollout, 
+           const OptimalControlProblem& optimalControlProblem,
            const Initializer& initializer)
-    : GaussNewtonDDP(std::move(ddpSettings), rollout, optimalControlProblem, initializer) {
-  if (settings().algorithm_ != ddp::Algorithm::ILQR) {
+  : GaussNewtonDDP(std::move(ddpSettings), rollout, optimalControlProblem, initializer) 
+{
+  if (settings().algorithm_ != ddp::Algorithm::ILQR) 
+  {
     throw std::runtime_error("[ILQR] In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
                              "\" while ILQR is instantiated!");
   }
 
   // dynamics discretizer
-  sensitivityDiscretizer_ = [&]() {
-    switch (settings().backwardPassIntegratorType_) {
+  sensitivityDiscretizer_ = [&]() 
+  {
+    switch (settings().backwardPassIntegratorType_) 
+    {
       case IntegratorType::EULER:
         return selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::EULER);
+      
       case IntegratorType::RK4:
         return selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::RK4);
+      
       case IntegratorType::ODE45:
         return selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::RK4);
+      
       case IntegratorType::ODE45_OCS2:
         return selectDynamicsSensitivityDiscretization(SensitivityIntegratorType::RK4);
+      
       default:
         throw std::runtime_error("[ILQR] Integrator of type " + integrator_type::toString(settings().backwardPassIntegratorType_) +
                                  " is not supported for sensitivity discretization! Modify ddp::Settings::backwardPassIntegratorType_.");
@@ -63,7 +73,8 @@ ILQR::ILQR(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalC
   // Riccati solver
   riccatiEquationsPtrStock_.clear();
   riccatiEquationsPtrStock_.reserve(settings().nThreads_);
-  for (size_t i = 0; i < settings().nThreads_; i++) {
+  for (size_t i = 0; i < settings().nThreads_; i++) 
+  {
     const bool isRiskSensitive = !numerics::almost_eq(settings().riskSensitiveCoeff_, 0.0);
     const bool preComputeRiccatiTerms = settings().preComputeRiccatiTerms_ && (settings().strategy_ == search_strategy::Type::LINE_SEARCH);
     riccatiEquationsPtrStock_.emplace_back(new DiscreteTimeRiccatiEquations(preComputeRiccatiTerms, isRiskSensitive));
@@ -76,7 +87,8 @@ ILQR::ILQR(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalC
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ILQR::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDataContainer& primalData) {
+void ILQR::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDataContainer& primalData) 
+{
   // create alias
   const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
   const auto& stateTrajectory = primalData.primalSolution.stateTrajectory_;
@@ -97,7 +109,8 @@ void ILQR::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDat
 
     // get next time index is atomic
     size_t timeIndex;
-    while ((timeIndex = nextTimeIndex_++) < timeTrajectory.size()) {
+    while ((timeIndex = nextTimeIndex_++) < timeTrajectory.size()) 
+    {
       // approximate continuous LQ for the given time index
       ocs2::approximateIntermediateLQ(optimalControlProblemStock_[taskId], timeTrajectory[timeIndex], stateTrajectory[timeIndex],
                                       inputTrajectory[timeIndex], multiplierTrajectory[timeIndex], continuousTimeModelData);
@@ -123,6 +136,80 @@ void ILQR::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDat
         discreteLQWorker(*optimalControlProblemStock_[taskId].dynamicsPtr, timeTrajectory[timeIndex], stateTrajectory[timeIndex],
                          inputTrajectory[timeIndex], timeStep, continuousTimeModelData, modelDataTrajectory[timeIndex]);
       } else {
+        modelDataTrajectory[timeIndex] = continuousTimeModelData;
+      }
+    }
+  };
+
+  runParallel(task, settings().nThreads_);
+}
+
+//// NUA NOTE: NOT COMPLETED (initFullState)!
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void ILQR::approximateIntermediateLQ(const DualSolution& dualSolution, 
+                                     PrimalDataContainer& primalData,
+                                     const vector_t& initFullState) 
+{
+  // create alias
+  const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
+  const auto& stateTrajectory = primalData.primalSolution.stateTrajectory_;
+  const auto& inputTrajectory = primalData.primalSolution.inputTrajectory_;
+  const auto& postEventIndices = primalData.primalSolution.postEventIndices_;
+  const auto& multiplierTrajectory = dualSolution.intermediates;
+  auto& modelDataTrajectory = primalData.modelDataTrajectory;
+
+  modelDataTrajectory.clear();
+  modelDataTrajectory.resize(timeTrajectory.size());
+
+  nextTimeIndex_ = 0;
+  nextTaskId_ = 0;
+  auto task = [&]() {
+    size_t taskId = nextTaskId_++;  // assign task ID (atomic)
+
+    ModelData continuousTimeModelData;
+
+    // get next time index is atomic
+    size_t timeIndex;
+    while ((timeIndex = nextTimeIndex_++) < timeTrajectory.size()) 
+    {
+      // approximate continuous LQ for the given time index
+      ocs2::approximateIntermediateLQ(optimalControlProblemStock_[taskId], timeTrajectory[timeIndex], stateTrajectory[timeIndex],
+                                      inputTrajectory[timeIndex], multiplierTrajectory[timeIndex], continuousTimeModelData);
+
+      // checking the numerical properties
+      if (settings().checkNumericalStability_) 
+      {
+        const auto errSize = checkSize(continuousTimeModelData, stateTrajectory[timeIndex].rows(), inputTrajectory[timeIndex].rows());
+        if (!errSize.empty()) 
+        {
+          throw std::runtime_error("[ILQR::approximateIntermediateLQ] Mismatch in dimensions at intermediate time: " +
+                                   std::to_string(timeTrajectory[timeIndex]) + "\n" + errSize);
+        }
+        const auto errProperties = checkDynamicsProperties(continuousTimeModelData) + checkCostProperties(continuousTimeModelData) +
+                                   checkConstraintProperties(continuousTimeModelData);
+        if (!errProperties.empty()) 
+        {
+          throw std::runtime_error("[ILQR::approximateIntermediateLQ] Ill-posed problem at intermediate time: " +
+                                   std::to_string(timeTrajectory[timeIndex]) + "\n" + errProperties);
+        }
+      }
+
+      // discretize LQ problem
+      const scalar_t timeStep = (timeIndex + 1 < timeTrajectory.size()) ? (timeTrajectory[timeIndex + 1] - timeTrajectory[timeIndex]) : 0.0;
+      if (!numerics::almost_eq(timeStep, 0.0)) 
+      {
+        discreteLQWorker(*optimalControlProblemStock_[taskId].dynamicsPtr, 
+                         timeTrajectory[timeIndex], 
+                         stateTrajectory[timeIndex],
+                         inputTrajectory[timeIndex], 
+                         timeStep, 
+                         continuousTimeModelData, 
+                         modelDataTrajectory[timeIndex]);
+      } 
+      else 
+      {
         modelDataTrajectory[timeIndex] = continuousTimeModelData;
       }
     }

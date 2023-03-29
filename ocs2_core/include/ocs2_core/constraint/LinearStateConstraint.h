@@ -54,6 +54,8 @@ class LinearStateConstraint : public StateConstraint {
 
   vector_t getValue(scalar_t t, const vector_t& x, const PreComputation& /* preComputation */) const final;
 
+  vector_t getValue(scalar_t t, const vector_t& x, const vector_t& x_full, const PreComputation& /* preComputation */) const final;
+
   VectorFunctionLinearApproximation getLinearApproximation(scalar_t t, const vector_t& x,
                                                            const PreComputation& /* preComputation */) const final;
 

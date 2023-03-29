@@ -64,6 +64,23 @@ vector_t ExtCollisionConstraint::getValue(scalar_t time, const vector_t& state, 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+vector_t ExtCollisionConstraint::getValue(scalar_t time, 
+                                          const vector_t& state, 
+                                          const vector_t& full_state, 
+                                          const PreComputation& preComputation) const 
+{
+  //std::cout << "[ExtCollisionConstraint::getValue] START" << std::endl;
+
+  auto pinocchioInterface = getPinocchioInterface(preComputation);
+
+  //std::cout << "[ExtCollisionConstraint::getValue] END" << std::endl;
+
+  return extCollision_.getValue(pinocchioInterface, *mappingPtr_, state);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 VectorFunctionLinearApproximation ExtCollisionConstraint::getLinearApproximation(scalar_t time, 
                                                                                  const vector_t& state,
                                                                                  const PreComputation& preComputation) const 

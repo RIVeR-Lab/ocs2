@@ -52,9 +52,53 @@ MobileManipulatorPinocchioMappingTpl<SCALAR>* MobileManipulatorPinocchioMappingT
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename SCALAR>
+const RobotModelInfo& MobileManipulatorPinocchioMappingTpl<SCALAR>::getRobotModelInfo() const
+{ 
+  return modelInfo_; 
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
 auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(const vector_t& state) const -> vector_t 
 {
   return state;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(const vector_t& state, const vector_t& fullState) const -> vector_t 
+{
+  auto modeStateDim = modelInfo_.modeStateDim;
+  vector_t pinocchioState = fullState;
+
+  switch (modelInfo_.modelMode) 
+  {
+    case ModelMode::BaseMotion:
+    {
+      pinocchioState.head(modeStateDim) = state;
+      break;
+    }
+
+    case ModelMode::ArmMotion:
+    {
+      pinocchioState.tail(modeStateDim) = state;
+      break;
+    }
+
+    case ModelMode::WholeBodyMotion:
+    {
+      pinocchioState = state;
+      break;
+    }
+
+    default: 
+      throw std::runtime_error("[MobileManipulatorPinocchioMapping::getPinocchioJointVelocity] ERROR: Invalid manipulator model type!");
+  }
+  return pinocchioState;
 }
 
 /******************************************************************************************************/
@@ -65,7 +109,7 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointVelocity(con
   -> vector_t 
 {
   auto modeStateDim = modelInfo_.modeStateDim;
-  vector_t vPinocchio = vector_t::Zero(modeStateDim);
+  vector_t pinocchioStateVelo = vector_t::Zero(modeStateDim);
 
   // Set velocity model based on model mode
   switch (modelInfo_.modelMode) 
@@ -74,13 +118,13 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointVelocity(con
     {
       const auto theta = state(2);
       const auto v = input(0);  // forward velocity in base frame
-      vPinocchio << cos(theta) * v, sin(theta) * v, input(1);
+      pinocchioStateVelo << cos(theta) * v, sin(theta) * v, input(1);
       break;
     }
 
     case ModelMode::ArmMotion:
     {
-      vPinocchio = input;
+      pinocchioStateVelo = input;
       break;
     }
 
@@ -88,14 +132,62 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointVelocity(con
     {
       const auto theta = state(2);
       const auto v = input(0);  // forward velocity in base frame
-      vPinocchio << cos(theta) * v, sin(theta) * v, input(1), input.tail(modelInfo_.robotArm.inputDim);
+      pinocchioStateVelo << cos(theta) * v, sin(theta) * v, input(1), input.tail(modelInfo_.robotArm.inputDim);
       break;
     }
 
     default: 
       throw std::runtime_error("[MobileManipulatorPinocchioMapping::getPinocchioJointVelocity] ERROR: Invalid manipulator model type!");
   }
-  return vPinocchio;
+  return pinocchioStateVelo;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointVelocity(const vector_t& state, const vector_t& fullStateVelo, const vector_t& input) const
+  -> vector_t 
+{
+  auto modeStateDim = modelInfo_.modeStateDim;
+  vector_t pinocchioStateVelo = fullStateVelo;
+
+  // Set velocity model based on model mode
+  switch (modelInfo_.modelMode) 
+  {
+    case ModelMode::BaseMotion:
+    {
+      const auto theta = state(2);
+      const auto v = input(0);  // forward velocity in base frame
+
+      pinocchioStateVelo(0) = cos(theta) * v;
+      pinocchioStateVelo(1) = sin(theta) * v;
+      pinocchioStateVelo(2) = input(1);
+      break;
+    }
+
+    case ModelMode::ArmMotion:
+    {
+      pinocchioStateVelo.tail(modelInfo_.robotArm.inputDim) = input;
+      break;
+    }
+
+    case ModelMode::WholeBodyMotion:
+    {
+      const auto theta = state(2);
+      const auto v = input(0);  // forward velocity in base frame
+
+      pinocchioStateVelo(0) = cos(theta) * v;
+      pinocchioStateVelo(1) = sin(theta) * v;
+      pinocchioStateVelo(2) = input(1);
+      pinocchioStateVelo.tail(modelInfo_.robotArm.inputDim) = input;
+      break;
+    }
+
+    default: 
+      throw std::runtime_error("[MobileManipulatorPinocchioMapping::getPinocchioJointVelocity] ERROR: Invalid manipulator model type!");
+  }
+  return pinocchioStateVelo;
 }
 
 /******************************************************************************************************/
@@ -103,6 +195,87 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointVelocity(con
 /******************************************************************************************************/
 template <typename SCALAR>
 auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const
+  -> std::pair<matrix_t, matrix_t> 
+{
+  // Set jacobian model based on model type
+  switch (modelInfo_.modelMode) 
+  {
+    case ModelMode::BaseMotion:
+    {
+      const auto stateDim = 3;
+      const auto inputDim = 2;
+
+      assert(Jq.rows() == stateDim);
+      assert(Jq.cols() == stateDim);
+      assert(Jv.rows() == stateDim);
+      assert(Jv.cols() == stateDim);
+
+      matrix_t dfdu(stateDim, inputDim);
+      Eigen::Matrix<SCALAR, stateDim, inputDim> dxdu_base;
+      
+      const SCALAR theta = state(2);
+      dxdu_base << cos(theta), SCALAR(0),
+                   sin(theta), SCALAR(0),
+                   SCALAR(0), SCALAR(1.0);
+      
+      dfdu.template leftCols<inputDim>() = Jv.template leftCols<stateDim>() * dxdu_base;
+      
+      return {Jq, dfdu};
+    }
+      
+    case ModelMode::ArmMotion:
+    {
+      const auto stateDim = modelInfo_.robotArm.stateDim;
+      const auto inputDim = modelInfo_.robotArm.inputDim;
+
+      assert(Jq.rows() == stateDim);
+      assert(Jq.cols() == stateDim);
+      assert(Jv.rows() == stateDim);
+      assert(Jv.cols() == stateDim);
+
+      return {Jq, Jv};
+    }
+
+    case ModelMode::WholeBodyMotion:
+    {
+      const auto modeStateDim = modelInfo_.modeStateDim;
+      const auto modeInputDim = modelInfo_.modeInputDim;
+
+      assert(Jq.rows() == modeStateDim);
+      assert(Jq.cols() == modeStateDim);
+      assert(Jv.rows() == modeStateDim);
+      assert(Jv.cols() == modeStateDim);
+
+      matrix_t dfdu(modeStateDim, modeInputDim);
+
+      const auto stateDimBase = 3;
+      const auto inputDimBase = 2;
+      const auto stateDimArm = modelInfo_.robotArm.stateDim;
+
+      Eigen::Matrix<SCALAR, stateDimBase, inputDimBase> dxdu_base;
+    
+      const SCALAR theta = state(2);
+      dxdu_base << cos(theta), SCALAR(0),
+                    sin(theta), SCALAR(0),
+                    SCALAR(0), SCALAR(1.0);
+      
+      dfdu.template leftCols<inputDimBase>() = Jv.template leftCols<stateDimBase>() * dxdu_base;
+      dfdu.template rightCols(stateDimArm) = Jv.template rightCols(stateDimArm);
+      
+      return {Jq, dfdu};
+    }
+      
+    default: 
+      throw std::runtime_error("[MobileManipulatorPinocchioMapping::getOcs2Jacobian] ERROR: Invalid manipulator model type!");
+      break;
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+template <typename SCALAR>
+auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getOcs2Jacobian(const vector_t& state, const vector_t& fullState, const matrix_t& Jq, const matrix_t& Jv) const
   -> std::pair<matrix_t, matrix_t> 
 {
   // Set jacobian model based on model type

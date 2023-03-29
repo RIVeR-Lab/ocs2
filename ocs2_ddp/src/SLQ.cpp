@@ -41,8 +41,10 @@ SLQ::SLQ(ddp::Settings ddpSettings,
          const RolloutBase& rollout, 
          const OptimalControlProblem& optimalControlProblem,
          const Initializer& initializer)
-    : GaussNewtonDDP(std::move(ddpSettings), rollout, optimalControlProblem, initializer) {
-  if (settings().algorithm_ != ddp::Algorithm::SLQ) {
+  : GaussNewtonDDP(std::move(ddpSettings), rollout, optimalControlProblem, initializer) 
+{
+  if (settings().algorithm_ != ddp::Algorithm::SLQ) 
+  {
     throw std::runtime_error("[SLQ] In DDP setting the algorithm name is set \"" + ddp::toAlgorithmName(settings().algorithm_) +
                              "\" while SLQ is instantiated!");
   }
@@ -50,6 +52,7 @@ SLQ::SLQ(ddp::Settings ddpSettings,
   allSsTrajectoryStock_.resize(settings().nThreads_);
   SsNormalizedTimeTrajectoryStock_.resize(settings().nThreads_);
   SsNormalizedEventsPastTheEndIndecesStock_.resize(settings().nThreads_);
+  
   // Riccati Solver
   riccatiEquationsPtrStock_.clear();
   riccatiEquationsPtrStock_.reserve(settings().nThreads_);
@@ -58,12 +61,14 @@ SLQ::SLQ(ddp::Settings ddpSettings,
 
   const auto integratorType = settings().backwardPassIntegratorType_;
   if (integratorType != IntegratorType::ODE45 && integratorType != IntegratorType::BULIRSCH_STOER &&
-      integratorType != IntegratorType::ODE45_OCS2 && integratorType != IntegratorType::RK4) {
-    throw(std::runtime_error("Unsupported Riccati equation integrator type: " +
+      integratorType != IntegratorType::ODE45_OCS2 && integratorType != IntegratorType::RK4) 
+  {
+    throw(std::runtime_error("Unsupported Riccati equation integrator type: " + 
                              integrator_type::toString(settings().backwardPassIntegratorType_)));
   }
 
-  for (size_t i = 0; i < settings().nThreads_; i++) {
+  for (size_t i = 0; i < settings().nThreads_; i++) 
+  {
     bool preComputeRiccatiTerms = settings().preComputeRiccatiTerms_ && (settings().strategy_ == search_strategy::Type::LINE_SEARCH);
     bool isRiskSensitive = !numerics::almost_eq(settings().riskSensitiveCoeff_, 0.0);
     riccatiEquationsPtrStock_.emplace_back(new ContinuousTimeRiccatiEquations(preComputeRiccatiTerms, isRiskSensitive));
@@ -79,7 +84,7 @@ SLQ::SLQ(ddp::Settings ddpSettings,
 /******************************************************************************************************/
 void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDataContainer& primalData) 
 {
-  //std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] START" << std::endl;
+  std::cout << "[GaussNewtonDDP::approximateIntermediateLQ(2)] START" << std::endl;
 
   // create alias
   const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
@@ -133,7 +138,70 @@ void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalData
 
   runParallel(task, settings().nThreads_);
 
-  //std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] END" << std::endl;
+  std::cout << "[GaussNewtonDDP::approximateIntermediateLQ(2)] END" << std::endl;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDataContainer& primalData, const vector_t& initFullState) 
+{
+  std::cout << "[SLQ::approximateIntermediateLQ(3)] START" << std::endl;
+
+  // create alias
+  const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
+  const auto& stateTrajectory = primalData.primalSolution.stateTrajectory_;
+  const auto& inputTrajectory = primalData.primalSolution.inputTrajectory_;
+  const auto& postEventIndices = primalData.primalSolution.postEventIndices_;
+  const auto& multiplierTrajectory = dualSolution.intermediates;
+  auto& modelDataTrajectory = primalData.modelDataTrajectory;
+
+  modelDataTrajectory.clear();
+  modelDataTrajectory.resize(timeTrajectory.size());
+
+  nextTimeIndex_ = 0;
+  nextTaskId_ = 0;
+  auto task = [&]() 
+  {
+    const size_t taskId = nextTaskId_++;  // assign task ID (atomic)
+
+    // get next time index is atomic
+    size_t timeIndex;
+    while ((timeIndex = nextTimeIndex_++) < timeTrajectory.size()) 
+    {
+      // approximate LQ for the given time index
+      ocs2::approximateIntermediateLQ(optimalControlProblemStock_[taskId], 
+                                      timeTrajectory[timeIndex], 
+                                      stateTrajectory[timeIndex],
+                                      initFullState,
+                                      inputTrajectory[timeIndex], 
+                                      multiplierTrajectory[timeIndex], 
+                                      modelDataTrajectory[timeIndex]);
+
+      // checking the numerical properties
+      if (settings().checkNumericalStability_) 
+      {
+        const auto errSize = checkSize(modelDataTrajectory[timeIndex], stateTrajectory[timeIndex].rows(), inputTrajectory[timeIndex].rows());
+        
+        if (!errSize.empty()) 
+        {
+          throw std::runtime_error("[SLQ::approximateIntermediateLQ] Mismatch in dimensions at intermediate time: " +
+                                   std::to_string(timeTrajectory[timeIndex]) + "\n" + errSize);
+        }
+        const std::string errProperties = checkDynamicsProperties(modelDataTrajectory[timeIndex]) +
+                                          checkCostProperties(modelDataTrajectory[timeIndex]) +
+                                          checkConstraintProperties(modelDataTrajectory[timeIndex]);
+        if (!errProperties.empty()) {
+          throw std::runtime_error("[SLQ::approximateIntermediateLQ] Ill-posed problem at intermediate time: " +
+                                   std::to_string(timeTrajectory[timeIndex]) + "\n" + errProperties);
+        }
+      }
+    }  // end of while loop
+  };
+
+  runParallel(task, settings().nThreads_);
+
+  std::cout << "[SLQ::approximateIntermediateLQ(3)] END" << std::endl;
 }
 
 /******************************************************************************************************/
