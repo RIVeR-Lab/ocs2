@@ -39,13 +39,34 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   : mrt_(mrt), 
     worldFrameName_(worldFrameName),
     mrtDesiredFrequency_(mrtDesiredFrequency), 
-    mpcDesiredFrequency_(mpcDesiredFrequency)
+    mpcDesiredFrequency_(mpcDesiredFrequency),
+    robotModelInfo_(mrt.getRobotModelInfo())
 {
   
   std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] mrtDesiredFrequency_: " << mrtDesiredFrequency_ << std::endl;
   std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] mpcDesiredFrequency_: " << mpcDesiredFrequency_ << std::endl;
   
   dt_ = 1.0 / mrtDesiredFrequency_;
+
+  switch (robotModelInfo_.robotModelType)
+  {
+    case RobotModelType::MobileBase:
+      baseFrameName_ = robotModelInfo_.mobileBase.baseFrame;
+      break;
+
+    case RobotModelType::RobotArm:
+      baseFrameName_ = robotModelInfo_.robotArm.baseFrame;
+      break;
+
+    case RobotModelType::MobileManipulator:
+      baseFrameName_ = robotModelInfo_.mobileBase.baseFrame;
+      break;
+    
+    default:
+      baseFrameName_ = robotModelInfo_.mobileBase.baseFrame;
+      std::cerr << "[MRT_ROS_Gazebo_Loop::isStateInitialized] ERROR: Invalid robot model type!";
+      break;
+  }
 
   setStateIndexMap();
   
@@ -76,16 +97,6 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
-void MRT_ROS_Gazebo_Loop::setRobotModelType(std::string robotModelType)
-{
-  robotModelType_ = robotModelType;
-}
-*/
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 bool MRT_ROS_Gazebo_Loop::isArmStateInitialized()
 {
   return initFlagArmState_;
@@ -96,7 +107,30 @@ bool MRT_ROS_Gazebo_Loop::isArmStateInitialized()
 /******************************************************************************************************/
 bool MRT_ROS_Gazebo_Loop::isStateInitialized()
 {
-  return initFlagBaseState_ && initFlagArmState_;
+  switch (robotModelInfo_.robotModelType)
+  {
+    case RobotModelType::MobileBase:
+    {  
+      //std::cout << "[MRT_ROS_Gazebo_Loop::isStateInitialized] RobotModelType::MobileBase" << std::endl;
+      return initFlagBaseState_;
+    }
+
+    case RobotModelType::RobotArm:
+    {
+      //std::cout << "[MRT_ROS_Gazebo_Loop::isStateInitialized] RobotModelType::RobotArm" << std::endl;
+      return initFlagArmState_;
+    }
+
+    case RobotModelType::MobileManipulator:
+    {
+      //std::cout << "[MRT_ROS_Gazebo_Loop::isStateInitialized] RobotModelType::MobileManipulator" << std::endl;
+      return initFlagBaseState_ && initFlagArmState_;
+    }
+
+    default:
+      std::cerr << "[MRT_ROS_Gazebo_Loop::isStateInitialized] ERROR: Invalid robot model type!";
+      return initFlagBaseState_ && initFlagArmState_;
+  }
 }
 
 /******************************************************************************************************/
@@ -113,20 +147,23 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
   mrt_.resetMpcNode(initTargetTrajectories);
 
   // Wait for the initial state and policy
-  while (!isStateInitialized() && !mrt_.initialPolicyReceived() && ros::ok() && ros::master::check()) 
+  while ( (!isStateInitialized() || !mrt_.initialPolicyReceived()) && ros::ok() && ros::master::check() ) 
   {
     mrt_.spinMRT();
 
     // Get initial observation
     initObservation = getCurrentObservation(true);
 
-    //std::cout << "OCS2_MRT_Loop::run -> initObservation:" << std::endl;
-    //std::cout << initObservation << std::endl;
-
     mrt_.setCurrentObservation(initObservation);
     ros::Rate(mrtDesiredFrequency_).sleep();
+
+    ros::spinOnce();
   }
   ROS_INFO_STREAM("[MRT_ROS_Gazebo_Loop::run] Initial policy has been received.");
+
+  //std::cout << "[MRT_ROS_Gazebo_Loop::run] isStateInitialized(): " << isStateInitialized() << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::run] BEFORE INF" << std::endl;
+  //while(1);
 
   currentInput_ = initObservation.input;
 
@@ -182,6 +219,9 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
 
   // Update the policy
   mrt_.updatePolicy();
+
+  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] BEFORE INF" << std::endl;
+  //while(1);
 
   ros::Rate simRate(mrtDesiredFrequency_);
   while (ros::ok() && ros::master::check()) 
@@ -286,11 +326,14 @@ void MRT_ROS_Gazebo_Loop::setStateIndexMap()
 
 void MRT_ROS_Gazebo_Loop::tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg)
 {
+  //std::cerr << "[MRT_ROS_Gazebo_Loop::tfCallback] START " << std::endl;
   //tf2_msgs::TFMessage tf_msg = *msg;
 
-  tfListener_.lookupTransform(worldFrameName_, mrt_.getRobotModelInfo().mobileBase.baseFrame, ros::Time(0), tf_robot_wrt_world_);
+  tfListener_.lookupTransform(worldFrameName_, baseFrameName_, ros::Time(0), tf_robot_wrt_world_);
 
   initFlagBaseState_ = true;
+
+  //std::cerr << "[MRT_ROS_Gazebo_Loop::tfCallback] START " << std::endl;
 }
 
 /******************************************************************************************************/
@@ -330,9 +373,13 @@ void MRT_ROS_Gazebo_Loop::jointStateCallback(const sensor_msgs::JointState::Cons
 /******************************************************************************************************/
 void MRT_ROS_Gazebo_Loop::jointTrajectoryControllerStateCallback(const control_msgs::JointTrajectoryControllerState::ConstPtr& msg)
 {
+  //std::cerr << "[MRT_ROS_Gazebo_Loop::jointTrajectoryControllerStateCallback] START " << std::endl;
+
   jointTrajectoryControllerStateMsg_ = *msg;
 
   initFlagArmState_ = true;
+
+  //std::cerr << "[MRT_ROS_Gazebo_Loop::jointTrajectoryControllerStateCallback] END " << std::endl;
 }
 
 /******************************************************************************************************/
@@ -368,7 +415,9 @@ void MRT_ROS_Gazebo_Loop::updateFullModelState()
   // Set arm states
   if (mrt_.getRobotModelInfo().robotArm.stateDim != jointTrajectoryControllerStateMsg.joint_names.size())
   {
-    std::cerr << "[MRT_ROS_Gazebo_Loop::updateFullModelState] ERROR: Arm state dimension mismatch!" << std::endl;
+    //std::cerr << "[MRT_ROS_Gazebo_Loop::updateFullModelState] mrt_.getArmStateDim(): " << mrt_.getRobotModelInfo().robotArm.stateDim << std::endl;
+    //std::cerr << "[MRT_ROS_Gazebo_Loop::updateFullModelState] jointTrajectoryControllerStateMsg.joint_names.size(): " << jointTrajectoryControllerStateMsg.joint_names.size() << std::endl;
+    //std::cerr << "[MRT_ROS_Gazebo_Loop::updateFullModelState] ERROR: Arm state dimension mismatch!" << std::endl;
   }
   else
   {
@@ -384,20 +433,23 @@ void MRT_ROS_Gazebo_Loop::updateFullModelState()
 /******************************************************************************************************/
 SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
 {
-  //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] START" << std::endl;
-  //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] inputDim_: " << inputDim_ << std::endl;
-  //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] stateDim_: " << stateDim_ << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] START" << std::endl;
   
-  auto fullStateDim = mrt_.getRobotModelInfo().mobileBase.stateDim + mrt_.getRobotModelInfo().robotArm.stateDim;
-  auto modeStateDim = mrt_.getRobotModelInfo().modeStateDim;
-  auto modeInputDim = mrt_.getRobotModelInfo().modeInputDim;
+  auto stateDimBase = getStateDimBase(robotModelInfo_);
+  auto stateDimArm = getStateDimArm(robotModelInfo_);
+  auto stateDim = getStateDim(robotModelInfo_);
+  auto modeStateDim = getModeStateDim(robotModelInfo_);
+  auto modeInputDim = getModeInputDim(robotModelInfo_);
+
+  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] model type: " << modelTypeEnumToString(robotModelInfo_) << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] model mode: " << modelModeEnumToString(robotModelInfo_) << std::endl;
 
   SystemObservation currentObservation;
   currentObservation.mode = 0;
   currentObservation.time = time_;
-  currentObservation.input.setZero(modeInputDim);
   currentObservation.state.setZero(modeStateDim);
-  currentObservation.full_state.setZero(fullStateDim);
+  currentObservation.full_state.setZero(stateDim);
+  currentObservation.input.setZero(modeInputDim);
 
   // Set current observation input
   if (!initFlag)
@@ -407,50 +459,107 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
 
   updateFullModelState();
 
-  // Set full_state of mobile base
-  if (mrt_.getRobotModelInfo().robotModelType == RobotModelType::MobileBase || 
-      mrt_.getRobotModelInfo().robotModelType == RobotModelType::MobileManipulator)
-  {
-    currentObservation.full_state[0] = stateBase_[0];
-    currentObservation.full_state[1] = stateBase_[1];
-    currentObservation.full_state[2] = stateBase_[2];
-  }
+  auto stateBase = stateBase_;
+  auto stateArm = stateArm_;
 
-  // Set state of mobile base
-  if (mrt_.getRobotModelInfo().modelMode == ModelMode::BaseMotion || 
-      mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+  switch (robotModelInfo_.robotModelType)
   {
-    currentObservation.state[0] = stateBase_[0];
-    currentObservation.state[1] = stateBase_[1];
-    currentObservation.state[2] = stateBase_[2];
-  }
+    case RobotModelType::MobileBase:
+    {  
+      // Set state
+      currentObservation.state[0] = stateBase[0];
+      currentObservation.state[1] = stateBase[1];
+      currentObservation.state[2] = stateBase[2];
 
-  // Set full state of arm
-  int baseOffset = mrt_.getRobotModelInfo().mobileBase.stateDim;
-  if (mrt_.getRobotModelInfo().robotModelType == RobotModelType::RobotArm || 
-      mrt_.getRobotModelInfo().robotModelType == RobotModelType::MobileManipulator)
-  {
-    //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] baseOffset: " << baseOffset << std::endl;
+      // Set full state
+      currentObservation.full_state = currentObservation.state;
+      break;
+    }
 
-    for (size_t i = 0; i < stateArm_.size(); i++)
+    case RobotModelType::RobotArm:
+    { 
+      // Set state
+      for (size_t i = 0; i < stateArm.size(); i++)
+      {
+        currentObservation.state[i] = stateArm[i];
+      }
+
+      // Set full state
+      currentObservation.full_state = currentObservation.state;
+      break;
+    }
+
+    case RobotModelType::MobileManipulator:
     {
-      currentObservation.full_state[baseOffset + i] = stateArm_[i];
+      switch (robotModelInfo_.modelMode)
+      {
+        case ModelMode::BaseMotion:
+        {
+          // Set state
+          currentObservation.state[0] = stateBase[0];
+          currentObservation.state[1] = stateBase[1];
+          currentObservation.state[2] = stateBase[2];
+
+          // Set full state
+          currentObservation.full_state[0] = stateBase[0];
+          currentObservation.full_state[1] = stateBase[1];
+          currentObservation.full_state[2] = stateBase[2];
+          break;
+        }
+
+        case ModelMode::ArmMotion:
+        {
+          for (size_t i = 0; i < stateArm.size(); i++)
+          {
+            // Set state
+            currentObservation.state[i] = stateArm[i];
+
+            // Set full state
+            currentObservation.full_state[stateDimBase + i] = stateArm[i];
+          }
+          break;
+        }
+
+        case ModelMode::WholeBodyMotion:
+        {
+          // Set state
+          currentObservation.state[0] = stateBase[0];
+          currentObservation.state[1] = stateBase[1];
+          currentObservation.state[2] = stateBase[2];
+
+          for (size_t i = 0; i < stateArm.size(); i++)
+          {
+            currentObservation.state[stateDimBase + i] = stateArm[i];
+          }
+
+          // Set full state
+          currentObservation.full_state = currentObservation.state;
+          break;
+        }
+
+        default:
+          std::cerr << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] ERROR: Invalid model mode!";
+          while(1);
+          break;
+      }
+      break;
+    }
+
+    default:
+    {
+      std::cerr << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] ERROR: Invalid robot model type!";
+      while(1);
+      break;
     }
   }
 
-  // Set state of arm state
-  if (mrt_.getRobotModelInfo().modelMode == ModelMode::ArmMotion || 
-      mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
-  {
-    //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] baseOffset: " << baseOffset << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] currentObservation.state size: " << currentObservation.state.size() << std::endl;
+  std::cout << currentObservation.state << std::endl << std::endl;
 
-    for (size_t i = 0; i < stateArm_.size(); i++)
-    {
-      currentObservation.state[baseOffset + i] = stateArm_[i];
-    }
-  }
+  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] currentObservation.full_state size: " << currentObservation.full_state.size() << std::endl;
+  std::cout << currentObservation.full_state << std::endl << std::endl;
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] END" << std::endl << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] END" << std::endl << std::endl;
 
   return currentObservation;
 }

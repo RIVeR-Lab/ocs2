@@ -1005,6 +1005,13 @@ void GaussNewtonDDP::takePrimalDualStep(scalar_t lqModelExpectedCost)
                                                modeSchedule, 
                                                solution);
   */
+
+  std::cout << "[GaussNewtonDDP::takePrimalDualStep] initState_ size: " << initState_.size() << std::endl;
+  std::cout << initState_ << std::endl << std::endl;
+
+  std::cout << "[GaussNewtonDDP::takePrimalDualStep] initFullState_ size: " << initFullState_.size() << std::endl;
+  std::cout << initFullState_ << std::endl << std::endl;
+
   const bool success = searchStrategyPtr_->run({initTime_, finalTime_}, 
                                                initState_, 
                                                initFullState_,
@@ -1097,6 +1104,10 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) 
 {
   //std::cout << "[GaussNewtonDDP::runImpl(3)] START" << std::endl;
+
+  //// NUA TODO: REMOVE AFTER MULTI-MODEL IS COMPLETED!
+  std::cout << "[GaussNewtonDDP::runImpl(3)] DEBUG INF LOOP!" << std::endl;
+  while(1);
 
   if (ddpSettings_.displayInfo_) 
   {

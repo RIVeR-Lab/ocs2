@@ -74,8 +74,8 @@ vector_t EndEffectorConstraint::getValue(scalar_t time,
   std::cout << "[EndEffectorConstraint::getValue(3)] END" << std:: endl;
 
   // NUA TODO: CLEAR THESE WHEN BE SURE THAT MULTI-MODEL IS WORKING!
-  //std::cout << "[EndEffectorConstraint::getValue(3)] BEFORE INF" << std:: endl;
-  //while(1);
+  std::cout << "[EndEffectorConstraint::getValue(3)] BEFORE INF" << std:: endl;
+  while(1);
 
   // PinocchioEndEffectorKinematics requires pre-computation with shared PinocchioInterface.
   if (pinocchioEEKinPtr_ != nullptr) 
@@ -114,7 +114,7 @@ vector_t EndEffectorConstraint::getValue(scalar_t time,
                                          const vector_t& fullState, 
                                          const PreComputation& preComputation) const 
 {
-  std::cout << "[EndEffectorConstraint::getValue(4)] START" << std:: endl;
+  //std::cout << "[EndEffectorConstraint::getValue(4)] START" << std:: endl;
 
   // PinocchioEndEffectorKinematics requires pre-computation with shared PinocchioInterface.
   if (pinocchioEEKinPtr_ != nullptr) 
@@ -143,7 +143,7 @@ vector_t EndEffectorConstraint::getValue(scalar_t time,
     }
   }
 
-  std::cout << "[EndEffectorConstraint::getValue(4)] END" << std:: endl << std::endl;
+  //std::cout << "[EndEffectorConstraint::getValue(4)] END" << std:: endl << std::endl;
 
   return constraint;
 }
@@ -158,8 +158,8 @@ VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(
   std::cout << "[EndEffectorConstraint::getLinearApproximation(3)] START" << std:: endl;
 
   // NUA TODO: CLEAR THESE WHEN BE SURE THAT MULTI-MODEL IS WORKING!
-  //std::cout << "[EndEffectorConstraint::getLinearApproximation(3)] BEFORE INF" << std:: endl;
-  //while(1);
+  std::cout << "[EndEffectorConstraint::getLinearApproximation(3)] BEFORE INF" << std:: endl;
+  while(1);
 
   // PinocchioEndEffectorKinematics requires pre-computation with shared PinocchioInterface.
   if (pinocchioEEKinPtr_ != nullptr) 

@@ -141,6 +141,9 @@ class MRT_ROS_Gazebo_Loop
     void publishCommand();
 
     std::string worldFrameName_;
+    std::string baseFrameName_;
+
+    RobotModelInfo robotModelInfo_;
 
     bool initFlagBaseState_ = false;
     bool initFlagArmState_ = false;

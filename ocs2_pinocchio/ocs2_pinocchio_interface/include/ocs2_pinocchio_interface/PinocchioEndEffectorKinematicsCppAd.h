@@ -153,17 +153,9 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
                                         const ad_vector_t& state,
                                         const ad_vector_t& params);
 
-    /*
-    ad_vector_t getTMPOrientationErrorCppAd(PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
-                                        const PinocchioStateInputMapping<ad_scalar_t>& mapping, 
-                                        const ad_vector_t& state,
-                                        const ad_vector_t& params);
-    */
-
     std::unique_ptr<CppAdInterface> positionCppAdInterfacePtr_;
     std::unique_ptr<CppAdInterface> velocityCppAdInterfacePtr_;
     std::unique_ptr<CppAdInterface> orientationErrorCppAdInterfacePtr_;
-    //std::unique_ptr<CppAdInterface> TMPorientationErrorCppAdInterfacePtr_;
 
     RobotModelInfo robotModelInfo_;
     

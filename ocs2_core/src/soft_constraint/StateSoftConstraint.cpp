@@ -88,7 +88,7 @@ scalar_t StateSoftConstraint::getValue(scalar_t time,
                                        const TargetTrajectories&,
                                        const PreComputation& preComp) const 
 {
-  std::cout << "[StateSoftConstraint::getValue(5)] START" << std::endl;
+  //std::cout << "[StateSoftConstraint::getValue(5)] START" << std::endl;
 
   return penalty_.getValue(time, constraintPtr_->getValue(time, state, fullState, preComp));
 }

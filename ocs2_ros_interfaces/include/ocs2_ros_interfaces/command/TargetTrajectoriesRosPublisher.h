@@ -44,23 +44,24 @@ namespace ocs2 {
 /**
  * This class provides a ROS publisher for the TargetTrajectories.
  */
-class TargetTrajectoriesRosPublisher final {
- public:
-  /**
-   * Constructor.
-   * @param [in] nodeHandle: ROS node handle.
-   * @param [in] topicPrefix: The TargetTrajectories will be published on "topicPrefix_mpc_target" topic.
-   */
-  TargetTrajectoriesRosPublisher(::ros::NodeHandle& nodeHandle, const std::string& topicPrefix = "anonymousRobot");
+class TargetTrajectoriesRosPublisher final 
+{
+  public:
+    /**
+     * Constructor.
+     * @param [in] nodeHandle: ROS node handle.
+     * @param [in] topicPrefix: The TargetTrajectories will be published on "topicPrefix_mpc_target" topic.
+     */
+    TargetTrajectoriesRosPublisher(::ros::NodeHandle& nodeHandle, const std::string& topicPrefix = "anonymousRobot");
 
-  /** Destructor. */
-  ~TargetTrajectoriesRosPublisher();
+    /** Destructor. */
+    ~TargetTrajectoriesRosPublisher();
 
-  /** Publishes the target trajectories. */
-  void publishTargetTrajectories(const TargetTrajectories& targetTrajectories);
+    /** Publishes the target trajectories. */
+    void publishTargetTrajectories(const TargetTrajectories& targetTrajectories);
 
- private:
-  ::ros::Publisher targetTrajectoriesPublisher_;
+  private:
+    ::ros::Publisher targetTrajectoriesPublisher_;
 };
 
 }  // namespace ocs2

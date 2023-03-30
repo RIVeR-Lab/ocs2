@@ -47,7 +47,7 @@ namespace ocs2 {
 class TargetTrajectoriesInteractiveMarker final 
 {
   public:
-    using GaolPoseToTargetTrajectories = std::function<TargetTrajectories(const Eigen::Vector3d& position, 
+    using GoalPoseToTargetTrajectories = std::function<TargetTrajectories(const Eigen::Vector3d& position, 
                                                                           const Eigen::Quaterniond& orientation, 
                                                                           const SystemObservation& observation)>;
 
@@ -57,11 +57,11 @@ class TargetTrajectoriesInteractiveMarker final
      * @param [in] nodeHandle: ROS node handle.
      * @param [in] topicPrefix: The TargetTrajectories will be published on "topicPrefix_mpc_target" topic. Moreover, the latest
      * observation is be expected on "topicPrefix_mpc_observation" topic.
-     * @param [in] gaolPoseToTargetTrajectories: A function which transforms the commanded pose to TargetTrajectories.
+     * @param [in] goalPoseToTargetTrajectories: A function which transforms the commanded pose to TargetTrajectories.
      */
     TargetTrajectoriesInteractiveMarker(::ros::NodeHandle& nodeHandle, 
                                         const std::string& topicPrefix,
-                                        GaolPoseToTargetTrajectories gaolPoseToTargetTrajectories);
+                                        GoalPoseToTargetTrajectories goalPoseToTargetTrajectories);
 
     /**
      * Spins ROS to update the interactive markers.
@@ -75,7 +75,7 @@ class TargetTrajectoriesInteractiveMarker final
     interactive_markers::MenuHandler menuHandler_;
     interactive_markers::InteractiveMarkerServer server_;
 
-    GaolPoseToTargetTrajectories gaolPoseToTargetTrajectories_;
+    GoalPoseToTargetTrajectories goalPoseToTargetTrajectories_;
 
     std::unique_ptr<TargetTrajectoriesRosPublisher> targetTrajectoriesPublisherPtr_;
 

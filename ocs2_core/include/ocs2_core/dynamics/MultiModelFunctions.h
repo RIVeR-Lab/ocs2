@@ -89,12 +89,12 @@ size_t getModeInputDim(RobotModelInfo& robotModelInfo);
 /**
  * NUA TODO: UPDATE!
  */
-static std::string modelTypeEnumToString(RobotModelType& robotModelType);
+std::string modelTypeEnumToString(RobotModelInfo& robotModelInfo);
 
 /**
  * NUA TODO: UPDATE!
  */
-static std::string modelModeEnumToString(ModelMode modelMode);
+std::string modelModeEnumToString(RobotModelInfo& robotModelInfo);
 
 /** Load ManipulatorModelType for a config file */
 RobotModelType loadRobotType(const std::string& configFilePath, const std::string& fieldName = "robotModelType");

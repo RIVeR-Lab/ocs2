@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 
 //#include "ocs2_mobile_manipulator/RobotModelInfo.h"
+#include "ocs2_core/dynamics/MultiModelFunctions.h"
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
 
 using namespace ocs2;
@@ -114,6 +115,48 @@ int main(int argc, char** argv)
   std::cout << "[MobileManipulatorMpcNode::main] END INIT MobileManipulatorInterface" << std::endl;
   std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
   std::cout << "" << std::endl;
+
+  // RobotModelInfo
+  RobotModelInfo robotModelInfo = interface.getRobotModelInfo();
+  std::string baseFrameName = robotModelInfo.mobileBase.baseFrame;
+  if (robotModelInfo.robotModelType == RobotModelType::RobotArm)
+  {
+    baseFrameName = robotModelInfo.robotArm.baseFrame;
+  }
+
+  auto stateDimBase = getStateDimBase(robotModelInfo);
+  auto stateDimArm = getStateDimArm(robotModelInfo);
+  auto stateDim = getStateDim(robotModelInfo);
+  auto modeStateDim = getModeStateDim(robotModelInfo);
+
+  auto inputDimBase = getInputDimBase(robotModelInfo);
+  auto inputDimArm = getInputDimArm(robotModelInfo);
+  auto inputDim = getInputDim(robotModelInfo);
+  auto modeInputDim = getModeInputDim(robotModelInfo);
+
+  std::cout << "[MobileManipulatorMpcNode::main] robotModelType: " << modelTypeEnumToString(robotModelInfo) << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] robotModelType: " << modelModeEnumToString(robotModelInfo) << std::endl << std::endl;
+
+  std::cout << "[MobileManipulatorMpcNode::main] stateDimBase: " << stateDimBase << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] stateDimArm: " << stateDimArm << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] stateDim: " << stateDim << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] modeStateDim: " << modeStateDim << std::endl << std::endl;
+
+  std::cout << "[MobileManipulatorMpcNode::main] inputDimBase: " << inputDimBase << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] inputDimArm: " << inputDimArm << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] inputDim: " << inputDim << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] modeInputDim: " << modeInputDim << std::endl << std::endl;
+
+  std::cout << "[MobileManipulatorMpcNode::main] armJointFrameNames: " << std::endl;
+  for (int i = 0; i < robotModelInfo.robotArm.jointFrameNames.size(); ++i)
+  {
+    std::cout << i << ": " << robotModelInfo.robotArm.jointFrameNames[i] << std::endl;
+  }
+  std::cout << "[MobileManipulatorMpcNode::main] armJointNames: " << std::endl;
+  for (int i = 0; i < robotModelInfo.robotArm.jointNames.size(); ++i)
+  {
+    std::cout << i << ": " << robotModelInfo.robotArm.jointNames[i] << std::endl;
+  }
 
   //std::cout << "[MobileManipulatorMpcNode::main] BEFORE INF" << std::endl;
   //while(1);

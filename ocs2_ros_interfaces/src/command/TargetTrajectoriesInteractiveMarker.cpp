@@ -39,8 +39,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 TargetTrajectoriesInteractiveMarker::TargetTrajectoriesInteractiveMarker(::ros::NodeHandle& nodeHandle, 
                                                                          const std::string& topicPrefix,
-                                                                         GaolPoseToTargetTrajectories gaolPoseToTargetTrajectories)
-    : server_("simple_marker"), gaolPoseToTargetTrajectories_(std::move(gaolPoseToTargetTrajectories)) 
+                                                                         GoalPoseToTargetTrajectories goalPoseToTargetTrajectories)
+    : server_("simple_marker"), goalPoseToTargetTrajectories_(std::move(goalPoseToTargetTrajectories)) 
 {
   // observation subscriber
   auto observationCallback = [this](const ocs2_msgs::mpc_observation::ConstPtr& msg) 
@@ -168,7 +168,7 @@ void TargetTrajectoriesInteractiveMarker::processFeedback(const visualization_ms
   }
 
   // get TargetTrajectories
-  const auto targetTrajectories = gaolPoseToTargetTrajectories_(position, orientation, observation);
+  const auto targetTrajectories = goalPoseToTargetTrajectories_(position, orientation, observation);
 
   // publish TargetTrajectories
   targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);

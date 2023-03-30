@@ -54,6 +54,8 @@ vector_t TimeTriggeredRollout::run(scalar_t initTime,
                                    vector_array_t& stateTrajectory, 
                                    vector_array_t& inputTrajectory) 
 {
+  std::cout << "[TimeTriggeredRollout::run] START" << std::endl;
+
   if (initTime > finalTime) 
   {
     throw std::runtime_error("[TimeTriggeredRollout::run] ERROR: The initial time should be less-equal to the final time!");
@@ -137,6 +139,8 @@ vector_t TimeTriggeredRollout::run(scalar_t initTime,
 
   // check for the numerical stability
   this->checkNumericalStability(*controller, timeTrajectory, postEventIndices, stateTrajectory, inputTrajectory);
+
+  std::cout << "[TimeTriggeredRollout::run] END" << std::endl;
 
   return stateTrajectory.back();
 }

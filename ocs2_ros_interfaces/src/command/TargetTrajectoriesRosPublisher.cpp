@@ -37,7 +37,8 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TargetTrajectoriesRosPublisher::TargetTrajectoriesRosPublisher(::ros::NodeHandle& nodeHandle, const std::string& topicPrefix) {
+TargetTrajectoriesRosPublisher::TargetTrajectoriesRosPublisher(::ros::NodeHandle& nodeHandle, const std::string& topicPrefix) 
+{
   targetTrajectoriesPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_target_trajectories>(topicPrefix + "_mpc_target", 1, false);
   ros::spinOnce();
   ROS_INFO_STREAM("The TargetTrajectories is publishing on " + topicPrefix + "_mpc_target topic.");
@@ -46,14 +47,16 @@ TargetTrajectoriesRosPublisher::TargetTrajectoriesRosPublisher(::ros::NodeHandle
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TargetTrajectoriesRosPublisher::~TargetTrajectoriesRosPublisher() {
+TargetTrajectoriesRosPublisher::~TargetTrajectoriesRosPublisher() 
+{
   targetTrajectoriesPublisher_.shutdown();
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void TargetTrajectoriesRosPublisher::publishTargetTrajectories(const TargetTrajectories& targetTrajectories) {
+void TargetTrajectoriesRosPublisher::publishTargetTrajectories(const TargetTrajectories& targetTrajectories) 
+{
   const auto mpcTargetTrajectoriesMsg = ros_msg_conversions::createTargetTrajectoriesMsg(targetTrajectories);
   targetTrajectoriesPublisher_.publish(mpcTargetTrajectoriesMsg);
 }

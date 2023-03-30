@@ -263,7 +263,7 @@ void MPC_ROS_Interface::copyToBuffer(const SystemObservation& mpcInitObservation
 /******************************************************************************************************/
 void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg) 
 {
-  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START" << std::endl;
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START" << std::endl;
 
   std::lock_guard<std::mutex> resetLock(resetMutex_);
 
@@ -279,6 +279,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   // measure the delay in running MPC
   mpcTimer_.startTimer();
 
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START mpc_.run" << std::endl;
   // run MPC
   bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state, currentObservation.full_state);
   if (!controllerIsUpdated) 
@@ -286,6 +287,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
     return;
   }
   copyToBuffer(currentObservation);
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END mpc_.run" << std::endl;
 
   // measure the delay for sending ROS messages
   mpcTimer_.endTimer();
@@ -325,7 +327,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE INF LOOP" << std::endl;
   //while(1){;}
 
-  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END" << std::endl << std::endl;
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END" << std::endl << std::endl;
 }
 
 /******************************************************************************************************/

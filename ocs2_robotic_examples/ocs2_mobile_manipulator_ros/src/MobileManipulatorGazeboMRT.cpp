@@ -118,18 +118,29 @@ int main(int argc, char** argv)
     baseFrameName = robotModelInfo.robotArm.baseFrame;
   }
 
-  auto stateDimBase = robotModelInfo.mobileBase.stateDim;
-  auto stateDimArm = robotModelInfo.robotArm.stateDim;
-  auto stateDim = stateDimBase + stateDimArm;
+  auto stateDimBase = getStateDimBase(robotModelInfo);
+  auto stateDimArm = getStateDimArm(robotModelInfo);
+  auto stateDim = getStateDim(robotModelInfo);
+  auto modeStateDim = getModeStateDim(robotModelInfo);
 
-  auto inputDimBase = robotModelInfo.mobileBase.inputDim;
-  auto inputDimArm = robotModelInfo.robotArm.inputDim;
-  auto inputDim = inputDimBase + inputDimArm;
+  auto inputDimBase = getInputDimBase(robotModelInfo);
+  auto inputDimArm = getInputDimArm(robotModelInfo);
+  auto inputDim = getInputDim(robotModelInfo);
+  auto modeInputDim = getModeInputDim(robotModelInfo);
 
-  //std::cout << "[MobileManipulatorGazeboMRT::main] robotModelType: " << modelTypeEnumToString(robotModelInfo.robotModelType) << std::endl;
-  std::cout << "[MobileManipulatorGazeboMRT::main] stateDim: " << stateDim << std::endl;
-  std::cout << "[MobileManipulatorGazeboMRT::main] inputDim: " << inputDim << std::endl;
+  std::cout << "[MobileManipulatorGazeboMRT::main] robotModelType: " << modelTypeEnumToString(robotModelInfo) << std::endl;
+  std::cout << "[MobileManipulatorGazeboMRT::main] robotModelType: " << modelModeEnumToString(robotModelInfo) << std::endl << std::endl;
+  
+  std::cout << "[MobileManipulatorGazeboMRT::main] stateDimBase: " << stateDimBase << std::endl;
   std::cout << "[MobileManipulatorGazeboMRT::main] stateDimArm: " << stateDimArm << std::endl;
+  std::cout << "[MobileManipulatorGazeboMRT::main] stateDim: " << stateDim << std::endl;
+  std::cout << "[MobileManipulatorGazeboMRT::main] modeStateDim: " << modeStateDim << std::endl << std::endl;
+
+  std::cout << "[MobileManipulatorGazeboMRT::main] inputDimBase: " << inputDimBase << std::endl;
+  std::cout << "[MobileManipulatorGazeboMRT::main] inputDimArm: " << inputDimArm << std::endl;
+  std::cout << "[MobileManipulatorGazeboMRT::main] inputDim: " << inputDim << std::endl;
+  std::cout << "[MobileManipulatorGazeboMRT::main] modeInputDim: " << modeInputDim << std::endl << std::endl;
+
   std::cout << "[MobileManipulatorGazeboMRT::main] armJointFrameNames: " << std::endl;
   for (int i = 0; i < robotModelInfo.robotArm.jointFrameNames.size(); ++i)
   {
@@ -140,8 +151,6 @@ int main(int argc, char** argv)
   {
     std::cout << i << ": " << robotModelInfo.robotArm.jointNames[i] << std::endl;
   }
-
-  //size_t modelMode = getModelModeInt(robotModelInfo);
 
   // MRT
   MRT_ROS_Interface mrt(robotModelInfo, robotName);
@@ -160,7 +169,6 @@ int main(int argc, char** argv)
                                interface.mpcSettings().mrtDesiredFrequency_, 
                                interface.mpcSettings().mpcDesiredFrequency_);
   mrt_loop.subscribeObservers({ocs2_mm_visu});
-
 
   // initial state
   SystemObservation initObservation;

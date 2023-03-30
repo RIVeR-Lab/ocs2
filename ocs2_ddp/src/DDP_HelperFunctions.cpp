@@ -68,6 +68,10 @@ void computeRolloutMetrics(OptimalControlProblem& problem,
 {
   //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics(4)] START" << std::endl;
 
+  //// NUA TODO: REMOVE AFTER MULTI-MODEL IS COMPLETED!
+  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics(4)] DEBUG INF LOOP!" << std::endl;
+  while(1);
+
   const auto& tTrajectory = primalSolution.timeTrajectory_;
   const auto& xTrajectory = primalSolution.stateTrajectory_;
   const auto& uTrajectory = primalSolution.inputTrajectory_;
@@ -130,7 +134,7 @@ void computeRolloutMetrics(OptimalControlProblem& problem,
                            const vector_t& initFullState,
                            ProblemMetrics& problemMetrics) 
 {
-  //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics(5)] START" << std::endl;
+  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics(5)] START" << std::endl;
 
   const auto& tTrajectory = primalSolution.timeTrajectory_;
   const auto& xTrajectory = primalSolution.stateTrajectory_;
@@ -200,7 +204,7 @@ void computeRolloutMetrics(OptimalControlProblem& problem,
     //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END computeFinalMetrics" << std::endl;
   }
 
-  //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END" << std::endl;
+  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -277,16 +281,40 @@ PerformanceIndex computeRolloutPerformanceIndex(const scalar_array_t& timeTrajec
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t rolloutTrajectory(RolloutBase& rollout, scalar_t initTime, const vector_t& initState, scalar_t finalTime,
-                           PrimalSolution& primalSolution) {
-  // rollout with controller
-  const auto xCurrent = rollout.run(initTime, initState, finalTime, primalSolution.controllerPtr_.get(), primalSolution.modeSchedule_,
-                                    primalSolution.timeTrajectory_, primalSolution.postEventIndices_, primalSolution.stateTrajectory_,
-                                    primalSolution.inputTrajectory_);
+scalar_t rolloutTrajectory(RolloutBase& rollout, 
+                           scalar_t initTime, 
+                           const vector_t& initState, 
+                           scalar_t finalTime,
+                           PrimalSolution& primalSolution) 
+{
+  std::cout << "[DDP_HelperFunctions::rolloutTrajectory] START" << std::endl;
 
-  if (!xCurrent.allFinite()) {
+  std::cout << "[DDP_HelperFunctions::rolloutTrajectory] initTime size: " << initTime << std::endl;
+  std::cout << "[DDP_HelperFunctions::rolloutTrajectory] initState size: " << initState.size() << std::endl;
+  std::cout << "[DDP_HelperFunctions::rolloutTrajectory] finalTime: " << finalTime << std::endl;
+  std::cout << "[DDP_HelperFunctions::rolloutTrajectory] primalSolution.stateTrajectory_ size: " << primalSolution.stateTrajectory_.size() << std::endl;
+  std::cout << "[DDP_HelperFunctions::rolloutTrajectory] primalSolution.inputTrajectory_ size: " << primalSolution.inputTrajectory_.size() << std::endl;
+
+  std::cout << "[DDP_HelperFunctions::rolloutTrajectory] START rollout.run" << std::endl;
+  // rollout with controller
+  const auto xCurrent = rollout.run(initTime, 
+                                    initState, 
+                                    finalTime, 
+                                    primalSolution.controllerPtr_.get(), 
+                                    primalSolution.modeSchedule_,
+                                    primalSolution.timeTrajectory_, 
+                                    primalSolution.postEventIndices_, 
+                                    primalSolution.stateTrajectory_,
+                                    primalSolution.inputTrajectory_);
+  std::cout << "[DDP_HelperFunctions::rolloutTrajectory] END rollout.run" << std::endl;
+
+  if (!xCurrent.allFinite()) 
+  {
+    std::cout << "[DDP_HelperFunctions::rolloutTrajectory] CIYAKUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU" << std::endl;
     throw std::runtime_error("[rolloutTrajectory] System became unstable during the rollout!");
   }
+
+  std::cout << "[DDP_HelperFunctions::rolloutTrajectory] END" << std::endl;
 
   // average time step
   return (finalTime - initTime) / static_cast<scalar_t>(primalSolution.timeTrajectory_.size());

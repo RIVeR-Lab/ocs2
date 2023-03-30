@@ -59,7 +59,10 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   
   /// Resolve meta-information about the model
   // Read robot type
+
+  //std::cout << "----------////////////////---------------||||||||||||||||------------------\\\\\\\\\\\\\\\-------------" << std::endl;
   RobotModelType robotModelType = loadRobotType(taskFile_, "model_information.robotModelType");
+  //std::cout << "----------////////////////---------------||||||||||||||||------------------\\\\\\\\\\\\\\\-------------" << std::endl;
 
   // Read the joints to make fixed
   std::vector<std::string> removeJointNames;
@@ -137,7 +140,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   referenceManagerPtr_.reset(new ReferenceManager);
 
   // NUA TODO: We don't need to do it here!
-  setMPCProblem(2, pointsAndRadii);
+  setMPCProblem(1, pointsAndRadii);
   
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END" << std::endl;
 }

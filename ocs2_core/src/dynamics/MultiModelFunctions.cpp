@@ -244,11 +244,11 @@ bool updateModelMode(RobotModelInfo& robotModelInfo, size_t& modelMode)
 /**
  * @brief Returns a string for a RobotModelType for retrieving data from a .info file
  */
-static std::string modelTypeEnumToString(RobotModelType robotModelType) 
+std::string modelTypeEnumToString(RobotModelInfo& robotModelInfo) 
 {
   std::string robotModelTypeString;
 
-  switch (robotModelType) 
+  switch (robotModelInfo.robotModelType) 
   {
     case RobotModelType::MobileBase: 
       robotModelTypeString = "mobileBase";
@@ -273,11 +273,11 @@ static std::string modelTypeEnumToString(RobotModelType robotModelType)
 /**
  * @brief Returns a string for a ModelMode
  */
-static std::string modelModeEnumToString(ModelMode& modelMode) 
+std::string modelModeEnumToString(RobotModelInfo& robotModelInfo) 
 {
   std::string modeModelString;
 
-  switch (modelMode) 
+  switch (robotModelInfo.modelMode) 
   {
     case ModelMode::BaseMotion: 
       modeModelString = "baseMotion";
