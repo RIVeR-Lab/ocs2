@@ -57,6 +57,9 @@ MobileManipulatorPreComputation* MobileManipulatorPreComputation::clone() const
 /******************************************************************************************************/
 void MobileManipulatorPreComputation::request(RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) 
 {
+  std::cout << "[MobileManipulatorPreComputation::request] DEBUG INF LOOP!" << std::endl;
+  while(1);
+
   if (!request.containsAny(Request::Cost + Request::Constraint + Request::SoftConstraint)) 
   {
     return;
@@ -85,6 +88,9 @@ void MobileManipulatorPreComputation::request(RequestSet request, scalar_t t, co
 /******************************************************************************************************/
 void MobileManipulatorPreComputation::requestFinal(RequestSet request, scalar_t t, const vector_t& x) 
 {
+  std::cout << "[MobileManipulatorPreComputation::requestFinal] DEBUG INF LOOP!" << std::endl;
+  while(1);
+
   if (!request.containsAny(Request::Cost + Request::Constraint + Request::SoftConstraint)) 
   {
     return;

@@ -181,6 +181,9 @@ inline ModelData approximateFinalLQ(OptimalControlProblem& problem,
                                     const vector_t& state,
                                     const MultiplierCollection& multipliers) 
 {
+  std::cout << "[LinearQuadraticApproximator::approximateFinalLQ(4)] DEBUG INF" << std::endl;
+  while(1);
+
   ModelData md;
   approximateFinalLQ(problem, time, state, multipliers, md);
   return md;

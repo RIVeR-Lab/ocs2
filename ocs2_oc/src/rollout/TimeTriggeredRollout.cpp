@@ -54,7 +54,7 @@ vector_t TimeTriggeredRollout::run(scalar_t initTime,
                                    vector_array_t& stateTrajectory, 
                                    vector_array_t& inputTrajectory) 
 {
-  std::cout << "[TimeTriggeredRollout::run] START" << std::endl;
+  //std::cout << "[TimeTriggeredRollout::run] START" << std::endl;
 
   if (initTime > finalTime) 
   {
@@ -93,6 +93,11 @@ vector_t TimeTriggeredRollout::run(scalar_t initTime,
   // reset the event class
   systemEventHandlersPtr_->reset();
 
+  //std::cout << "[TimeTriggeredRollout::run] maxNumSteps: " << maxNumSteps << std::endl;
+  //std::cout << "[TimeTriggeredRollout::run] numSubsystems: " << numSubsystems << std::endl;
+  //std::cout << "[TimeTriggeredRollout::run] BEFORE stateTrajectory size: " << stateTrajectory.size() << std::endl;
+  //std::cout << "[TimeTriggeredRollout::run] BEFORE inputTrajectory size: " << inputTrajectory.size() << std::endl;
+
   vector_t beginState = initState;
   int k_u = 0;  // control input iterator
   for (int i = 0; i < numSubsystems; i++) 
@@ -101,6 +106,7 @@ vector_t TimeTriggeredRollout::run(scalar_t initTime,
     {
       Observer observer(&stateTrajectory, &timeTrajectory);  // concatenate trajectory
       
+      //std::cout << "[TimeTriggeredRollout::run] START integrateAdaptive" << std::endl;
       // integrate controlled system
       dynamicsIntegratorPtr_->integrateAdaptive(*systemDynamicsPtr_, 
                                                 observer, 
@@ -111,9 +117,11 @@ vector_t TimeTriggeredRollout::run(scalar_t initTime,
                                                 this->settings().absTolODE,
                                                 this->settings().relTolODE, 
                                                 maxNumSteps);
+      //std::cout << "[TimeTriggeredRollout::run] END integrateAdaptive" << std::endl;
     } 
     else 
     {
+      //std::cout << "[TimeTriggeredRollout::run] else" << std::endl;
       timeTrajectory.push_back(timeIntervalArray[i].second);
       stateTrajectory.push_back(beginState);
     }
@@ -121,26 +129,40 @@ vector_t TimeTriggeredRollout::run(scalar_t initTime,
     // compute control input trajectory and concatenate to inputTrajectory
     if (this->settings().reconstructInputTrajectory) 
     {
+      //std::cout << "[TimeTriggeredRollout::run] START computeInput" << std::endl;
       for (; k_u < timeTrajectory.size(); k_u++) 
       {
+        
         inputTrajectory.emplace_back(systemDynamicsPtr_->controllerPtr()->computeInput(timeTrajectory[k_u], stateTrajectory[k_u]));
       }  // end of k_u loop
+      //std::cout << "[TimeTriggeredRollout::run] END computeInput" << std::endl;
     }
 
     // a jump has taken place
     if (i < numEvents) 
     {
+      //std::cout << "[TimeTriggeredRollout::run] START jump" << std::endl;
       postEventIndices.push_back(stateTrajectory.size());
       
       // jump map
       beginState = systemDynamicsPtr_->computeJumpMap(timeTrajectory.back(), stateTrajectory.back());
+      //std::cout << "[TimeTriggeredRollout::run] END jump" << std::endl;
     }
   }  // end of i loop
+
+  //std::cout << "[TimeTriggeredRollout::run] AFTER stateTrajectory size: " << stateTrajectory.size() << std::endl;
+  //std::cout << "[TimeTriggeredRollout::run] AFTER inputTrajectory size: " << inputTrajectory.size() << std::endl;
+
+  //std::cout << "[TimeTriggeredRollout::run] DEBUG INF" << std::endl;
+  //while(1);
 
   // check for the numerical stability
   this->checkNumericalStability(*controller, timeTrajectory, postEventIndices, stateTrajectory, inputTrajectory);
 
-  std::cout << "[TimeTriggeredRollout::run] END" << std::endl;
+  //std::cout << "[TimeTriggeredRollout::run] inputTrajectory:" << std::endl;
+  //std::cout << inputTrajectory.back() << std::endl;
+
+  //std::cout << "[TimeTriggeredRollout::run] END" << std::endl;
 
   return stateTrajectory.back();
 }

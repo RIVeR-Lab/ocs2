@@ -68,7 +68,7 @@ class MRT_ROS_Gazebo_Loop
     /**
      * Destructor.
      */
-    virtual ~MRT_ROS_Gazebo_Loop() = default;
+    virtual ~MRT_ROS_Gazebo_Loop();
 
     /** NUA TODO: Add description */
     //void setRobotModelType(std::string robotModelType);
@@ -116,9 +116,6 @@ class MRT_ROS_Gazebo_Loop
     void setStateIndexMap();
 
     /** NUA TODO: Add description */
-    void tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg);
-
-    /** NUA TODO: Add description */
     void odometryCallback(const nav_msgs::Odometry::ConstPtr& msg);
 
     /** NUA TODO: Add description */
@@ -131,7 +128,7 @@ class MRT_ROS_Gazebo_Loop
     void jointTrajectoryControllerStateCallback(const control_msgs::JointTrajectoryControllerState::ConstPtr& msg);
 
     /** NUA TODO: Add description */
-    void updateFullModelState();
+    void updateState();
 
     /** NUA TODO: Add description */
     SystemObservation getCurrentObservation(bool initFlag=false);
@@ -162,7 +159,7 @@ class MRT_ROS_Gazebo_Loop
     std::vector<double> stateBase_;
     std::vector<double> stateArm_;
 
-    tf::TransformListener tfListener_;
+    tf::TransformListener* tfListenerPtr_;
 
     std::vector<std::shared_ptr<DummyObserver>> observers_;
 

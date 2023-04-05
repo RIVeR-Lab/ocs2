@@ -140,7 +140,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   referenceManagerPtr_.reset(new ReferenceManager);
 
   // NUA TODO: We don't need to do it here!
-  setMPCProblem(1, pointsAndRadii);
+  setMPCProblem(2, pointsAndRadii);
   
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END" << std::endl;
 }
@@ -183,6 +183,9 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
   // Self-collision avoidance constraint
   if (activateSelfCollision_) 
   {
+    std::cout << "[MobileManipulatorInterface::setMPCProblem] DEBUG INF activateSelfCollision_" << std::endl;
+    while(1);
+
     if (modelMode == 1 || modelMode == 2)
     {
       problem_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint("selfCollision"));
@@ -194,6 +197,9 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
   // External-collision avoidance constraint
   if (activateExtCollision_) 
   {
+    std::cout << "[MobileManipulatorInterface::setMPCProblem] DEBUG INF activateExtCollision_" << std::endl;
+    while(1);
+
     createPointsOnRobotPtr(pointsAndRadii);
     
     if (pointsOnRobotPtr_->getNumOfPoints() > 0) 
@@ -236,10 +242,14 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
   std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE Dynamics" << std::endl;
   
   // Dynamics
-  switch (modelMode) 
+  switch (robotModelInfo_.robotModelType) 
   {
-    case 0:
-      std::cout << "[MobileManipulatorInterface::setMPCProblem] Mobile Base" << std::endl;
+    case RobotModelType::MobileBase:
+      std::cout << "[MobileManipulatorInterface::setMPCProblem] MobileBase" << std::endl;
+
+      std::cout << "[MobileManipulatorInterface::setMPCProblem] DEBUG INF MobileBase" << std::endl;
+      while(1);
+
       problem_.dynamicsPtr.reset(new MobileBaseDynamics(robotModelInfo_, 
                                                         "MobileBaseDynamics", 
                                                         libraryFolder_, 
@@ -247,8 +257,9 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
                                                         true));
       break;
 
-    case 1:
-      std::cout << "[MobileManipulatorInterface::setMPCProblem] Robotics Arm" << std::endl;
+    case RobotModelType::RobotArm:
+      std::cout << "[MobileManipulatorInterface::setMPCProblem] RobotArm" << std::endl;
+
       problem_.dynamicsPtr.reset(new RobotArmDynamics(robotModelInfo_, 
                                                       "RobotArmDynamics", 
                                                       libraryFolder_, 
@@ -256,8 +267,8 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
                                                       true));
       break;
 
-    case 2: 
-      std::cout << "[MobileManipulatorInterface::setMPCProblem] Mobile Manipulator" << std::endl;
+    case RobotModelType::MobileManipulator: 
+      std::cout << "[MobileManipulatorInterface::setMPCProblem] MobileManipulator" << std::endl;
       problem_.dynamicsPtr.reset(new MobileManipulatorDynamics(robotModelInfo_, 
                                                                "MobileManipulatorDynamics", 
                                                                libraryFolder_, 
@@ -266,7 +277,7 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
       break;
 
     default:
-      throw std::invalid_argument("[MobileManipulatorInterface::setMPCProblem] ERROR: Invalid model mode!");
+      throw std::invalid_argument("[MobileManipulatorInterface::setMPCProblem] ERROR: Invalid robot model type!");
   }
 
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Pre-computation" << std::endl;
@@ -276,6 +287,9 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
    */
   if (usePreComputation_) 
   {
+    std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] DEBUG INF" << std::endl;
+    while(1);
+
     problem_.preComputationPtr.reset(new MobileManipulatorPreComputation(*pinocchioInterfacePtr_, robotModelInfo_));
   }
 
@@ -286,8 +300,8 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
   rolloutPtr_.reset(new TimeTriggeredRollout(*problem_.dynamicsPtr, rolloutSettings));
 
   // Initialization
-  auto modelInputDim = getInputDim(robotModelInfo_);
-  initializerPtr_.reset(new DefaultInitializer(modelInputDim));
+  auto modeInputDim = getModeInputDim(robotModelInfo_);
+  initializerPtr_.reset(new DefaultInitializer(modeInputDim));
 
   std::cout << "[MobileManipulatorInterface::setMPCProblem] END" << std::endl;
 }
@@ -413,8 +427,35 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftCon
     loadData::loadPtreeValue(pt, deltaPositionLimits, "jointPositionLimits.delta", true);
     std::cerr << " #### =============================================================================\n";
     
+    /*
+    std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] lowerBound:" << std::endl;
+    std::cout << lowerBound << std::endl << std::endl;
+
+    std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] upperBound:" << std::endl;
+    std::cout << upperBound << std::endl << std::endl;
+    */
+
     stateLimits.reserve(modeStateDim);
-    const size_t stateOffset = modeStateDim - stateDimArm;
+    size_t stateOffset;
+    switch (robotModelInfo_.modelMode)
+    {
+      case ModelMode::ArmMotion:
+      {
+        stateOffset = 0;
+        break;
+      }
+
+      case ModelMode::WholeBodyMotion:
+      {
+        stateOffset = getStateDimBase(robotModelInfo_);
+        break;
+      }
+      
+      default:
+        throw std::invalid_argument("[MobileManipulatorInterface::getJointLimitSoftConstraint] ERROR: Invalid model mode!");
+        break;
+    }
+
     for (int i = 0; i < stateDimArm; ++i) 
     {
       StateInputSoftBoxConstraint::BoxConstraint boxConstraint;
@@ -461,6 +502,14 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftCon
       lowerBound.tail(inputDimArm) = lowerBoundArm;
       upperBound.tail(inputDimArm) = upperBoundArm;
     }
+
+    /*
+    std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] lowerBound:" << std::endl;
+    std::cout << lowerBound << std::endl << std::endl;
+
+    std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] upperBound:" << std::endl;
+    std::cout << upperBound << std::endl << std::endl;
+    */
 
     scalar_t muVelocityLimits = 1e-2;
     scalar_t deltaVelocityLimits = 1e-3;

@@ -66,19 +66,24 @@ void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t fina
 /******************************************************************************************************/
 void SolverBase::run(scalar_t initTime, const vector_t& initState, const vector_t& initFullState, scalar_t finalTime) 
 {
-  std::cout << "[SolverBase::run(4)] START" << std::endl;
+  //std::cout << "[SolverBase::run(4)] START" << std::endl;
 
   preRun(initTime, initState, finalTime);
   runImpl(initTime, initState, initFullState, finalTime);
   postRun();
 
-  std::cout << "[SolverBase::run(4)] END" << std::endl;
+  //std::cout << "[SolverBase::run(4)] END" << std::endl;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const ControllerBase* externalControllerPtr) {
+void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const ControllerBase* externalControllerPtr) 
+{
+  //// NUA TODO: REMOVE AFTER MULTI-MODEL IS COMPLETED!
+  std::cout << "[SolverBase::run(4 externalControllerPtr)] DEBUG INF LOOP!" << std::endl;
+  while(1);
+
   preRun(initTime, initState, finalTime);
   runImpl(initTime, initState, finalTime, externalControllerPtr);
   postRun();
@@ -87,7 +92,12 @@ void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t fina
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const PrimalSolution& primalSolution) {
+void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t finalTime, const PrimalSolution& primalSolution) 
+{
+  //// NUA TODO: REMOVE AFTER MULTI-MODEL IS COMPLETED!
+  std::cout << "[SolverBase::run(4 primalSolution)] DEBUG INF LOOP!" << std::endl;
+  while(1);
+
   preRun(initTime, initState, finalTime);
   runImpl(initTime, initState, finalTime, primalSolution);
   postRun();
@@ -96,7 +106,8 @@ void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t fina
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-PrimalSolution SolverBase::primalSolution(scalar_t finalTime) const {
+PrimalSolution SolverBase::primalSolution(scalar_t finalTime) const 
+{
   PrimalSolution primalSolution;
   getPrimalSolution(finalTime, &primalSolution);
   return primalSolution;
@@ -105,7 +116,8 @@ PrimalSolution SolverBase::primalSolution(scalar_t finalTime) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SolverBase::printString(const std::string& text) const {
+void SolverBase::printString(const std::string& text) const 
+{
   std::lock_guard<std::mutex> outputDisplayGuard(outputDisplayGuardMutex_);
   std::cerr << text << '\n';
 }
@@ -115,10 +127,14 @@ void SolverBase::printString(const std::string& text) const {
 /******************************************************************************************************/
 void SolverBase::preRun(scalar_t initTime, const vector_t& initState, scalar_t finalTime) 
 {
-  referenceManagerPtr_ -> preSolverRun(initTime, finalTime, initState);
+  referenceManagerPtr_->preSolverRun(initTime, finalTime, initState);
 
   for (auto& module : synchronizedModules_) 
   {
+    //// NUA TODO: REMOVE AFTER MULTI-MODEL IS COMPLETED!
+    std::cout << "[SolverBase::preRun] DEBUG INF LOOP!" << std::endl;
+    while(1);
+    
     module -> preSolverRun(initTime, finalTime, initState, *referenceManagerPtr_);
   }
 }

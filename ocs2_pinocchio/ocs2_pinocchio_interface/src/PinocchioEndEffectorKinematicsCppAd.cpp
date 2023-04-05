@@ -187,7 +187,7 @@ ad_vector_t PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(PinocchioInter
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(3)] START" << std::endl;
 
   //// NUA NOTE: CLEAN WHEN MULTI MODEL IS COMPLETED!
-  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(3)] NOT CHECKED/IMPLEMENTED INF LOOP!" << std::endl;
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(3)] DEBUG INF LOOP!" << std::endl;
   while(1);
 
   const auto& model = pinocchioInterfaceCppAd.getModel();
@@ -246,10 +246,10 @@ auto PinocchioEndEffectorKinematicsCppAd::getPosition(const vector_t& state) con
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPosition(1)] START" << std::endl;
 
   //// NUA NOTE: CLEAN WHEN MULTI MODEL IS COMPLETED!
-  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPosition(1)] NOT CHECKED/IMPLEMENTED INF LOOP!" << std::endl;
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPosition(1)] DEBUG INF LOOP!" << std::endl;
   while(1);
 
-  const vector_t positionValues = positionCppAdInterfacePtr_->getFunctionValue(state);
+  const vector_t positionValues = positionCppAdInterfacePtr_->getFunctionValue(state, state);
 
   std::vector<vector3_t> positions;
   for (int i = 0; i < endEffectorFrameIds_.size(); i++) 
@@ -290,11 +290,11 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCpp
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation(1)] START" << std::endl;
 
   //// NUA NOTE: CLEAN WHEN MULTI MODEL IS COMPLETED!
-  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation(1)] NOT CHECKED/IMPLEMENTED INF LOOP!" << std::endl;
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation(1)] DEBUG INF LOOP!" << std::endl;
   while(1);
 
-  const vector_t positionValues = positionCppAdInterfacePtr_->getFunctionValue(state);
-  const matrix_t positionJacobian = positionCppAdInterfacePtr_->getJacobian(state);
+  const vector_t positionValues = positionCppAdInterfacePtr_->getFunctionValue(state, state);
+  const matrix_t positionJacobian = positionCppAdInterfacePtr_->getJacobian(state, state);
 
   std::vector<VectorFunctionLinearApproximation> positions;
   for (int i = 0; i < endEffectorFrameIds_.size(); i++) 
@@ -375,7 +375,7 @@ auto PinocchioEndEffectorKinematicsCppAd::getVelocity(const vector_t& state, con
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::getVelocity] START" << std::endl;
 
   //// NUA NOTE: NOT ENTERING THIS FUNCTION!
-  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getVelocity] NOT CHECKED/IMPLEMENTED INF LOOP!" << std::endl;
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getVelocity] DEBUG INF LOOP!" << std::endl;
   while(1);
 
   vector_t stateInput(state.rows() + input.rows());
@@ -402,7 +402,7 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCpp
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::getVelocityLinearApproximation] START" << std::endl;
 
   //// NUA NOTE: NOT ENTERING THIS FUNCTION!
-  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getVelocityLinearApproximation] NOT CHECKED/IMPLEMENTED INF LOOP!" << std::endl;
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getVelocityLinearApproximation] DEBUG INF LOOP!" << std::endl;
   while(1);
 
   vector_t stateInput(state.rows() + input.rows());
@@ -435,13 +435,16 @@ auto PinocchioEndEffectorKinematicsCppAd::getOrientationError(const vector_t& st
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationError(2)] START" << std::endl;
 
   //// NUA NOTE: CLEAN WHEN MULTI MODEL IS COMPLETED!
-  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationError(2)] NOT CHECKED/IMPLEMENTED INF LOOP!" << std::endl;
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationError(2)] DEBUG INF LOOP!" << std::endl;
   while(1);
 
-  vector_t params(4 * endEffectorFrameIds_.size());
+  const int stateDim = state.size();
+  vector_t params(stateDim + 4 * endEffectorFrameIds_.size());
+  
+  params.head(stateDim) = state;
   for (int i = 0; i < endEffectorFrameIds_.size(); i++) 
   {
-    params.segment<4>(i) = referenceOrientations[i].coeffs();
+    params.segment<4>(stateDim + i) = referenceOrientations[i].coeffs();
   }
 
   const vector_t errorValues = orientationErrorCppAdInterfacePtr_->getFunctionValue(state, params);
@@ -498,10 +501,13 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCpp
 {
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(2)] END" << std::endl;
 
-  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(2)] NOT CHECKED/IMPLEMENTED INF LOOP!" << std::endl;
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(2)] DEBUG INF LOOP!" << std::endl;
   while(1);
   
-  vector_t params(4 * endEffectorFrameIds_.size());
+  const int stateDim = state.size();
+  vector_t params(stateDim + 4 * endEffectorFrameIds_.size());
+  
+  params.head(stateDim) = state;
   for (int i = 0; i < endEffectorFrameIds_.size(); i++) 
   {
     params.segment<4>(i) = referenceOrientations[i].coeffs();

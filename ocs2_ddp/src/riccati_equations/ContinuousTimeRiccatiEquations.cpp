@@ -110,10 +110,17 @@ void ContinuousTimeRiccatiEquations::convert2Matrix(const vector_t& allSs, matri
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ContinuousTimeRiccatiEquations::setData(const scalar_array_t* timeStampPtr, const std::vector<ModelData>* projectedModelDataPtr,
+void ContinuousTimeRiccatiEquations::setData(const scalar_array_t* timeStampPtr, 
+                                             const std::vector<ModelData>* projectedModelDataPtr,
                                              const size_array_t* eventsPastTheEndIndecesPtr,
                                              const std::vector<ModelData>* modelDataEventTimesPtr,
-                                             const std::vector<riccati_modification::Data>* riccatiModificationPtr) {
+                                             const std::vector<riccati_modification::Data>* riccatiModificationPtr) 
+{
+  //std::cout << "[ContinuousTimeRiccatiEquations::setData] START" << std::endl;
+  
+  //std::cout << "[ContinuousTimeRiccatiEquations::setData] DEBUG INF" << std::endl;
+  //while(1);
+
   OdeBase::resetNumFunctionCalls();
 
   // saving array pointers
@@ -124,9 +131,12 @@ void ContinuousTimeRiccatiEquations::setData(const scalar_array_t* timeStampPtr,
 
   eventTimes_.clear();
   eventTimes_.reserve(eventsPastTheEndIndecesPtr->size());
-  for (const auto& postEventIndex : *eventsPastTheEndIndecesPtr) {
+  for (const auto& postEventIndex : *eventsPastTheEndIndecesPtr) 
+  {
     eventTimes_.push_back((*timeStampPtr)[postEventIndex - 1]);
   }
+
+  //std::cout << "[ContinuousTimeRiccatiEquations::setData] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -149,21 +159,47 @@ vector_t ContinuousTimeRiccatiEquations::computeJumpMap(scalar_t z, const vector
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t ContinuousTimeRiccatiEquations::computeFlowMap(scalar_t z, const vector_t& allSs) {
+vector_t ContinuousTimeRiccatiEquations::computeFlowMap(scalar_t z, const vector_t& allSs) 
+{
+  //std::cout << "[ContinuousTimeRiccatiEquations::computeFlowMap] START" << std::endl;
+
+  //std::cout << "[ContinuousTimeRiccatiEquations::computeFlowMap] z: " << z << std::endl;
+
+  //std::cout << "[ContinuousTimeRiccatiEquations::computeFlowMap] allSs size: " << allSs.size() << std::endl;
+  //std::cout << allSs << std::endl << std::endl;
+
   // index
   const scalar_t t = -z;  // denormalized time
   const auto indexAlpha = LinearInterpolation::timeSegment(t, *timeStampPtr_);
 
   convert2Matrix(allSs, continuousTimeRiccatiData_.Sm_, continuousTimeRiccatiData_.Sv_, continuousTimeRiccatiData_.s_);
-  if (isRiskSensitive_) {
-    computeFlowMapILEG(indexAlpha, continuousTimeRiccatiData_.Sm_, continuousTimeRiccatiData_.Sv_, continuousTimeRiccatiData_.s_,
-                       continuousTimeRiccatiData_, continuousTimeRiccatiData_.dSm_, continuousTimeRiccatiData_.dSv_,
+  
+  if (isRiskSensitive_) 
+  {
+    //std::cout << "[ContinuousTimeRiccatiEquations::computeFlowMap] isRiskSensitive_ true" << std::endl;
+    computeFlowMapILEG(indexAlpha, 
+                       continuousTimeRiccatiData_.Sm_, 
+                       continuousTimeRiccatiData_.Sv_, 
+                       continuousTimeRiccatiData_.s_,
+                       continuousTimeRiccatiData_, 
+                       continuousTimeRiccatiData_.dSm_, 
+                       continuousTimeRiccatiData_.dSv_,
                        continuousTimeRiccatiData_.ds_);
-  } else {
-    computeFlowMapSLQ(indexAlpha, continuousTimeRiccatiData_.Sm_, continuousTimeRiccatiData_.Sv_, continuousTimeRiccatiData_.s_,
-                      continuousTimeRiccatiData_, continuousTimeRiccatiData_.dSm_, continuousTimeRiccatiData_.dSv_,
+  } 
+  else 
+  {
+    //std::cout << "[ContinuousTimeRiccatiEquations::computeFlowMap] isRiskSensitive_ false" << std::endl;
+    computeFlowMapSLQ(indexAlpha, 
+                      continuousTimeRiccatiData_.Sm_, 
+                      continuousTimeRiccatiData_.Sv_, 
+                      continuousTimeRiccatiData_.s_,
+                      continuousTimeRiccatiData_, 
+                      continuousTimeRiccatiData_.dSm_, 
+                      continuousTimeRiccatiData_.dSv_,
                       continuousTimeRiccatiData_.ds_);
   }
+
+  //std::cout << "[ContinuousTimeRiccatiEquations::computeFlowMap] END" << std:: endl;
 
   return convert2Vector(continuousTimeRiccatiData_.dSm_, continuousTimeRiccatiData_.dSv_, continuousTimeRiccatiData_.ds_);
 }

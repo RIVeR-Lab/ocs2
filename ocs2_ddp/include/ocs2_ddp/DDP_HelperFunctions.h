@@ -192,7 +192,8 @@ std::vector<std::pair<int, int>> computePartitionIntervals(const scalar_array_t&
 /**
  * Gets a reference to the linear controller from the given primal solution.
  */
-inline LinearController& getLinearController(PrimalSolution& primalSolution) {
+inline LinearController& getLinearController(PrimalSolution& primalSolution) 
+{
   assert(dynamic_cast<LinearController*>(primalSolution.controllerPtr_.get()) != nullptr);
   return static_cast<LinearController&>(*primalSolution.controllerPtr_);
 }
@@ -200,7 +201,8 @@ inline LinearController& getLinearController(PrimalSolution& primalSolution) {
 /**
  * Gets a const reference to the linear controller from the given primal solution.
  */
-inline const LinearController& getLinearController(const PrimalSolution& primalSolution) {
+inline const LinearController& getLinearController(const PrimalSolution& primalSolution) 
+{
   assert(dynamic_cast<const LinearController*>(primalSolution.controllerPtr_.get()) != nullptr);
   return static_cast<const LinearController&>(*primalSolution.controllerPtr_);
 }

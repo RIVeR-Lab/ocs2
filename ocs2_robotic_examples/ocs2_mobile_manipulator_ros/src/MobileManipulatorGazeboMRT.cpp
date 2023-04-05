@@ -163,7 +163,7 @@ int main(int argc, char** argv)
   std::cout << "[MobileManipulatorGazeboMRT::main] AFTER ocs2_mm_visu" << std::endl;
 
   // MRT loop
-  MRT_ROS_Gazebo_Loop mrt_loop(nodeHandle, 
+  MRT_ROS_Gazebo_Loop mrt_loop(nodeHandle,
                                mrt, 
                                "world",
                                interface.mpcSettings().mrtDesiredFrequency_, 
@@ -182,7 +182,7 @@ int main(int argc, char** argv)
   
   // initial command
   vector_t initTarget(7);
-  initTarget.head(3) << -0.2, 0, 0.8;
+  initTarget.head(3) << -0.2, 0, 1.5;
   initTarget.tail(4) << Eigen::Quaternion<scalar_t>(0, 0, 1, 0).coeffs();
   //const vector_t zeroInput = vector_t::Zero(inputDim);
   //const TargetTrajectories initTargetTrajectories({initObservation.time}, {initTarget}, {zeroInput});

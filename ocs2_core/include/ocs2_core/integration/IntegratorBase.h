@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <functional>
 #include <limits>
 #include <memory>
+#include <iostream>
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/integration/Observer.h>

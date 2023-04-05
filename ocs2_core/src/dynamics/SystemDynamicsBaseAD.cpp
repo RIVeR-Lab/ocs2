@@ -53,8 +53,24 @@ SystemDynamicsBaseAD::SystemDynamicsBaseAD(const SystemDynamicsBaseAD& rhs)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemDynamicsBaseAD::initialize(size_t stateDim, size_t inputDim, const std::string& modelName, const std::string& modelFolder,
-                                      bool recompileLibraries, bool verbose) {
+void SystemDynamicsBaseAD::initialize(size_t stateDim, 
+                                      size_t inputDim, 
+                                      const std::string& modelName, 
+                                      const std::string& modelFolder,
+                                      bool recompileLibraries, 
+                                      bool verbose) 
+{
+  std::cout << "[SystemDynamicsBaseAD::initialize] START" << std::endl;
+
+  std::cout << "[SystemDynamicsBaseAD::initialize] stateDim: " << stateDim << std::endl;
+  std::cout << "[SystemDynamicsBaseAD::initialize] inputDim: " << inputDim << std::endl;
+  std::cout << "[SystemDynamicsBaseAD::initialize] modelName: " << modelName << std::endl;
+  std::cout << "[SystemDynamicsBaseAD::initialize] modelFolder: " << modelFolder << std::endl;
+  std::cout << "[SystemDynamicsBaseAD::initialize] recompileLibraries: " << recompileLibraries << std::endl;
+
+  //std::cout << "[SystemDynamicsBaseAD::initialize] DEBUG INF" << std::endl;
+  //while(1);
+
   tapedTimeStateInput_.resize(1 + stateDim + inputDim);
   tapedTimeState_.resize(1 + stateDim);
 
@@ -64,8 +80,7 @@ void SystemDynamicsBaseAD::initialize(size_t stateDim, size_t inputDim, const st
     const ad_vector_t input = x.tail(inputDim);
     y = this->systemFlowMap(time, state, input, p);
   };
-  flowMapADInterfacePtr_.reset(
-      new CppAdInterface(flowMap, 1 + stateDim + inputDim, getNumFlowMapParameters(), modelName + "_flow_map", modelFolder));
+  flowMapADInterfacePtr_.reset(new CppAdInterface(flowMap, 1 + stateDim + inputDim, getNumFlowMapParameters(), modelName + "_flow_map", modelFolder));
 
   auto jumpMap = [this, stateDim](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
     const ad_scalar_t time = x(0);
@@ -79,26 +94,48 @@ void SystemDynamicsBaseAD::initialize(size_t stateDim, size_t inputDim, const st
     const ad_vector_t state = x.tail(stateDim);
     y = this->systemGuardSurfaces(time, state, p);
   };
-  guardSurfacesADInterfacePtr_.reset(
-      new CppAdInterface(guardSurfaces, 1 + stateDim, getNumGuardSurfacesParameters(), modelName + "_guard_surfaces", modelFolder));
+  guardSurfacesADInterfacePtr_.reset(new CppAdInterface(guardSurfaces, 1 + stateDim, getNumGuardSurfacesParameters(), modelName + "_guard_surfaces", modelFolder));
 
-  if (recompileLibraries) {
+  if (recompileLibraries) 
+  {
     flowMapADInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
     jumpMapADInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
     guardSurfacesADInterfacePtr_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
-  } else {
+  } 
+  else 
+  {
     flowMapADInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
     jumpMapADInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
     guardSurfacesADInterfacePtr_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
   }
+
+  std::cout << "[SystemDynamicsBaseAD::initialize] END" << std::endl;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t SystemDynamicsBaseAD::computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation& preComputation) {
+vector_t SystemDynamicsBaseAD::computeFlowMap(scalar_t t, const vector_t& x, const vector_t& u, const PreComputation& preComputation) 
+{
+  //std::cout << "[SystemDynamicsBaseAD::computeFlowMap] START"  << std::endl;
+
   tapedTimeStateInput_ << t, x, u;
   const vector_t parameters = getFlowMapParameters(t, preComputation);
+
+  //std::cout << "[SystemDynamicsBaseAD::computeFlowMap] t:"  << std::endl;
+  //std::cout << t << std::endl << std::endl;
+
+  //std::cout << "[SystemDynamicsBaseAD::computeFlowMap] x:"  << std::endl;
+  //std::cout << x << std::endl << std::endl;
+
+  //std::cout << "[SystemDynamicsBaseAD::computeFlowMap] u:"  << std::endl;
+  //std::cout << u << std::endl << std::endl;
+
+  //std::cout << "[SystemDynamicsBaseAD::computeFlowMap] DEBUG INF"  << std::endl;
+  //while(1);
+
+  //std::cout << "[SystemDynamicsBaseAD::computeFlowMap] END"  << std::endl;
+
   return flowMapADInterfacePtr_->getFunctionValue(tapedTimeStateInput_, parameters);
 }
 

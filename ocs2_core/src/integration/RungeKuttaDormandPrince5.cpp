@@ -260,9 +260,20 @@ void RungeKuttaDormandPrince5::runIntegrateConst(system_func_t system, observer_
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void RungeKuttaDormandPrince5::runIntegrateAdaptive(system_func_t system, observer_func_t observer, const vector_t& initialState,
-                                                    scalar_t startTime, scalar_t finalTime, scalar_t dtInitial, scalar_t absTol,
-                                                    scalar_t relTol) {
+void RungeKuttaDormandPrince5::runIntegrateAdaptive(system_func_t system, 
+                                                    observer_func_t observer, 
+                                                    const vector_t& initialState,
+                                                    scalar_t startTime, 
+                                                    scalar_t finalTime, 
+                                                    scalar_t dtInitial, 
+                                                    scalar_t absTol,
+                                                    scalar_t relTol) 
+{
+  std::cout << "[RungeKuttaDormandPrince5::runIntegrateAdaptive] START" << std::endl;
+
+  std::cout << "[IntegratorBase::integrateAdaptive] DEBUG INF" << std::endl;
+  while(1);
+
   Stepper stepper;
   scalar_t t = startTime;
   scalar_t dt = dtInitial;
@@ -286,6 +297,8 @@ void RungeKuttaDormandPrince5::runIntegrateAdaptive(system_func_t system, observ
     }  // end of while loop
   }    // end of while loop
   observer(x, t);
+
+  std::cout << "[RungeKuttaDormandPrince5::runIntegrateAdaptive] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -294,7 +307,13 @@ void RungeKuttaDormandPrince5::runIntegrateAdaptive(system_func_t system, observ
 void RungeKuttaDormandPrince5::runIntegrateTimes(system_func_t system, observer_func_t observer, const vector_t& initialState,
                                                  typename scalar_array_t::const_iterator beginTimeItr,
                                                  typename scalar_array_t::const_iterator endTimeItr, scalar_t dtInitial, scalar_t absTol,
-                                                 scalar_t relTol) {
+                                                 scalar_t relTol) 
+{
+  std::cout << "[RungeKuttaDormandPrince5::runIntegrateTimes] START" << std::endl;
+
+  std::cout << "[IntegratorBase::runIntegrateTimes] DEBUG INF" << std::endl;
+  while(1);
+
   Stepper stepper;
   scalar_t dt = dtInitial;
   vector_t x = initialState;
@@ -326,6 +345,8 @@ void RungeKuttaDormandPrince5::runIntegrateTimes(system_func_t system, observer_
       }
     }  // end of while loop
   }    // end of while loop
+
+  std::cout << "[RungeKuttaDormandPrince5::runIntegrateTimes] END" << std::endl;
 }
 
 /******************************************************************************************************/

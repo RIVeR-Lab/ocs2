@@ -74,8 +74,8 @@ vector_t EndEffectorConstraint::getValue(scalar_t time,
   std::cout << "[EndEffectorConstraint::getValue(3)] END" << std:: endl;
 
   // NUA TODO: CLEAR THESE WHEN BE SURE THAT MULTI-MODEL IS WORKING!
-  std::cout << "[EndEffectorConstraint::getValue(3)] BEFORE INF" << std:: endl;
-  while(1);
+  std::cout << "[EndEffectorConstraint::getValue(3)] DEBUG INF" << std:: endl;
+  //while(1);
 
   // PinocchioEndEffectorKinematics requires pre-computation with shared PinocchioInterface.
   if (pinocchioEEKinPtr_ != nullptr) 
@@ -158,8 +158,8 @@ VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(
   std::cout << "[EndEffectorConstraint::getLinearApproximation(3)] START" << std:: endl;
 
   // NUA TODO: CLEAR THESE WHEN BE SURE THAT MULTI-MODEL IS WORKING!
-  std::cout << "[EndEffectorConstraint::getLinearApproximation(3)] BEFORE INF" << std:: endl;
-  while(1);
+  std::cout << "[EndEffectorConstraint::getLinearApproximation(3)] DEBUG INF" << std:: endl;
+  //while(1);
 
   // PinocchioEndEffectorKinematics requires pre-computation with shared PinocchioInterface.
   if (pinocchioEEKinPtr_ != nullptr) 
@@ -193,7 +193,7 @@ VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(
                                                                                 const vector_t& fullState,
                                                                                 const PreComputation& preComputation) const 
 {
-  std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] START" << std:: endl;
+  //std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] START" << std:: endl;
 
   // PinocchioEndEffectorKinematics requires pre-computation with shared PinocchioInterface.
   if (pinocchioEEKinPtr_ != nullptr) 
@@ -214,7 +214,7 @@ VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(
   approximation.f.tail<3>() = eeOrientationError.f;
   approximation.dfdx.bottomRows<3>() = eeOrientationError.dfdx;
 
-  std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] END" << std:: endl;
+  //std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] END" << std:: endl;
 
   return approximation;
 }

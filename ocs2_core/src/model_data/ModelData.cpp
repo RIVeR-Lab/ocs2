@@ -37,8 +37,14 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::string checkSize(const ModelData& data, int stateDim, int inputDim) {
+std::string checkSize(const ModelData& data, int stateDim, int inputDim) 
+{
+  std::cout << "[ModelData::checkSize] START" << std::endl;
+
   std::stringstream errorDescription;
+
+  std::cout << "[ModelData::checkSize] DEBUG INF" << std::endl;
+  while(1);
 
   if (data.stateDim != stateDim) {
     errorDescription << "data.stateDim != " << stateDim << "\n";
@@ -65,6 +71,8 @@ std::string checkSize(const ModelData& data, int stateDim, int inputDim) {
   // state-input equality constraints
   errorDescription << checkSize(data.stateInputEqConstraint.f.size(), stateDim, inputDim, data.stateInputEqConstraint,
                                 "stateInputEqConstraint");
+
+  std::cout << "[ModelData::checkSize] END" << std::endl;
 
   return errorDescription.str();
 }

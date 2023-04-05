@@ -53,8 +53,12 @@ void RosReferenceManager::subscribe(ros::NodeHandle& nodeHandle)
   // ModeSchedule
   auto modeScheduleCallback = [this](const ocs2_msgs::mode_schedule::ConstPtr& msg) 
   {
+    std::cout << "[RosReferenceManager::subscribe::modeScheduleCallback] START" << std::endl;
+
     auto modeSchedule = ros_msg_conversions::readModeScheduleMsg(*msg);
     referenceManagerPtr_->setModeSchedule(std::move(modeSchedule));
+
+    std::cout << "[RosReferenceManager::subscribe::modeScheduleCallback] END" << std::endl;
   };
   modeScheduleSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mode_schedule>(topicPrefix_ + "_mode_schedule", 1, modeScheduleCallback);
 

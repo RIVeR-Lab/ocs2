@@ -74,6 +74,10 @@ SLQ::SLQ(ddp::Settings ddpSettings,
     riccatiEquationsPtrStock_.emplace_back(new ContinuousTimeRiccatiEquations(preComputeRiccatiTerms, isRiskSensitive));
     riccatiEquationsPtrStock_.back()->setRiskSensitiveCoefficient(settings().riskSensitiveCoeff_);
     riccatiIntegratorPtrStock_.emplace_back(newIntegrator(integratorType));
+
+    //std::cout << "[SLQ::SLQ] integratorType: " << integrator_type::toString(integratorType) << std::endl;
+    //while(1);
+
   }  // end of i loop
 
   Eigen::initParallel();
@@ -84,7 +88,10 @@ SLQ::SLQ(ddp::Settings ddpSettings,
 /******************************************************************************************************/
 void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDataContainer& primalData) 
 {
-  std::cout << "[GaussNewtonDDP::approximateIntermediateLQ(2)] START" << std::endl;
+  std::cout << "[SLQ::approximateIntermediateLQ(2)] START" << std::endl;
+
+  std::cout << "[SLQ::approximateIntermediateLQ(2)] DEBUG INF" << std::endl;
+  while(1);
 
   // create alias
   const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
@@ -138,7 +145,7 @@ void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalData
 
   runParallel(task, settings().nThreads_);
 
-  std::cout << "[GaussNewtonDDP::approximateIntermediateLQ(2)] END" << std::endl;
+  std::cout << "[SLQ::approximateIntermediateLQ(2)] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -146,7 +153,7 @@ void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalData
 /******************************************************************************************************/
 void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDataContainer& primalData, const vector_t& initFullState) 
 {
-  std::cout << "[SLQ::approximateIntermediateLQ(3)] START" << std::endl;
+  //std::cout << "[SLQ::approximateIntermediateLQ(3)] START" << std::endl;
 
   // create alias
   const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
@@ -201,7 +208,7 @@ void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalData
 
   runParallel(task, settings().nThreads_);
 
-  std::cout << "[SLQ::approximateIntermediateLQ(3)] END" << std::endl;
+  //std::cout << "[SLQ::approximateIntermediateLQ(3)] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -254,7 +261,10 @@ void SLQ::calculateControllerWorker(size_t timeIndex, const PrimalDataContainer&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-scalar_t SLQ::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticApproximation& finalValueFunction) {
+scalar_t SLQ::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticApproximation& finalValueFunction) 
+{
+  //std::cout << "[SLQ::solveSequentialRiccatiEquations] START" << std::endl;
+
   // fully compute the riccatiModifications and projected modelData
   // number of the intermediate LQ variables
   const size_t N = nominalPrimalData_.primalSolution.timeTrajectory_.size();
@@ -262,17 +272,21 @@ scalar_t SLQ::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticAppro
   nominalDualData_.riccatiModificationTrajectory.resize(N);
   nominalDualData_.projectedModelDataTrajectory.resize(N);
 
-  if (N > 0) {
+  if (N > 0) 
+  {
     // perform the computeRiccatiModificationTerms for partition i
     nextTimeIndex_ = 0;
     nextTaskId_ = 0;
-    auto task = [this, N]() {
+    auto task = [this, N]() 
+    {
       int timeIndex;
       const matrix_t SmDummy = matrix_t::Zero(0, 0);
 
       // get next time index is atomic
-      while ((timeIndex = nextTimeIndex_++) < N) {
-        computeProjectionAndRiccatiModification(nominalPrimalData_.modelDataTrajectory[timeIndex], SmDummy,
+      while ((timeIndex = nextTimeIndex_++) < N) 
+      {
+        computeProjectionAndRiccatiModification(nominalPrimalData_.modelDataTrajectory[timeIndex], 
+                                                SmDummy,
                                                 nominalDualData_.projectedModelDataTrajectory[timeIndex],
                                                 nominalDualData_.riccatiModificationTrajectory[timeIndex]);
       }
@@ -280,27 +294,36 @@ scalar_t SLQ::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticAppro
     runParallel(task, settings().nThreads_);
   }
 
+  //std::cout << "[SLQ::solveSequentialRiccatiEquations] END" << std::endl;
+
   return solveSequentialRiccatiEquationsImpl(finalValueFunction);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-matrix_t SLQ::computeHamiltonianHessian(const ModelData& modelData, const matrix_t& Sm) const {
+matrix_t SLQ::computeHamiltonianHessian(const ModelData& modelData, const matrix_t& Sm) const 
+{
   return searchStrategyPtr_->augmentHamiltonianHessian(modelData, modelData.cost.dfduu);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SLQ::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& partitionInterval,
-                                 const ScalarFunctionQuadraticApproximation& finalValueFunction) {
+void SLQ::riccatiEquationsWorker(size_t workerIndex, 
+                                 const std::pair<int, int>& partitionInterval,
+                                 const ScalarFunctionQuadraticApproximation& finalValueFunction) 
+{
+  //std::cout << "[SLQ::riccatiEquationsWorker] START" << std::endl;
+
+  //std::cout << "[SLQ::riccatiEquationsWorker] workerIndex: " << workerIndex << std::endl;
+  //std::cout << "[SLQ::riccatiEquationsWorker] START" << std::endl;
+
   // set data for Riccati equations
   riccatiEquationsPtrStock_[workerIndex]->resetNumFunctionCalls();
-  riccatiEquationsPtrStock_[workerIndex]->setData(
-      &(nominalPrimalData_.primalSolution.timeTrajectory_), &(nominalDualData_.projectedModelDataTrajectory),
-      &(nominalPrimalData_.primalSolution.postEventIndices_), &(nominalPrimalData_.modelDataEventTimes),
-      &(nominalDualData_.riccatiModificationTrajectory));
+  riccatiEquationsPtrStock_[workerIndex]->setData(&(nominalPrimalData_.primalSolution.timeTrajectory_), &(nominalDualData_.projectedModelDataTrajectory),
+                                                  &(nominalPrimalData_.primalSolution.postEventIndices_), &(nominalPrimalData_.modelDataEventTimes),
+                                                  &(nominalDualData_.riccatiModificationTrajectory));
 
   const auto& nominalTimeTrajectory = nominalPrimalData_.primalSolution.timeTrajectory_;
   const auto& nominalEventsPastTheEndIndices = nominalPrimalData_.primalSolution.postEventIndices_;
@@ -322,28 +345,47 @@ void SLQ::riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& 
    *  SsNormalized = [-10.0, ..., -2.0, -1.0, -0.0]
    */
   vector_array_t& allSsTrajectory = allSsTrajectoryStock_[workerIndex];
-  integrateRiccatiEquationNominalTime(*riccatiIntegratorPtrStock_[workerIndex], *riccatiEquationsPtrStock_[workerIndex], partitionInterval,
-                                      nominalTimeTrajectory, nominalEventsPastTheEndIndices, std::move(allSsFinal), SsNormalizedTime,
-                                      SsNormalizedPostEventIndices, allSsTrajectory);
+  integrateRiccatiEquationNominalTime(*riccatiIntegratorPtrStock_[workerIndex], 
+                                      *riccatiEquationsPtrStock_[workerIndex], 
+                                      partitionInterval,
+                                      nominalTimeTrajectory, 
+                                      nominalEventsPastTheEndIndices, 
+                                      std::move(allSsFinal), 
+                                      SsNormalizedTime,
+                                      SsNormalizedPostEventIndices, 
+                                      allSsTrajectory);
 
   // Convert value function to matrix format
   size_t outputN = SsNormalizedTime.size();
   for (size_t k = partitionInterval.first; k < partitionInterval.second; k++) {
     ContinuousTimeRiccatiEquations::convert2Matrix(allSsTrajectory[outputN - 1 - k + partitionInterval.first], valueFunctionTrajectory[k]);
   }  // end of k loop
+
+  //std::cout << "[SLQ::riccatiEquationsWorker] END" << std::endl;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SLQ::integrateRiccatiEquationNominalTime(IntegratorBase& riccatiIntegrator, ContinuousTimeRiccatiEquations& riccatiEquation,
-                                              const std::pair<int, int>& partitionInterval, const scalar_array_t& nominalTimeTrajectory,
-                                              const size_array_t& nominalEventsPastTheEndIndices, vector_t allSsFinal,
-                                              scalar_array_t& SsNormalizedTime, size_array_t& SsNormalizedPostEventIndices,
-                                              vector_array_t& allSsTrajectory) {
+void SLQ::integrateRiccatiEquationNominalTime(IntegratorBase& riccatiIntegrator, 
+                                              ContinuousTimeRiccatiEquations& riccatiEquation,
+                                              const std::pair<int, int>& partitionInterval, 
+                                              const scalar_array_t& nominalTimeTrajectory,
+                                              const size_array_t& nominalEventsPastTheEndIndices, 
+                                              vector_t allSsFinal,
+                                              scalar_array_t& SsNormalizedTime, 
+                                              size_array_t& SsNormalizedPostEventIndices,
+                                              vector_array_t& allSsTrajectory) 
+{
+  //std::cout << "[SLQ::integrateRiccatiEquationNominalTime] START" << std::endl;
+
   // normalized time and post event indices
-  retrieveActiveNormalizedTime(partitionInterval, nominalTimeTrajectory, nominalEventsPastTheEndIndices, SsNormalizedTime,
+  retrieveActiveNormalizedTime(partitionInterval, 
+                               nominalTimeTrajectory, 
+                               nominalEventsPastTheEndIndices, 
+                               SsNormalizedTime,
                                SsNormalizedPostEventIndices);
+  
   // Extract sizes
   const int nominalTimeSize = SsNormalizedTime.size();
   const int numEvents = SsNormalizedPostEventIndices.size();
@@ -354,7 +396,9 @@ void SLQ::integrateRiccatiEquationNominalTime(IntegratorBase& riccatiIntegrator,
   std::vector<std::pair<iterator_t, iterator_t>> SsNormalizedSwitchingTimesIndices;
   SsNormalizedSwitchingTimesIndices.reserve(numEvents + 1);
   SsNormalizedSwitchingTimesIndices.emplace_back(SsNormalizedTime.cbegin(), SsNormalizedTime.cbegin());
-  for (const auto& index : SsNormalizedPostEventIndices) {
+  
+  for (const auto& index : SsNormalizedPostEventIndices) 
+  {
     SsNormalizedSwitchingTimesIndices.back().second = SsNormalizedTime.cbegin() + index;
     SsNormalizedSwitchingTimesIndices.emplace_back(SsNormalizedTime.cbegin() + index, SsNormalizedTime.cbegin() + index);
   }
@@ -363,23 +407,36 @@ void SLQ::integrateRiccatiEquationNominalTime(IntegratorBase& riccatiIntegrator,
   // integrating the Riccati equations
   allSsTrajectory.clear();
   allSsTrajectory.reserve(nominalTimeSize);
-  for (int i = 0; i <= numEvents; i++) {
+  for (int i = 0; i <= numEvents; i++) 
+  {
     iterator_t beginTimeItr = SsNormalizedSwitchingTimesIndices[i].first;
     iterator_t endTimeItr = SsNormalizedSwitchingTimesIndices[i].second;
 
     // solve Riccati equations
     Observer observer(&allSsTrajectory);
     const auto maxNumTimeSteps = static_cast<size_t>(settings().maxNumStepsPerSecond_ * std::max(1.0, partitionDuration));
-    riccatiIntegrator.integrateTimes(riccatiEquation, observer, allSsFinal, beginTimeItr, endTimeItr, settings().timeStep_,
-                                     settings().absTolODE_, settings().relTolODE_, maxNumTimeSteps);
+    
+    //std::cout << "[SLQ::integrateRiccatiEquationNominalTime] START integrateTimes" << std::endl;
+    riccatiIntegrator.integrateTimes(riccatiEquation, 
+                                     observer, 
+                                     allSsFinal, 
+                                     beginTimeItr, 
+                                     endTimeItr, 
+                                     settings().timeStep_,
+                                     settings().absTolODE_, 
+                                     settings().relTolODE_, 
+                                     maxNumTimeSteps);
+    //std::cout << "[SLQ::integrateRiccatiEquationNominalTime] END integrateTimes" << std::endl;
 
-    if (i < numEvents) {
+    if (i < numEvents) 
+    {
       allSsFinal = riccatiEquation.computeJumpMap(*endTimeItr, allSsTrajectory.back());
     }
   }  // end of i loop
 
   // check size
-  if (allSsTrajectory.size() != nominalTimeSize) {
+  if (allSsTrajectory.size() != nominalTimeSize) 
+  {
     throw std::runtime_error("[SLQ::integrateRiccatiEquationNominalTim] allSsTrajectory size is incorrect.");
   }
 }

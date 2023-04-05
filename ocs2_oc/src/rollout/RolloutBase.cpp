@@ -106,32 +106,45 @@ void RolloutBase::display(const scalar_array_t& timeTrajectory, const size_array
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void RolloutBase::checkNumericalStability(const ControllerBase& controller, const scalar_array_t& timeTrajectory,
-                                          const size_array_t& postEventIndices, const vector_array_t& stateTrajectory,
-                                          const vector_array_t& inputTrajectory) const {
-  if (!rolloutSettings_.checkNumericalStability) {
+void RolloutBase::checkNumericalStability(const ControllerBase& controller, 
+                                          const scalar_array_t& timeTrajectory,
+                                          const size_array_t& postEventIndices, 
+                                          const vector_array_t& stateTrajectory,
+                                          const vector_array_t& inputTrajectory) const 
+{
+  if (!rolloutSettings_.checkNumericalStability) 
+  {
+    //std::cout << "[RolloutBase::checkNumericalStability] NO CHECK!" << std::endl;
     return;
   }
 
-  for (size_t i = 0; i < timeTrajectory.size(); i++) {
-    try {
-      if (!stateTrajectory[i].allFinite()) {
-        throw std::runtime_error("Rollout: state is not finite");
+  for (size_t i = 0; i < timeTrajectory.size(); i++) 
+  {
+    try 
+    {
+      if (!stateTrajectory[i].allFinite()) 
+      {
+        throw std::runtime_error("[RolloutBase::checkNumericalStability] ERROR: Rollout: state is not finite");
       }
-      if (rolloutSettings_.reconstructInputTrajectory && !inputTrajectory[i].allFinite()) {
-        throw std::runtime_error("Rollout: input is not finite");
+      if (rolloutSettings_.reconstructInputTrajectory && !inputTrajectory[i].allFinite()) 
+      {
+        throw std::runtime_error("[RolloutBase::checkNumericalStability] ERROR: Rollout: input is not finite");
       }
-    } catch (const std::exception& error) {
-      std::cerr << "what(): " << error.what() << " at time " + std::to_string(timeTrajectory[i]) + " [sec]." << '\n';
+    } 
+    catch (const std::exception& error) 
+    {
+      std::cerr << "[RolloutBase::checkNumericalStability] what(): " << error.what() << " at time " + std::to_string(timeTrajectory[i]) + " [sec]." << '\n';
 
       // truncate trajectories
       scalar_array_t timeTrajectoryTemp;
       vector_array_t stateTrajectoryTemp;
       vector_array_t inputTrajectoryTemp;
-      for (size_t j = 0; j <= i; j++) {
+      for (size_t j = 0; j <= i; j++) 
+      {
         timeTrajectoryTemp.push_back(timeTrajectory[j]);
         stateTrajectoryTemp.push_back(stateTrajectory[j]);
-        if (rolloutSettings_.reconstructInputTrajectory) {
+        if (rolloutSettings_.reconstructInputTrajectory) 
+        {
           inputTrajectoryTemp.push_back(inputTrajectory[j]);
         }
       }

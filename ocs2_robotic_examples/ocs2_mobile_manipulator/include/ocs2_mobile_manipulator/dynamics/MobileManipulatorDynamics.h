@@ -16,7 +16,7 @@
 
 //#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
 //#include "ocs2_mobile_manipulator/RobotModelInfo.h"
-#include "ocs2_core/dynamics/RobotModelInfo.h"
+#include "ocs2_core/dynamics/MultiModelFunctions.h"
 
 namespace ocs2 {
 namespace mobile_manipulator {
@@ -63,7 +63,7 @@ class MobileManipulatorDynamics final : public SystemDynamicsBaseAD
                               const ad_vector_t& input,
                               const ad_vector_t& /*parameters*/) const override;
 
-    const RobotModelInfo info_;
+    RobotModelInfo info_;
 };
 
 }  // namespace mobile_manipulator

@@ -23,10 +23,10 @@ MobileManipulatorDynamics::MobileManipulatorDynamics(RobotModelInfo info,
                                                      bool recompileLibraries /*= true*/, bool verbose /*= true*/)
   : info_(std::move(info)) 
 {
-  auto stateDim = info_.mobileBase.stateDim + info_.robotArm.stateDim;
-  auto inputDim = info_.mobileBase.inputDim + info_.robotArm.inputDim;
+  auto modeStateDim = getModeStateDim(info_);
+  auto modeInputDim = getModeInputDim(info_);
 
-  this->initialize(stateDim, inputDim, modelName, modelFolder, recompileLibraries, verbose);
+  this->initialize(modeStateDim, modeInputDim, modelName, modelFolder, recompileLibraries, verbose);
 }
 
 /******************************************************************************************************/
@@ -37,12 +37,64 @@ ad_vector_t MobileManipulatorDynamics::systemFlowMap(ad_scalar_t time,
                                                      const ad_vector_t& input,
                                                      const ad_vector_t&) const 
 {
-  auto stateDim = info_.mobileBase.stateDim + info_.robotArm.stateDim;
-  ad_vector_t dxdt(stateDim);
-  const auto theta = state(2);
-  const auto v = input(0);  // forward velocity in base frame
-  dxdt << cos(theta) * v, sin(theta) * v, input(1), input.tail(info_.robotArm.stateDim);
-  return dxdt;
+  std::cout << "[MobileManipulatorDynamics::systemFlowMap] START" << std::endl;
+
+  auto robotModelInfo = info_;
+  auto modeStateDim = getModeStateDim(robotModelInfo);
+
+  std::cout << "[MobileManipulatorDynamics::systemFlowMap] modelMode: " << modelModeEnumToString(robotModelInfo) << std::endl;
+  std::cout << "[MobileManipulatorDynamics::systemFlowMap] modeStateDim: " << modeStateDim << std::endl;;
+
+  switch (info_.modelMode)
+  {
+    case ModelMode::BaseMotion:
+    {
+      std::cout << "[MobileManipulatorDynamics::systemFlowMap] DEBUG INF BaseMotion" << std::endl;
+      while(1);
+
+      ad_vector_t dxdt(modeStateDim);
+      const auto theta = state(2);
+      const auto v = input(0);  // forward velocity in base frame
+      dxdt << cos(theta) * v, sin(theta) * v, input(1);
+      return dxdt;
+    }
+
+    case ModelMode::ArmMotion:
+    {
+      std::cout << "[MobileManipulatorDynamics::systemFlowMap] DEBUG INF ArmMotion" << std::endl;
+      //while(1);
+
+      return input;
+
+      //ad_vector_t dxdt(modeStateDim);
+      //dxdt << input.tail(info_.robotArm.stateDim);
+      //return dxdt;
+    }
+
+    case ModelMode::WholeBodyMotion:
+    {
+      std::cout << "[MobileManipulatorDynamics::systemFlowMap] DEBUG INF WholeBodyMotion" << std::endl;
+
+      /*
+      ad_vector_t dxdt(1);
+      dxdt << state(4);
+      */
+      
+      ad_vector_t dxdt(modeStateDim);
+      const auto theta = state(2);
+      const auto v = input(0);  // forward velocity in base frame
+      dxdt << cos(theta) * v, sin(theta) * v, input(1), input.tail(info_.robotArm.stateDim);
+      
+
+      return dxdt;
+    }
+
+    default:
+      std::cerr << "[MobileManipulatorDynamics::systemFlowMap] ERROR: Invalid model mode!";
+      break;
+  }
+
+  std::cout << "[MobileManipulatorDynamics::systemFlowMap] END" << std::endl;
 }
 
 }  // namespace mobile_manipulator

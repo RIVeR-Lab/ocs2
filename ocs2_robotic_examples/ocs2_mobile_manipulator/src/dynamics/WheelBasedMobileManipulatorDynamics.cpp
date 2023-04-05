@@ -46,7 +46,11 @@ WheelBasedMobileManipulatorDynamics::WheelBasedMobileManipulatorDynamics(Manipul
 /******************************************************************************************************/
 /******************************************************************************************************/
 ad_vector_t WheelBasedMobileManipulatorDynamics::systemFlowMap(ad_scalar_t time, const ad_vector_t& state, const ad_vector_t& input,
-                                                               const ad_vector_t&) const {
+                                                               const ad_vector_t&) const 
+{
+  std::cout << "[WheelBasedMobileManipulatorDynamics::systemFlowMap] DEBUG INF" << std::endl;
+  while(1);
+
   ad_vector_t dxdt(info_.stateDim);
   const auto theta = state(2);
   const auto v = input(0);  // forward velocity in base frame

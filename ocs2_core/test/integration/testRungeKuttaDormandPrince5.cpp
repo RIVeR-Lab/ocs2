@@ -40,11 +40,19 @@ TEST(RungeKuttaDormandPrince5Test, instantiate) {
 class LinearSystem final : public ocs2::OdeBase {
  public:
   ~LinearSystem() override = default;
-  ocs2::vector_t computeFlowMap(ocs2::scalar_t t, const ocs2::vector_t& x) override {
+  ocs2::vector_t computeFlowMap(ocs2::scalar_t t, const ocs2::vector_t& x) override 
+  {
+    std::cout << "[testRungeKuttaDormandPrince5Test::computeFlowMap] START" << std::endl;
+
     const ocs2::matrix_t A = (ocs2::matrix_t(2, 2) << -2, -1,  // clang-format off
                                                        1,  0).finished();  // clang-format on
     const ocs2::vector_t B = (ocs2::vector_t(2) << 1, 0).finished();
     const ocs2::vector_t u = ocs2::vector_t::Ones(1);
+
+    while(1);
+
+    std::cout << "[testRungeKuttaDormandPrince5Test::computeFlowMap] END" << std::endl;
+
     return A * x + B * u;
   }
 };
