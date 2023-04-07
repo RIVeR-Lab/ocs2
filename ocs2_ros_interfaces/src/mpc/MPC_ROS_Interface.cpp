@@ -279,9 +279,18 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   // measure the delay in running MPC
   mpcTimer_.startTimer();
 
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.state:" << std::endl;
+  std::cout << currentObservation.state << std::endl << std::endl;
+  
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.input:" << std::endl;
+  std::cout << currentObservation.input << std::endl;
+
+  //while(1);
+
   std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START mpc_.run" << std::endl;
   // run MPC
-  bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state, currentObservation.full_state);
+  bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state);
+  //bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state, currentObservation.full_state);
   if (!controllerIsUpdated) 
   {
     return;

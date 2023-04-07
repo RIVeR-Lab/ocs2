@@ -107,22 +107,22 @@ void OCS2_Mobile_Manipulator_Visualization::launchVisualizerNode(ros::NodeHandle
   stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/mobile_manipulator/optimizedPoseTrajectory", 1);
   
   // Get ROS parameter
-  std::string urdfFile, taskFile;
-  nodeHandle.getParam("/urdfFile", urdfFile);
-  nodeHandle.getParam("/taskFile", taskFile);
+  //std::string urdfFile, taskFile;
+  //nodeHandle.getParam("/urdfFile", urdfFile);
+  //nodeHandle.getParam("/taskFile", taskFile);
   
   // read manipulator type
-  RobotModelType modelType = loadRobotType(taskFile, "model_information.robotModelType");
+  //RobotModelType modelType = loadRobotType(taskFile_, "model_information.robotModelType");
   
   // read the joints to make fixed
-  loadData::loadStdVector<std::string>(taskFile, "model_information.removeJoints", removeJointNames_, false);
+  loadData::loadStdVector<std::string>(taskFile_, "model_information.removeJoints", removeJointNames_, false);
 
   // create pinocchio interface
-  PinocchioInterface pinocchioInterface(mobile_manipulator::createPinocchioInterface(urdfFile, modelType, removeJointNames_));
+  PinocchioInterface pinocchioInterface(mobile_manipulator::createPinocchioInterface(urdfFile_, modelInfo_.robotModelType, removeJointNames_));
 
   // read if self-collision checking active
   boost::property_tree::ptree pt;
-  boost::property_tree::read_info(taskFile, pt);
+  boost::property_tree::read_info(taskFile_, pt);
   bool activateSelfCollision = true;
   loadData::loadPtreeValue(pt, activateSelfCollision, "selfCollision.activate", true);
 
@@ -141,8 +141,8 @@ void OCS2_Mobile_Manipulator_Visualization::launchVisualizerNode(ros::NodeHandle
     loadData::loadPtreeValue(pt, mu, prefix + ".mu", true);
     loadData::loadPtreeValue(pt, delta, prefix + ".delta", true);
     loadData::loadPtreeValue(pt, minimumDistance, prefix + ".minimumDistance", true);
-    loadData::loadStdVectorOfPair(taskFile, prefix + ".collisionObjectPairs", collisionObjectPairs, true);
-    loadData::loadStdVectorOfPair(taskFile, prefix + ".collisionLinkPairs", collisionLinkPairs, true);
+    loadData::loadStdVectorOfPair(taskFile_, prefix + ".collisionObjectPairs", collisionObjectPairs, true);
+    loadData::loadStdVectorOfPair(taskFile_, prefix + ".collisionLinkPairs", collisionLinkPairs, true);
     //std::cerr << " #### =============================================================================\n";
 
     PinocchioGeometryInterface geometryInterface(pinocchioInterface, collisionLinkPairs, collisionObjectPairs);
@@ -161,6 +161,8 @@ void OCS2_Mobile_Manipulator_Visualization::update(const SystemObservation& obse
                                                    const PrimalSolution& policy,
                                                    const CommandData& command) 
 {
+  //std::cout << "[OCS2_Mobile_Manipulator_Visualization::update] START" << std::endl;
+
   const ros::Time timeStamp = ros::Time::now();
 
   //publishObservation(timeStamp, observation);   //NUA EDIT: Commented out.
@@ -171,6 +173,8 @@ void OCS2_Mobile_Manipulator_Visualization::update(const SystemObservation& obse
   {
     geometryVisualization_ -> publishDistances(observation.state);
   }
+
+  //std::cout << "[OCS2_Mobile_Manipulator_Visualization::update] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -232,18 +236,22 @@ void OCS2_Mobile_Manipulator_Visualization::publishTargetTrajectories(const ros:
 /******************************************************************************************************/
 void OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy) 
 {
+  //std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] START" << std::endl;
+
   const scalar_t TRAJECTORYLINEWIDTH = 0.005;
   const std::array<scalar_t, 3> red{0.6350, 0.0780, 0.1840};
   const std::array<scalar_t, 3> blue{0, 0.4470, 0.7410};
   const auto& mpcStateTrajectory = policy.stateTrajectory_;
   visualization_msgs::MarkerArray markerArray;
 
+  //std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] START Base" << std::endl;
   // Base trajectory
   std::vector<geometry_msgs::Point> baseTrajectory;
   baseTrajectory.reserve(mpcStateTrajectory.size());
   geometry_msgs::PoseArray poseArray;
   poseArray.poses.reserve(mpcStateTrajectory.size());
 
+  //std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] START EE" << std::endl;
   // End effector trajectory
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
@@ -262,6 +270,7 @@ void OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(const ros
   markerArray.markers.emplace_back(ros_msg_helpers::getLineMsg(std::move(endEffectorTrajectory), blue, TRAJECTORYLINEWIDTH));
   markerArray.markers.back().ns = "EE Trajectory";
 
+  //std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] START Extract" << std::endl;
   // Extract base pose from state
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const vector_t& state) 
   {
@@ -287,6 +296,8 @@ void OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(const ros
 
   stateOptimizedPublisher_.publish(markerArray);
   stateOptimizedPosePublisher_.publish(poseArray);
+
+  //std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] END" << std::endl;
 }
 
 }  // namespace mobile_manipulator

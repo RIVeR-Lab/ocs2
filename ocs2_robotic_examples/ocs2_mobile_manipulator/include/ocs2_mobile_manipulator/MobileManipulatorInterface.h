@@ -100,6 +100,21 @@ class MobileManipulatorInterface final : public RobotInterface
     }
     */
 
+    const std::string& getTaskFile() const
+    { 
+      return taskFile_;
+    }
+
+    const std::string& getLibraryFolder() const 
+    { 
+      return libraryFolder_;
+    }
+
+    const std::string& getUrdfFile() const
+    { 
+      return urdfFile_;
+    }
+
     ddp::Settings& ddpSettings() 
     { 
       return ddpSettings_; 

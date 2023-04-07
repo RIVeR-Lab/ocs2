@@ -90,8 +90,8 @@ class GaussNewtonDDP_MPC final : public MPC_BASE
   private:
     void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override 
     {
-      std::cout << "[GaussNewtonDDP_MPC::calculateController(3)] DEBUG INF LOOP!" << std::endl;
-      while(1);
+      //std::cout << "[GaussNewtonDDP_MPC::calculateController(3)] DEBUG INF LOOP!" << std::endl;
+      //while(1);
 
       if (settings().coldStart_) 
       {

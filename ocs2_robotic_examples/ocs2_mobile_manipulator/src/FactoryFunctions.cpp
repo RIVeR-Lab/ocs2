@@ -139,11 +139,21 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath,
     while(1);
   }
   
-  se3_base_wrt_world.translation().x() = transform_base_wrt_world.getOrigin().x();
-  se3_base_wrt_world.translation().y() = transform_base_wrt_world.getOrigin().y();
+  //se3_base_wrt_world.translation().x() = transform_base_wrt_world.getOrigin().x();
+  se3_base_wrt_world.translation().x() = 0;
+  //se3_base_wrt_world.translation().y() = transform_base_wrt_world.getOrigin().y();
+  se3_base_wrt_world.translation().y() = 0;
   se3_base_wrt_world.translation().z() = transform_base_wrt_world.getOrigin().z();
 
-  tf::matrixTFToEigen(tf::Matrix3x3(transform_base_wrt_world.getRotation()), se3_base_wrt_world.rotation());
+
+  std::cout << "[FactoryFunctions::createPinocchioInterface(5)] x: " << se3_base_wrt_world.translation().x() << std::endl;
+  std::cout << "[FactoryFunctions::createPinocchioInterface(5)] y: " << se3_base_wrt_world.translation().y() << std::endl;
+  std::cout << "[FactoryFunctions::createPinocchioInterface(5)] z: " << se3_base_wrt_world.translation().z() << std::endl;
+  //while(1);
+
+  //tf::matrixTFToEigen(tf::Matrix3x3(transform_base_wrt_world.getRotation()), se3_base_wrt_world.rotation());
+
+  se3_base_wrt_world.rotation().setIdentity();
 
   // resolve for the robot type
   switch (robotModelType) 
@@ -169,6 +179,9 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath,
 
     case RobotModelType::MobileManipulator: 
     {
+      //return getPinocchioInterfaceFromUrdfModel(newModel, se3_base_wrt_world);
+
+      ///*
       // Add XY-yaw joint for the wheel-base
       pinocchio::JointModelComposite jointComposite(3);
       jointComposite.addJoint(pinocchio::JointModelPX());
@@ -177,6 +190,7 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath,
 
       // Return pinocchio interface
       return getPinocchioInterfaceFromUrdfModel(newModel, jointComposite, se3_base_wrt_world);
+      //*/
     }
     
     default:

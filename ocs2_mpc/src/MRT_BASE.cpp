@@ -65,12 +65,16 @@ void MRT_BASE::reset()
 /******************************************************************************************************/
 const CommandData& MRT_BASE::getCommand() const 
 {
+  //std::cout << "[MRT_BASE::getCommand] START" << std::endl;
+
   if (activeCommandPtr_ != nullptr) 
   {
+    //std::cout << "[MRT_BASE::getCommand] END if" << std::endl;
     return *activeCommandPtr_;
   } 
   else 
   {
+    //std::cout << "[MRT_BASE::getCommand] END else" << std::endl;
     throw std::runtime_error("[MRT_BASE::getCommand] updatePolicy() should be called first!");
   }
 }
@@ -80,16 +84,16 @@ const CommandData& MRT_BASE::getCommand() const
 /******************************************************************************************************/
 const PrimalSolution& MRT_BASE::getPolicy() const 
 {
-  //td::cout << "[MRT_BASE::getPolicy] START" << std::endl;
+  //std::cout << "[MRT_BASE::getPolicy] START" << std::endl;
 
   if (activePrimalSolutionPtr_ != nullptr) 
   {
-    //std::cout << "[MRT_BASE::getPolicy] END" << std::endl;
-    
+    //std::cout << "[MRT_BASE::getPolicy] END if" << std::endl;
     return *activePrimalSolutionPtr_;
   } 
   else 
   {
+    //std::cout << "[MRT_BASE::getPolicy] END else" << std::endl;
     throw std::runtime_error("[MRT_BASE::getPolicy] updatePolicy() should be called first!");
   }
 }

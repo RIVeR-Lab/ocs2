@@ -46,13 +46,42 @@ int main(int argc, char** argv)
 {
   std::cout << "[MobileManipulatorGazeboMRT::main] START" << std::endl;
 
-  const std::string robotName = "mobile_manipulator";
+  std::string robotName = "jackal_ur5";
+  std::string robotModel = "mobile_manipulator";
 
   // Initialize ros node
-  ros::init(argc, argv, robotName + "_mrt");
+  ros::init(argc, argv, robotModel + "_mrt");
   ros::NodeHandle nodeHandle;
 
   // Get node parameters
+  string workspacePath;
+  
+  nodeHandle.getParam("/workspacePath", workspacePath);
+  std::string taskFile_mobileBase = workspacePath + "/config/task/task_" + robotName + "_mobileBase.info";
+  std::string taskFile_robotArm = workspacePath + "/config/task/task_" + robotName + "_robotArm.info";
+  std::string taskFile_mobileManipulator = workspacePath + "/config/task/task_" + robotName + "_mobileManipulator.info";
+
+  std::cout << "[MobileManipulatorMpcNode::main] taskFile_mobileBase: " << taskFile_mobileBase << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] taskFile_robotArm: " << taskFile_robotArm << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] taskFile_mobileManipulator: " << taskFile_mobileManipulator << std::endl;
+
+  std::string libFolder_mobileBase = workspacePath + "/codegen/auto_generated/" + robotName;
+  std::string libFolder_robotArm = workspacePath + "/codegen/auto_generated/" + robotName;
+  std::string libFolder_mobileManipulator = workspacePath + "/codegen/auto_generated/" + robotName;
+  
+  std::cout << "[MobileManipulatorMpcNode::main] libFolder_mobileBase: " << libFolder_mobileBase << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] libFolder_robotArm: " << libFolder_robotArm << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] libFolder_mobileManipulator: " << libFolder_mobileManipulator << std::endl;
+
+  std::string urdfFile_mobileBase = workspacePath + "/urdf/jackal_fixedWheel_ur5.urdf";
+  std::string urdfFile_robotArm = workspacePath + "/urdf/jackal_fixedWheel_ur5.urdf";
+  std::string urdfFile_mobileManipulator = workspacePath + "/urdf/jackal_fixedWheel_ur5.urdf";
+
+  std::cout << "[MobileManipulatorMpcNode::main] urdfFile_mobileBase: " << urdfFile_mobileBase << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] urdfFile_robotArm: " << urdfFile_robotArm << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] urdfFile_mobileManipulator: " << urdfFile_mobileManipulator << std::endl;
+
+  /*
   std::string taskFile, libFolder, urdfFile;
   nodeHandle.getParam("/taskFile", taskFile);
   nodeHandle.getParam("/libFolder", libFolder);
@@ -60,6 +89,7 @@ int main(int argc, char** argv)
   std::cerr << "Loading task file: " << taskFile << std::endl;
   std::cerr << "Loading library folder: " << libFolder << std::endl;
   std::cerr << "Loading urdf file: " << urdfFile << std::endl;
+  */
 
   PointsOnRobot::points_radii_t pointsAndRadii(8);
   if (nodeHandle.hasParam("/collision_points")) 
@@ -104,6 +134,19 @@ int main(int argc, char** argv)
   {
     std::cout << "[MobileManipulatorGazeboMRT::main] ERROR: collision_points is not defined!" << std::endl;
   }
+
+  // taskFile_mobileManipulator
+  // taskFile_robotArm
+
+  string taskFile = taskFile_mobileManipulator;
+  string libFolder = libFolder_mobileManipulator;
+  string urdfFile = urdfFile_mobileManipulator;
+
+  std::cout << "[MobileManipulatorMpcNode::main] Loading task file: " << taskFile << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] Loading library folder: " << libFolder << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] Loading urdf file: " << urdfFile << std::endl;
+
+  //while(1);
 
   // Robot Interface
   std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE MobileManipulatorInterface" << std::endl;
@@ -153,7 +196,7 @@ int main(int argc, char** argv)
   }
 
   // MRT
-  MRT_ROS_Interface mrt(robotModelInfo, robotName);
+  MRT_ROS_Interface mrt(robotModelInfo, robotModel);
   mrt.initRollout(&interface.getRollout());
   mrt.launchNodes(nodeHandle);
 
@@ -171,14 +214,14 @@ int main(int argc, char** argv)
   mrt_loop.subscribeObservers({ocs2_mm_visu});
 
   // initial state
-  SystemObservation initObservation;
+  //SystemObservation initObservation;
   //initObservation.state = interface.getInitialState();
-  initObservation.state.setZero(stateDim);
-  initObservation.input.setZero(inputDim);
-  initObservation.time = 0.0;
+  //initObservation.state.setZero(stateDim);
+  //initObservation.input.setZero(inputDim);
+  //initObservation.time = 0.0;
 
-  std::cout << "[MobileManipulatorGazeboMRT::main] state size: " << initObservation.state.size() << std::endl;
-  std::cout << "[MobileManipulatorGazeboMRT::main] input size: " << initObservation.input.size() << std::endl;
+  //std::cout << "[MobileManipulatorGazeboMRT::main] state size: " << initObservation.state.size() << std::endl;
+  //std::cout << "[MobileManipulatorGazeboMRT::main] input size: " << initObservation.input.size() << std::endl;
   
   // initial command
   vector_t initTarget(7);

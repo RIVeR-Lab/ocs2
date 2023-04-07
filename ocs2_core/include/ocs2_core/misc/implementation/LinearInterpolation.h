@@ -27,6 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <iostream>
 #include <algorithm>
 #include <functional>
 
@@ -108,7 +109,10 @@ inline index_alpha_t timeSegment(scalar_t enquiryTime, const std::vector<scalar_
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename Data, class Alloc>
-Data interpolate(index_alpha_t indexAlpha, const std::vector<Data, Alloc>& dataArray) {
+Data interpolate(index_alpha_t indexAlpha, const std::vector<Data, Alloc>& dataArray) 
+{
+  //std::cout << "[LinearInterpolation::interpolate(2)] START" <<std::endl;
+
   return interpolate(indexAlpha, dataArray, stdAccessFun<Data, Alloc>);
 }
 
@@ -116,7 +120,10 @@ Data interpolate(index_alpha_t indexAlpha, const std::vector<Data, Alloc>& dataA
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename Data, class Alloc>
-Data interpolate(scalar_t enquiryTime, const std::vector<scalar_t>& timeArray, const std::vector<Data, Alloc>& dataArray) {
+Data interpolate(scalar_t enquiryTime, const std::vector<scalar_t>& timeArray, const std::vector<Data, Alloc>& dataArray) 
+{
+  //std::cout << "[LinearInterpolation::interpolate(3 dataArray)] START" <<std::endl;
+
   return interpolate(enquiryTime, timeArray, dataArray, stdAccessFun<Data, Alloc>);
 }
 
@@ -125,20 +132,32 @@ Data interpolate(scalar_t enquiryTime, const std::vector<scalar_t>& timeArray, c
 /******************************************************************************************************/
 template <typename Data, class Alloc, class AccessFun>
 auto interpolate(index_alpha_t indexAlpha, const std::vector<Data, Alloc>& dataArray, AccessFun accessFun)
-    -> remove_cvref_t<typename std::result_of<AccessFun(const std::vector<Data, Alloc>&, size_t)>::type> {
+  -> remove_cvref_t<typename std::result_of<AccessFun(const std::vector<Data, Alloc>&, size_t)>::type> 
+{
+  //std::cout << "[LinearInterpolation::interpolate(3 accessFun)] START" <<std::endl;
+
   assert(dataArray.size() > 0);
-  if (dataArray.size() > 1) {
+  if (dataArray.size() > 1) 
+  {
     // Normal interpolation case
     int index = indexAlpha.first;
     scalar_t alpha = indexAlpha.second;
     auto& lhs = accessFun(dataArray, index);
     auto& rhs = accessFun(dataArray, index + 1);
-    if (areSameSize(rhs, lhs)) {
+    
+    if (areSameSize(rhs, lhs)) 
+    {
+      //std::cout << "[LinearInterpolation::interpolate] END if" <<std::endl;
       return alpha * lhs + (scalar_t(1.0) - alpha) * rhs;
-    } else {
+    } 
+    else 
+    {
+      //std::cout << "[LinearInterpolation::interpolate] END else" <<std::endl;
       return (alpha > 0.5) ? lhs : rhs;
     }
-  } else {  // dataArray.size() == 1
+  } 
+  else 
+  {  // dataArray.size() == 1
     // Time vector has only 1 element -> Constant function
     return accessFun(dataArray, 0);
   }
@@ -148,8 +167,14 @@ auto interpolate(index_alpha_t indexAlpha, const std::vector<Data, Alloc>& dataA
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename Data, class Alloc, class AccessFun>
-auto interpolate(scalar_t enquiryTime, const std::vector<scalar_t>& timeArray, const std::vector<Data, Alloc>& dataArray,
-                 AccessFun accessFun) -> remove_cvref_t<typename std::result_of<AccessFun(const std::vector<Data, Alloc>&, size_t)>::type> {
+auto interpolate(scalar_t enquiryTime, 
+                 const std::vector<scalar_t>& timeArray, 
+                 const std::vector<Data, Alloc>& dataArray,
+                 AccessFun accessFun) 
+  -> remove_cvref_t<typename std::result_of<AccessFun(const std::vector<Data, Alloc>&, size_t)>::type> 
+{
+  //std::cout << "[LinearInterpolation::interpolate(4)] START" <<std::endl;
+
   return interpolate(timeSegment(enquiryTime, timeArray), dataArray, accessFun);
 }
 

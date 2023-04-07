@@ -162,6 +162,9 @@ class MRT_ROS_Gazebo_Loop
     std::vector<double> stateBase_;
     std::vector<double> stateArm_;
 
+    std::vector<double> inputBase_;
+    std::vector<double> inputArm_;
+
     tf::TransformListener tfListener_;
 
     std::vector<std::shared_ptr<DummyObserver>> observers_;
@@ -169,6 +172,7 @@ class MRT_ROS_Gazebo_Loop
     tf::StampedTransform tf_robot_wrt_world_;
     nav_msgs::Odometry odometryMsg_;
     geometry_msgs::Pose robotBasePoseMsg_;
+    geometry_msgs::Twist robotBaseTwistMsg_;
     sensor_msgs::JointState jointStateMsg_;
     control_msgs::JointTrajectoryControllerState jointTrajectoryControllerStateMsg_;
 

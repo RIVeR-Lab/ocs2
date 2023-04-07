@@ -43,9 +43,15 @@ class OCS2_Mobile_Manipulator_Visualization final : public DummyObserver
 {
   public:
     OCS2_Mobile_Manipulator_Visualization(ros::NodeHandle& nodeHandle, const MobileManipulatorInterface& interface)
-      : pinocchioInterface_(interface.getPinocchioInterface()), modelInfo_(interface.getRobotModelInfo()) 
+      : pinocchioInterface_(interface.getPinocchioInterface()), 
+        modelInfo_(interface.getRobotModelInfo()),
+        urdfFile_(interface.getUrdfFile()),
+        taskFile_(interface.getTaskFile())
+
     {
+      std::cout << "[OCS2_Mobile_Manipulator_Visualization::OCS2_Mobile_Manipulator_Visualization] START" << std::endl;
       launchVisualizerNode(nodeHandle);
+      std::cout << "[OCS2_Mobile_Manipulator_Visualization::OCS2_Mobile_Manipulator_Visualization] END" << std::endl;
     }
 
     ~OCS2_Mobile_Manipulator_Visualization() override = default;
@@ -61,8 +67,12 @@ class OCS2_Mobile_Manipulator_Visualization final : public DummyObserver
     
     void publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy);
 
-    PinocchioInterface pinocchioInterface_;
+    const std::string urdfFile_;
+    const std::string taskFile_;
     const RobotModelInfo modelInfo_;
+
+    PinocchioInterface pinocchioInterface_;
+    
     std::vector<std::string> removeJointNames_;
 
     std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;

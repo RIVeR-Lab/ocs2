@@ -44,7 +44,7 @@ EndEffectorConstraint::EndEffectorConstraint(const EndEffectorKinematics<scalar_
     endEffectorKinematicsPtr_(endEffectorKinematics.clone()),
     referenceManagerPtr_(&referenceManager) 
 {
-  //std::cout << "[EndEffectorConstraint::EndEffectorConstraint] START " << std::endl;
+  std::cout << "[EndEffectorConstraint::EndEffectorConstraint] START " << std::endl;
 
   if (endEffectorKinematics.getEndEffectorFrameNames().size() != 1) 
   {
@@ -52,7 +52,7 @@ EndEffectorConstraint::EndEffectorConstraint(const EndEffectorKinematics<scalar_
   }
   pinocchioEEKinPtr_ = dynamic_cast<PinocchioEndEffectorKinematics*>(endEffectorKinematicsPtr_.get());
 
-  //std::cout << "[EndEffectorConstraint::EndEffectorConstraint] END " << std::endl;
+  std::cout << "[EndEffectorConstraint::EndEffectorConstraint] END " << std::endl;
 }
 
 /******************************************************************************************************/
@@ -74,8 +74,8 @@ vector_t EndEffectorConstraint::getValue(scalar_t time,
   std::cout << "[EndEffectorConstraint::getValue(3)] END" << std:: endl;
 
   // NUA TODO: CLEAR THESE WHEN BE SURE THAT MULTI-MODEL IS WORKING!
-  std::cout << "[EndEffectorConstraint::getValue(3)] BEFORE INF" << std:: endl;
-  while(1);
+  //std::cout << "[EndEffectorConstraint::getValue(3)] BEFORE INF" << std:: endl;
+  //while(1);
 
   // PinocchioEndEffectorKinematics requires pre-computation with shared PinocchioInterface.
   if (pinocchioEEKinPtr_ != nullptr) 
@@ -158,8 +158,8 @@ VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(
   std::cout << "[EndEffectorConstraint::getLinearApproximation(3)] START" << std:: endl;
 
   // NUA TODO: CLEAR THESE WHEN BE SURE THAT MULTI-MODEL IS WORKING!
-  std::cout << "[EndEffectorConstraint::getLinearApproximation(3)] BEFORE INF" << std:: endl;
-  while(1);
+  //std::cout << "[EndEffectorConstraint::getLinearApproximation(3)] BEFORE INF" << std:: endl;
+  //while(1);
 
   // PinocchioEndEffectorKinematics requires pre-computation with shared PinocchioInterface.
   if (pinocchioEEKinPtr_ != nullptr) 

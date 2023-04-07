@@ -51,8 +51,8 @@ void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t fina
   std::cout << "[SolverBase::run(3)] START" << std::endl;
 
   //// NUA TODO: REMOVE AFTER MULTI-MODEL IS COMPLETED!
-  std::cout << "[SolverBase::run(3)] DEBUG INF LOOP!" << std::endl;
-  while(1);
+  //std::cout << "[SolverBase::run(3)] DEBUG INF LOOP!" << std::endl;
+  //while(1);
 
   preRun(initTime, initState, finalTime);
   runImpl(initTime, initState, finalTime);

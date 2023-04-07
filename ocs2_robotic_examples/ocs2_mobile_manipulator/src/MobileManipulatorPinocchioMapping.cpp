@@ -63,6 +63,8 @@ const RobotModelInfo& MobileManipulatorPinocchioMappingTpl<SCALAR>::getRobotMode
 template <typename SCALAR>
 auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(const vector_t& state) const -> vector_t 
 {
+  std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(1)] START" << std::endl;
+
   return state;
 }
 
@@ -72,6 +74,11 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(con
 template <typename SCALAR>
 auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(const vector_t& state, const vector_t& fullState) const -> vector_t 
 {
+  std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF" << std::endl;
+  while(1);
+
+  return state;
+  /*
   auto modeStateDim = modelInfo_.modeStateDim;
   vector_t pinocchioState = fullState;
 
@@ -99,6 +106,7 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(con
       throw std::runtime_error("[MobileManipulatorPinocchioMapping::getPinocchioJointVelocity] ERROR: Invalid manipulator model type!");
   }
   return pinocchioState;
+  */
 }
 
 /******************************************************************************************************/
@@ -108,6 +116,9 @@ template <typename SCALAR>
 auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const
   -> vector_t 
 {
+  std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointVelocity] DEBUG INF" << std::endl;
+  //while(1);
+
   auto modeStateDim = modelInfo_.modeStateDim;
   vector_t pinocchioStateVelo = vector_t::Zero(modeStateDim);
 
@@ -149,6 +160,9 @@ template <typename SCALAR>
 auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointVelocity(const vector_t& state, const vector_t& fullStateVelo, const vector_t& input) const
   -> vector_t 
 {
+  std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointVelocity(3)] DEBUG INF" << std::endl;
+  while(1);
+
   auto modeStateDim = modelInfo_.modeStateDim;
   vector_t pinocchioStateVelo = fullStateVelo;
 
@@ -197,6 +211,9 @@ template <typename SCALAR>
 auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const
   -> std::pair<matrix_t, matrix_t> 
 {
+  std::cout << "[MobileManipulatorPinocchioMappingTpl::getOcs2Jacobian] DEBUG INF" << std::endl;
+  while(1);
+
   // Set jacobian model based on model type
   switch (modelInfo_.modelMode) 
   {
@@ -278,6 +295,9 @@ template <typename SCALAR>
 auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getOcs2Jacobian(const vector_t& state, const vector_t& fullState, const matrix_t& Jq, const matrix_t& Jv) const
   -> std::pair<matrix_t, matrix_t> 
 {
+  std::cout << "[MobileManipulatorPinocchioMappingTpl::getOcs2Jacobian(4)] DEBUG INF" << std::endl;
+  while(1);
+
   // Set jacobian model based on model type
   switch (modelInfo_.modelMode) 
   {

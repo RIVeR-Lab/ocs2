@@ -45,20 +45,52 @@ int main(int argc, char** argv)
 {
   std::cout << "[MobileManipulatorMpcNode::main] START" << std::endl;
 
-  const std::string robotName = "mobile_manipulator";
+  std::string robotName = "jackal_ur5";
+  std::string robotModel = "mobile_manipulator";
 
   // Initialize ros node
-  ros::init(argc, argv, robotName + "_mpc");
+  ros::init(argc, argv, robotModel + "_mpc");
   ros::NodeHandle nodeHandle;
   
   // Get node parameters
-  std::string taskFile, libFolder, urdfFile;
+  string workspacePath;
+  
+  nodeHandle.getParam("/workspacePath", workspacePath);
+  std::string taskFile_mobileBase = workspacePath + "/config/task/task_" + robotName + "_mobileBase.info";
+  std::string taskFile_robotArm = workspacePath + "/config/task/task_" + robotName + "_robotArm.info";
+  std::string taskFile_mobileManipulator = workspacePath + "/config/task/task_" + robotName + "_mobileManipulator.info";
+
+  std::cout << "[MobileManipulatorMpcNode::main] taskFile_mobileBase: " << taskFile_mobileBase << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] taskFile_robotArm: " << taskFile_robotArm << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] taskFile_mobileManipulator: " << taskFile_mobileManipulator << std::endl;
+
+  std::string libFolder_mobileBase = workspacePath + "/codegen/auto_generated/" + robotName;
+  std::string libFolder_robotArm = workspacePath + "/codegen/auto_generated/" + robotName;
+  std::string libFolder_mobileManipulator = workspacePath + "/codegen/auto_generated/" + robotName;
+  
+  std::cout << "[MobileManipulatorMpcNode::main] libFolder_mobileBase: " << libFolder_mobileBase << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] libFolder_robotArm: " << libFolder_robotArm << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] libFolder_mobileManipulator: " << libFolder_mobileManipulator << std::endl;
+
+  std::string urdfFile_mobileBase = workspacePath + "/urdf/jackal_fixedWheel_ur5.urdf";
+  std::string urdfFile_robotArm = workspacePath + "/urdf/jackal_fixedWheel_ur5.urdf";
+  std::string urdfFile_mobileManipulator = workspacePath + "/urdf/jackal_fixedWheel_ur5.urdf";
+
+  std::cout << "[MobileManipulatorMpcNode::main] urdfFile_mobileBase: " << urdfFile_mobileBase << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] urdfFile_robotArm: " << urdfFile_robotArm << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] urdfFile_mobileManipulator: " << urdfFile_mobileManipulator << std::endl;
+
+  //std::cerr << "[MobileManipulatorMpcNode::main] DEBUG INF" << std::endl;
+  //while(1);
+
+  /*
   nodeHandle.getParam("/taskFile", taskFile);
   nodeHandle.getParam("/libFolder", libFolder);
   nodeHandle.getParam("/urdfFile", urdfFile);
   std::cerr << "Loading task file: " << taskFile << std::endl;
   std::cerr << "Loading library folder: " << libFolder << std::endl;
   std::cerr << "Loading urdf file: " << urdfFile << std::endl;
+  */
   
   // Get points on robot parameters
   PointsOnRobot::points_radii_t pointsAndRadii(8);
@@ -105,6 +137,19 @@ int main(int argc, char** argv)
   {
     std::cout << "[MobileManipulatorMpcNode::main] ERROR: collision_points is not defined!" << std::endl;
   }
+
+  // taskFile_mobileManipulator
+  // taskFile_robotArm
+
+  string taskFile = taskFile_mobileManipulator;
+  string libFolder = libFolder_mobileManipulator;
+  string urdfFile = urdfFile_mobileManipulator;
+
+  std::cout << "[MobileManipulatorMpcNode::main] Loading task file: " << taskFile << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] Loading library folder: " << libFolder << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] Loading urdf file: " << urdfFile << std::endl;
+
+  //while(1);
 
   // Robot interface
   std::cout << "" << std::endl;
@@ -162,7 +207,7 @@ int main(int argc, char** argv)
   //while(1);
 
   // ROS ReferenceManager
-  std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(new ocs2::RosReferenceManager(robotName, interface.getReferenceManagerPtr()));
+  std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(new ocs2::RosReferenceManager(robotModel, interface.getReferenceManagerPtr()));
   rosReferenceManagerPtr->subscribe(nodeHandle);
 
   // MPC
@@ -175,7 +220,7 @@ int main(int argc, char** argv)
   mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
 
   // Launch MPC ROS node
-  MPC_ROS_Interface mpcNode(mpc, robotName);
+  MPC_ROS_Interface mpcNode(mpc, robotModel);
   mpcNode.launchNodes(nodeHandle);
 
   std::cout << "[MobileManipulatorMpcNode::main] END" << std::endl;

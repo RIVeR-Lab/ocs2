@@ -69,8 +69,8 @@ void computeRolloutMetrics(OptimalControlProblem& problem,
   //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics(4)] START" << std::endl;
 
   //// NUA TODO: REMOVE AFTER MULTI-MODEL IS COMPLETED!
-  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics(4)] DEBUG INF LOOP!" << std::endl;
-  while(1);
+  //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics(4)] DEBUG INF LOOP!" << std::endl;
+  //while(1);
 
   const auto& tTrajectory = primalSolution.timeTrajectory_;
   const auto& xTrajectory = primalSolution.stateTrajectory_;

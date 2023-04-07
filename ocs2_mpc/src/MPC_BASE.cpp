@@ -103,8 +103,8 @@ bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState)
 {
   std::cout << "[MPC_BASE::run(2)] START" << std::endl;
 
-  std::cout << "[MPC_BASE::run(2)] DEBUG INF LOOP!" << std::endl;
-  while(1);
+  //std::cout << "[MPC_BASE::run(2)] DEBUG INF LOOP!" << std::endl;
+  //while(1);
 
   // check if the current time exceeds the solver final limit
   if (!initRun_ && currentTime >= getSolverPtr()->getFinalTime()) 

@@ -51,23 +51,28 @@ struct PrimalSolution {
 
   /** Copy constructor */
   PrimalSolution(const PrimalSolution& other)
-      : timeTrajectory_(other.timeTrajectory_),
-        stateTrajectory_(other.stateTrajectory_),
-        inputTrajectory_(other.inputTrajectory_),
-        postEventIndices_(other.postEventIndices_),
-        modeSchedule_(other.modeSchedule_),
-        controllerPtr_(other.controllerPtr_ ? other.controllerPtr_->clone() : nullptr) {}
+    : timeTrajectory_(other.timeTrajectory_),
+      stateTrajectory_(other.stateTrajectory_),
+      inputTrajectory_(other.inputTrajectory_),
+      postEventIndices_(other.postEventIndices_),
+      modeSchedule_(other.modeSchedule_),
+      controllerPtr_(other.controllerPtr_ ? other.controllerPtr_->clone() : nullptr) {}
 
   /** Copy Assignment */
-  PrimalSolution& operator=(const PrimalSolution& other) {
+  PrimalSolution& operator=(const PrimalSolution& other) 
+  {
     timeTrajectory_ = other.timeTrajectory_;
     stateTrajectory_ = other.stateTrajectory_;
     inputTrajectory_ = other.inputTrajectory_;
     postEventIndices_ = other.postEventIndices_;
     modeSchedule_ = other.modeSchedule_;
-    if (other.controllerPtr_) {
+    
+    if (other.controllerPtr_) 
+    {
       controllerPtr_.reset(other.controllerPtr_->clone());
-    } else {
+    } 
+    else 
+    {
       controllerPtr_.reset();
     }
     return *this;

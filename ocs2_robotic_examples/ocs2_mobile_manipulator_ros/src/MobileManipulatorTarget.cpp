@@ -53,8 +53,8 @@ TargetTrajectories goalPoseToTargetTrajectories(const Eigen::Vector3d& position,
 
 int main(int argc, char* argv[]) 
 {
-  const std::string robotName = "mobile_manipulator";
-  ::ros::init(argc, argv, robotName + "_target");
+  const std::string robotMode = "mobile_manipulator";
+  ::ros::init(argc, argv, robotMode + "_target");
   ::ros::NodeHandle nodeHandle;
 
   // Gazebo
@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
   //targetPoseCommand.publishInteractiveMarker();
 
   // Interactive Marker
-  TargetTrajectoriesInteractiveMarker targetPoseCommand(nodeHandle, robotName, &goalPoseToTargetTrajectories);
+  TargetTrajectoriesInteractiveMarker targetPoseCommand(nodeHandle, robotMode, &goalPoseToTargetTrajectories);
   targetPoseCommand.publishInteractiveMarker();
 
   // Successful exit

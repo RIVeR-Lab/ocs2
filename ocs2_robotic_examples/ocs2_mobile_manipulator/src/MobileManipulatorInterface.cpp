@@ -140,7 +140,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   referenceManagerPtr_.reset(new ReferenceManager);
 
   // NUA TODO: We don't need to do it here!
-  setMPCProblem(1, pointsAndRadii);
+  int modelMode = getModelModeInt(robotModelInfo_);
+  setMPCProblem(modelMode, pointsAndRadii);
   
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END" << std::endl;
 }
@@ -151,6 +152,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::points_radii_t& pointsAndRadii)
 {
   std::cout << "[MobileManipulatorInterface::setMPCProblem] START" << std::endl;
+
+  std::cout << "[MobileManipulatorInterface::setMPCProblem] modelMode: " << modelMode << std::endl;
 
   bool isModeUpdated = updateModelMode(robotModelInfo_, modelMode);
 
@@ -286,8 +289,8 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
   rolloutPtr_.reset(new TimeTriggeredRollout(*problem_.dynamicsPtr, rolloutSettings));
 
   // Initialization
-  auto modelInputDim = getInputDim(robotModelInfo_);
-  initializerPtr_.reset(new DefaultInitializer(modelInputDim));
+  auto modeInputDim = getModeInputDim(robotModelInfo_);
+  initializerPtr_.reset(new DefaultInitializer(modeInputDim));
 
   std::cout << "[MobileManipulatorInterface::setMPCProblem] END" << std::endl;
 }
@@ -341,8 +344,8 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCos
   const size_t modeInputDim = getModeInputDim(robotModelInfo_);
   
   std::cout << "[MobileManipulatorInterface::setMPCProblem] modelMode: " << modelMode << std::endl;
-  std::cout << "[MobileManipulatorInterface::setMPCProblem] modelStateDim: " << modeStateDim << std::endl;
-  std::cout << "[MobileManipulatorInterface::setMPCProblem] modelInputDim: " << modeInputDim << std::endl;
+  //std::cout << "[MobileManipulatorInterface::setMPCProblem] modelStateDim: " << modeStateDim << std::endl;
+  //std::cout << "[MobileManipulatorInterface::setMPCProblem] modelInputDim: " << modeInputDim << std::endl;
 
   matrix_t R = matrix_t::Zero(modeInputDim, modeInputDim);
 
@@ -500,9 +503,9 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile_, pt);
 
-  const int stateDim = getStateDim(robotModelInfo_);
-  const int modeStateDim = getModeStateDim(robotModelInfo_);
-  const int modeInputDim = getModeInputDim(robotModelInfo_);
+  //const int stateDim = getStateDim(robotModelInfo_);
+  //const int modeStateDim = getModeStateDim(robotModelInfo_);
+  //const int modeInputDim = getModeInputDim(robotModelInfo_);
 
   scalar_t muPosition = 1.0;
   scalar_t muOrientation = 1.0;
@@ -520,6 +523,9 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
   std::unique_ptr<StateConstraint> constraint;
   if (usePreComputation_) 
   {
+    std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] DEBUG INF" << std::endl;
+    while(1);
+
     MobileManipulatorPinocchioMapping pinocchioMapping(robotModelInfo_);
     PinocchioEndEffectorKinematics eeKinematics(*pinocchioInterfacePtr_, pinocchioMapping, {robotModelInfo_.robotArm.eeFrame});
     constraint.reset(new EndEffectorConstraint(eeKinematics, *referenceManagerPtr_));
