@@ -95,6 +95,9 @@ void LineSearchStrategy::computeSolution(size_t taskId, scalar_t stepLength, sea
 {
   std::cout << "[LineSearchStrategy::computeSolution(3)] START" << std::endl;
 
+  std::cout << "[LineSearchStrategy::computeSolution(3)] DEBUG INF" << std::endl;
+  while(1);
+
   auto& problem = optimalControlProblemRefStock_[taskId];
   auto& rollout = rolloutRefStock_[taskId];
 
@@ -233,6 +236,9 @@ bool LineSearchStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod,
                              search_strategy::SolutionRef solutionRef) 
 {
   std::cout << "[LineSearchStrategy::run(7)] START" << std::endl;
+
+  std::cout << "[LineSearchStrategy::run(7)] DEBUG INF" << std::endl;
+  while(1);
 
   // initialize lineSearchModule inputs
   lineSearchInputRef_.timePeriodPtr = &timePeriod;
@@ -374,6 +380,9 @@ void LineSearchStrategy::lineSearchTask(const size_t taskId)
 {
   std::cout << "[LineSearchStrategy::lineSearchTask(1)] START" << std::endl;
 
+  std::cout << "[LineSearchStrategy::lineSearchTask(1)] DEBUG INF" << std::endl;
+  while(1);
+
   while (true) 
   {
     const size_t alphaExp = alphaExpNext_++;
@@ -460,7 +469,7 @@ void LineSearchStrategy::lineSearchTask(const size_t taskId)
 /******************************************************************************************************/
 void LineSearchStrategy::lineSearchTask(const size_t taskId, const vector_t& initFullState) 
 {
-  //std::cout << "[LineSearchStrategy::lineSearchTask(2)] START" << std::endl;
+  std::cout << "[LineSearchStrategy::lineSearchTask(2)] START" << std::endl;
 
   while (true) 
   {
@@ -517,9 +526,9 @@ void LineSearchStrategy::lineSearchTask(const size_t taskId, const vector_t& ini
        * cost should be better than the baseline cost but learning rate should
        * be as high as possible. This is equivalent to a single core line search.
        */
-      const bool armijoCondition = workersSolution_[taskId].performanceIndex.merit <
-                                   (baselineMerit_ - settings_.armijoCoefficient * stepLength * unoptimizedControllerUpdateIS_);
-      if (armijoCondition && stepLength > bestStepSize_) {  // save solution
+      const bool armijoCondition = workersSolution_[taskId].performanceIndex.merit < (baselineMerit_ - settings_.armijoCoefficient * stepLength * unoptimizedControllerUpdateIS_);
+      if (armijoCondition && stepLength > bestStepSize_) 
+      {  // save solution
         bestStepSize_ = stepLength;
         swap(*bestSolutionRef_, workersSolution_[taskId]);
         terminateLinesearchTasks = std::all_of(alphaProcessed_.cbegin(), alphaProcessed_.cbegin() + alphaExp, [](bool f) { return f; });
@@ -529,19 +538,23 @@ void LineSearchStrategy::lineSearchTask(const size_t taskId, const vector_t& ini
     }  // end lock
 
     // kill other ongoing line search tasks
-    if (terminateLinesearchTasks) {
-      for (RolloutBase& rollout : rolloutRefStock_) {
+    if (terminateLinesearchTasks) 
+    {
+      for (RolloutBase& rollout : rolloutRefStock_) 
+      {
         rollout.abortRollout();
       }
-      if (baseSettings_.displayInfo) {
-        printString("    LS: interrupt other rollout's integrations.\n");
+
+      if (baseSettings_.displayInfo) 
+      {
+        printString("[LineSearchStrategy::lineSearchTask(2)] LS: interrupt other rollout's integrations.\n");
       }
       break;
     }
 
   }  // end of while loop
 
-  //std::cout << "[LineSearchStrategy::lineSearchTask(2)] END" << std::endl;
+  std::cout << "[LineSearchStrategy::lineSearchTask(2)] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -601,7 +614,8 @@ void LineSearchStrategy::computeRiccatiModification(const ModelData& projectedMo
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void LineSearchStrategy::printString(const std::string& text) const {
+void LineSearchStrategy::printString(const std::string& text) const 
+{
   std::lock_guard<std::mutex> outputDisplayGuard(outputDisplayGuardMutex_);
   std::cerr << text;
 }

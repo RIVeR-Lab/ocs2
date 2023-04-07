@@ -103,6 +103,7 @@ PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const P
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] modeStateDim: " << modeStateDim << std::endl;
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] modeInputDim: " << modeInputDim << std::endl;
   
+  /*
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] START getPositionCppAd" << std::endl;
   auto positionFunc = [&, this](const ad_vector_t& x, ad_vector_t& y) 
   {
@@ -114,8 +115,10 @@ PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const P
                                                       modelName + "_position", 
                                                       modelFolder));
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] END getPositionCppAd" << std::endl;
+  */
 
-  /*
+  ///*
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] START getPositionCppAd" << std::endl;
   auto positionFunc = [&, this](const ad_vector_t& x, const ad_vector_t& x_full, ad_vector_t& y) 
   {
     updateCallback(x, pinocchioInterfaceCppAd);
@@ -126,7 +129,8 @@ PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const P
                                                       stateDim,
                                                       modelName + "_position", 
                                                       modelFolder));
-  */
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] END getPositionCppAd" << std::endl;
+  //*/
   
   // Set velocity function
   auto velocityFunc = [&, this](const ad_vector_t& x, ad_vector_t& y) 
@@ -141,6 +145,7 @@ PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const P
                                                       modelName + "_velocity", 
                                                       modelFolder));
 
+  /*
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] START orientationErrorCppAdInterfacePtr_" << std::endl;
   // Set Orientation function
   auto orientationFunc = [&, this](const ad_vector_t& x, const ad_vector_t& params, ad_vector_t& y) 
@@ -153,13 +158,21 @@ PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const P
                                                               4 * endEffectorFrameIds_.size(), 
                                                               modelName + "_orientation", 
                                                               modelFolder));
-  /*
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] END orientationErrorCppAdInterfacePtr_" << std::endl;
+  */
+  ///*
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] START orientationErrorCppAdInterfacePtr_" << std::endl;
+  auto orientationFunc = [&, this](const ad_vector_t& x, const ad_vector_t& params, ad_vector_t& y) 
+  {
+    updateCallback(x, pinocchioInterfaceCppAd);
+    y = getOrientationErrorCppAd(pinocchioInterfaceCppAd, *mappingPtr, x, params);
+  };
   orientationErrorCppAdInterfacePtr_.reset(new CppAdInterface(orientationFunc, 
                                                               modeStateDim, 
                                                               stateDim + 4 * endEffectorFrameIds_.size(), 
                                                               modelName + "_orientation", 
                                                               modelFolder));
-  */
+  //*/
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] END orientationErrorCppAdInterfacePtr_" << std::endl;
 
   if (recompileLibraries) 
@@ -224,8 +237,8 @@ ad_vector_t PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(PinocchioInter
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(3)] START" << std::endl;
 
   //// NUA NOTE: CLEAN WHEN MULTI MODEL IS COMPLETED!
-  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(3)] NOT CHECKED/IMPLEMENTED INF LOOP!" << std::endl;
-  //while(1);
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(3)] NOT CHECKED/IMPLEMENTED INF LOOP!" << std::endl;
+  while(1);
 
   const auto& model = pinocchioInterfaceCppAd.getModel();
   auto& data = pinocchioInterfaceCppAd.getData();
@@ -254,10 +267,10 @@ ad_vector_t PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(PinocchioInter
                                                                   const ad_vector_t& state,
                                                                   const ad_vector_t& fullState) 
 {
-  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(4)] START" << std::endl;
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(4)] START" << std::endl;
 
-  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(4)] DEBUG INF" << std::endl;
-  while(1);
+  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(4)] DEBUG INF" << std::endl;
+  //while(1);
 
   const auto& model = pinocchioInterfaceCppAd.getModel();
   auto& data = pinocchioInterfaceCppAd.getData();
@@ -273,7 +286,7 @@ ad_vector_t PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(PinocchioInter
     positions.segment<3>(3 * i) = data.oMf[frameId].translation();
   }
 
-  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(4)] END" << std::endl;
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(4)] END" << std::endl;
 
   return positions;
 }
@@ -286,8 +299,8 @@ auto PinocchioEndEffectorKinematicsCppAd::getPosition(const vector_t& state) con
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPosition(1)] START" << std::endl;
 
   //// NUA NOTE: CLEAN WHEN MULTI MODEL IS COMPLETED!
-  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPosition(1)] NOT CHECKED/IMPLEMENTED INF LOOP!" << std::endl;
-  //while(1);
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPosition(1)] NOT CHECKED/IMPLEMENTED INF LOOP!" << std::endl;
+  while(1);
 
   const vector_t positionValues = positionCppAdInterfacePtr_->getFunctionValue(state);
 
@@ -309,8 +322,8 @@ auto PinocchioEndEffectorKinematicsCppAd::getPosition(const vector_t& state, con
 {
   //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPosition(2)] START" << std::endl;
 
-  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPosition(2)] DEBUG INF" << std::endl;
-  while(1);
+  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPosition(2)] DEBUG INF" << std::endl;
+  //while(1);
 
   const vector_t positionValues = positionCppAdInterfacePtr_->getFunctionValue(state, fullState);
 
@@ -333,8 +346,8 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCpp
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation(1)] START" << std::endl;
 
   //// NUA NOTE: CLEAN WHEN MULTI MODEL IS COMPLETED!
-  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation(1)] NOT CHECKED/IMPLEMENTED INF LOOP!" << std::endl;
-  //while(1);
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation(1)] NOT CHECKED/IMPLEMENTED INF LOOP!" << std::endl;
+  while(1);
 
   const vector_t positionValues = positionCppAdInterfacePtr_->getFunctionValue(state);
   const matrix_t positionJacobian = positionCppAdInterfacePtr_->getJacobian(state);
@@ -361,8 +374,8 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCpp
 {
   //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation] START" << std::endl;
 
-  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation(2)] DEBUG INF" << std::endl;
-  while(1);
+  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation(2)] DEBUG INF" << std::endl;
+  //while(1);
 
   const vector_t positionValues = positionCppAdInterfacePtr_->getFunctionValue(state, fullState);
   const matrix_t positionJacobian = positionCppAdInterfacePtr_->getJacobian(state, fullState);
@@ -484,8 +497,8 @@ auto PinocchioEndEffectorKinematicsCppAd::getOrientationError(const vector_t& st
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationError(2)] START" << std::endl;
 
   //// NUA NOTE: CLEAN WHEN MULTI MODEL IS COMPLETED!
-  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationError(2)] NOT CHECKED/IMPLEMENTED INF LOOP!" << std::endl;
-  //while(1);
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationError(2)] NOT CHECKED/IMPLEMENTED INF LOOP!" << std::endl;
+  while(1);
 
   vector_t params(4 * endEffectorFrameIds_.size());
   for (int i = 0; i < endEffectorFrameIds_.size(); i++) 
@@ -516,8 +529,8 @@ auto PinocchioEndEffectorKinematicsCppAd::getOrientationError(const vector_t& st
 {
   //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationError(3)] START" << std::endl;
 
-  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationError(3)] DEBUG INF" << std::endl;
-  while(1);
+  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationError(3)] DEBUG INF" << std::endl;
+  //while(1);
 
   const int stateDim = fullState.size();
   vector_t params(stateDim + 4 * endEffectorFrameIds_.size());
@@ -549,8 +562,8 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCpp
 {
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(2)] END" << std::endl;
 
-  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(2)] NOT CHECKED/IMPLEMENTED INF LOOP!" << std::endl;
-  //while(1);
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(2)] NOT CHECKED/IMPLEMENTED INF LOOP!" << std::endl;
+  while(1);
   
   vector_t params(4 * endEffectorFrameIds_.size());
   for (int i = 0; i < endEffectorFrameIds_.size(); i++) 
@@ -584,8 +597,8 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCpp
 {
   //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(3)] END" << std::endl;
 
-  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(3)] DEBUG INF" << std::endl;
-  while(1);
+  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(3)] DEBUG INF" << std::endl;
+  //while(1);
 
   auto stateDim = fullState.size();
   vector_t params(stateDim + 4 * endEffectorFrameIds_.size());
@@ -625,16 +638,16 @@ ad_vector_t PinocchioEndEffectorKinematicsCppAd::getOrientationErrorCppAd(Pinocc
 
   using ad_quaternion_t = Eigen::Quaternion<ad_scalar_t>;
 
-  //const int stateDim = robotModelInfo_.mobileBase.stateDim + robotModelInfo_.robotArm.stateDim;
+  const int stateDim = robotModelInfo_.mobileBase.stateDim + robotModelInfo_.robotArm.stateDim;
   //const int stateDim = 9;
 
-  //auto fullState = params.head(stateDim);
+  auto fullState = params.head(stateDim);
   auto pp = params.tail(4);
 
   const auto& model = pinocchioInterfaceCppAd.getModel();
   auto& data = pinocchioInterfaceCppAd.getData();
-  const ad_vector_t q = mapping.getPinocchioJointPosition(state);
-  //const ad_vector_t q = mapping.getPinocchioJointPosition(state, fullState);
+  //const ad_vector_t q = mapping.getPinocchioJointPosition(state);
+  const ad_vector_t q = mapping.getPinocchioJointPosition(state, fullState);
 
   pinocchio::forwardKinematics(model, data, q);
   pinocchio::updateFramePlacements(model, data);

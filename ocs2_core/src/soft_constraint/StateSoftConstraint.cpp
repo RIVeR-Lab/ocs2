@@ -76,6 +76,9 @@ scalar_t StateSoftConstraint::getValue(scalar_t time,
 {
   std::cout << "[StateSoftConstraint::getValue(4)] START" << std::endl;
 
+  std::cout << "[StateSoftConstraint::getValue(4)] DEBUG INF" << std::endl;
+  while(1);
+
   return penalty_.getValue(time, constraintPtr_->getValue(time, state, preComp));
 }
 
@@ -88,7 +91,7 @@ scalar_t StateSoftConstraint::getValue(scalar_t time,
                                        const TargetTrajectories&,
                                        const PreComputation& preComp) const 
 {
-  //std::cout << "[StateSoftConstraint::getValue(5)] START" << std::endl;
+  std::cout << "[StateSoftConstraint::getValue(5)] START" << std::endl;
 
   return penalty_.getValue(time, constraintPtr_->getValue(time, state, fullState, preComp));
 }
@@ -101,6 +104,9 @@ ScalarFunctionQuadraticApproximation StateSoftConstraint::getQuadraticApproximat
                                                                                     const TargetTrajectories&,
                                                                                     const PreComputation& preComp) const 
 {
+  std::cout << "[StateSoftConstraint::getQuadraticApproximation(4)] DEBUG INF" << std::endl;
+  while(1);
+
   switch (constraintPtr_->getOrder()) 
   {
     case ConstraintOrder::Linear:
@@ -123,17 +129,23 @@ ScalarFunctionQuadraticApproximation StateSoftConstraint::getQuadraticApproximat
                                                                                     const TargetTrajectories&,
                                                                                     const PreComputation& preComp) const 
 {
+  std::cout << "[StateSoftConstraint::getQuadraticApproximation(5)] START" << std::endl;
+
   switch (constraintPtr_->getOrder()) 
   {
     case ConstraintOrder::Linear:
+      std::cout << "[StateSoftConstraint::getQuadraticApproximation(5)] START Linear" << std::endl;
       return penalty_.getQuadraticApproximation(time, constraintPtr_->getLinearApproximation(time, state, fullState, preComp));
     
     case ConstraintOrder::Quadratic:
+      std::cout << "[StateSoftConstraint::getQuadraticApproximation(5)] START Quadratic" << std::endl;
       return penalty_.getQuadraticApproximation(time, constraintPtr_->getQuadraticApproximation(time, state, fullState, preComp));
     
     default:
       throw std::runtime_error("[StateSoftConstraint::getQuadraticApproximation] ERROR: Unknown constraint Order");
   }
+
+  std::cout << "[StateSoftConstraint::getQuadraticApproximation(5)] END" << std::endl;
 }
 
 }  // namespace ocs2

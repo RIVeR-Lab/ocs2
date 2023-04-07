@@ -695,8 +695,8 @@ void GaussNewtonDDP::approximateOptimalControlProblem()
    */
   // perform the LQ approximation for intermediate times
   std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] START approximateIntermediateLQ" << std::endl;
-  approximateIntermediateLQ(nominalDualData_.dualSolution, nominalPrimalData_);
-  //approximateIntermediateLQ(nominalDualData_.dualSolution, nominalPrimalData_, initFullState_);
+  //approximateIntermediateLQ(nominalDualData_.dualSolution, nominalPrimalData_);
+  approximateIntermediateLQ(nominalDualData_.dualSolution, nominalPrimalData_, initFullState_);
   std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] END approximateIntermediateLQ" << std::endl;
 
   /*
@@ -766,8 +766,8 @@ void GaussNewtonDDP::approximateOptimalControlProblem()
     const auto& time = nominalPrimalData_.primalSolution.timeTrajectory_.back();
     const auto& state = nominalPrimalData_.primalSolution.stateTrajectory_.back();
     const auto& multiplier = nominalDualData_.dualSolution.final;
-    modelData = ocs2::approximateFinalLQ(optimalControlProblemStock_[0], time, state, multiplier);
-    //modelData = ocs2::approximateFinalLQ(optimalControlProblemStock_[0], time, state, initFullState_, multiplier);
+    //modelData = ocs2::approximateFinalLQ(optimalControlProblemStock_[0], time, state, multiplier);
+    modelData = ocs2::approximateFinalLQ(optimalControlProblemStock_[0], time, state, initFullState_, multiplier);
 
     // checking the numerical properties
     if (ddpSettings_.checkNumericalStability_) 
@@ -955,19 +955,19 @@ void GaussNewtonDDP::initializeDualSolutionAndMetrics()
   //std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] END initializeDualSolution" << std::endl;
   
   //std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] START computeRolloutMetrics" << std::endl;
-  ///*
+  /*
   computeRolloutMetrics(optimalControlProblemStock_[0], 
                         nominalPrimalData_.primalSolution, 
                         nominalDualData_.dualSolution,
                         nominalPrimalData_.problemMetrics);
-  //*/
-  /*
+  */
+  ///*
   computeRolloutMetrics(optimalControlProblemStock_[0], 
                         nominalPrimalData_.primalSolution, 
                         nominalDualData_.dualSolution,
                         initFullState_,
                         nominalPrimalData_.problemMetrics);
-  */
+  //*/
   //std::cout << "[GaussNewtonDDP::initializeDualSolutionAndMetrics] END computeRolloutMetrics" << std::endl;
 
   // update dual
@@ -998,7 +998,7 @@ void GaussNewtonDDP::takePrimalDualStep(scalar_t lqModelExpectedCost)
                                         performanceIndex_);
 
   //std::cout << "[GaussNewtonDDP::takePrimalDualStep] START searchStrategyPtr_" << std::endl;
-  ///*
+  /*
   const bool success = searchStrategyPtr_->run({initTime_, finalTime_}, 
                                                initState_,
                                                lqModelExpectedCost, 
@@ -1006,7 +1006,7 @@ void GaussNewtonDDP::takePrimalDualStep(scalar_t lqModelExpectedCost)
                                                nominalDualData_.dualSolution, 
                                                modeSchedule, 
                                                solution);
-  //*/
+  */
 
   //std::cout << "[GaussNewtonDDP::takePrimalDualStep] initState_ size: " << initState_.size() << std::endl;
   //std::cout << initState_ << std::endl << std::endl;
@@ -1014,7 +1014,7 @@ void GaussNewtonDDP::takePrimalDualStep(scalar_t lqModelExpectedCost)
   //std::cout << "[GaussNewtonDDP::takePrimalDualStep] initFullState_ size: " << initFullState_.size() << std::endl;
   //std::cout << initFullState_ << std::endl << std::endl;
 
-  /*
+  ///*
   const bool success = searchStrategyPtr_->run({initTime_, finalTime_}, 
                                                initState_, 
                                                initFullState_,
@@ -1023,7 +1023,7 @@ void GaussNewtonDDP::takePrimalDualStep(scalar_t lqModelExpectedCost)
                                                nominalDualData_.dualSolution, 
                                                modeSchedule, 
                                                solution);
-  */
+  //*/
   
   std::cout << "[GaussNewtonDDP::takePrimalDualStep] END searchStrategyPtr_" << std::endl;
 

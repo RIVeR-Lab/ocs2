@@ -74,30 +74,38 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(con
 template <typename SCALAR>
 auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(const vector_t& state, const vector_t& fullState) const -> vector_t 
 {
-  std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF" << std::endl;
-  while(1);
+  std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] START" << std::endl;
+  
+  //std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF" << std::endl;
+  //while(1);
 
-  return state;
-  /*
+  //return state;
+  ///*
   auto modeStateDim = modelInfo_.modeStateDim;
+
+  std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] modeStateDim: " << modeStateDim << std::endl;
+
   vector_t pinocchioState = fullState;
 
   switch (modelInfo_.modelMode) 
   {
     case ModelMode::BaseMotion:
     {
+      std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] BaseMotion" << std::endl;
       pinocchioState.head(modeStateDim) = state;
       break;
     }
 
     case ModelMode::ArmMotion:
     {
+      std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] ArmMotion" << std::endl;
       pinocchioState.tail(modeStateDim) = state;
       break;
     }
 
     case ModelMode::WholeBodyMotion:
     {
+      std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] WholeBodyMotion" << std::endl;
       pinocchioState = state;
       break;
     }
@@ -105,8 +113,14 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(con
     default: 
       throw std::runtime_error("[MobileManipulatorPinocchioMapping::getPinocchioJointVelocity] ERROR: Invalid manipulator model type!");
   }
+
+  //std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF" << std::endl;
+  //while(1);
+
+  std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] END" << std::endl;
+
   return pinocchioState;
-  */
+  //*/
 }
 
 /******************************************************************************************************/

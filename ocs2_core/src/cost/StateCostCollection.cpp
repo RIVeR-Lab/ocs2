@@ -52,6 +52,8 @@ scalar_t StateCostCollection::getValue(scalar_t time,
                                        const TargetTrajectories& targetTrajectories,
                                        const PreComputation& preComp) const 
 {
+  std::cout << "[StateCostCollection::getValue(4)] START" << std::endl;
+
   scalar_t cost = 0.0;
 
   // accumulate cost terms
@@ -59,9 +61,14 @@ scalar_t StateCostCollection::getValue(scalar_t time,
   {
     if (costTerm->isActive(time)) 
     {
+      std::cout << "[StateCostCollection::getValue(4)] DEBUG INF" << std::endl;
+      while(1);
+      
       cost += costTerm->getValue(time, state, targetTrajectories, preComp);
     }
   }
+
+  std::cout << "[StateCostCollection::getValue(4)] END" << std::endl;
 
   return cost;
 }
@@ -102,6 +109,11 @@ ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximat
                                                                                     const TargetTrajectories& targetTrajectories,
                                                                                     const PreComputation& preComp) const 
 {
+  std::cout << "[StateCostCollection::getQuadraticApproximation(4)] START" << std::endl;
+
+  std::cout << "[StateCostCollection::getQuadraticApproximation(4)] DEBUG INF" << std::endl;
+  while(1);
+
   const auto firstActive = std::find_if(terms_.begin(), terms_.end(), [time](const std::unique_ptr<StateCost>& costTerm) { return costTerm->isActive(time); });
 
   // No active terms (or terms is empty).
@@ -127,6 +139,8 @@ ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximat
   cost.dfdu = vector_t();
   cost.dfduu = matrix_t();
   cost.dfdux = matrix_t();
+
+  std::cout << "[StateCostCollection::getQuadraticApproximation(4)] END" << std::endl;
 
   return cost;
 }

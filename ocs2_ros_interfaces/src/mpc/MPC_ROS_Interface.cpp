@@ -289,8 +289,8 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
 
   std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START mpc_.run" << std::endl;
   // run MPC
-  bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state);
-  //bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state, currentObservation.full_state);
+  //bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state);
+  bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state, currentObservation.full_state);
   if (!controllerIsUpdated) 
   {
     return;
