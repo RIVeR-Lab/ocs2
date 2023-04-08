@@ -20,10 +20,15 @@ namespace mobile_manipulator {
 template <typename SCALAR>
 Eigen::Matrix<SCALAR, 3, 1> getBasePosition(const Eigen::Matrix<SCALAR, -1, 1>& state, const RobotModelInfo& info) 
 {
-  auto stateDim = info.mobileBase.stateDim + info.robotArm.stateDim;
+  std::cout << "[AccessHelperFunctionsImpl::getBasePosition] START" << std::endl;
 
-  assert(state.rows() == stateDim);
-  assert(state.cols() == 1);
+  //std::cout << "[AccessHelperFunctionsImpl::getBasePosition] DEBUG INF" << std::endl;
+  //while(1);
+
+  //auto stateDim = info.mobileBase.stateDim + info.robotArm.stateDim;
+
+  //assert(state.rows() == stateDim);
+  //assert(state.cols() == 1);
 
   // Resolve the position vector based on robot type.
   switch (info.robotModelType) 
@@ -49,6 +54,8 @@ Eigen::Matrix<SCALAR, 3, 1> getBasePosition(const Eigen::Matrix<SCALAR, -1, 1>& 
     default:
       throw std::invalid_argument("[AccessHelperFunctionsImpl::getBasePosition] ERROR: Invalid manipulator model type!");
   }
+
+  std::cout << "[AccessHelperFunctionsImpl::getBasePosition] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -57,10 +64,15 @@ Eigen::Matrix<SCALAR, 3, 1> getBasePosition(const Eigen::Matrix<SCALAR, -1, 1>& 
 template <typename SCALAR>
 Eigen::Quaternion<SCALAR> getBaseOrientation(const Eigen::Matrix<SCALAR, -1, 1>& state, const RobotModelInfo& info) 
 {
-  auto stateDim = info.mobileBase.stateDim + info.robotArm.stateDim;
+  std::cout << "[AccessHelperFunctionsImpl::getBaseOrientation] START" << std::endl;
 
-  assert(state.rows() == stateDim);
-  assert(state.cols() == 1);
+  //std::cout << "[AccessHelperFunctionsImpl::getBaseOrientation] DEBUG INF" << std::endl;
+  //while(1);
+
+  //auto stateDim = info.mobileBase.stateDim + info.robotArm.stateDim;
+
+  //assert(state.rows() == stateDim);
+  //assert(state.cols() == 1);
   
   // Resolve the orientation vector based on robot type.
   switch (info.robotModelType) 
@@ -86,6 +98,8 @@ Eigen::Quaternion<SCALAR> getBaseOrientation(const Eigen::Matrix<SCALAR, -1, 1>&
     default:
       throw std::invalid_argument("[AccessHelperFunctionsImpl::getBaseOrientation] ERROR: Invalid manipulator model type!");
   }
+
+  std::cout << "[AccessHelperFunctionsImpl::getBaseOrientation] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -94,14 +108,25 @@ Eigen::Quaternion<SCALAR> getBaseOrientation(const Eigen::Matrix<SCALAR, -1, 1>&
 template <typename Derived>
 Eigen::Block<Derived, -1, 1> getArmJointAngles(Eigen::MatrixBase<Derived>& state, const RobotModelInfo& info) 
 {
-  auto stateDimBase = info.mobileBase.stateDim;
-  auto stateDimArm = info.robotArm.stateDim;
-  auto stateDim = stateDimBase + stateDimArm;
+  std::cout << "[AccessHelperFunctionsImpl::getArmJointAngles] START" << std::endl;
 
-  assert(state.rows() == stateDim);
-  assert(state.cols() == 1);
+  std::cout << "[AccessHelperFunctionsImpl::getArmJointAngles] DEBUG INF" << std::endl;
+  while(1);
+
+  auto infoTmp = info;
+
+  //auto stateDimBase = info.mobileBase.stateDim;
+  auto stateDimBase = getStateDimBase(infoTmp);
+  //auto stateDimArm = info.robotArm.stateDim;
+  auto stateDimArm = getStateDimArm(infoTmp);
+  //auto stateDim = stateDimBase + stateDimArm;
+
+  //assert(state.rows() == stateDim);
+  //assert(state.cols() == 1);
   
   const size_t startRow = stateDimBase;
+
+  std::cout << "[AccessHelperFunctionsImpl::getArmJointAngles] END" << std::endl;
 
   return Eigen::Block<Derived, -1, 1>(state.derived(), startRow, 0, stateDimArm, 1);
 }
@@ -112,16 +137,27 @@ Eigen::Block<Derived, -1, 1> getArmJointAngles(Eigen::MatrixBase<Derived>& state
 template <typename Derived>
 const Eigen::Block<const Derived, -1, 1> getArmJointAngles(const Eigen::MatrixBase<Derived>& state, const RobotModelInfo& info) 
 {
-  auto stateDimBase = info.mobileBase.stateDim;
-  auto stateDimArm = info.robotArm.stateDim;
-  auto stateDim = stateDimBase + stateDimArm;
+  std::cout << "[AccessHelperFunctionsImpl::getArmJointAngles] START" << std::endl;
 
-  assert(state.rows() == stateDim);
-  assert(state.cols() == 1);
+  std::cout << "[AccessHelperFunctionsImpl::getArmJointAngles] DEBUG INF" << std::endl;
+  while(1);
+
+  auto infoTmp = info;
+
+  //auto stateDimBase = info.mobileBase.stateDim;
+  auto stateDimBase = getStateDimBase(infoTmp);
+  //auto stateDimArm = info.robotArm.stateDim;
+  auto stateDimArm = getStateDimArm(infoTmp);
+  //auto stateDim = stateDimBase + stateDimArm;
+
+  //assert(state.rows() == stateDim);
+  //assert(state.cols() == 1);
 
   // Resolve for arm dof start index
   const size_t startRow = stateDimBase;
   
+  std::cout << "[AccessHelperFunctionsImpl::getArmJointAngles] END" << std::endl;
+
   return Eigen::Block<const Derived, -1, 1>(state.derived(), startRow, 0, stateDimArm, 1);
 }
 

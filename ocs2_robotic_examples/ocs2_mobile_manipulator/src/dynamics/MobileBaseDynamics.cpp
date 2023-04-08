@@ -24,7 +24,13 @@ MobileBaseDynamics::MobileBaseDynamics(RobotModelInfo info,
                                        bool verbose /*= true*/)
   : info_(std::move(info))
 {
-  this->initialize(info_.mobileBase.stateDim, info_.mobileBase.inputDim, modelName, modelFolder, recompileLibraries, verbose);
+  if(info_.mobileBase.stateDimTmp != 3 || info_.mobileBase.inputDim != 2)
+  {
+    std::cout << "[MobileBaseDynamics::MobileBaseDynamics] DEBUG INF" << std::endl;
+    while(1);
+  }
+
+  this->initialize(info_.mobileBase.stateDimTmp, info_.mobileBase.inputDim, modelName, modelFolder, recompileLibraries, verbose);
 }
 
 /******************************************************************************************************/
@@ -35,7 +41,14 @@ ad_vector_t MobileBaseDynamics::systemFlowMap(ad_scalar_t time,
                                               const ad_vector_t& input,
                                               const ad_vector_t&) const 
 {
-  ad_vector_t dxdt(info_.mobileBase.stateDim);
+
+  if(state.size() != 3 || input.size() != 2)
+  {
+    std::cout << "[MobileBaseDynamics::systemFlowMap] DEBUG INF" << std::endl;
+    while(1);
+  }
+
+  ad_vector_t dxdt(info_.mobileBase.stateDimTmp);
   const auto theta = state(2);
   const auto v = input(0);  // forward velocity in base frame
   dxdt << cos(theta) * v, sin(theta) * v, input(1);

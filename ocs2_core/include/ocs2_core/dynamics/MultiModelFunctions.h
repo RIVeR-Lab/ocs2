@@ -59,7 +59,7 @@ size_t getStateDimArm(RobotModelInfo& robotModelInfo);
 /**
  * NUA TODO: UPDATE!
  */
-size_t getStateDim(RobotModelInfo& robotModelInfo);
+size_t getStateDimTmp(RobotModelInfo& robotModelInfo);
 
 /**
  * NUA TODO: UPDATE!

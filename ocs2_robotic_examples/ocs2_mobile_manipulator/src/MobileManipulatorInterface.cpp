@@ -123,6 +123,22 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
                                          armJointFrameNames,
                                          armJointNames);
 
+  std::cout << "=================================" << std::endl;
+  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] CHECK robotModelInfo_" << std::endl;
+  std::cout << "info.mobileBase.baseFrame: " << robotModelInfo_.mobileBase.baseFrame << std::endl;
+  std::cout << "info.mobileBase.stateDim: " << robotModelInfo_.mobileBase.stateDimTmp << std::endl;
+  std::cout << "info.mobileBase.inputDim: " << robotModelInfo_.mobileBase.inputDim << std::endl;
+  std::cout << "info.robotArm.baseFrame: " << robotModelInfo_.robotArm.baseFrame << std::endl;
+  std::cout << "info.robotArm.eeFrame: " << robotModelInfo_.robotArm.eeFrame << std::endl;
+  std::cout << "info.robotArm.stateDim: " << robotModelInfo_.robotArm.stateDim << std::endl;
+  std::cout << "info.robotArm.inputDim: " << robotModelInfo_.robotArm.inputDim << std::endl;
+  std::cout << "info.modeStateDim: " << robotModelInfo_.modeStateDim << std::endl;
+  std::cout << "info.modeInputDim: " << robotModelInfo_.modeInputDim << std::endl;
+  std::cout << "modelModeEnumToString(robotModelInfo_): " << modelModeEnumToString(robotModelInfo_) << std::endl;
+  std::cout << "getModelModeInt(robotModelInfo_): " << getModelModeInt(robotModelInfo_) << std::endl;
+  std::cout << "modelTypeEnumToString(robotModelInfo_): " << modelTypeEnumToString(robotModelInfo_) << std::endl;
+  std::cout << "=================================" << std::endl << std::endl;
+
   // Set Model Settings
   std::cerr << "\n #### Model Settings:";
   std::cerr << "\n #### =============================================================================\n";
@@ -141,6 +157,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 
   // NUA TODO: We don't need to do it here!
   int modelMode = getModelModeInt(robotModelInfo_);
+  //modelMode = 1;
   setMPCProblem(modelMode, pointsAndRadii);
   
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END" << std::endl;
@@ -157,13 +174,34 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
 
   bool isModeUpdated = updateModelMode(robotModelInfo_, modelMode);
 
+  std::cout << "=================================" << std::endl;
+  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] CHECK AFTER isModeUpdated: " << isModeUpdated << std::endl;
+  std::cout << "info.mobileBase.baseFrame: " << robotModelInfo_.mobileBase.baseFrame << std::endl;
+  std::cout << "info.mobileBase.stateDim: " << robotModelInfo_.mobileBase.stateDimTmp << std::endl;
+  std::cout << "info.mobileBase.inputDim: " << robotModelInfo_.mobileBase.inputDim << std::endl;
+  std::cout << "info.robotArm.baseFrame: " << robotModelInfo_.robotArm.baseFrame << std::endl;
+  std::cout << "info.robotArm.eeFrame: " << robotModelInfo_.robotArm.eeFrame << std::endl;
+  std::cout << "info.robotArm.stateDim: " << robotModelInfo_.robotArm.stateDim << std::endl;
+  std::cout << "info.robotArm.inputDim: " << robotModelInfo_.robotArm.inputDim << std::endl;
+  std::cout << "info.modeStateDim: " << robotModelInfo_.modeStateDim << std::endl;
+  std::cout << "info.modeInputDim: " << robotModelInfo_.modeInputDim << std::endl;
+  std::cout << "modelModeEnumToString(robotModelInfo_): " << modelModeEnumToString(robotModelInfo_) << std::endl;
+  std::cout << "getModelModeInt(robotModelInfo_): " << getModelModeInt(robotModelInfo_) << std::endl;
+  std::cout << "modelTypeEnumToString(robotModelInfo_): " << modelTypeEnumToString(robotModelInfo_) << std::endl;
+  std::cout << "=================================" << std::endl << std::endl;
+
+  //std::cout << "[MobileManipulatorInterface::setMPCProblem] DEBUG INF" << std::endl;
+  //while(1);
+
   //// Optimal control problem
   /// Cost
   problem_.costPtr->add("inputCost", getQuadraticInputCost(modelMode));
+  std::cout << "" << std::endl;
 
   /// Constraints
   // Joint limits constraint
   problem_.softConstraintPtr->add("jointLimits", getJointLimitSoftConstraint(modelMode));
+  std::cout << "" << std::endl;
 
   // Mobile base or End-effector state constraint
   if (modelMode == 0)
@@ -177,6 +215,7 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
     problem_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint("endEffector"));
     problem_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint("finalEndEffector"));
   }
+  std::cout << "" << std::endl;
 
   //std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE INF" << std::endl;
   //while(1);
@@ -191,6 +230,7 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
       problem_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint("selfCollision"));
     }
   }
+  std::cout << "" << std::endl;
 
   //// NUA TODO: COMPLETE IT!
   activateExtCollision_ = false;
@@ -235,6 +275,7 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
     
     problem_.stateSoftConstraintPtr->add("extCollision", getExtCollisionConstraint("extCollision", modelMode));
   }
+  std::cout << "" << std::endl;
 
   std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE Dynamics" << std::endl;
   
@@ -271,6 +312,10 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
     default:
       throw std::invalid_argument("[MobileManipulatorInterface::setMPCProblem] ERROR: Invalid model mode!");
   }
+  std::cout << "" << std::endl;
+
+  //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] DEBUG INF" << std::endl;
+  //while(1);
 
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Pre-computation" << std::endl;
 
@@ -279,8 +324,11 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
    */
   if (usePreComputation_) 
   {
+    std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START preComputationPtr" << std::endl;
+    while(1);
     problem_.preComputationPtr.reset(new MobileManipulatorPreComputation(*pinocchioInterfacePtr_, robotModelInfo_));
   }
+  std::cout << "" << std::endl;
 
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Rollout" << std::endl;
 
@@ -290,7 +338,13 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
 
   // Initialization
   auto modeInputDim = getModeInputDim(robotModelInfo_);
+
+  std::cout << "[MobileManipulatorInterface::setMPCProblem] modeInputDim: " << modeInputDim << std::endl;
+
   initializerPtr_.reset(new DefaultInitializer(modeInputDim));
+
+  //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] DEBUG INF" << std::endl;
+  //while(1);
 
   std::cout << "[MobileManipulatorInterface::setMPCProblem] END" << std::endl;
 }
@@ -343,9 +397,9 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCos
   const size_t modeStateDim = getModeStateDim(robotModelInfo_);
   const size_t modeInputDim = getModeInputDim(robotModelInfo_);
   
-  std::cout << "[MobileManipulatorInterface::setMPCProblem] modelMode: " << modelMode << std::endl;
-  //std::cout << "[MobileManipulatorInterface::setMPCProblem] modelStateDim: " << modeStateDim << std::endl;
-  //std::cout << "[MobileManipulatorInterface::setMPCProblem] modelInputDim: " << modeInputDim << std::endl;
+  std::cout << "[MobileManipulatorInterface::getQuadraticInputCost] modelMode: " << modelMode << std::endl;
+  //std::cout << "[MobileManipulatorInterface::getQuadraticInputCost] modelStateDim: " << modeStateDim << std::endl;
+  //std::cout << "[MobileManipulatorInterface::getQuadraticInputCost] modelInputDim: " << modeInputDim << std::endl;
 
   matrix_t R = matrix_t::Zero(modeInputDim, modeInputDim);
 
@@ -354,7 +408,7 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCos
   {
     const size_t inputDimBase = getInputDimBase(robotModelInfo_);
 
-    std::cout << "[MobileManipulatorInterface::setMPCProblem] inputDimBase: " << inputDimBase << std::endl;
+    std::cout << "[MobileManipulatorInterface::getQuadraticInputCost] inputDimBase: " << inputDimBase << std::endl;
 
     matrix_t R_base = matrix_t::Zero(inputDimBase, inputDimBase);
     loadData::loadEigenMatrix(taskFile_, "inputCost.R.base", R_base);
@@ -366,7 +420,7 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCos
   {
     const size_t inputDimArm = getInputDimArm(robotModelInfo_);
 
-    std::cout << "[MobileManipulatorInterface::setMPCProblem] inputDimArm: " << inputDimArm << std::endl;
+    std::cout << "[MobileManipulatorInterface::getQuadraticInputCost] inputDimArm: " << inputDimArm << std::endl;
 
     matrix_t R_arm = matrix_t::Zero(inputDimArm, inputDimArm);
     loadData::loadEigenMatrix(taskFile_, "inputCost.R.arm", R_arm);
@@ -498,7 +552,7 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftCon
 /******************************************************************************************************/
 std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(const std::string& prefix) 
 {
-  std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] START" << std::endl;
+  std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] START prefix: " << prefix << std::endl;
 
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile_, pt);
@@ -624,7 +678,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile_, pt);
 
-  const int modelStateDim = getStateDim(robotModelInfo_);
+  const int modelStateDim = getStateDimTmp(robotModelInfo_);
 
   scalar_t mu = 1e-2;
   scalar_t delta = 1e-3;

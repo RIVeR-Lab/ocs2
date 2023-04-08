@@ -22,7 +22,17 @@ RobotArmDynamics::RobotArmDynamics(const RobotModelInfo& info,
                                    const std::string& modelFolder, bool recompileLibraries /*= true*/,
                                    bool verbose /*= true*/) 
 {
+  std::cout << "[RobotArmDynamics::RobotArmDynamics] START" << std::endl;
+
+  if(info.robotArm.stateDim != 6 || info.robotArm.inputDim != 6)
+  {
+    std::cout << "[RobotArmDynamics::RobotArmDynamics] DEBUG INF" << std::endl;
+    while(1);
+  }
+
   this->initialize(info.robotArm.stateDim, info.robotArm.inputDim, modelName, modelFolder, recompileLibraries, verbose);
+
+  std::cout << "[RobotArmDynamics::RobotArmDynamics] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -33,6 +43,14 @@ ad_vector_t RobotArmDynamics::systemFlowMap(ad_scalar_t time,
                                             const ad_vector_t& input,
                                             const ad_vector_t&) const 
 {
+  std::cout << "[RobotArmDynamics::systemFlowMap] START" << std::endl;
+
+  if(state.size() != 6 || input.size() != 6)
+  {
+    std::cout << "[RobotArmDynamics::RobotArmDynamics] DEBUG INF" << std::endl;
+    while(1);
+  }
+
   return input;
 }
 

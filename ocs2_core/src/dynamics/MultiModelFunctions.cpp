@@ -53,14 +53,14 @@ RobotModelInfo createRobotModelInfo(const RobotModelType& robotModelType,
     {
       std::cout << "[FactoryFunction::createRobotModelInfo] MobileBase" << std::endl;
       info.mobileBase.baseFrame = baseFrame;
-      info.mobileBase.stateDim = 3;
+      info.mobileBase.stateDimTmp = 3;
       info.mobileBase.inputDim = 2;
       info.robotArm.baseFrame = "";
       info.robotArm.eeFrame = "";
       info.robotArm.stateDim = 0;
       info.robotArm.inputDim = 0;
       info.modelMode = ModelMode::BaseMotion;
-      info.modeStateDim = info.mobileBase.stateDim;
+      info.modeStateDim = info.mobileBase.stateDimTmp;
       info.modeInputDim = info.mobileBase.inputDim;
       break;
     }
@@ -69,7 +69,7 @@ RobotModelInfo createRobotModelInfo(const RobotModelType& robotModelType,
     {
       std::cout << "[FactoryFunction::createRobotModelInfo] RobotArm" << std::endl;
       info.mobileBase.baseFrame = "";
-      info.mobileBase.stateDim = 0;
+      info.mobileBase.stateDimTmp = 0;
       info.mobileBase.inputDim = 0;
       info.robotArm.baseFrame = armBaseFrame;
       info.robotArm.eeFrame = eeFrame;
@@ -87,6 +87,22 @@ RobotModelInfo createRobotModelInfo(const RobotModelType& robotModelType,
     case RobotModelType::MobileManipulator: 
     {
       std::cout << "[FactoryFunction::createRobotModelInfo] MobileManipulator" << std::endl;
+      ///*
+      info.mobileBase.baseFrame = baseFrame;
+      info.mobileBase.stateDimTmp = 3;
+      info.mobileBase.inputDim = 2;
+      info.robotArm.baseFrame = armBaseFrame;
+      info.robotArm.eeFrame = eeFrame;
+      info.robotArm.jointFrameNames = armJointFrameNames;
+      info.robotArm.jointNames = armJointNames;
+      //info.robotArm.jointFrameNames = model.names;
+      info.robotArm.stateDim = n_armJoints;
+      info.robotArm.inputDim = n_armJoints;
+      info.modelMode = ModelMode::WholeBodyMotion;
+      info.modeStateDim = info.mobileBase.stateDimTmp + info.robotArm.stateDim;
+      info.modeInputDim = info.mobileBase.inputDim + info.robotArm.inputDim;
+      //*/
+      /*
       info.mobileBase.baseFrame = baseFrame;
       info.mobileBase.stateDim = 3;
       info.mobileBase.inputDim = 2;
@@ -99,6 +115,7 @@ RobotModelInfo createRobotModelInfo(const RobotModelType& robotModelType,
       info.modelMode = ModelMode::WholeBodyMotion;
       info.modeStateDim = info.mobileBase.stateDim + info.robotArm.stateDim;
       info.modeInputDim = info.mobileBase.inputDim + info.robotArm.inputDim;
+      */
       break;
     }
 
@@ -143,7 +160,8 @@ size_t getModelModeInt(RobotModelInfo& robotModelInfo)
 /******************************************************************************************************/
 size_t getStateDimBase(RobotModelInfo& robotModelInfo)
 {
-  return robotModelInfo.mobileBase.stateDim;
+  return robotModelInfo.mobileBase.stateDimTmp;
+  //return 0;
 }
 
 /******************************************************************************************************/
@@ -157,9 +175,10 @@ size_t getStateDimArm(RobotModelInfo& robotModelInfo)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t getStateDim(RobotModelInfo& robotModelInfo)
+size_t getStateDimTmp(RobotModelInfo& robotModelInfo)
 {
-  return robotModelInfo.mobileBase.stateDim + robotModelInfo.robotArm.stateDim;
+  return robotModelInfo.mobileBase.stateDimTmp + robotModelInfo.robotArm.stateDim;
+  //return robotModelInfo.robotArm.stateDim;
 }
 
 /******************************************************************************************************/
@@ -214,7 +233,7 @@ bool updateModelMode(RobotModelInfo& robotModelInfo, size_t& modelMode)
     {
       case 0:
         robotModelInfo.modelMode = ModelMode::BaseMotion;
-        robotModelInfo.modeStateDim = robotModelInfo.mobileBase.stateDim;
+        robotModelInfo.modeStateDim = robotModelInfo.mobileBase.stateDimTmp;
         robotModelInfo.modeInputDim = robotModelInfo.mobileBase.inputDim;
         result = true;
         break;
@@ -228,7 +247,7 @@ bool updateModelMode(RobotModelInfo& robotModelInfo, size_t& modelMode)
 
       case 2:
         robotModelInfo.modelMode = ModelMode::WholeBodyMotion;
-        robotModelInfo.modeStateDim = robotModelInfo.mobileBase.stateDim + robotModelInfo.robotArm.stateDim;
+        robotModelInfo.modeStateDim = robotModelInfo.mobileBase.stateDimTmp + robotModelInfo.robotArm.stateDim;
         robotModelInfo.modeInputDim = robotModelInfo.mobileBase.inputDim + robotModelInfo.robotArm.inputDim;
         result = true;
         break;

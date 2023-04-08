@@ -147,7 +147,10 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
   }
 
   SystemObservation initObservation = getCurrentObservation(true);
+
+  std::cout << "[MRT_ROS_Gazebo_Loop::updateFullModelState] BEFORE initTargetTrajectories" << std::endl;
   const TargetTrajectories initTargetTrajectories({0}, {initTarget}, {initObservation.input});
+  std::cout << "[MRT_ROS_Gazebo_Loop::updateFullModelState] AFTER initTargetTrajectories" << std::endl;
 
   // Reset MPC node
   mrt_.resetMpcNode(initTargetTrajectories);
@@ -265,7 +268,7 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
     // Update observers for visualization
     for (auto& observer : observers_) 
     {
-      //std::cout << "[OCS2_MRT_Loop::mrtLoop] START getPolicy 2" << std::endl;
+      std::cout << "[OCS2_MRT_Loop::mrtLoop] START getPolicy 2" << std::endl;
       observer -> update(currentObservation, mrt_.getPolicy(), mrt_.getCommand());
     }
 
@@ -468,12 +471,19 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
   auto inputDimBase = getInputDimBase(robotModelInfo_);
   auto stateDimBase = getStateDimBase(robotModelInfo_);
   auto stateDimArm = getStateDimArm(robotModelInfo_);
-  auto stateDim = getStateDim(robotModelInfo_);
+  auto stateDim = getStateDimTmp(robotModelInfo_);
   auto modeStateDim = getModeStateDim(robotModelInfo_);
   auto modeInputDim = getModeInputDim(robotModelInfo_);
 
   std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] model type: " << modelTypeEnumToString(robotModelInfo_) << std::endl;
   std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] model mode: " << modelModeEnumToString(robotModelInfo_) << std::endl;
+
+  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] inputDimBase: " << inputDimBase << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] stateDimBase: " << stateDimBase << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] stateDimArm: " << stateDimArm << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] stateDim: " << stateDim << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] modeStateDim: " << modeStateDim << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] modeInputDim: " << modeInputDim << std::endl;
 
   SystemObservation currentObservation;
   currentObservation.mode = 0;
@@ -555,11 +565,22 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
           currentObservation.full_state[0] = stateBase[0];
           currentObservation.full_state[1] = stateBase[1];
           currentObservation.full_state[2] = stateBase[2];
+
+          for (size_t i = 0; i < stateArm.size(); i++)
+          {
+            currentObservation.full_state[stateDimBase + i] = stateArm[i];
+          }
+
           break;
         }
 
         case ModelMode::ArmMotion:
         {
+          // Set full state base
+          currentObservation.full_state[0] = stateBase[0];
+          currentObservation.full_state[1] = stateBase[1];
+          currentObservation.full_state[2] = stateBase[2];
+
           for (size_t i = 0; i < stateArm.size(); i++)
           {
             // Set state
@@ -570,7 +591,7 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
               currentObservation.input[i] = stateArm[i];
             }
 
-            // Set full state
+            // Set full state arm
             currentObservation.full_state[stateDimBase + i] = stateArm[i];
           }
           break;
@@ -648,7 +669,7 @@ void MRT_ROS_Gazebo_Loop::publishCommand()
   trajectory_msgs::JointTrajectory armJointTrajectoryMsg;
 
   // Set mobile base command
-  int baseOffset = mrt_.getRobotModelInfo().mobileBase.stateDim;
+  int baseOffset = mrt_.getRobotModelInfo().mobileBase.stateDimTmp;
   if (mrt_.getRobotModelInfo().modelMode == ModelMode::BaseMotion || 
       mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
   {

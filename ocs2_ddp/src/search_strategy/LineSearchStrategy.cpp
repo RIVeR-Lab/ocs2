@@ -40,7 +40,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LineSearchStrategy::LineSearchStrategy(search_strategy::Settings baseSettings, line_search::Settings settings, ThreadPool& threadPoolRef,
+LineSearchStrategy::LineSearchStrategy(search_strategy::Settings baseSettings, 
+                                       line_search::Settings settings, 
+                                       ThreadPool& threadPoolRef,
                                        std::vector<std::reference_wrapper<RolloutBase>> rolloutRefStock,
                                        std::vector<std::reference_wrapper<OptimalControlProblem>> optimalControlProblemRefStock,
                                        std::function<scalar_t(const PerformanceIndex&)> meritFunc)
@@ -160,24 +162,24 @@ void LineSearchStrategy::computeSolution(size_t taskId,
                                          const vector_t& initFullState, 
                                          search_strategy::Solution& solution) 
 {
-  std::cout << "[LineSearchStrategy::computeSolution(4)] START" << std::endl;
+  //std::cout << "[LineSearchStrategy::computeSolution(4)] START" << std::endl;
 
   auto& problem = optimalControlProblemRefStock_[taskId];
   auto& rollout = rolloutRefStock_[taskId];
 
-  std::cout << "[LineSearchStrategy::computeSolution(4)] START getLinearController" << std::endl;
+  //std::cout << "[LineSearchStrategy::computeSolution(4)] START getLinearController" << std::endl;
   // compute primal solution
   solution.primalSolution.modeSchedule_ = *lineSearchInputRef_.modeSchedulePtr;
   incrementController(stepLength, *lineSearchInputRef_.unoptimizedControllerPtr, getLinearController(solution.primalSolution));
-  std::cout << "[LineSearchStrategy::computeSolution(4)] END getLinearController" << std::endl;
+  //std::cout << "[LineSearchStrategy::computeSolution(4)] END getLinearController" << std::endl;
 
-  std::cout << "[LineSearchStrategy::computeSolution(4)] START rolloutTrajectory" << std::endl;
+  //std::cout << "[LineSearchStrategy::computeSolution(4)] START rolloutTrajectory" << std::endl;
   solution.avgTimeStep = rolloutTrajectory(rollout, 
                                            lineSearchInputRef_.timePeriodPtr->first, 
                                            *lineSearchInputRef_.initStatePtr,
                                            lineSearchInputRef_.timePeriodPtr->second, 
                                            solution.primalSolution);
-  std::cout << "[LineSearchStrategy::computeSolution(4)] END rolloutTrajectory" << std::endl;
+  //std::cout << "[LineSearchStrategy::computeSolution(4)] END rolloutTrajectory" << std::endl;
 
   // adjust dual solution only if it is required
   const DualSolution* adjustedDualSolutionPtr = lineSearchInputRef_.dualSolutionPtr;
@@ -197,16 +199,16 @@ void LineSearchStrategy::computeSolution(size_t taskId,
     }
   }
 
-  std::cout << "[LineSearchStrategy::computeSolution(4)] START initializeDualSolution" << std::endl;
+  //std::cout << "[LineSearchStrategy::computeSolution(4)] START initializeDualSolution" << std::endl;
   // initialize dual solution
   initializeDualSolution(problem, solution.primalSolution, *adjustedDualSolutionPtr, solution.dualSolution);
-  std::cout << "[LineSearchStrategy::computeSolution(4)] END initializeDualSolution" << std::endl;
+  //std::cout << "[LineSearchStrategy::computeSolution(4)] END initializeDualSolution" << std::endl;
 
-  std::cout << "[LineSearchStrategy::computeSolution(4)] START computeRolloutMetrics" << std::endl;
+  //std::cout << "[LineSearchStrategy::computeSolution(4)] START computeRolloutMetrics" << std::endl;
   // compute problem metrics
   //computeRolloutMetrics(problem, solution.primalSolution, solution.dualSolution, solution.problemMetrics);
   computeRolloutMetrics(problem, solution.primalSolution, solution.dualSolution, initFullState, solution.problemMetrics);
-  std::cout << "[LineSearchStrategy::computeSolution(4)] END computeRolloutMetrics" << std::endl;
+  //std::cout << "[LineSearchStrategy::computeSolution(4)] END computeRolloutMetrics" << std::endl;
 
   // compute performanceIndex
   solution.performanceIndex = computeRolloutPerformanceIndex(solution.primalSolution.timeTrajectory_, solution.problemMetrics);
@@ -221,7 +223,7 @@ void LineSearchStrategy::computeSolution(size_t taskId,
     printString(infoDisplay.str());
   }
 
-  std::cout << "[LineSearchStrategy::computeSolution(4)] END" << std::endl;
+  //std::cout << "[LineSearchStrategy::computeSolution(4)] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -323,10 +325,10 @@ bool LineSearchStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod,
   
   try 
   {
-    std::cout << "[LineSearchStrategy::run(8)] START computeSolution" << std::endl;
+    //std::cout << "[LineSearchStrategy::run(8)] START computeSolution" << std::endl;
     //computeSolution(taskId, stepLength, workersSolution_[taskId]);
     computeSolution(taskId, stepLength, initFullState, workersSolution_[taskId]);
-    std::cout << "[LineSearchStrategy::run(8)] END computeSolution" << std::endl;
+    //std::cout << "[LineSearchStrategy::run(8)] END computeSolution" << std::endl;
 
     baselineMerit_ = workersSolution_[taskId].performanceIndex.merit;
     unoptimizedControllerUpdateIS_ = computeControllerUpdateIS(unoptimizedController);

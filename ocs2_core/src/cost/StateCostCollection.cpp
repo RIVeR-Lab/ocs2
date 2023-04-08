@@ -154,7 +154,7 @@ ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximat
                                                                                     const TargetTrajectories& targetTrajectories,
                                                                                     const PreComputation& preComp) const 
 {
-  std::cout << "[StateCostCollection::getQuadraticApproximation(5)] START" << std::endl;
+  //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] START" << std::endl;
 
   const auto firstActive = std::find_if(terms_.begin(), terms_.end(), [time](const std::unique_ptr<StateCost>& costTerm) 
   { 
@@ -167,7 +167,7 @@ ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximat
     return ScalarFunctionQuadraticApproximation::Zero(state.rows());
   }
 
-  std::cout << "[StateCostCollection::getQuadraticApproximation(5)] START getQuadraticApproximation" << std::endl;
+  //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] START getQuadraticApproximation" << std::endl;
   // Initialize with first active term, accumulate potentially other active terms.
   auto cost = (*firstActive)->getQuadraticApproximation(time, state, fullState, targetTrajectories, preComp);
   std::for_each(std::next(firstActive), terms_.end(), [&](const std::unique_ptr<StateCost>& costTerm) 
@@ -180,14 +180,14 @@ ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximat
       cost.dfdxx += costTermApproximation.dfdxx;
     }
   });
-  std::cout << "[StateCostCollection::getQuadraticApproximation(5)] END getQuadraticApproximation" << std::endl;
+  //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] END getQuadraticApproximation" << std::endl;
 
   // Make sure that input derivatives are empty
   cost.dfdu = vector_t();
   cost.dfduu = matrix_t();
   cost.dfdux = matrix_t();
 
-  std::cout << "[StateCostCollection::getQuadraticApproximation(5)] END" << std::endl;
+  //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] END" << std::endl;
 
   return cost;
 }

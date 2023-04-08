@@ -84,14 +84,23 @@ CppAdInterface::CppAdInterface(const CppAdInterface& rhs)
 /******************************************************************************************************/
 void CppAdInterface::createModels(ApproximationOrder approximationOrder, bool verbose) 
 {
+  //std::cout << "[CppAdInterface::createModels] START" << std::endl;
+
+  //std::cout << "[CppAdInterface::createModels] START createFolderStructure" << std::endl;
   createFolderStructure();
+  //std::cout << "[CppAdInterface::createModels] END createFolderStructure" << std::endl;
+
+  //std::cout << "[CppAdInterface::createModels] variableDim_: " << variableDim_ << std::endl;
+  //std::cout << "[CppAdInterface::createModels] parameterDim_: " << parameterDim_ << std::endl;
 
   // set and declare independent variables and start tape recording
   ad_vector_t xp(variableDim_ + parameterDim_);
   
+  //std::cout << "[CppAdInterface::createModels] START setOnes" << std::endl;
   xp.setOnes();  // Ones are better than zero, to prevent devision by zero in taping
   CppAD::Independent(xp);
 
+  //std::cout << "[CppAdInterface::createModels] START Split" << std::endl;
   // Split in variables and parameters
   ad_vector_t x = xp.segment(0, variableDim_);
   ad_vector_t p = xp.segment(variableDim_, parameterDim_);
@@ -99,20 +108,24 @@ void CppAdInterface::createModels(ApproximationOrder approximationOrder, bool ve
   // dependent variable vector
   ad_vector_t y;
   
+  //std::cout << "[CppAdInterface::createModels] START adFunction_" << std::endl;
   // the model equation
   adFunction_(x, p, y);
   rangeDim_ = y.rows();
   
+  //std::cout << "[CppAdInterface::createModels] START fun" << std::endl;
   // create f: xp -> y and stop tape recording
   ad_fun_t fun(xp, y);
 
   // Optimize the operation sequence
   fun.optimize();
 
+  //std::cout << "[CppAdInterface::createModels] START setApproximationOrder" << std::endl;
   // generates source code
   CppAD::cg::ModelCSourceGen<scalar_t> sourceGen(fun, modelName_);
   setApproximationOrder(approximationOrder, sourceGen, fun);
 
+  //std::cout << "[CppAdInterface::createModels] START libraryCSourceGen" << std::endl;
   // Compiler objects, compile to temporary shared library file to avoid interference between processes
   CppAD::cg::ModelLibraryCSourceGen<scalar_t> libraryCSourceGen(sourceGen);
   CppAD::cg::GccCompiler<scalar_t> gccCompiler;
@@ -125,20 +138,25 @@ void CppAdInterface::createModels(ApproximationOrder approximationOrder, bool ve
               << libraryName_ + tmpName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION << std::endl;
   }
 
+  //std::cout << "[CppAdInterface::createModels] START createDynamicLibrary" << std::endl;
   // Compile and store the library
   dynamicLib_ = libraryProcessor.createDynamicLibrary(gccCompiler);
   model_ = dynamicLib_->model(modelName_);
 
+  //std::cout << "[CppAdInterface::createModels] START setSparsityNonzeros" << std::endl;
   setSparsityNonzeros();
 
   // Rename generated library after loading
-  if (verbose) {
+  if (verbose) 
+  {
     std::cerr << "[CppAdInterface] Renaming " << libraryName_ + tmpName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION << " to "
               << libraryName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION << std::endl;
   }
 
   boost::filesystem::rename(libraryName_ + tmpName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION,
                             libraryName_ + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION);
+
+  //std::cout << "[CppAdInterface::createModels] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -345,9 +363,17 @@ bool CppAdInterface::isLibraryAvailable() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void CppAdInterface::createFolderStructure() const {
+void CppAdInterface::createFolderStructure() const 
+{
+  //std::cout << "[CppAdInterface::createFolderStructure] START" << std::endl;
+
+  //std::cout << "[CppAdInterface::createFolderStructure] libraryFolder_: " << libraryFolder_ << std::endl;
+  //std::cout << "[CppAdInterface::createFolderStructure] tmpFolder_: " << tmpFolder_ << std::endl;
+
   boost::filesystem::create_directories(libraryFolder_);
   boost::filesystem::create_directories(tmpFolder_);
+
+  //std::cout << "[CppAdInterface::createFolderStructure] END" << std::endl;
 }
 
 /******************************************************************************************************/

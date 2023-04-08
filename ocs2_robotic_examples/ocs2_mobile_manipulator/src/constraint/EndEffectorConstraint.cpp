@@ -114,7 +114,7 @@ vector_t EndEffectorConstraint::getValue(scalar_t time,
                                          const vector_t& fullState, 
                                          const PreComputation& preComputation) const 
 {
-  std::cout << "[EndEffectorConstraint::getValue(4)] START" << std:: endl;
+  //std::cout << "[EndEffectorConstraint::getValue(4)] START" << std:: endl;
 
   // PinocchioEndEffectorKinematics requires pre-computation with shared PinocchioInterface.
   if (pinocchioEEKinPtr_ != nullptr) 
@@ -143,7 +143,7 @@ vector_t EndEffectorConstraint::getValue(scalar_t time,
     }
   }
 
-  std::cout << "[EndEffectorConstraint::getValue(4)] END" << std:: endl << std::endl;
+  //std::cout << "[EndEffectorConstraint::getValue(4)] END" << std:: endl << std::endl;
 
   return constraint;
 }
@@ -193,7 +193,7 @@ VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(
                                                                                 const vector_t& fullState,
                                                                                 const PreComputation& preComputation) const 
 {
-  std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] START" << std:: endl;
+  //std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] START" << std:: endl;
 
   // PinocchioEndEffectorKinematics requires pre-computation with shared PinocchioInterface.
   if (pinocchioEEKinPtr_ != nullptr) 
@@ -214,7 +214,7 @@ VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(
   approximation.f.tail<3>() = eeOrientationError.f;
   approximation.dfdx.bottomRows<3>() = eeOrientationError.dfdx;
 
-  std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] END" << std:: endl;
+  //std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] END" << std:: endl;
 
   return approximation;
 }

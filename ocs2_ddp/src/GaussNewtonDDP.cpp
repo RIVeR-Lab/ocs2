@@ -688,16 +688,16 @@ void GaussNewtonDDP::calculateController()
 /******************************************************************************************************/
 void GaussNewtonDDP::approximateOptimalControlProblem() 
 {
-  std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] START" << std::endl;
+  //std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] START" << std::endl;
   
   /*
    * compute and augment the LQ approximation of intermediate times
    */
   // perform the LQ approximation for intermediate times
-  std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] START approximateIntermediateLQ" << std::endl;
+  //std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] START approximateIntermediateLQ" << std::endl;
   //approximateIntermediateLQ(nominalDualData_.dualSolution, nominalPrimalData_);
   approximateIntermediateLQ(nominalDualData_.dualSolution, nominalPrimalData_, initFullState_);
-  std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] END approximateIntermediateLQ" << std::endl;
+  //std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] END approximateIntermediateLQ" << std::endl;
 
   /*
    * compute and augment the LQ approximation of the event times.
@@ -707,7 +707,7 @@ void GaussNewtonDDP::approximateOptimalControlProblem()
   nominalPrimalData_.modelDataEventTimes.clear();
   nominalPrimalData_.modelDataEventTimes.resize(NE);
   
-  std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] START if" << std::endl;
+  //std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] START if" << std::endl;
   if (NE > 0) 
   {
     std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] TRUE if" << std::endl;
@@ -752,15 +752,15 @@ void GaussNewtonDDP::approximateOptimalControlProblem()
     };
     runParallel(task, ddpSettings_.nThreads_);
   }
-  std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] END if" << std::endl;
+  //std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] END if" << std::endl;
 
-  std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] START if 2" << std::endl;
+  //std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] START if 2" << std::endl;
   /*
    * compute the Heuristics function at the final time. Also call shiftHessian on the Heuristics 2nd order derivative.
    */
   if (!nominalPrimalData_.primalSolution.timeTrajectory_.empty()) 
   {
-    std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] TRUE if 2" << std::endl;
+    //std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] TRUE if 2" << std::endl;
 
     ModelData& modelData = nominalPrimalData_.modelDataFinalTime;
     const auto& time = nominalPrimalData_.primalSolution.timeTrajectory_.back();
@@ -785,9 +785,9 @@ void GaussNewtonDDP::approximateOptimalControlProblem()
                                        ddpSettings_.lineSearch_.hessianCorrectionMultiple);
     }
   }
-  std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] END if 2" << std::endl;
+  //std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] END if 2" << std::endl;
 
-  std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] END" << std::endl;
+  //std::cout << "[GaussNewtonDDP::approximateOptimalControlProblem] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -1349,10 +1349,14 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const
     linearQuadraticApproximationTimer_.endTimer();
     std::cout << "[GaussNewtonDDP::runImpl(4)] END approximateOptimalControlProblem" << std::endl;
 
+    std::cout << "[GaussNewtonDDP::runImpl(4)] nominalPrimalData_.modelDataFinalTime.cost: " << nominalPrimalData_.modelDataFinalTime.cost << std::endl;
+
+    std::cout << "[GaussNewtonDDP::runImpl(4)] START solveSequentialRiccatiEquations" << std::endl;
     // nominal --> nominal: solves the LQ problem
     backwardPassTimer_.startTimer();
     avgTimeStepBP_ = solveSequentialRiccatiEquations(nominalPrimalData_.modelDataFinalTime.cost);
     backwardPassTimer_.endTimer();
+    std::cout << "[GaussNewtonDDP::runImpl(4)] END solveSequentialRiccatiEquations" << std::endl;
 
     std::cout << "[GaussNewtonDDP::runImpl(4)] START calculateController" << std::endl;
     // calculate controller and store the result in unoptimizedController_
@@ -1407,7 +1411,8 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const
   }  // end of while loop
 
   // display
-  if (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_) {
+  if (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_) 
+  {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
     std::cerr << "\n++++++++++++++ " + ddp::toAlgorithmName(ddpSettings_.algorithm_) + " solver has terminated +++++++++++++";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";

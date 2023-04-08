@@ -155,6 +155,8 @@ void MRT_BASE::rolloutPolicy(scalar_t currentTime,
                              vector_t& mpcInput, 
                              size_t& mode) 
 {
+  std::cout << "[MRT_BASE::rolloutPolicy] START" << std::endl;
+
   if (rolloutPtr_ == nullptr) 
   {
     throw std::runtime_error("[MRT_BASE::rolloutPolicy] rollout class is not set! Use initRollout() to initialize it!");
@@ -189,7 +191,12 @@ void MRT_BASE::rolloutPolicy(scalar_t currentTime,
   mpcState = stateTrajectory.back();
   mpcInput = inputTrajectory.back();
 
+  std::cout << "[MRT_BASE::rolloutPolicy] mpcState size: " << mpcState.size() << std::endl;
+  std::cout << "[MRT_BASE::rolloutPolicy] mpcInput size: " << mpcInput.size() << std::endl;
+
   mode = activePrimalSolutionPtr_->modeSchedule_.modeAtTime(finalTime);
+
+  std::cout << "[MRT_BASE::rolloutPolicy] END" << std::endl;
 }
 
 /******************************************************************************************************/

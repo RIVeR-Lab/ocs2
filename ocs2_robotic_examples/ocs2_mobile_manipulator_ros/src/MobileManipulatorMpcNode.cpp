@@ -141,7 +141,7 @@ int main(int argc, char** argv)
   // taskFile_mobileManipulator
   // taskFile_robotArm
 
-  string taskFile = taskFile_mobileManipulator;
+  string taskFile = taskFile_robotArm;
   string libFolder = libFolder_mobileManipulator;
   string urdfFile = urdfFile_mobileManipulator;
 
@@ -171,7 +171,7 @@ int main(int argc, char** argv)
 
   auto stateDimBase = getStateDimBase(robotModelInfo);
   auto stateDimArm = getStateDimArm(robotModelInfo);
-  auto stateDim = getStateDim(robotModelInfo);
+  auto stateDim = getStateDimTmp(robotModelInfo);
   auto modeStateDim = getModeStateDim(robotModelInfo);
 
   auto inputDimBase = getInputDimBase(robotModelInfo);
@@ -203,7 +203,7 @@ int main(int argc, char** argv)
     std::cout << i << ": " << robotModelInfo.robotArm.jointNames[i] << std::endl;
   }
 
-  //std::cout << "[MobileManipulatorMpcNode::main] BEFORE INF" << std::endl;
+  //std::cout << "[MobileManipulatorMpcNode::main] DEBUG INF" << std::endl;
   //while(1);
 
   // ROS ReferenceManager

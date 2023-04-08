@@ -44,11 +44,26 @@ IntegratorBase::IntegratorBase(std::shared_ptr<SystemEventHandler> eventHandlerP
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-IntegratorBase::system_func_t IntegratorBase::systemFunction(OdeBase& system, int maxNumSteps) const {
-  return [&system, maxNumSteps](const vector_t& x, vector_t& dxdt, scalar_t t) {
+IntegratorBase::system_func_t IntegratorBase::systemFunction(OdeBase& system, int maxNumSteps) const 
+{
+  //std::cout << "[IntegratorBase::systemFunction] START" << std::endl;
+
+  return [&system, maxNumSteps](const vector_t& x, vector_t& dxdt, scalar_t t) 
+  {
+    //std::cout << "[IntegratorBase::systemFunction] x.size: " << x.size() << std::endl;
+    //std::cout << x << std::endl << std::endl;
+
     dxdt = system.computeFlowMap(t, x);
+
+    //std::cout << "[IntegratorBase::systemFunction] dxdt.size: " << dxdt.size() << std::endl;
+    //std::cout << dxdt << std::endl;
+
+    //std::cout << "[IntegratorBase::systemFunction] DEBUG INF" << std::endl;
+    //while(1);
+
     // max number of function calls
-    if (system.incrementNumFunctionCalls() > maxNumSteps) {
+    if (system.incrementNumFunctionCalls() > maxNumSteps) 
+    {
       std::stringstream msg;
       msg << "Integration terminated since the maximum number of function calls is reached. State at termination time " << t << ":\n["
           << x.transpose() << "]\n";

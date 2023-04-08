@@ -107,7 +107,7 @@ void MRT_ROS_Interface::resetMpcNode(const TargetTrajectories& initTargetTraject
 /******************************************************************************************************/
 void MRT_ROS_Interface::setCurrentObservation(const SystemObservation& currentObservation) 
 {
-  //std::cout << "[MRT_ROS_Interface::setCurrentObservation] START" << std::endl;
+  std::cout << "[MRT_ROS_Interface::setCurrentObservation] START" << std::endl;
 
 #ifdef PUBLISH_THREAD
   std::unique_lock<std::mutex> lk(publisherMutex_);
@@ -125,7 +125,7 @@ void MRT_ROS_Interface::setCurrentObservation(const SystemObservation& currentOb
   mpcObservationPublisher_.publish(mpcObservationMsg_);
 #endif
 
-  //std::cout << "[MRT_ROS_Interface::setCurrentObservation] END" << std::endl;
+  std::cout << "[MRT_ROS_Interface::setCurrentObservation] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -168,6 +168,11 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
   performanceIndices = ros_msg_conversions::readPerformanceIndicesMsg(msg.performanceIndices);
 
   const size_t N = msg.timeTrajectory.size();
+
+  std::cout << "[MRT_ROS_Interface::readPolicyMsg] N: " << N << std::endl;
+  std::cout << "[MRT_ROS_Interface::readPolicyMsg] DEBUG INF" << std::endl;
+  //while(1);
+
   if (N == 0) 
   {
     throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] controller message is empty!");
@@ -203,7 +208,8 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
   }
 
   primalSolution.postEventIndices_.reserve(msg.postEventIndices.size());
-  for (auto ind : msg.postEventIndices) {
+  for (auto ind : msg.postEventIndices) 
+  {
     primalSolution.postEventIndices_.emplace_back(static_cast<size_t>(ind));
   }
 
@@ -213,17 +219,21 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
   }
 
   // instantiate the correct controller
-  switch (msg.controllerType) {
+  switch (msg.controllerType) 
+  {
     case ocs2_msgs::mpc_flattened_controller::CONTROLLER_FEEDFORWARD: {
       auto controller = FeedforwardController::unFlatten(primalSolution.timeTrajectory_, controllerDataPtrArray);
       primalSolution.controllerPtr_.reset(new FeedforwardController(std::move(controller)));
       break;
     }
-    case ocs2_msgs::mpc_flattened_controller::CONTROLLER_LINEAR: {
+    
+    case ocs2_msgs::mpc_flattened_controller::CONTROLLER_LINEAR: 
+    {
       auto controller = LinearController::unFlatten(stateDim, inputDim, primalSolution.timeTrajectory_, controllerDataPtrArray);
       primalSolution.controllerPtr_.reset(new LinearController(std::move(controller)));
       break;
     }
+
     default:
       throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] Unknown controllerType!");
   }

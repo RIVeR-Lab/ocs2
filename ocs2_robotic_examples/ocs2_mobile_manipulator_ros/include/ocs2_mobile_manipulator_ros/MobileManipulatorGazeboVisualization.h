@@ -67,6 +67,8 @@ class OCS2_Mobile_Manipulator_Visualization final : public DummyObserver
     
     void publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy);
 
+    void publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy, vector_t fullState);
+
     const std::string urdfFile_;
     const std::string taskFile_;
     const RobotModelInfo modelInfo_;

@@ -54,17 +54,17 @@ class MPC_BASE
     /** Destructor. */
     virtual ~MPC_BASE() = default;
 
-    int getModelMode();
+    //int getModelMode();
 
-    int getBaseStateDim();
+    //int getBaseStateDim();
 
-    int getArmStateDim();
+    //int getArmStateDim();
 
-    void setModelMode(int modelMode);
+    //void setModelMode(int modelMode);
 
-    void setBaseStateDim(int baseStateDim);
+    //void setBaseStateDim(int baseStateDim);
     
-    void setArmStateDim(int armStateDim);
+    //void setArmStateDim(int armStateDim);
 
     /**
      * Resets the class to its state after construction.
@@ -141,9 +141,9 @@ class MPC_BASE
 
     benchmark::RepeatedTimer mpcTimer_;
 
-    int modelMode_ = 2;     // 0: base, 1: arm, 2: arm+base
-    int baseStateDim_ = 3;
-    int armStateDim_ = 6;
+    //int modelMode_ = 2;     // 0: base, 1: arm, 2: arm+base
+    //int baseStateDim_ = 3;
+    //int armStateDim_ = 6;
 };
 
 }  // namespace ocs2

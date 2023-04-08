@@ -134,7 +134,7 @@ void computeRolloutMetrics(OptimalControlProblem& problem,
                            const vector_t& initFullState,
                            ProblemMetrics& problemMetrics) 
 {
-  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics(5)] START" << std::endl;
+  //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics(5)] START" << std::endl;
 
   const auto& tTrajectory = primalSolution.timeTrajectory_;
   const auto& xTrajectory = primalSolution.stateTrajectory_;
@@ -153,7 +153,7 @@ void computeRolloutMetrics(OptimalControlProblem& problem,
     // intermediate time cost and constraints
     problem.preComputationPtr->request(request, tTrajectory[k], xTrajectory[k], uTrajectory[k]);
 
-    std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] START computeIntermediateMetrics" << std::endl;
+    //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] START computeIntermediateMetrics" << std::endl;
     /*
     problemMetrics.intermediates.push_back(computeIntermediateMetrics(problem, 
                                                                       tTrajectory[k], 
@@ -168,7 +168,7 @@ void computeRolloutMetrics(OptimalControlProblem& problem,
                                                                       uTrajectory[k],
                                                                       dualSolution.intermediates[k]));
     
-    std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END computeIntermediateMetrics" << std::endl;
+    //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END computeIntermediateMetrics" << std::endl;
 
     // event time cost and constraints
     if (nextPostEventIndexItr != postEventIndices.end() && k + 1 == *nextPostEventIndexItr) 
@@ -204,7 +204,7 @@ void computeRolloutMetrics(OptimalControlProblem& problem,
     //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END computeFinalMetrics" << std::endl;
   }
 
-  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END" << std::endl;
+  //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics] END" << std::endl;
 }
 
 /******************************************************************************************************/

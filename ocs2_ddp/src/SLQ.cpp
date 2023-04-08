@@ -146,7 +146,7 @@ void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalData
 /******************************************************************************************************/
 void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalDataContainer& primalData, const vector_t& initFullState) 
 {
-  std::cout << "[SLQ::approximateIntermediateLQ(3)] START" << std::endl;
+  //std::cout << "[SLQ::approximateIntermediateLQ(3)] START" << std::endl;
 
   // create alias
   const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
@@ -201,7 +201,7 @@ void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalData
 
   runParallel(task, settings().nThreads_);
 
-  std::cout << "[SLQ::approximateIntermediateLQ(3)] END" << std::endl;
+  //std::cout << "[SLQ::approximateIntermediateLQ(3)] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -254,7 +254,8 @@ void SLQ::calculateControllerWorker(size_t timeIndex, const PrimalDataContainer&
 /******************************************************************************************************/
 /******************************************************************************************************/
 /***************************************************************************************************** */
-scalar_t SLQ::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticApproximation& finalValueFunction) {
+scalar_t SLQ::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticApproximation& finalValueFunction) 
+{
   // fully compute the riccatiModifications and projected modelData
   // number of the intermediate LQ variables
   const size_t N = nominalPrimalData_.primalSolution.timeTrajectory_.size();

@@ -65,6 +65,11 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(con
 {
   std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(1)] START" << std::endl;
 
+  std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(1)] DEBUG INF" << std::endl;
+  while(1);
+
+  std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(1)] END" << std::endl;
+
   return state;
 }
 
@@ -85,41 +90,86 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(con
 
   std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] modeStateDim: " << modeStateDim << std::endl;
 
-  vector_t pinocchioState = fullState;
-
-  switch (modelInfo_.modelMode) 
+  switch (modelInfo_.robotModelType)
   {
-    case ModelMode::BaseMotion:
+    case RobotModelType::MobileBase:
     {
-      std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] BaseMotion" << std::endl;
-      pinocchioState.head(modeStateDim) = state;
-      break;
+      if (state.size() != fullState.size() || state.size() != 3)
+      {
+        std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF MobileBase" << std::endl;
+        while(1);
+      }
+      return state;
     }
 
-    case ModelMode::ArmMotion:
+    case RobotModelType::RobotArm:
     {
-      std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] ArmMotion" << std::endl;
-      pinocchioState.tail(modeStateDim) = state;
-      break;
+      if (state.size() != fullState.size() || state.size() != 6)
+      {
+        std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF RobotArm" << std::endl;
+        while(1);
+      }
+      return state;
     }
 
-    case ModelMode::WholeBodyMotion:
+    case RobotModelType::MobileManipulator:
     {
-      std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] WholeBodyMotion" << std::endl;
-      pinocchioState = state;
-      break;
-    }
+      switch (modelInfo_.modelMode) 
+      {
+        case ModelMode::BaseMotion:
+        {
+          std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] BaseMotion" << std::endl;
+          
+          if (fullState.size() != 9 || state.size() != 3)
+          {
+            std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF" << std::endl;
+            while(1);
+          }
+          
+          vector_t pinocchioState = fullState;
+          pinocchioState.head(modeStateDim) = state;
+          return pinocchioState;
+        }
 
-    default: 
-      throw std::runtime_error("[MobileManipulatorPinocchioMapping::getPinocchioJointVelocity] ERROR: Invalid manipulator model type!");
+        case ModelMode::ArmMotion:
+        {
+          std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] ArmMotion" << std::endl;
+          
+          if (fullState.size() != 9 || state.size() != 6)
+          {
+            std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF" << std::endl;
+            while(1);
+          }
+          
+          vector_t pinocchioState = fullState;
+          pinocchioState.tail(modeStateDim) = state;
+          return pinocchioState;
+        }
+
+        case ModelMode::WholeBodyMotion:
+        {
+          std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] WholeBodyMotion" << std::endl;
+          
+          if (fullState.size() != 9 || state.size() != 9)
+          {
+            std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF" << std::endl;
+            while(1);
+          }
+          
+          return state;
+        }
+
+        default: 
+          throw std::runtime_error("[MobileManipulatorPinocchioMapping::getPinocchioJointVelocity] ERROR: Invalid manipulator model type!");
+      }
+    }
+  
+    default:
+      break;
   }
 
   //std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF" << std::endl;
   //while(1);
-
-  std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] END" << std::endl;
-
-  return pinocchioState;
   //*/
 }
 
@@ -130,8 +180,10 @@ template <typename SCALAR>
 auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointVelocity(const vector_t& state, const vector_t& input) const
   -> vector_t 
 {
+  std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointVelocity] START" << std::endl;
+
   std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointVelocity] DEBUG INF" << std::endl;
-  //while(1);
+  while(1);
 
   auto modeStateDim = modelInfo_.modeStateDim;
   vector_t pinocchioStateVelo = vector_t::Zero(modeStateDim);
@@ -141,6 +193,7 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointVelocity(con
   {
     case ModelMode::BaseMotion:
     {
+      std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointVelocity] BaseMotion" << std::endl;
       const auto theta = state(2);
       const auto v = input(0);  // forward velocity in base frame
       pinocchioStateVelo << cos(theta) * v, sin(theta) * v, input(1);
@@ -149,12 +202,14 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointVelocity(con
 
     case ModelMode::ArmMotion:
     {
+      std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointVelocity] ArmMotion" << std::endl;
       pinocchioStateVelo = input;
       break;
     }
 
     case ModelMode::WholeBodyMotion:
     {
+      std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointVelocity] WholeBodyMotion" << std::endl;
       const auto theta = state(2);
       const auto v = input(0);  // forward velocity in base frame
       pinocchioStateVelo << cos(theta) * v, sin(theta) * v, input(1), input.tail(modelInfo_.robotArm.inputDim);
@@ -164,6 +219,9 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointVelocity(con
     default: 
       throw std::runtime_error("[MobileManipulatorPinocchioMapping::getPinocchioJointVelocity] ERROR: Invalid manipulator model type!");
   }
+
+  std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointVelocity] END" << std::endl;
+
   return pinocchioStateVelo;
 }
 

@@ -167,7 +167,8 @@ void OCS2_Mobile_Manipulator_Visualization::update(const SystemObservation& obse
 
   //publishObservation(timeStamp, observation);   //NUA EDIT: Commented out.
   //publishTargetTrajectories(timeStamp, command.mpcTargetTrajectories_);
-  publishOptimizedTrajectory(timeStamp, policy);
+  //publishOptimizedTrajectory(timeStamp, policy);
+  publishOptimizedTrajectory(timeStamp, policy, observation.full_state);
   
   if (geometryVisualization_ != nullptr) 
   {
@@ -236,7 +237,10 @@ void OCS2_Mobile_Manipulator_Visualization::publishTargetTrajectories(const ros:
 /******************************************************************************************************/
 void OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy) 
 {
-  //std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] START" << std::endl;
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(2)] START" << std::endl;
+
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(2)] DEBUG INF" << std::endl;
+  while(1);
 
   const scalar_t TRAJECTORYLINEWIDTH = 0.005;
   const std::array<scalar_t, 3> red{0.6350, 0.0780, 0.1840};
@@ -260,6 +264,9 @@ void OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(const ros
   endEffectorTrajectory.reserve(mpcStateTrajectory.size());
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const Eigen::VectorXd& state) 
   {
+    std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] FIX IT AND NEVER SEE ME AGAIN..." << std::endl;
+    while(1);
+
     pinocchio::forwardKinematics(model, data, state);
     pinocchio::updateFramePlacements(model, data);
     const auto eeIndex = model.getBodyId(modelInfo_.robotArm.eeFrame);
@@ -297,7 +304,83 @@ void OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(const ros
   stateOptimizedPublisher_.publish(markerArray);
   stateOptimizedPosePublisher_.publish(poseArray);
 
-  //std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] END" << std::endl;
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(2)] END" << std::endl;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy, vector_t fullState) 
+{
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(3)] START" << std::endl;
+
+  MobileManipulatorPinocchioMapping pinocchioMapping(modelInfo_);
+
+  const scalar_t TRAJECTORYLINEWIDTH = 0.005;
+  const std::array<scalar_t, 3> red{0.6350, 0.0780, 0.1840};
+  const std::array<scalar_t, 3> blue{0, 0.4470, 0.7410};
+  const auto& mpcStateTrajectory = policy.stateTrajectory_;
+  visualization_msgs::MarkerArray markerArray;
+
+  //std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] START Base" << std::endl;
+  // Base trajectory
+  std::vector<geometry_msgs::Point> baseTrajectory;
+  baseTrajectory.reserve(mpcStateTrajectory.size());
+  geometry_msgs::PoseArray poseArray;
+  poseArray.poses.reserve(mpcStateTrajectory.size());
+
+  //std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] START EE" << std::endl;
+  // End effector trajectory
+  const auto& model = pinocchioInterface_.getModel();
+  auto& data = pinocchioInterface_.getData();
+
+  std::vector<geometry_msgs::Point> endEffectorTrajectory;
+  endEffectorTrajectory.reserve(mpcStateTrajectory.size());
+  std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const Eigen::VectorXd& state) 
+  {
+    const vector_t q = pinocchioMapping.getPinocchioJointPosition(state, fullState);
+    pinocchio::forwardKinematics(model, data, q);
+    
+    //std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(3)] DEBUG INF" << std::endl;
+    //while(1);
+    
+    pinocchio::updateFramePlacements(model, data);
+    const auto eeIndex = model.getBodyId(modelInfo_.robotArm.eeFrame);
+    const vector_t eePosition = data.oMf[eeIndex].translation();
+    endEffectorTrajectory.push_back(ros_msg_helpers::getPointMsg(eePosition));
+  });
+
+  markerArray.markers.emplace_back(ros_msg_helpers::getLineMsg(std::move(endEffectorTrajectory), blue, TRAJECTORYLINEWIDTH));
+  markerArray.markers.back().ns = "EE Trajectory";
+
+  //std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] START Extract" << std::endl;
+  // Extract base pose from state
+  std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const vector_t& state) 
+  {
+    // extract from observation
+    const auto r_world_base = getBasePosition(state, modelInfo_);
+    const Eigen::Quaternion<scalar_t> q_world_base = getBaseOrientation(state, modelInfo_);
+
+    // convert to ros message
+    geometry_msgs::Pose pose;
+    pose.position = ros_msg_helpers::getPointMsg(r_world_base);
+
+    pose.orientation = ros_msg_helpers::getOrientationMsg(q_world_base);
+    baseTrajectory.push_back(pose.position);
+    poseArray.poses.push_back(std::move(pose));
+  });
+
+  markerArray.markers.emplace_back(ros_msg_helpers::getLineMsg(std::move(baseTrajectory), red, TRAJECTORYLINEWIDTH));
+  markerArray.markers.back().ns = "Base Trajectory";
+
+  assignHeader(markerArray.markers.begin(), markerArray.markers.end(), ros_msg_helpers::getHeaderMsg("world", timeStamp));
+  assignIncreasingId(markerArray.markers.begin(), markerArray.markers.end());
+  poseArray.header = ros_msg_helpers::getHeaderMsg("world", timeStamp);
+
+  stateOptimizedPublisher_.publish(markerArray);
+  stateOptimizedPosePublisher_.publish(poseArray);
+
+  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(3)] END" << std::endl;
 }
 
 }  // namespace mobile_manipulator
