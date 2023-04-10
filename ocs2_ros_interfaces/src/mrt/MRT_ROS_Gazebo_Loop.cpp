@@ -142,7 +142,7 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
   
   while(!isStateInitialized())
   {
-    std::cout << "[MRT_ROS_Gazebo_Loop::updateFullModelState] WARNING: State not initialized!" << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::updateFullModelState] WARNING: State not initialized!" << std::endl;
     ros::spinOnce();
   }
 
@@ -185,6 +185,9 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
 SystemObservation MRT_ROS_Gazebo_Loop::forwardSimulation(const SystemObservation& currentObservation) 
 {
   std::cout << "[MRT_ROS_Gazebo_Loop::forwardSimulation] START" << std::endl;
+
+  std::cout << "[MRT_ROS_Gazebo_Loop::forwardSimulation] DEBUG INF" << std::endl;
+  while(1);
 
   SystemObservation nextObservation;
   nextObservation.time = currentObservation.time + dt_;
@@ -270,12 +273,13 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
     {
       std::cout << "[OCS2_MRT_Loop::mrtLoop] START getPolicy 2" << std::endl;
       observer -> update(currentObservation, mrt_.getPolicy(), mrt_.getCommand());
+      std::cout << "[OCS2_MRT_Loop::mrtLoop] END getPolicy 2" << std::endl;
     }
 
     // NUA NOTE: Instead used interpolation in publishCommand, which provides much stable commands.
     //targetObservation = forwardSimulation(currentObservation);
 
-    //std::cout << "[OCS2_MRT_Loop::mrtLoop] START publishCommand" << std::endl;
+    std::cout << "[OCS2_MRT_Loop::mrtLoop] START publishCommand" << std::endl;
     // Publish the control command 
     publishCommand();
 
@@ -475,6 +479,9 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
   auto modeStateDim = getModeStateDim(robotModelInfo_);
   auto modeInputDim = getModeInputDim(robotModelInfo_);
 
+  stateDimBase = 3;
+  stateDim = 9;
+
   std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] model type: " << modelTypeEnumToString(robotModelInfo_) << std::endl;
   std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] model mode: " << modelModeEnumToString(robotModelInfo_) << std::endl;
 
@@ -484,6 +491,8 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
   std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] stateDim: " << stateDim << std::endl;
   std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] modeStateDim: " << modeStateDim << std::endl;
   std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] modeInputDim: " << modeInputDim << std::endl;
+
+  //while(1);
 
   SystemObservation currentObservation;
   currentObservation.mode = 0;
@@ -651,9 +660,10 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
   std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] currentObservation.full_state size: " << currentObservation.full_state.size() << std::endl;
   std::cout << currentObservation.full_state << std::endl << std::endl;
 
-  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] END" << std::endl << std::endl;
-
+  //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] DEBUG INF" << std::endl;
   //while(1);
+
+  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] END" << std::endl;
 
   return currentObservation;
 }
@@ -669,7 +679,6 @@ void MRT_ROS_Gazebo_Loop::publishCommand()
   trajectory_msgs::JointTrajectory armJointTrajectoryMsg;
 
   // Set mobile base command
-  int baseOffset = mrt_.getRobotModelInfo().mobileBase.stateDimTmp;
   if (mrt_.getRobotModelInfo().modelMode == ModelMode::BaseMotion || 
       mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
   {
@@ -681,6 +690,11 @@ void MRT_ROS_Gazebo_Loop::publishCommand()
   if (mrt_.getRobotModelInfo().modelMode == ModelMode::ArmMotion || 
       mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
   {
+    int baseOffset = 0;
+    if (mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+    {
+      baseOffset = mrt_.getRobotModelInfo().mobileBase.stateDim;
+    }
     int n_joints = mrt_.getRobotModelInfo().robotArm.jointNames.size();
     armJointTrajectoryMsg.joint_names.resize(n_joints);
 

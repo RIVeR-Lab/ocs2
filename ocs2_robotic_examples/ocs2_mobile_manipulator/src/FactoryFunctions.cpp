@@ -181,7 +181,6 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath,
     {
       //return getPinocchioInterfaceFromUrdfModel(newModel, se3_base_wrt_world);
 
-      ///*
       // Add XY-yaw joint for the wheel-base
       pinocchio::JointModelComposite jointComposite(3);
       jointComposite.addJoint(pinocchio::JointModelPX());
@@ -190,7 +189,6 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath,
 
       // Return pinocchio interface
       return getPinocchioInterfaceFromUrdfModel(newModel, jointComposite, se3_base_wrt_world);
-      //*/
     }
     
     default:

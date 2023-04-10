@@ -205,9 +205,9 @@ class MobileManipulatorInterface final : public RobotInterface
     void launchNodes(ros::NodeHandle& nodeHandle);
 
   private:
-    std::unique_ptr<StateInputCost> getQuadraticInputCost(size_t modelMode);
+    std::unique_ptr<StateInputCost> getQuadraticInputCost();
 
-    std::unique_ptr<StateInputCost> getJointLimitSoftConstraint(size_t modelMode);
+    std::unique_ptr<StateInputCost> getJointLimitSoftConstraint();
     
     std::unique_ptr<StateCost> getEndEffectorConstraint(const std::string& prefix);
     

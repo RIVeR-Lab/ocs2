@@ -126,7 +126,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   std::cout << "=================================" << std::endl;
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] CHECK robotModelInfo_" << std::endl;
   std::cout << "info.mobileBase.baseFrame: " << robotModelInfo_.mobileBase.baseFrame << std::endl;
-  std::cout << "info.mobileBase.stateDim: " << robotModelInfo_.mobileBase.stateDimTmp << std::endl;
+  std::cout << "info.mobileBase.stateDim: " << robotModelInfo_.mobileBase.stateDim << std::endl;
   std::cout << "info.mobileBase.inputDim: " << robotModelInfo_.mobileBase.inputDim << std::endl;
   std::cout << "info.robotArm.baseFrame: " << robotModelInfo_.robotArm.baseFrame << std::endl;
   std::cout << "info.robotArm.eeFrame: " << robotModelInfo_.robotArm.eeFrame << std::endl;
@@ -157,7 +157,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 
   // NUA TODO: We don't need to do it here!
   int modelMode = getModelModeInt(robotModelInfo_);
-  //modelMode = 1;
+  modelMode = 1;
   setMPCProblem(modelMode, pointsAndRadii);
   
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END" << std::endl;
@@ -177,7 +177,7 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
   std::cout << "=================================" << std::endl;
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] CHECK AFTER isModeUpdated: " << isModeUpdated << std::endl;
   std::cout << "info.mobileBase.baseFrame: " << robotModelInfo_.mobileBase.baseFrame << std::endl;
-  std::cout << "info.mobileBase.stateDim: " << robotModelInfo_.mobileBase.stateDimTmp << std::endl;
+  std::cout << "info.mobileBase.stateDim: " << robotModelInfo_.mobileBase.stateDim << std::endl;
   std::cout << "info.mobileBase.inputDim: " << robotModelInfo_.mobileBase.inputDim << std::endl;
   std::cout << "info.robotArm.baseFrame: " << robotModelInfo_.robotArm.baseFrame << std::endl;
   std::cout << "info.robotArm.eeFrame: " << robotModelInfo_.robotArm.eeFrame << std::endl;
@@ -195,12 +195,12 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
 
   //// Optimal control problem
   /// Cost
-  problem_.costPtr->add("inputCost", getQuadraticInputCost(modelMode));
+  problem_.costPtr->add("inputCost", getQuadraticInputCost());
   std::cout << "" << std::endl;
 
   /// Constraints
   // Joint limits constraint
-  problem_.softConstraintPtr->add("jointLimits", getJointLimitSoftConstraint(modelMode));
+  problem_.softConstraintPtr->add("jointLimits", getJointLimitSoftConstraint());
   std::cout << "" << std::endl;
 
   // Mobile base or End-effector state constraint
@@ -392,16 +392,23 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCost(size_t modelMode) 
+std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCost() 
 {
+  //const size_t modeStateDim = getStateDimTmp(robotModelInfo_);
   const size_t modeStateDim = getModeStateDim(robotModelInfo_);
+  
+  //const size_t modeInputDim = getInputDim(robotModelInfo_);
   const size_t modeInputDim = getModeInputDim(robotModelInfo_);
   
+  auto modelMode = getModelModeInt(robotModelInfo_);
+
   std::cout << "[MobileManipulatorInterface::getQuadraticInputCost] modelMode: " << modelMode << std::endl;
-  //std::cout << "[MobileManipulatorInterface::getQuadraticInputCost] modelStateDim: " << modeStateDim << std::endl;
-  //std::cout << "[MobileManipulatorInterface::getQuadraticInputCost] modelInputDim: " << modeInputDim << std::endl;
+  std::cout << "[MobileManipulatorInterface::getQuadraticInputCost] modeStateDim: " << modeStateDim << std::endl;
+  std::cout << "[MobileManipulatorInterface::getQuadraticInputCost] modeInputDim: " << modeInputDim << std::endl;
 
   matrix_t R = matrix_t::Zero(modeInputDim, modeInputDim);
+
+  
 
   // Input cost of mobile base
   if (modelMode == 0 || modelMode == 2) 
@@ -438,16 +445,24 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCos
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftConstraint(size_t modelMode) 
+std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftConstraint() 
 {
+  auto modelMode = getModelModeInt(robotModelInfo_);
+
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile_, pt);
 
   bool activateJointPositionLimit = true;
   loadData::loadPtreeValue(pt, activateJointPositionLimit, "jointPositionLimits.activate", true);
 
+  //const size_t modeStateDim = getStateDimTmp(robotModelInfo_);
   const size_t modeStateDim = getModeStateDim(robotModelInfo_);
+  
+  //const size_t modeInputDim = getInputDim(robotModelInfo_);
   const size_t modeInputDim = getModeInputDim(robotModelInfo_);
+
+  std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] modeStateDim: " << modeStateDim << std::endl;
+  std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] modeInputDim: " << modeInputDim << std::endl;
 
   // Load position limits
   std::vector<StateInputSoftBoxConstraint::BoxConstraint> stateLimits;
@@ -459,6 +474,10 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftCon
     // Arm joint DOF limits from the parsed URDF      
     const vector_t lowerBound = model.lowerPositionLimit.tail(stateDimArm);
     const vector_t upperBound = model.upperPositionLimit.tail(stateDimArm);
+
+    std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] lowerBound size: " << lowerBound.size() << std::endl;
+    std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] upperBound size: " << upperBound.size() << std::endl;
+
     scalar_t muPositionLimits = 1e-2;
     scalar_t deltaPositionLimits = 1e-3;
 
@@ -472,6 +491,9 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftCon
     
     stateLimits.reserve(modeStateDim);
     const size_t stateOffset = modeStateDim - stateDimArm;
+
+    std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] stateOffset: " << stateOffset << std::endl;
+
     for (int i = 0; i < stateDimArm; ++i) 
     {
       StateInputSoftBoxConstraint::BoxConstraint boxConstraint;
@@ -481,6 +503,13 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftCon
       boxConstraint.penaltyPtr.reset(new RelaxedBarrierPenalty({muPositionLimits, deltaPositionLimits}));
       stateLimits.push_back(std::move(boxConstraint));
     }
+
+    std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] lowerBound size: " << lowerBound.size() << std::endl;
+    std::cout << lowerBound << std::endl << std::endl;
+    std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] upperBound size: " << upperBound.size() << std::endl;
+    std::cout << upperBound << std::endl << std::endl;
+
+    std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] stateLimits.size(): " << stateLimits.size() << std::endl;
   }
 
   // Load velocity limits
@@ -539,10 +568,21 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftCon
       boxConstraint.penaltyPtr.reset(new RelaxedBarrierPenalty({muVelocityLimits, deltaVelocityLimits}));
       inputLimits.push_back(std::move(boxConstraint));
     }
+
+    std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] lowerBound size: " << lowerBound.size() << std::endl;
+    std::cout << lowerBound << std::endl << std::endl;
+    std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] upperBound size: " << upperBound.size() << std::endl;
+    std::cout << upperBound << std::endl << std::endl;
   }
+
+  std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] stateLimits size: " << stateLimits.size() << std::endl;
+  std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] inputLimits size: " << inputLimits.size() << std::endl;
 
   auto boxConstraints = std::unique_ptr<StateInputSoftBoxConstraint>(new StateInputSoftBoxConstraint(stateLimits, inputLimits));
   boxConstraints -> initializeOffset(0.0, vector_t::Zero(modeStateDim), vector_t::Zero(modeInputDim));
+
+  //std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] DEBUG INF" << std::endl;
+  //while(1);
 
   return boxConstraints;
 }

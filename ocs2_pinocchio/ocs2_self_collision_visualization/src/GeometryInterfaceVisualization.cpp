@@ -60,6 +60,9 @@ void GeometryInterfaceVisualization::publishDistances(const ocs2::vector_t& q)
 
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
+
+  const vector_t q = pinocchioMapping.getPinocchioJointPosition(state, fullState);
+
   pinocchio::forwardKinematics(model, data, q);
   const auto results = geometryInterface_.computeDistances(pinocchioInterface_);
 

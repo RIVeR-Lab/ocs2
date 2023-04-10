@@ -122,6 +122,8 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(con
           
           if (fullState.size() != 9 || state.size() != 3)
           {
+            std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] fullState.size(): " << fullState.size() << std::endl;
+            std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] state.size(): " << state.size() << std::endl;
             std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF" << std::endl;
             while(1);
           }
@@ -137,13 +139,17 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(con
           
           if (fullState.size() != 9 || state.size() != 6)
           {
+            std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] fullState.size(): " << fullState.size() << std::endl;
+            std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] state.size(): " << state.size() << std::endl;
             std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF" << std::endl;
-            while(1);
+            //while(1);
           }
           
           vector_t pinocchioState = fullState;
           pinocchioState.tail(modeStateDim) = state;
+          
           return pinocchioState;
+          //return state;
         }
 
         case ModelMode::WholeBodyMotion:
@@ -152,6 +158,8 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(con
           
           if (fullState.size() != 9 || state.size() != 9)
           {
+            std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] fullState.size(): " << fullState.size() << std::endl;
+            std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] state.size(): " << state.size() << std::endl;
             std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF" << std::endl;
             while(1);
           }

@@ -138,7 +138,7 @@ int main(int argc, char** argv)
   // taskFile_mobileManipulator
   // taskFile_robotArm
 
-  string taskFile = taskFile_robotArm;
+  string taskFile = taskFile_mobileManipulator;
   string libFolder = libFolder_mobileManipulator;
   string urdfFile = urdfFile_mobileManipulator;
 

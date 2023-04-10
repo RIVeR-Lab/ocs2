@@ -75,7 +75,7 @@ int main(int argc, char** argv)
   // RobotModelInfo
   RobotModelInfo robotModelInfo = interface.getRobotModelInfo();
   
-  auto stateDimBase = robotModelInfo.mobileBase.stateDimTmp;
+  auto stateDimBase = robotModelInfo.mobileBase.stateDim;
   auto stateDimArm = robotModelInfo.robotArm.stateDim;
   auto stateDim = stateDimBase + stateDimArm;
 

@@ -95,6 +95,7 @@ PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const P
 
   // NUA TODO: FIX IT !!!!!!!!!!!!!!!!!!!!!!!!!
   const int stateDim = getStateDimTmp(robotModelInfo_);
+  //const int stateDim = 9;
   const int modeStateDim = getModeStateDim(robotModelInfo_);
   const int modeInputDim = getModeInputDim(robotModelInfo_);
 
@@ -104,6 +105,15 @@ PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const P
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] modeStateDim: " << modeStateDim << std::endl;
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] modeInputDim: " << modeInputDim << std::endl;
   
+
+  const auto& model = pinocchioInterfaceCppAd.getModel();
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] model.nq: " << model.nq << std::endl;
+  if(stateDim != model.nq)
+  {
+    std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] DEBUG INF " << std::endl;
+    while(1);
+  }
+
   /*
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] START getPositionCppAd" << std::endl;
   auto positionFunc = [&, this](const ad_vector_t& x, ad_vector_t& y) 
@@ -640,6 +650,7 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCpp
   //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(3)] DEBUG INF" << std::endl;
   //while(1);
 
+  /*
   if(fullState.size() != 9)
   {
     std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(3)] state.size(): " << state.size() << std::endl;
@@ -647,6 +658,7 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCpp
     std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(3)] DEBUG INF" << std::endl;
     //while(1);
   }
+  */
 
   auto stateDim = fullState.size();
   vector_t params(stateDim + 4 * endEffectorFrameIds_.size());
@@ -687,9 +699,9 @@ ad_vector_t PinocchioEndEffectorKinematicsCppAd::getOrientationErrorCppAd(Pinocc
   using ad_quaternion_t = Eigen::Quaternion<ad_scalar_t>;
 
   // NUA TODO: MUST FIX!!!!!!!!!!!!!!!!!!!!!!!
-  const int stateDim = robotModelInfo_.mobileBase.stateDimTmp + robotModelInfo_.robotArm.stateDim;
+  //const int stateDim = robotModelInfo_.mobileBase.stateDimTmp + robotModelInfo_.robotArm.stateDim;
   //const int stateDim = robotModelInfo_.robotArm.stateDim;
-  //const int stateDim = 9;
+  const int stateDim = 9;
 
   if(params.size()-4 == state.size())
   {

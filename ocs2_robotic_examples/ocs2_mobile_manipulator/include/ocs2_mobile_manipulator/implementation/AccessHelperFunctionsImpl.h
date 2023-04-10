@@ -80,26 +80,30 @@ Eigen::Quaternion<SCALAR> getBaseOrientation(const Eigen::Matrix<SCALAR, -1, 1>&
     case RobotModelType::MobileBase: 
     {
       // For wheel-based, we assume only yaw
+      std::cout << "[AccessHelperFunctionsImpl::getBaseOrientation] END MobileBase" << std::endl;
+
       return Eigen::Quaternion<SCALAR>(Eigen::AngleAxis<SCALAR>(state(2), Eigen::Matrix<SCALAR, 3, 1>::UnitZ()));
     }
 
     case RobotModelType::RobotArm: 
     {
       // For arm, we assume robot is at identity pose
+      std::cout << "[AccessHelperFunctionsImpl::getBaseOrientation] END RobotArm" << std::endl;
+      
       return Eigen::Quaternion<SCALAR>::Identity();
     }
 
     case RobotModelType::MobileManipulator: 
     {
       // For wheel-based, we assume only yaw
+      std::cout << "[AccessHelperFunctionsImpl::getBaseOrientation] END MobileManipulator" << std::endl;
+
       return Eigen::Quaternion<SCALAR>(Eigen::AngleAxis<SCALAR>(state(2), Eigen::Matrix<SCALAR, 3, 1>::UnitZ()));
     }
 
     default:
       throw std::invalid_argument("[AccessHelperFunctionsImpl::getBaseOrientation] ERROR: Invalid manipulator model type!");
   }
-
-  std::cout << "[AccessHelperFunctionsImpl::getBaseOrientation] END" << std::endl;
 }
 
 /******************************************************************************************************/

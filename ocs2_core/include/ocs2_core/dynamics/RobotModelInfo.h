@@ -38,7 +38,7 @@ enum class ModelMode
 
 struct MobileBase
 {
-  size_t stateDimTmp;                                // number of states
+  size_t stateDim;                                // number of states
   size_t inputDim;                                // number of inputs
   std::string baseFrame;                          // name of the root frame of the robot
 };
