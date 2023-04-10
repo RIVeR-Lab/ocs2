@@ -471,7 +471,7 @@ void LineSearchStrategy::lineSearchTask(const size_t taskId)
 /******************************************************************************************************/
 void LineSearchStrategy::lineSearchTask(const size_t taskId, const vector_t& initFullState) 
 {
-  std::cout << "[LineSearchStrategy::lineSearchTask(2)] START" << std::endl;
+  //std::cout << "[LineSearchStrategy::lineSearchTask(2)] START" << std::endl;
 
   while (true) 
   {
@@ -556,7 +556,7 @@ void LineSearchStrategy::lineSearchTask(const size_t taskId, const vector_t& ini
 
   }  // end of while loop
 
-  std::cout << "[LineSearchStrategy::lineSearchTask(2)] END" << std::endl;
+  //std::cout << "[LineSearchStrategy::lineSearchTask(2)] END" << std::endl;
 }
 
 /******************************************************************************************************/

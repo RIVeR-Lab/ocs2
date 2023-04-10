@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.03.04
+// LAST UPDATE: 2022.04.10
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -87,7 +87,6 @@ RobotModelInfo createRobotModelInfo(const RobotModelType& robotModelType,
     case RobotModelType::MobileManipulator: 
     {
       std::cout << "[FactoryFunction::createRobotModelInfo] MobileManipulator" << std::endl;
-      ///*
       info.mobileBase.baseFrame = baseFrame;
       info.mobileBase.stateDim = 3;
       info.mobileBase.inputDim = 2;
@@ -101,21 +100,6 @@ RobotModelInfo createRobotModelInfo(const RobotModelType& robotModelType,
       info.modelMode = ModelMode::WholeBodyMotion;
       info.modeStateDim = info.mobileBase.stateDim + info.robotArm.stateDim;
       info.modeInputDim = info.mobileBase.inputDim + info.robotArm.inputDim;
-      //*/
-      /*
-      info.mobileBase.baseFrame = baseFrame;
-      info.mobileBase.stateDim = 3;
-      info.mobileBase.inputDim = 2;
-      info.robotArm.baseFrame = armBaseFrame;
-      info.robotArm.eeFrame = eeFrame;
-      info.robotArm.jointFrameNames = armJointFrameNames;
-      info.robotArm.jointNames = armJointNames;
-      info.robotArm.stateDim = n_armJoints;
-      info.robotArm.inputDim = n_armJoints;
-      info.modelMode = ModelMode::WholeBodyMotion;
-      info.modeStateDim = info.mobileBase.stateDim + info.robotArm.stateDim;
-      info.modeInputDim = info.mobileBase.inputDim + info.robotArm.inputDim;
-      */
       break;
     }
 
@@ -161,7 +145,6 @@ size_t getModelModeInt(RobotModelInfo& robotModelInfo)
 size_t getStateDimBase(RobotModelInfo& robotModelInfo)
 {
   return robotModelInfo.mobileBase.stateDim;
-  //return 0;
 }
 
 /******************************************************************************************************/
@@ -175,10 +158,9 @@ size_t getStateDimArm(RobotModelInfo& robotModelInfo)
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t getStateDimTmp(RobotModelInfo& robotModelInfo)
+size_t getStateDim(RobotModelInfo& robotModelInfo)
 {
   return robotModelInfo.mobileBase.stateDim + robotModelInfo.robotArm.stateDim;
-  //return robotModelInfo.robotArm.stateDim;
 }
 
 /******************************************************************************************************/
@@ -260,10 +242,10 @@ bool updateModelMode(RobotModelInfo& robotModelInfo, size_t& modelMode)
   return result;
 }
 
-/**
- * @brief Returns a string for a RobotModelType for retrieving data from a .info file
- */
-std::string modelTypeEnumToString(RobotModelInfo& robotModelInfo) 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::string getRobotModelTypeString(RobotModelInfo& robotModelInfo) 
 {
   std::string robotModelTypeString;
 
@@ -282,17 +264,17 @@ std::string modelTypeEnumToString(RobotModelInfo& robotModelInfo)
       break;
 
     default:
-      throw std::invalid_argument("[MultiModelFunctions::modelTypeEnumToString] Error: Invalid robot model!");
+      throw std::invalid_argument("[MultiModelFunctions::getRobotModelType] Error: Invalid robot model!");
       break;
   }
 
   return robotModelTypeString;
 }
 
-/**
- * @brief Returns a string for a ModelMode
- */
-std::string modelModeEnumToString(RobotModelInfo& robotModelInfo) 
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::string getModelModeString(RobotModelInfo& robotModelInfo) 
 {
   std::string modeModelString;
 
@@ -311,7 +293,7 @@ std::string modelModeEnumToString(RobotModelInfo& robotModelInfo)
       break;
 
     default:
-      throw std::invalid_argument("[MultiModelFunctions::modelModeEnumToString] Error: Invalid model mode!");
+      throw std::invalid_argument("[MultiModelFunctions::getModelModeString] Error: Invalid model mode!");
       break;
   }
 
@@ -327,6 +309,37 @@ RobotModelType loadRobotType(const std::string& configFilePath, const std::strin
   boost::property_tree::read_info(configFilePath, pt);
   const size_t type = pt.template get<size_t>(fieldName);
   return static_cast<RobotModelType>(type);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void printRobotModelInfo(RobotModelInfo& robotModelInfo)
+{
+    std::cout << "[MultiModelFunctions::printInfo] =================================" << std::endl;
+    std::cout << "robotModelType: " << getRobotModelTypeString(robotModelInfo) << std::endl;
+    std::cout << "modelMode (String): " << getModelModeString(robotModelInfo) << std::endl;
+    std::cout << "modelMode (int): " << getModelModeInt(robotModelInfo) << std::endl;
+    std::cout << "modeStateDim: " << robotModelInfo.modeStateDim << std::endl;
+    std::cout << "modeInputDim: " << robotModelInfo.modeInputDim << std::endl;
+    std::cout << "mobileBase.baseFrame: " << robotModelInfo.mobileBase.baseFrame << std::endl;
+    std::cout << "mobileBase.stateDim: " << robotModelInfo.mobileBase.stateDim << std::endl;
+    std::cout << "mobileBase.inputDim: " << robotModelInfo.mobileBase.inputDim << std::endl;
+    std::cout << "robotArm.baseFrame: " << robotModelInfo.robotArm.baseFrame << std::endl;
+    std::cout << "robotArm.eeFrame: " << robotModelInfo.robotArm.eeFrame << std::endl;
+    std::cout << "robotArm.stateDim: " << robotModelInfo.robotArm.stateDim << std::endl;
+    std::cout << "robotArm.inputDim: " << robotModelInfo.robotArm.inputDim << std::endl;
+    std::cout << "armJointFrameNames: " << std::endl;
+    for (int i = 0; i < robotModelInfo.robotArm.jointFrameNames.size(); ++i)
+    {
+      std::cout << i << ": " << robotModelInfo.robotArm.jointFrameNames[i] << std::endl;
+    }
+    std::cout << "armJointNames: " << std::endl;
+    for (int i = 0; i < robotModelInfo.robotArm.jointNames.size(); ++i)
+    {
+      std::cout << i << ": " << robotModelInfo.robotArm.jointNames[i] << std::endl;
+    }
+    std::cout << "=================================" << std::endl << std::endl;
 }
 
 //}  // namespace mobile_manipulator

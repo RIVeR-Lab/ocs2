@@ -1,37 +1,18 @@
-/******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
- * Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-
- * Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
- * Neither the name of the copyright holder nor the names of its
-  contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
+// LAST UPDATE: 2022.04.10
+//
+// AUTHOR: Neset Unver Akmandor (NUA)
+//
+// E-MAIL: akmandor.n@northeastern.edu
+//
+// DESCRIPTION: TODO...
+//
+// REFERENCES:
+// [1] https://github.com/leggedrobotics/ocs2
 
 // External libraries:
 #include <ros/init.h>
 #include <ros/package.h>
 
-//#include <ocs2_core/dynamics/MultiModelFunctions.h>
 #include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
@@ -54,43 +35,18 @@ int main(int argc, char** argv)
   ros::NodeHandle nodeHandle;
 
   // Get node parameters
-  string workspacePath;
-  
-  nodeHandle.getParam("/workspacePath", workspacePath);
-  std::string taskFile_mobileBase = workspacePath + "/config/task/task_" + robotName + "_mobileBase.info";
-  std::string taskFile_robotArm = workspacePath + "/config/task/task_" + robotName + "_robotArm.info";
-  std::string taskFile_mobileManipulator = workspacePath + "/config/task/task_" + robotName + "_mobileManipulator.info";
+  string taskFile, libFolder, urdfFile;
 
-  std::cout << "[MobileManipulatorMpcNode::main] taskFile_mobileBase: " << taskFile_mobileBase << std::endl;
-  std::cout << "[MobileManipulatorMpcNode::main] taskFile_robotArm: " << taskFile_robotArm << std::endl;
-  std::cout << "[MobileManipulatorMpcNode::main] taskFile_mobileManipulator: " << taskFile_mobileManipulator << std::endl;
-
-  std::string libFolder_mobileBase = workspacePath + "/codegen/auto_generated/" + robotName;
-  std::string libFolder_robotArm = workspacePath + "/codegen/auto_generated/" + robotName;
-  std::string libFolder_mobileManipulator = workspacePath + "/codegen/auto_generated/" + robotName;
-  
-  std::cout << "[MobileManipulatorMpcNode::main] libFolder_mobileBase: " << libFolder_mobileBase << std::endl;
-  std::cout << "[MobileManipulatorMpcNode::main] libFolder_robotArm: " << libFolder_robotArm << std::endl;
-  std::cout << "[MobileManipulatorMpcNode::main] libFolder_mobileManipulator: " << libFolder_mobileManipulator << std::endl;
-
-  std::string urdfFile_mobileBase = workspacePath + "/urdf/jackal_fixedWheel_ur5.urdf";
-  std::string urdfFile_robotArm = workspacePath + "/urdf/jackal_fixedWheel_ur5.urdf";
-  std::string urdfFile_mobileManipulator = workspacePath + "/urdf/jackal_fixedWheel_ur5.urdf";
-
-  std::cout << "[MobileManipulatorMpcNode::main] urdfFile_mobileBase: " << urdfFile_mobileBase << std::endl;
-  std::cout << "[MobileManipulatorMpcNode::main] urdfFile_robotArm: " << urdfFile_robotArm << std::endl;
-  std::cout << "[MobileManipulatorMpcNode::main] urdfFile_mobileManipulator: " << urdfFile_mobileManipulator << std::endl;
-
-  /*
-  std::string taskFile, libFolder, urdfFile;
   nodeHandle.getParam("/taskFile", taskFile);
   nodeHandle.getParam("/libFolder", libFolder);
   nodeHandle.getParam("/urdfFile", urdfFile);
-  std::cerr << "Loading task file: " << taskFile << std::endl;
-  std::cerr << "Loading library folder: " << libFolder << std::endl;
-  std::cerr << "Loading urdf file: " << urdfFile << std::endl;
-  */
 
+  std::cout << "[MobileManipulatorMpcNode::main] Loading task file: " << taskFile << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] Loading library folder: " << libFolder << std::endl;
+  std::cout << "[MobileManipulatorMpcNode::main] Loading urdf file: " << urdfFile << std::endl;
+
+  //// NUA TODO: GET INFO FROM TASK FILE AND INIT IN MobileManipulatorInterface!
+  // Get points on robot parameters
   PointsOnRobot::points_radii_t pointsAndRadii(8);
   if (nodeHandle.hasParam("/collision_points")) 
   {
@@ -135,65 +91,13 @@ int main(int argc, char** argv)
     std::cout << "[MobileManipulatorGazeboMRT::main] ERROR: collision_points is not defined!" << std::endl;
   }
 
-  // taskFile_mobileManipulator
-  // taskFile_robotArm
-
-  string taskFile = taskFile_mobileManipulator;
-  string libFolder = libFolder_mobileManipulator;
-  string urdfFile = urdfFile_mobileManipulator;
-
-  std::cout << "[MobileManipulatorMpcNode::main] Loading task file: " << taskFile << std::endl;
-  std::cout << "[MobileManipulatorMpcNode::main] Loading library folder: " << libFolder << std::endl;
-  std::cout << "[MobileManipulatorMpcNode::main] Loading urdf file: " << urdfFile << std::endl;
-
-  //while(1);
-
   // Robot Interface
   std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE MobileManipulatorInterface" << std::endl;
   MobileManipulatorInterface interface(taskFile, libFolder, urdfFile, pointsAndRadii);
   std::cout << "[MobileManipulatorGazeboMRT::main] AFTER MobileManipulatorInterface" << std::endl;
 
-  // RobotModelInfo
-  RobotModelInfo robotModelInfo = interface.getRobotModelInfo();
-  std::string baseFrameName = robotModelInfo.mobileBase.baseFrame;
-  if (robotModelInfo.robotModelType == RobotModelType::RobotArm)
-  {
-    baseFrameName = robotModelInfo.robotArm.baseFrame;
-  }
-
-  auto stateDimBase = getStateDimBase(robotModelInfo);
-  auto stateDimArm = getStateDimArm(robotModelInfo);
-  auto stateDim = getStateDimTmp(robotModelInfo);
-  auto modeStateDim = getModeStateDim(robotModelInfo);
-
-  auto inputDimBase = getInputDimBase(robotModelInfo);
-  auto inputDimArm = getInputDimArm(robotModelInfo);
-  auto inputDim = getInputDim(robotModelInfo);
-  auto modeInputDim = getModeInputDim(robotModelInfo);
-
-  std::cout << "[MobileManipulatorGazeboMRT::main] robotModelType: " << modelTypeEnumToString(robotModelInfo) << std::endl;
-  std::cout << "[MobileManipulatorGazeboMRT::main] robotModelType: " << modelModeEnumToString(robotModelInfo) << std::endl << std::endl;
-  
-  std::cout << "[MobileManipulatorGazeboMRT::main] stateDimBase: " << stateDimBase << std::endl;
-  std::cout << "[MobileManipulatorGazeboMRT::main] stateDimArm: " << stateDimArm << std::endl;
-  std::cout << "[MobileManipulatorGazeboMRT::main] stateDim: " << stateDim << std::endl;
-  std::cout << "[MobileManipulatorGazeboMRT::main] modeStateDim: " << modeStateDim << std::endl << std::endl;
-
-  std::cout << "[MobileManipulatorGazeboMRT::main] inputDimBase: " << inputDimBase << std::endl;
-  std::cout << "[MobileManipulatorGazeboMRT::main] inputDimArm: " << inputDimArm << std::endl;
-  std::cout << "[MobileManipulatorGazeboMRT::main] inputDim: " << inputDim << std::endl;
-  std::cout << "[MobileManipulatorGazeboMRT::main] modeInputDim: " << modeInputDim << std::endl << std::endl;
-
-  std::cout << "[MobileManipulatorGazeboMRT::main] armJointFrameNames: " << std::endl;
-  for (int i = 0; i < robotModelInfo.robotArm.jointFrameNames.size(); ++i)
-  {
-    std::cout << i << ": " << robotModelInfo.robotArm.jointFrameNames[i] << std::endl;
-  }
-  std::cout << "[MobileManipulatorGazeboMRT::main] armJointNames: " << std::endl;
-  for (int i = 0; i < robotModelInfo.robotArm.jointNames.size(); ++i)
-  {
-    std::cout << i << ": " << robotModelInfo.robotArm.jointNames[i] << std::endl;
-  }
+  auto robotModelInfo = interface.getRobotModelInfo();
+  printRobotModelInfo(robotModelInfo);
 
   // MRT
   MRT_ROS_Interface mrt(robotModelInfo, robotModel);
@@ -201,9 +105,7 @@ int main(int argc, char** argv)
   mrt.launchNodes(nodeHandle);
 
   // Visualization
-  std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE ocs2_mm_visu" << std::endl;
   std::shared_ptr<OCS2_Mobile_Manipulator_Visualization> ocs2_mm_visu(new OCS2_Mobile_Manipulator_Visualization(nodeHandle, interface));
-  std::cout << "[MobileManipulatorGazeboMRT::main] AFTER ocs2_mm_visu" << std::endl;
 
   // MRT loop
   MRT_ROS_Gazebo_Loop mrt_loop(nodeHandle, 
@@ -213,30 +115,13 @@ int main(int argc, char** argv)
                                interface.mpcSettings().mpcDesiredFrequency_);
   mrt_loop.subscribeObservers({ocs2_mm_visu});
 
-  // initial state
-  //SystemObservation initObservation;
-  //initObservation.state = interface.getInitialState();
-  //initObservation.state.setZero(stateDim);
-  //initObservation.input.setZero(inputDim);
-  //initObservation.time = 0.0;
-
-  //std::cout << "[MobileManipulatorGazeboMRT::main] state size: " << initObservation.state.size() << std::endl;
-  //std::cout << "[MobileManipulatorGazeboMRT::main] input size: " << initObservation.input.size() << std::endl;
-  
   // initial command
   vector_t initTarget(7);
   initTarget.head(3) << -0.2, 0, 0.8;
   initTarget.tail(4) << Eigen::Quaternion<scalar_t>(0, 0, 1, 0).coeffs();
-  //const vector_t zeroInput = vector_t::Zero(inputDim);
-  //const TargetTrajectories initTargetTrajectories({initObservation.time}, {initTarget}, {zeroInput});
 
-  //std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE INF" << std::endl;
-  //while(1);
-
-  // Run mrt_loop (loops while ros is ok)
+  // Run mrt_loop
   mrt_loop.run(initTarget);
-  //mrt_loop.run(initTargetTrajectories);
-  //mrt_loop.runSinglePolicy(initObservation, initTargetTrajectories);
 
   // Successful exit
   return 0;

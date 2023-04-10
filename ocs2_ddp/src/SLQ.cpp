@@ -86,6 +86,9 @@ void SLQ::approximateIntermediateLQ(const DualSolution& dualSolution, PrimalData
 {
   std::cout << "[GaussNewtonDDP::approximateIntermediateLQ(2)] START" << std::endl;
 
+  std::cout << "[GaussNewtonDDP::approximateIntermediateLQ(2)] DEBUG INF" << std::endl;
+  while(1);
+
   // create alias
   const auto& timeTrajectory = primalData.primalSolution.timeTrajectory_;
   const auto& stateTrajectory = primalData.primalSolution.stateTrajectory_;

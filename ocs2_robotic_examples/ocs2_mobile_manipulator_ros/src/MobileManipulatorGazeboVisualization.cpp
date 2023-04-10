@@ -91,13 +91,13 @@ void OCS2_Mobile_Manipulator_Visualization::launchVisualizerNode(ros::NodeHandle
   urdf::Model model;
   if (!model.initParam(urdfName)) 
   {
-    ROS_ERROR("URDF model load was NOT successful");
+    ROS_ERROR("[OCS2_Mobile_Manipulator_Visualization::launchVisualizerNode] URDF model load was NOT successful");
   }
 
   KDL::Tree tree;
   if (!kdl_parser::treeFromUrdfModel(model, tree)) 
   {
-    ROS_ERROR("Failed to extract kdl tree from xml robot description");
+    ROS_ERROR("[OCS2_Mobile_Manipulator_Visualization::launchVisualizerNode] Failed to extract kdl tree from xml robot description");
   }
 
   robotStatePublisherPtr_.reset(new robot_state_publisher::RobotStatePublisher(tree));
@@ -161,23 +161,17 @@ void OCS2_Mobile_Manipulator_Visualization::update(const SystemObservation& obse
                                                    const PrimalSolution& policy,
                                                    const CommandData& command) 
 {
-  std::cout << "[OCS2_Mobile_Manipulator_Visualization::update] START" << std::endl;
+  //std::cout << "[OCS2_Mobile_Manipulator_Visualization::update] START" << std::endl;
 
   const ros::Time timeStamp = ros::Time::now();
-
-  //publishObservation(timeStamp, observation);   //NUA EDIT: Commented out.
-  //publishTargetTrajectories(timeStamp, command.mpcTargetTrajectories_);
-  //publishOptimizedTrajectory(timeStamp, policy);
-  std::cout << "[OCS2_Mobile_Manipulator_Visualization::update] START publishOptimizedTrajectory" << std::endl;
   publishOptimizedTrajectory(timeStamp, policy, observation.full_state);
-  std::cout << "[OCS2_Mobile_Manipulator_Visualization::update] END publishOptimizedTrajectory" << std::endl;
   
   if (geometryVisualization_ != nullptr) 
   {
     geometryVisualization_ -> publishDistances(observation.state, observation.full_state, modelInfo_);
   }
 
-  std::cout << "[OCS2_Mobile_Manipulator_Visualization::update] END" << std::endl;
+  //std::cout << "[OCS2_Mobile_Manipulator_Visualization::update] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -311,9 +305,7 @@ void OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(const ros
 /******************************************************************************************************/
 void OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy, vector_t fullState) 
 {
-  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(3)] START" << std::endl;
-
-  
+  //std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(3)] START" << std::endl;
 
   const scalar_t TRAJECTORYLINEWIDTH = 0.005;
   const std::array<scalar_t, 3> red{0.6350, 0.0780, 0.1840};
@@ -321,14 +313,12 @@ void OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(const ros
   const auto& mpcStateTrajectory = policy.stateTrajectory_;
   visualization_msgs::MarkerArray markerArray;
 
-  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] START Base" << std::endl;
   // Base trajectory
   std::vector<geometry_msgs::Point> baseTrajectory;
   baseTrajectory.reserve(mpcStateTrajectory.size());
   geometry_msgs::PoseArray poseArray;
   poseArray.poses.reserve(mpcStateTrajectory.size());
 
-  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] START EE" << std::endl;
   // End effector trajectory
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
@@ -337,26 +327,17 @@ void OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(const ros
   endEffectorTrajectory.reserve(mpcStateTrajectory.size());
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const Eigen::VectorXd& state) 
   {
-    std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(3)] state size: " << state.size() << std::endl;
-    std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(3)] fullState size: " << fullState.size() << std::endl;
-
     MobileManipulatorPinocchioMapping pinocchioMapping(modelInfo_);
     const vector_t q = pinocchioMapping.getPinocchioJointPosition(state, fullState);
     pinocchio::forwardKinematics(model, data, q);
-    
-    //std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(3)] DEBUG INF" << std::endl;
-    //while(1);
-    
     pinocchio::updateFramePlacements(model, data);
     const auto eeIndex = model.getBodyId(modelInfo_.robotArm.eeFrame);
     const vector_t eePosition = data.oMf[eeIndex].translation();
     endEffectorTrajectory.push_back(ros_msg_helpers::getPointMsg(eePosition));
   });
-
   markerArray.markers.emplace_back(ros_msg_helpers::getLineMsg(std::move(endEffectorTrajectory), blue, TRAJECTORYLINEWIDTH));
   markerArray.markers.back().ns = "EE Trajectory";
 
-  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] START Extract" << std::endl;
   // Extract base pose from state
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const vector_t& state) 
   {
@@ -383,10 +364,7 @@ void OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(const ros
   stateOptimizedPublisher_.publish(markerArray);
   stateOptimizedPosePublisher_.publish(poseArray);
 
-  //std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(3)] DEBUG INF" << std::endl;
-  //while(1);
-
-  std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(3)] END" << std::endl;
+  //std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(3)] END" << std::endl;
 }
 
 }  // namespace mobile_manipulator

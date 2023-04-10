@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.03.09
+// LAST UPDATE: 2022.04.10
 //
 // AUTHOR: Neset Unver Akmandor  (NUA)
 //
@@ -59,10 +59,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   
   /// Resolve meta-information about the model
   // Read robot type
-
-  //std::cout << "----------////////////////---------------||||||||||||||||------------------\\\\\\\\\\\\\\\-------------" << std::endl;
   RobotModelType robotModelType = loadRobotType(taskFile_, "model_information.robotModelType");
-  //std::cout << "----------////////////////---------------||||||||||||||||------------------\\\\\\\\\\\\\\\-------------" << std::endl;
 
   // Read the joints to make fixed
   std::vector<std::string> removeJointNames;
@@ -106,13 +103,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   std::cerr << " #### =============================================================================" << std::endl;
 
   // Create pinocchio interface
-  std::cout << "" << std::endl;
-  std::cout << "*********************************" << std::endl;
-  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START PinocchioInterface" << std::endl;
   pinocchioInterfacePtr_.reset(new PinocchioInterface(createPinocchioInterface(urdfFile_, robotModelType, removeJointNames)));
-  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END PinocchioInterface" << std::endl;
-  std::cout << "*********************************" << std::endl;
-  std::cout << "" << std::endl;
+
   std::cerr << *pinocchioInterfacePtr_;
 
   // Set Robot Model Info
@@ -122,22 +114,6 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
                                          eeFrame,
                                          armJointFrameNames,
                                          armJointNames);
-
-  std::cout << "=================================" << std::endl;
-  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] CHECK robotModelInfo_" << std::endl;
-  std::cout << "info.mobileBase.baseFrame: " << robotModelInfo_.mobileBase.baseFrame << std::endl;
-  std::cout << "info.mobileBase.stateDim: " << robotModelInfo_.mobileBase.stateDim << std::endl;
-  std::cout << "info.mobileBase.inputDim: " << robotModelInfo_.mobileBase.inputDim << std::endl;
-  std::cout << "info.robotArm.baseFrame: " << robotModelInfo_.robotArm.baseFrame << std::endl;
-  std::cout << "info.robotArm.eeFrame: " << robotModelInfo_.robotArm.eeFrame << std::endl;
-  std::cout << "info.robotArm.stateDim: " << robotModelInfo_.robotArm.stateDim << std::endl;
-  std::cout << "info.robotArm.inputDim: " << robotModelInfo_.robotArm.inputDim << std::endl;
-  std::cout << "info.modeStateDim: " << robotModelInfo_.modeStateDim << std::endl;
-  std::cout << "info.modeInputDim: " << robotModelInfo_.modeInputDim << std::endl;
-  std::cout << "modelModeEnumToString(robotModelInfo_): " << modelModeEnumToString(robotModelInfo_) << std::endl;
-  std::cout << "getModelModeInt(robotModelInfo_): " << getModelModeInt(robotModelInfo_) << std::endl;
-  std::cout << "modelTypeEnumToString(robotModelInfo_): " << modelTypeEnumToString(robotModelInfo_) << std::endl;
-  std::cout << "=================================" << std::endl << std::endl;
 
   // Set Model Settings
   std::cerr << "\n #### Model Settings:";
@@ -156,9 +132,9 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   referenceManagerPtr_.reset(new ReferenceManager);
 
   // NUA TODO: We don't need to do it here!
-  int modelMode = getModelModeInt(robotModelInfo_);
-  modelMode = 1;
-  setMPCProblem(modelMode, pointsAndRadii);
+  //int modelMode = getModelModeInt(robotModelInfo_);
+  auto modelModeInt = 1;
+  setMPCProblem(modelModeInt, pointsAndRadii);
   
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END" << std::endl;
 }
@@ -166,29 +142,15 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::points_radii_t& pointsAndRadii)
+void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobot::points_radii_t& pointsAndRadii)
 {
   std::cout << "[MobileManipulatorInterface::setMPCProblem] START" << std::endl;
 
-  std::cout << "[MobileManipulatorInterface::setMPCProblem] modelMode: " << modelMode << std::endl;
+  std::cout << "[MobileManipulatorInterface::setMPCProblem] modelMode: " << modelModeInt << std::endl;
 
-  bool isModeUpdated = updateModelMode(robotModelInfo_, modelMode);
+  bool isModeUpdated = updateModelMode(robotModelInfo_, modelModeInt);
 
-  std::cout << "=================================" << std::endl;
-  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] CHECK AFTER isModeUpdated: " << isModeUpdated << std::endl;
-  std::cout << "info.mobileBase.baseFrame: " << robotModelInfo_.mobileBase.baseFrame << std::endl;
-  std::cout << "info.mobileBase.stateDim: " << robotModelInfo_.mobileBase.stateDim << std::endl;
-  std::cout << "info.mobileBase.inputDim: " << robotModelInfo_.mobileBase.inputDim << std::endl;
-  std::cout << "info.robotArm.baseFrame: " << robotModelInfo_.robotArm.baseFrame << std::endl;
-  std::cout << "info.robotArm.eeFrame: " << robotModelInfo_.robotArm.eeFrame << std::endl;
-  std::cout << "info.robotArm.stateDim: " << robotModelInfo_.robotArm.stateDim << std::endl;
-  std::cout << "info.robotArm.inputDim: " << robotModelInfo_.robotArm.inputDim << std::endl;
-  std::cout << "info.modeStateDim: " << robotModelInfo_.modeStateDim << std::endl;
-  std::cout << "info.modeInputDim: " << robotModelInfo_.modeInputDim << std::endl;
-  std::cout << "modelModeEnumToString(robotModelInfo_): " << modelModeEnumToString(robotModelInfo_) << std::endl;
-  std::cout << "getModelModeInt(robotModelInfo_): " << getModelModeInt(robotModelInfo_) << std::endl;
-  std::cout << "modelTypeEnumToString(robotModelInfo_): " << modelTypeEnumToString(robotModelInfo_) << std::endl;
-  std::cout << "=================================" << std::endl << std::endl;
+  printRobotModelInfo(robotModelInfo_);
 
   //std::cout << "[MobileManipulatorInterface::setMPCProblem] DEBUG INF" << std::endl;
   //while(1);
@@ -204,7 +166,7 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
   std::cout << "" << std::endl;
 
   // Mobile base or End-effector state constraint
-  if (modelMode == 0)
+  if (robotModelInfo_.modelMode == ModelMode::BaseMotion)
   {
     ///////// NUA TODO: COMPLETE!
   }
@@ -225,7 +187,7 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
   // Self-collision avoidance constraint
   if (activateSelfCollision_) 
   {
-    if (modelMode == 1 || modelMode == 2)
+    if (robotModelInfo_.modelMode == ModelMode::ArmMotion || robotModelInfo_.modelMode == ModelMode::WholeBodyMotion)
     {
       problem_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint("selfCollision"));
     }
@@ -273,16 +235,17 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
     emuPtr_->setPubOccDistVisu(pub_name_oct_dist_visu);
     emuPtr_->setPubOccDistArrayVisu(pub_name_oct_dist_array_visu);
     
-    problem_.stateSoftConstraintPtr->add("extCollision", getExtCollisionConstraint("extCollision", modelMode));
+    problem_.stateSoftConstraintPtr->add("extCollision", getExtCollisionConstraint("extCollision"));
   }
   std::cout << "" << std::endl;
 
   std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE Dynamics" << std::endl;
   
   // Dynamics
-  switch (modelMode) 
+  switch (robotModelInfo_.modelMode) 
   {
-    case 0:
+    case ModelMode::BaseMotion:
+    {
       std::cout << "[MobileManipulatorInterface::setMPCProblem] Mobile Base" << std::endl;
       problem_.dynamicsPtr.reset(new MobileBaseDynamics(robotModelInfo_, 
                                                         "MobileBaseDynamics", 
@@ -290,8 +253,10 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
                                                         recompileLibraries_, 
                                                         true));
       break;
-
-    case 1:
+    }
+    
+    case ModelMode::ArmMotion:
+    {
       std::cout << "[MobileManipulatorInterface::setMPCProblem] Robotics Arm" << std::endl;
       problem_.dynamicsPtr.reset(new RobotArmDynamics(robotModelInfo_, 
                                                       "RobotArmDynamics", 
@@ -299,8 +264,10 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
                                                       recompileLibraries_, 
                                                       true));
       break;
-
-    case 2: 
+    }
+    
+    case ModelMode::WholeBodyMotion: 
+    {
       std::cout << "[MobileManipulatorInterface::setMPCProblem] Mobile Manipulator" << std::endl;
       problem_.dynamicsPtr.reset(new MobileManipulatorDynamics(robotModelInfo_, 
                                                                "MobileManipulatorDynamics", 
@@ -308,17 +275,14 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelMode, PointsOnRobot::
                                                                recompileLibraries_, 
                                                                true));
       break;
+    }
 
     default:
       throw std::invalid_argument("[MobileManipulatorInterface::setMPCProblem] ERROR: Invalid model mode!");
   }
   std::cout << "" << std::endl;
 
-  //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] DEBUG INF" << std::endl;
-  //while(1);
-
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Pre-computation" << std::endl;
-
   /*
    * Pre-computation
    */
@@ -710,15 +674,15 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint(const std::string& prefix, 
-                                                                                 size_t modelMode) 
+std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint(const std::string& prefix) 
 {
   std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] START" << std::endl;
 
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile_, pt);
 
-  const int modelStateDim = getStateDimTmp(robotModelInfo_);
+  const int modelStateDim = getStateDim(robotModelInfo_);
+  auto modelModeInt = getModelModeInt(robotModelInfo_);
 
   scalar_t mu = 1e-2;
   scalar_t delta = 1e-3;
@@ -743,7 +707,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
                                                                                               pointsOnRobotPtr_,
                                                                                               maxDistance,
                                                                                               emuPtr_,
-                                                                                              modelMode,
+                                                                                              modelModeInt,
                                                                                               modelStateDim));
   }
   else
@@ -753,7 +717,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
     constraint = std::unique_ptr<StateConstraint>(new ExtCollisionConstraintCppAd(*pinocchioInterfacePtr_, 
                                                                                   MobileManipulatorPinocchioMapping(robotModelInfo_), 
                                                                                   std::move(extCollisionPinocchioGeometryInterface), 
-                                                                                  modelMode,
+                                                                                  modelModeInt,
                                                                                   pointsOnRobotPtr_,
                                                                                   maxDistance,
                                                                                   emuPtr_,
