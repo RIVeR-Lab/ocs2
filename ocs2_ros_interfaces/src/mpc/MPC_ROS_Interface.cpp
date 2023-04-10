@@ -74,16 +74,6 @@ void MPC_ROS_Interface::setEsdfCachingServer(std::shared_ptr<voxblox::EsdfCachin
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-/*
-void MPC_ROS_Interface::setExtMapUtility(std::shared_ptr<ExtMapUtility> emuPtr)
-{
-  emuPtr_ = emuPtr;
-}
-*/
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 void MPC_ROS_Interface::resetMpcNode(TargetTrajectories&& initTargetTrajectories) 
 {
   std::lock_guard<std::mutex> resetLock(resetMutex_);
@@ -100,7 +90,8 @@ void MPC_ROS_Interface::resetMpcNode(TargetTrajectories&& initTargetTrajectories
 /******************************************************************************************************/
 bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_msgs::reset::Response& res) 
 {
-  if (static_cast<bool>(req.reset)) {
+  if (static_cast<bool>(req.reset)) 
+  {
     auto targetTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(req.targetTrajectories);
     resetMpcNode(std::move(targetTrajectories));
     res.done = static_cast<uint8_t>(true);
@@ -112,7 +103,9 @@ bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_ms
               << "\n#####################################################\n";
     return true;
 
-  } else {
+  } 
+  else 
+  {
     ROS_WARN_STREAM("[MPC_ROS_Interface] Reset request failed!");
     return false;
   }
@@ -125,20 +118,12 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(const 
                                                                           const CommandData& commandData,
                                                                           const PerformanceIndex& performanceIndices) 
 {
-  std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] START" << std::endl;
+  //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] START" << std::endl;
 
   ocs2_msgs::mpc_flattened_controller mpcPolicyMsg;
-
-  std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] START createObservationMsg" << std::endl;
   mpcPolicyMsg.initObservation = ros_msg_conversions::createObservationMsg(commandData.mpcInitObservation_);
-  
-  std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] START createTargetTrajectoriesMsg" << std::endl;
   mpcPolicyMsg.planTargetTrajectories = ros_msg_conversions::createTargetTrajectoriesMsg(commandData.mpcTargetTrajectories_);
-  
-  std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] START createModeScheduleMsg" << std::endl;
   mpcPolicyMsg.modeSchedule = ros_msg_conversions::createModeScheduleMsg(primalSolution.modeSchedule_);
-  
-  std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] START createPerformanceIndicesMsg" << std::endl;
   mpcPolicyMsg.performanceIndices = ros_msg_conversions::createPerformanceIndicesMsg(commandData.mpcInitObservation_.time, performanceIndices);
 
   switch (primalSolution.controllerPtr_->getType()) 
@@ -179,7 +164,6 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(const 
     mpcPolicyMsg.postEventIndices.emplace_back(static_cast<uint16_t>(ind));
   }
 
-  std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] START state" << std::endl;
   // state
   for (size_t k = 0; k < N; k++) 
   {
@@ -193,7 +177,6 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(const 
     mpcPolicyMsg.stateTrajectory.emplace_back(mpcState);
   }  // end of k loop
 
-  std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] START input" << std::endl;
   // input
   for (size_t k = 0; k < N; k++) 
   {
@@ -207,7 +190,6 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(const 
     mpcPolicyMsg.inputTrajectory.emplace_back(mpcInput);
   }  // end of k loop
 
-  std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] START input" << std::endl;
   // controller
   scalar_array_t timeTrajectoryTruncated;
   std::vector<std::vector<float>*> policyMsgDataPointers;
@@ -224,7 +206,7 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(const 
   // serialize controller into data buffer
   primalSolution.controllerPtr_->flatten(timeTrajectoryTruncated, policyMsgDataPointers);
 
-  std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] END" << std::endl;
+  //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] END" << std::endl;
 
   return mpcPolicyMsg;
 }
@@ -234,7 +216,7 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(const 
 /******************************************************************************************************/
 void MPC_ROS_Interface::publisherWorker() 
 {
-  std::cout << "[MPC_ROS_Interface::publisherWorker] START" << std::endl;
+  //std::cout << "[MPC_ROS_Interface::publisherWorker] START" << std::endl;
 
   while (!terminateThread_) 
   {
@@ -264,7 +246,7 @@ void MPC_ROS_Interface::publisherWorker()
     msgReady_.notify_one();
   }
 
-  std::cout << "[MPC_ROS_Interface::publisherWorker] END" << std::endl;
+  //std::cout << "[MPC_ROS_Interface::publisherWorker] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -272,7 +254,7 @@ void MPC_ROS_Interface::publisherWorker()
 /******************************************************************************************************/
 void MPC_ROS_Interface::copyToBuffer(const SystemObservation& mpcInitObservation) 
 {
-  std::cout << "[MPC_ROS_Interface::copyToBuffer] START" << std::endl;
+  //std::cout << "[MPC_ROS_Interface::copyToBuffer] START" << std::endl;
 
   // buffer policy mutex
   std::lock_guard<std::mutex> policyBufferLock(bufferMutex_);
@@ -292,7 +274,7 @@ void MPC_ROS_Interface::copyToBuffer(const SystemObservation& mpcInitObservation
   // performance indices
   *bufferPerformanceIndicesPtr_ = mpc_.getSolverPtr()->getPerformanceIndeces();
 
-  std::cout << "[MPC_ROS_Interface::copyToBuffer] END" << std::endl;
+  //std::cout << "[MPC_ROS_Interface::copyToBuffer] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -300,7 +282,7 @@ void MPC_ROS_Interface::copyToBuffer(const SystemObservation& mpcInitObservation
 /******************************************************************************************************/
 void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg) 
 {
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START" << std::endl;
+  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START" << std::endl;
 
   std::lock_guard<std::mutex> resetLock(resetMutex_);
 
@@ -316,6 +298,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   // measure the delay in running MPC
   mpcTimer_.startTimer();
 
+  /*
   std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.state:" << std::endl;
   std::cout << currentObservation.state << std::endl << std::endl;
   
@@ -324,10 +307,9 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
 
   std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.full_state:" << std::endl;
   std::cout << currentObservation.full_state << std::endl;
+  */
 
-  //while(1);
-
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START mpc_.run" << std::endl;
+  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START mpc_.run" << std::endl;
   // run MPC
   //bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state);
   bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state, currentObservation.full_state);
@@ -336,7 +318,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
     return;
   }
   copyToBuffer(currentObservation);
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END mpc_.run" << std::endl;
+  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END mpc_.run" << std::endl;
 
   // measure the delay for sending ROS messages
   mpcTimer_.endTimer();
@@ -373,13 +355,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   mpcPolicyPublisher_.publish(mpcPolicyMsg);
 #endif
 
-  if (currentObservation.time > 0.05)
-  {
-    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE INF LOOP time: " << currentObservation.time << std::endl;
-    //while(1);
-  }
-
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END" << std::endl << std::endl;
+  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END" << std::endl << std::endl;
 }
 
 /******************************************************************************************************/

@@ -52,7 +52,7 @@ scalar_t StateCostCollection::getValue(scalar_t time,
                                        const TargetTrajectories& targetTrajectories,
                                        const PreComputation& preComp) const 
 {
-  std::cout << "[StateCostCollection::getValue(4)] START" << std::endl;
+  //std::cout << "[StateCostCollection::getValue(4)] START" << std::endl;
 
   scalar_t cost = 0.0;
 
@@ -68,7 +68,7 @@ scalar_t StateCostCollection::getValue(scalar_t time,
     }
   }
 
-  std::cout << "[StateCostCollection::getValue(4)] END" << std::endl;
+  //std::cout << "[StateCostCollection::getValue(4)] END" << std::endl;
 
   return cost;
 }

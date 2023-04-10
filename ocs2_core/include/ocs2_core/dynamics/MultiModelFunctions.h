@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.03.09
+// LAST UPDATE: 2022.04.10
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -59,7 +59,7 @@ size_t getStateDimArm(RobotModelInfo& robotModelInfo);
 /**
  * NUA TODO: UPDATE!
  */
-size_t getStateDimTmp(RobotModelInfo& robotModelInfo);
+size_t getStateDim(RobotModelInfo& robotModelInfo);
 
 /**
  * NUA TODO: UPDATE!
@@ -87,16 +87,25 @@ size_t getInputDim(RobotModelInfo& robotModelInfo);
 size_t getModeInputDim(RobotModelInfo& robotModelInfo);
 
 /**
+ * @brief Returns a string for a RobotModelType for retrieving data from a .info file
  * NUA TODO: UPDATE!
  */
-std::string modelTypeEnumToString(RobotModelInfo& robotModelInfo);
+std::string getRobotModelTypeString(RobotModelInfo& robotModelInfo);
+
+/**
+ * @brief Returns a string for a ModelMode
+ * NUA TODO: UPDATE!
+ */
+std::string getModelModeString(RobotModelInfo& robotModelInfo);
+
+/** Load ManipulatorModelType for a config file
+ * NUA TODO: UPDATE!
+ */
+RobotModelType loadRobotType(const std::string& configFilePath, const std::string& fieldName = "robotModelType");
 
 /**
  * NUA TODO: UPDATE!
  */
-std::string modelModeEnumToString(RobotModelInfo& robotModelInfo);
-
-/** Load ManipulatorModelType for a config file */
-RobotModelType loadRobotType(const std::string& configFilePath, const std::string& fieldName = "robotModelType");
+void printRobotModelInfo(RobotModelInfo& robotModelInfo);
 
 }  // namespace ocs2

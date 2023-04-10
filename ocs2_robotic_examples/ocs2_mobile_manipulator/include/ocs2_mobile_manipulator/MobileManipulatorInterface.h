@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.03.09
+// LAST UPDATE: 2022.04.10
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -213,7 +213,7 @@ class MobileManipulatorInterface final : public RobotInterface
     
     std::unique_ptr<StateCost> getSelfCollisionConstraint(const std::string& prefix);
 
-    std::unique_ptr<StateCost> getExtCollisionConstraint(const std::string& prefix, size_t modelMode);
+    std::unique_ptr<StateCost> getExtCollisionConstraint(const std::string& prefix);
 
     const std::string taskFile_;
     const std::string libraryFolder_;

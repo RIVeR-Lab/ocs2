@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.03.04
+// LAST UPDATE: 2022.04.10
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -25,9 +25,7 @@ MobileManipulatorDynamics::MobileManipulatorDynamics(RobotModelInfo info,
 {
   std::cout << "[MobileManipulatorDynamics::MobileManipulatorDynamics] START" << std::endl;
 
-  //auto stateDim = info_.mobileBase.stateDimTmp + info_.robotArm.stateDim;stateDimTmp
-  auto stateDim = getStateDimTmp(info);
-  //auto inputDim = info_.mobileBase.inputDim + info_.robotArm.inputDim;
+  auto stateDim = getStateDim(info);
   auto inputDim = getInputDim(info);
 
   if(stateDim != 9 || inputDim != 8)
@@ -37,9 +35,6 @@ MobileManipulatorDynamics::MobileManipulatorDynamics(RobotModelInfo info,
   }
 
   this->initialize(stateDim, inputDim, modelName, modelFolder, recompileLibraries, verbose);
-
-  //std::cout << "[MobileManipulatorDynamics::MobileManipulatorDynamics] DEBUG INF" << std::endl;
-  //while(1);
 
   std::cout << "[MobileManipulatorDynamics::MobileManipulatorDynamics] END" << std::endl;
 }
@@ -60,9 +55,8 @@ ad_vector_t MobileManipulatorDynamics::systemFlowMap(ad_scalar_t time,
     while(1);
   }
 
-  //auto stateDim = info_.mobileBase.stateDim + info_.robotArm.stateDim;
   auto info = info_;
-  auto stateDim = getStateDimTmp(info);
+  auto stateDim = getStateDim(info);
   
   ad_vector_t dxdt(stateDim);
   
@@ -70,9 +64,6 @@ ad_vector_t MobileManipulatorDynamics::systemFlowMap(ad_scalar_t time,
   const auto v = input(0);  // forward velocity in base frame
   
   dxdt << cos(theta) * v, sin(theta) * v, input(1), input.tail(info_.robotArm.stateDim);
-  
-  //std::cout << "[MobileManipulatorDynamics::systemFlowMap] DEBUG INF" << std::endl;
-  //while(1);
 
   std::cout << "[MobileManipulatorDynamics::systemFlowMap] END" << std::endl;
 

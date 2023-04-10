@@ -47,6 +47,9 @@ void approximateIntermediateLQ(OptimalControlProblem& problem,
 {
   std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(6)] START" << std::endl;
 
+  std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(6)] DEBUG INF" << std::endl;
+  while(1);
+
   auto& preComputation = *problem.preComputationPtr;
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Constraint + Request::Dynamics + Request::Approximation;
   preComputation.request(request, time, state, input);
@@ -390,6 +393,10 @@ ScalarFunctionQuadraticApproximation approximateCost(const OptimalControlProblem
                                                      const vector_t& input) 
 {
   std::cout << "[LinearQuadraticApproximator::approximateCost(4)] START" << std::endl;
+
+  std::cout << "[LinearQuadraticApproximator::approximateCost(4)] DEBUG INF" << std::endl;
+  while(1);
+
   const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
   const auto& preComputation = *problem.preComputationPtr;
 
@@ -491,13 +498,16 @@ scalar_t computeEventCost(const OptimalControlProblem& problem, const scalar_t& 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ScalarFunctionQuadraticApproximation approximateEventCost(const OptimalControlProblem& problem, const scalar_t& time,
-                                                          const vector_t& state) {
+ScalarFunctionQuadraticApproximation approximateEventCost(const OptimalControlProblem& problem, 
+                                                          const scalar_t& time,
+                                                          const vector_t& state) 
+{
   const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
   const auto& preComputation = *problem.preComputationPtr;
 
   auto cost = problem.preJumpCostPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
-  if (!problem.preJumpSoftConstraintPtr->empty()) {
+  if (!problem.preJumpSoftConstraintPtr->empty()) 
+  {
     cost += problem.preJumpSoftConstraintPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
   }
 

@@ -79,23 +79,17 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(con
 template <typename SCALAR>
 auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(const vector_t& state, const vector_t& fullState) const -> vector_t 
 {
-  std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] START" << std::endl;
-  
-  //std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF" << std::endl;
-  //while(1);
+  //std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] START" << std::endl;
 
-  //return state;
-  ///*
   auto modeStateDim = modelInfo_.modeStateDim;
-
-  std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] modeStateDim: " << modeStateDim << std::endl;
-
   switch (modelInfo_.robotModelType)
   {
     case RobotModelType::MobileBase:
     {
       if (state.size() != fullState.size() || state.size() != 3)
       {
+        std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] fullState.size(): " << fullState.size() << std::endl;
+        std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] state.size(): " << state.size() << std::endl;
         std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF MobileBase" << std::endl;
         while(1);
       }
@@ -106,6 +100,8 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(con
     {
       if (state.size() != fullState.size() || state.size() != 6)
       {
+        std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] fullState.size(): " << fullState.size() << std::endl;
+        std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] state.size(): " << state.size() << std::endl;
         std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF RobotArm" << std::endl;
         while(1);
       }
@@ -118,7 +114,7 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(con
       {
         case ModelMode::BaseMotion:
         {
-          std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] BaseMotion" << std::endl;
+          //std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] BaseMotion" << std::endl;
           
           if (fullState.size() != 9 || state.size() != 3)
           {
@@ -135,14 +131,14 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(con
 
         case ModelMode::ArmMotion:
         {
-          std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] ArmMotion" << std::endl;
+          //std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] ArmMotion" << std::endl;
           
           if (fullState.size() != 9 || state.size() != 6)
           {
             std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] fullState.size(): " << fullState.size() << std::endl;
             std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] state.size(): " << state.size() << std::endl;
             std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF" << std::endl;
-            //while(1);
+            while(1);
           }
           
           vector_t pinocchioState = fullState;
@@ -154,7 +150,7 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(con
 
         case ModelMode::WholeBodyMotion:
         {
-          std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] WholeBodyMotion" << std::endl;
+          //std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] WholeBodyMotion" << std::endl;
           
           if (fullState.size() != 9 || state.size() != 9)
           {
@@ -175,10 +171,6 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(con
     default:
       break;
   }
-
-  //std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF" << std::endl;
-  //while(1);
-  //*/
 }
 
 /******************************************************************************************************/

@@ -1,31 +1,13 @@
-/******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-* Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-
-* Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
-* Neither the name of the copyright holder nor the names of its
-  contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-******************************************************************************/
+// LAST UPDATE: 2022.04.10
+//
+// AUTHOR: Neset Unver Akmandor (NUA)
+//
+// E-MAIL: akmandor.n@northeastern.edu
+//
+// DESCRIPTION: TODO...
+//
+// REFERENCES:
+// [1] https://github.com/leggedrobotics/ocs2
 
 #include "ocs2_ros_interfaces/mrt/MRT_ROS_Gazebo_Loop.h"
 
@@ -42,10 +24,6 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
     mpcDesiredFrequency_(mpcDesiredFrequency),
     robotModelInfo_(mrt.getRobotModelInfo())
 {
-  
-  std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] mrtDesiredFrequency_: " << mrtDesiredFrequency_ << std::endl;
-  std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] mpcDesiredFrequency_: " << mpcDesiredFrequency_ << std::endl;
-  
   dt_ = 1.0 / mrtDesiredFrequency_;
 
   switch (robotModelInfo_.robotModelType)
@@ -64,14 +42,14 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
     
     default:
       baseFrameName_ = robotModelInfo_.mobileBase.baseFrame;
-      std::cerr << "[MRT_ROS_Gazebo_Loop::isStateInitialized] ERROR: Invalid robot model type!";
+      std::cerr << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] ERROR: Invalid robot model type!";
       break;
   }
 
   setStateIndexMap();
   
   // SUBSCRIBE TO STATE INFO
-  // NUA TODO: Consider localization error
+  //// NUA TODO: Consider localization error
   //odometrySub_ = nh.subscribe("/jackal_velocity_controller/odom", 10, &MRT_ROS_Gazebo_Loop::odometryCallback, this);
   linkStateSub_ = nh.subscribe("/gazebo/link_states", 10, &MRT_ROS_Gazebo_Loop::linkStateCallback, this);
   //tfSub_ = nh.subscribe("/tf", 10, &MRT_ROS_Gazebo_Loop::tfCallback, this);
@@ -147,10 +125,7 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
   }
 
   SystemObservation initObservation = getCurrentObservation(true);
-
-  std::cout << "[MRT_ROS_Gazebo_Loop::updateFullModelState] BEFORE initTargetTrajectories" << std::endl;
   const TargetTrajectories initTargetTrajectories({0}, {initTarget}, {initObservation.input});
-  std::cout << "[MRT_ROS_Gazebo_Loop::updateFullModelState] AFTER initTargetTrajectories" << std::endl;
 
   // Reset MPC node
   mrt_.resetMpcNode(initTargetTrajectories);
@@ -169,10 +144,6 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
     ros::spinOnce();
   }
   ROS_INFO_STREAM("[MRT_ROS_Gazebo_Loop::run] Initial policy has been received.");
-
-  //std::cout << "[MRT_ROS_Gazebo_Loop::run] isStateInitialized(): " << isStateInitialized() << std::endl;
-  //std::cout << "[MRT_ROS_Gazebo_Loop::run] BEFORE INF" << std::endl;
-  //while(1);
 
   currentInput_ = initObservation.input;
 
@@ -232,9 +203,6 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
   // Update the policy
   mrt_.updatePolicy();
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] BEFORE INF" << std::endl;
-  //while(1);
-
   ros::Rate simRate(mrtDesiredFrequency_);
   while (ros::ok() && ros::master::check()) 
   {
@@ -247,54 +215,31 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
     {
       mrt_.spinMRT();
 
-      //std::cout << "[OCS2_MRT_Loop::mrtLoop] START getCurrentObservation" << std::endl;
       // Get current observation
       currentObservation = getCurrentObservation(false);
 
-      //std::cout << "[OCS2_MRT_Loop::mrtLoop] START setCurrentObservation" << std::endl;
       // Set current observation
       mrt_.setCurrentObservation(currentObservation);
     }
 
-    //std::cout << "[OCS2_MRT_Loop::mrtLoop] START updatePolicy" << std::endl;
     // Update the policy if a new one was received
     mrt_.updatePolicy();
-
-    //std::cout << "[OCS2_MRT_Loop::mrtLoop] START getPolicy 1" << std::endl;
     currentPolicy = mrt_.getPolicy();
-
-    //std::cout << "[OCS2_MRT_Loop::mrtLoop] START getDesiredInput" << std::endl;
     currentInput_ = currentPolicy.getDesiredInput(time_);
-
-    //std::cout << "[OCS2_MRT_Loop::mrtLoop] currentInput size: " << currentInput_.size() << std::endl;
 
     // Update observers for visualization
     for (auto& observer : observers_) 
     {
-      std::cout << "[OCS2_MRT_Loop::mrtLoop] START getPolicy 2" << std::endl;
       observer -> update(currentObservation, mrt_.getPolicy(), mrt_.getCommand());
-      std::cout << "[OCS2_MRT_Loop::mrtLoop] END getPolicy 2" << std::endl;
     }
 
-    // NUA NOTE: Instead used interpolation in publishCommand, which provides much stable commands.
-    //targetObservation = forwardSimulation(currentObservation);
-
-    std::cout << "[OCS2_MRT_Loop::mrtLoop] START publishCommand" << std::endl;
     // Publish the control command 
     publishCommand();
 
     time_ += dt_;
 
-    /*
-    if (time_ > 3*dt_)
-    {
-      std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] BEFORE INF" << std::endl;
-      while(1);
-    }
-    */
-
-    std::cout << "[OCS2_MRT_Loop::mrtLoop] END" << std::endl;
-    std::cout << "---------------" << std::endl << std::endl;
+    //std::cout << "[OCS2_MRT_Loop::mrtLoop] END" << std::endl;
+    //std::cout << "---------------" << std::endl << std::endl;
 
     ros::spinOnce();
     simRate.sleep();
@@ -409,18 +354,18 @@ void MRT_ROS_Gazebo_Loop::jointTrajectoryControllerStateCallback(const control_m
 /******************************************************************************************************/
 void MRT_ROS_Gazebo_Loop::updateFullModelState()
 {
-  std::cout << "[MRT_ROS_Gazebo_Loop::updateFullModelState] START " << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::updateFullModelState] START " << std::endl;
 
   stateBase_.clear();
   inputBase_.clear();
   stateArm_.clear();
 
-  while(!initFlagBaseState_);
+  //while(!initFlagBaseState_);
   //tf::StampedTransform tf_robot_wrt_world = tf_robot_wrt_world_;
   geometry_msgs::Pose robotBasePoseMsg = robotBasePoseMsg_;
   geometry_msgs::Twist robotBaseTwistMsg = robotBaseTwistMsg_;
 
-  while(!initFlagArmState_);
+  //while(!initFlagArmState_);
   control_msgs::JointTrajectoryControllerState jointTrajectoryControllerStateMsg = jointTrajectoryControllerStateMsg_;
 
   
@@ -450,6 +395,7 @@ void MRT_ROS_Gazebo_Loop::updateFullModelState()
     stateArm_.push_back(jointTrajectoryControllerStateMsg.actual.positions[stateIndexMap_[i]]);
   }
 
+  /*
   std::cout << "[MRT_ROS_Gazebo_Loop::updateFullModelState] stateBase_ size: " << stateBase_.size() << std::endl;
   for (size_t i = 0; i < stateBase_.size(); i++)
   {
@@ -461,8 +407,9 @@ void MRT_ROS_Gazebo_Loop::updateFullModelState()
   {
     std::cout << i << " -> " << stateArm_[i] << std::endl;
   }
+  */
 
-  std::cout << "[MRT_ROS_Gazebo_Loop::updateFullModelState] END " << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::updateFullModelState] END " << std::endl;
 }
 
 /******************************************************************************************************/
@@ -470,29 +417,13 @@ void MRT_ROS_Gazebo_Loop::updateFullModelState()
 /******************************************************************************************************/
 SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
 {
-  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] START" << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] START" << std::endl;
   
-  auto inputDimBase = getInputDimBase(robotModelInfo_);
   auto stateDimBase = getStateDimBase(robotModelInfo_);
-  auto stateDimArm = getStateDimArm(robotModelInfo_);
-  auto stateDim = getStateDimTmp(robotModelInfo_);
+  auto stateDim = getStateDim(robotModelInfo_);
+  auto inputDimBase = getInputDimBase(robotModelInfo_);
   auto modeStateDim = getModeStateDim(robotModelInfo_);
   auto modeInputDim = getModeInputDim(robotModelInfo_);
-
-  stateDimBase = 3;
-  stateDim = 9;
-
-  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] model type: " << modelTypeEnumToString(robotModelInfo_) << std::endl;
-  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] model mode: " << modelModeEnumToString(robotModelInfo_) << std::endl;
-
-  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] inputDimBase: " << inputDimBase << std::endl;
-  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] stateDimBase: " << stateDimBase << std::endl;
-  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] stateDimArm: " << stateDimArm << std::endl;
-  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] stateDim: " << stateDim << std::endl;
-  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] modeStateDim: " << modeStateDim << std::endl;
-  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] modeInputDim: " << modeInputDim << std::endl;
-
-  //while(1);
 
   SystemObservation currentObservation;
   currentObservation.mode = 0;
@@ -651,6 +582,7 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
     }
   }
 
+  /*
   std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] currentObservation.state size: " << currentObservation.state.size() << std::endl;
   std::cout << currentObservation.state << std::endl << std::endl;
 
@@ -659,11 +591,9 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
 
   std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] currentObservation.full_state size: " << currentObservation.full_state.size() << std::endl;
   std::cout << currentObservation.full_state << std::endl << std::endl;
+  */
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] DEBUG INF" << std::endl;
-  //while(1);
-
-  std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] END" << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::getCurrentObservation] END" << std::endl;
 
   return currentObservation;
 }
@@ -673,7 +603,7 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
 /******************************************************************************************************/
 void MRT_ROS_Gazebo_Loop::publishCommand()
 {
-  //std::cout << "OCS2_MRT_Loop::publishCommand -> START" << std::endl;
+  //std::cout << "[OCS2_MRT_Loop::publishCommand] START" << std::endl;
 
   geometry_msgs::Twist baseTwistMsg;
   trajectory_msgs::JointTrajectory armJointTrajectoryMsg;
@@ -726,7 +656,7 @@ void MRT_ROS_Gazebo_Loop::publishCommand()
     armJointTrajectoryPub_.publish(armJointTrajectoryMsg);
   }
 
-  //std::cout << "OCS2_MRT_Loop::publishCommand -> END" << std::endl;
+  //std::cout << "[OCS2_MRT_Loop::publishCommand] END" << std::endl;
 }
 
 }  // namespace ocs2

@@ -1,31 +1,13 @@
-/******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-* Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-
-* Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
-* Neither the name of the copyright holder nor the names of its
-  contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-******************************************************************************/
+// LAST UPDATE: 2022.04.10
+//
+// AUTHOR: Neset Unver Akmandor (NUA)
+//
+// E-MAIL: akmandor.n@northeastern.edu
+//
+// DESCRIPTION: TODO...
+//
+// REFERENCES:
+// [1] https://github.com/leggedrobotics/ocs2
 
 #include "ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h"
 
@@ -107,7 +89,7 @@ void MRT_ROS_Interface::resetMpcNode(const TargetTrajectories& initTargetTraject
 /******************************************************************************************************/
 void MRT_ROS_Interface::setCurrentObservation(const SystemObservation& currentObservation) 
 {
-  std::cout << "[MRT_ROS_Interface::setCurrentObservation] START" << std::endl;
+  //std::cout << "[MRT_ROS_Interface::setCurrentObservation] START" << std::endl;
 
 #ifdef PUBLISH_THREAD
   std::unique_lock<std::mutex> lk(publisherMutex_);
@@ -125,7 +107,7 @@ void MRT_ROS_Interface::setCurrentObservation(const SystemObservation& currentOb
   mpcObservationPublisher_.publish(mpcObservationMsg_);
 #endif
 
-  std::cout << "[MRT_ROS_Interface::setCurrentObservation] END" << std::endl;
+  //std::cout << "[MRT_ROS_Interface::setCurrentObservation] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -168,10 +150,6 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
   performanceIndices = ros_msg_conversions::readPerformanceIndicesMsg(msg.performanceIndices);
 
   const size_t N = msg.timeTrajectory.size();
-
-  std::cout << "[MRT_ROS_Interface::readPolicyMsg] N: " << N << std::endl;
-  std::cout << "[MRT_ROS_Interface::readPolicyMsg] DEBUG INF" << std::endl;
-  //while(1);
 
   if (N == 0) 
   {
@@ -221,7 +199,8 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
   // instantiate the correct controller
   switch (msg.controllerType) 
   {
-    case ocs2_msgs::mpc_flattened_controller::CONTROLLER_FEEDFORWARD: {
+    case ocs2_msgs::mpc_flattened_controller::CONTROLLER_FEEDFORWARD: 
+    {
       auto controller = FeedforwardController::unFlatten(primalSolution.timeTrajectory_, controllerDataPtrArray);
       primalSolution.controllerPtr_.reset(new FeedforwardController(std::move(controller)));
       break;

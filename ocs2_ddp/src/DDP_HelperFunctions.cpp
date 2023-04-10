@@ -287,15 +287,8 @@ scalar_t rolloutTrajectory(RolloutBase& rollout,
                            scalar_t finalTime,
                            PrimalSolution& primalSolution) 
 {
-  std::cout << "[DDP_HelperFunctions::rolloutTrajectory] START" << std::endl;
+  //std::cout << "[DDP_HelperFunctions::rolloutTrajectory] START" << std::endl;
 
-  std::cout << "[DDP_HelperFunctions::rolloutTrajectory] initTime size: " << initTime << std::endl;
-  std::cout << "[DDP_HelperFunctions::rolloutTrajectory] initState size: " << initState.size() << std::endl;
-  std::cout << "[DDP_HelperFunctions::rolloutTrajectory] finalTime: " << finalTime << std::endl;
-  std::cout << "[DDP_HelperFunctions::rolloutTrajectory] primalSolution.stateTrajectory_ size: " << primalSolution.stateTrajectory_.size() << std::endl;
-  std::cout << "[DDP_HelperFunctions::rolloutTrajectory] primalSolution.inputTrajectory_ size: " << primalSolution.inputTrajectory_.size() << std::endl;
-
-  std::cout << "[DDP_HelperFunctions::rolloutTrajectory] START rollout.run" << std::endl;
   // rollout with controller
   const auto xCurrent = rollout.run(initTime, 
                                     initState, 
@@ -306,15 +299,14 @@ scalar_t rolloutTrajectory(RolloutBase& rollout,
                                     primalSolution.postEventIndices_, 
                                     primalSolution.stateTrajectory_,
                                     primalSolution.inputTrajectory_);
-  std::cout << "[DDP_HelperFunctions::rolloutTrajectory] END rollout.run" << std::endl;
+  //std::cout << "[DDP_HelperFunctions::rolloutTrajectory] END rollout.run" << std::endl;
 
   if (!xCurrent.allFinite()) 
   {
-    std::cout << "[DDP_HelperFunctions::rolloutTrajectory] CIYAKUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU" << std::endl;
-    throw std::runtime_error("[rolloutTrajectory] System became unstable during the rollout!");
+    throw std::runtime_error("[DDP_HelperFunctions::rolloutTrajectory] System became unstable during the rollout!");
   }
 
-  std::cout << "[DDP_HelperFunctions::rolloutTrajectory] END" << std::endl;
+  //std::cout << "[DDP_HelperFunctions::rolloutTrajectory] END" << std::endl;
 
   // average time step
   return (finalTime - initTime) / static_cast<scalar_t>(primalSolution.timeTrajectory_.size());

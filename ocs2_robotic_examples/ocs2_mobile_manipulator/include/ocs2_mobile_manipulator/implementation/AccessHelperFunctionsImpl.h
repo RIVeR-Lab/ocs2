@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.03.06
+// LAST UPDATE: 2022.04.10
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -20,12 +20,7 @@ namespace mobile_manipulator {
 template <typename SCALAR>
 Eigen::Matrix<SCALAR, 3, 1> getBasePosition(const Eigen::Matrix<SCALAR, -1, 1>& state, const RobotModelInfo& info) 
 {
-  std::cout << "[AccessHelperFunctionsImpl::getBasePosition] START" << std::endl;
-
-  //std::cout << "[AccessHelperFunctionsImpl::getBasePosition] DEBUG INF" << std::endl;
-  //while(1);
-
-  //auto stateDim = info.mobileBase.stateDim + info.robotArm.stateDim;
+  //std::cout << "[AccessHelperFunctionsImpl::getBasePosition] START" << std::endl;
 
   //assert(state.rows() == stateDim);
   //assert(state.cols() == 1);
@@ -55,7 +50,7 @@ Eigen::Matrix<SCALAR, 3, 1> getBasePosition(const Eigen::Matrix<SCALAR, -1, 1>& 
       throw std::invalid_argument("[AccessHelperFunctionsImpl::getBasePosition] ERROR: Invalid manipulator model type!");
   }
 
-  std::cout << "[AccessHelperFunctionsImpl::getBasePosition] END" << std::endl;
+  //std::cout << "[AccessHelperFunctionsImpl::getBasePosition] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -64,12 +59,7 @@ Eigen::Matrix<SCALAR, 3, 1> getBasePosition(const Eigen::Matrix<SCALAR, -1, 1>& 
 template <typename SCALAR>
 Eigen::Quaternion<SCALAR> getBaseOrientation(const Eigen::Matrix<SCALAR, -1, 1>& state, const RobotModelInfo& info) 
 {
-  std::cout << "[AccessHelperFunctionsImpl::getBaseOrientation] START" << std::endl;
-
-  //std::cout << "[AccessHelperFunctionsImpl::getBaseOrientation] DEBUG INF" << std::endl;
-  //while(1);
-
-  //auto stateDim = info.mobileBase.stateDim + info.robotArm.stateDim;
+  //std::cout << "[AccessHelperFunctionsImpl::getBaseOrientation] START" << std::endl;
 
   //assert(state.rows() == stateDim);
   //assert(state.cols() == 1);
@@ -80,24 +70,21 @@ Eigen::Quaternion<SCALAR> getBaseOrientation(const Eigen::Matrix<SCALAR, -1, 1>&
     case RobotModelType::MobileBase: 
     {
       // For wheel-based, we assume only yaw
-      std::cout << "[AccessHelperFunctionsImpl::getBaseOrientation] END MobileBase" << std::endl;
-
+      //std::cout << "[AccessHelperFunctionsImpl::getBaseOrientation] END MobileBase" << std::endl;
       return Eigen::Quaternion<SCALAR>(Eigen::AngleAxis<SCALAR>(state(2), Eigen::Matrix<SCALAR, 3, 1>::UnitZ()));
     }
 
     case RobotModelType::RobotArm: 
     {
       // For arm, we assume robot is at identity pose
-      std::cout << "[AccessHelperFunctionsImpl::getBaseOrientation] END RobotArm" << std::endl;
-      
+      //std::cout << "[AccessHelperFunctionsImpl::getBaseOrientation] END RobotArm" << std::endl;
       return Eigen::Quaternion<SCALAR>::Identity();
     }
 
     case RobotModelType::MobileManipulator: 
     {
       // For wheel-based, we assume only yaw
-      std::cout << "[AccessHelperFunctionsImpl::getBaseOrientation] END MobileManipulator" << std::endl;
-
+      //std::cout << "[AccessHelperFunctionsImpl::getBaseOrientation] END MobileManipulator" << std::endl;
       return Eigen::Quaternion<SCALAR>(Eigen::AngleAxis<SCALAR>(state(2), Eigen::Matrix<SCALAR, 3, 1>::UnitZ()));
     }
 
@@ -147,12 +134,8 @@ const Eigen::Block<const Derived, -1, 1> getArmJointAngles(const Eigen::MatrixBa
   while(1);
 
   auto infoTmp = info;
-
-  //auto stateDimBase = info.mobileBase.stateDim;
   auto stateDimBase = getStateDimBase(infoTmp);
-  //auto stateDimArm = info.robotArm.stateDim;
   auto stateDimArm = getStateDimArm(infoTmp);
-  //auto stateDim = stateDimBase + stateDimArm;
 
   //assert(state.rows() == stateDim);
   //assert(state.cols() == 1);
