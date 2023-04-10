@@ -10,6 +10,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_pinocchio_interface
   ocs2_self_collision
   ocs2_ros_interfaces
+  ocs2_mobile_manipulator
 
   # visualization deps
   roscpp

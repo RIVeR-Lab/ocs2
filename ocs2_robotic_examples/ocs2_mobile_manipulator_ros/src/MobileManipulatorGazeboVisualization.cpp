@@ -174,7 +174,7 @@ void OCS2_Mobile_Manipulator_Visualization::update(const SystemObservation& obse
   
   if (geometryVisualization_ != nullptr) 
   {
-    geometryVisualization_ -> publishDistances(observation.state);
+    geometryVisualization_ -> publishDistances(observation.state, observation.full_state, modelInfo_);
   }
 
   std::cout << "[OCS2_Mobile_Manipulator_Visualization::update] END" << std::endl;
@@ -266,9 +266,6 @@ void OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(const ros
   endEffectorTrajectory.reserve(mpcStateTrajectory.size());
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const Eigen::VectorXd& state) 
   {
-    std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory] FIX IT AND NEVER SEE ME AGAIN..." << std::endl;
-    while(1);
-
     pinocchio::forwardKinematics(model, data, state);
     pinocchio::updateFramePlacements(model, data);
     const auto eeIndex = model.getBodyId(modelInfo_.robotArm.eeFrame);
@@ -316,7 +313,7 @@ void OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(const ros
 {
   std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(3)] START" << std::endl;
 
-  MobileManipulatorPinocchioMapping pinocchioMapping(modelInfo_);
+  
 
   const scalar_t TRAJECTORYLINEWIDTH = 0.005;
   const std::array<scalar_t, 3> red{0.6350, 0.0780, 0.1840};
@@ -343,6 +340,7 @@ void OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(const ros
     std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(3)] state size: " << state.size() << std::endl;
     std::cout << "[OCS2_Mobile_Manipulator_Visualization::publishOptimizedTrajectory(3)] fullState size: " << fullState.size() << std::endl;
 
+    MobileManipulatorPinocchioMapping pinocchioMapping(modelInfo_);
     const vector_t q = pinocchioMapping.getPinocchioJointPosition(state, fullState);
     pinocchio::forwardKinematics(model, data, q);
     

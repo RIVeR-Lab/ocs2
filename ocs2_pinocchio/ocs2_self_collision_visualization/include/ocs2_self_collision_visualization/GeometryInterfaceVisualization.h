@@ -31,26 +31,33 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/ros.h>
 
+#include "ocs2_core/dynamics/MultiModelFunctions.h"
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_self_collision/PinocchioGeometryInterface.h>
+#include "ocs2_mobile_manipulator/MobileManipulatorPinocchioMapping.h"
 
 namespace ocs2 {
 
-class GeometryInterfaceVisualization {
- public:
-  GeometryInterfaceVisualization(PinocchioInterface pinocchioInterface, PinocchioGeometryInterface geometryInterface, ros::NodeHandle& nh,
-                                 std::string pinocchioWorldFrame = "world");
-  virtual ~GeometryInterfaceVisualization() = default;
+class GeometryInterfaceVisualization 
+{
+  public:
+    GeometryInterfaceVisualization(PinocchioInterface pinocchioInterface, 
+                                  PinocchioGeometryInterface geometryInterface, 
+                                  ros::NodeHandle& nh,
+                                  std::string pinocchioWorldFrame = "world");
+    virtual ~GeometryInterfaceVisualization() = default;
 
-  void publishDistances(const ocs2::vector_t&);
+    void publishDistances(const ocs2::vector_t&);
 
- private:
-  PinocchioInterface pinocchioInterface_;
-  PinocchioGeometryInterface geometryInterface_;
+    void publishDistances(const ocs2::vector_t& state, const ocs2::vector_t& fullState, const RobotModelInfo& modelInfo);
 
-  ros::Publisher markerPublisher_;
+  private:
+    PinocchioInterface pinocchioInterface_;
+    PinocchioGeometryInterface geometryInterface_;
 
-  std::string pinocchioWorldFrame_;
+    ros::Publisher markerPublisher_;
+
+    std::string pinocchioWorldFrame_;
 };
 
 }  // namespace ocs2
