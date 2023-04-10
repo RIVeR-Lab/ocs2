@@ -283,58 +283,49 @@ template <typename SCALAR>
 auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const
   -> std::pair<matrix_t, matrix_t> 
 {
-  std::cout << "[MobileManipulatorPinocchioMappingTpl::getOcs2Jacobian] DEBUG INF" << std::endl;
-  while(1);
+  //std::cout << "[MobileManipulatorPinocchioMappingTpl::getOcs2Jacobian] DEBUG INF" << std::endl;
+  
+  //std::cout << "[MobileManipulatorPinocchioMappingTpl::getOcs2Jacobian] DEBUG INF" << std::endl;
+  //while(1);
+
+  auto modelInfo = modelInfo_;
+  const auto modeStateDim = getModeStateDim(modelInfo);
+  const auto modeInputDim = getModeInputDim(modelInfo);
+
+  assert(state.size() == modeStateDim);
+  assert(Jq.rows() == modeStateDim);
+  assert(Jq.cols() == modeStateDim);
+  assert(Jv.rows() == modeStateDim);
+  assert(Jv.cols() == modeStateDim);
 
   // Set jacobian model based on model type
   switch (modelInfo_.modelMode) 
   {
     case ModelMode::BaseMotion:
     {
-      const auto stateDim = 3;
-      const auto inputDim = 2;
+      const auto stateDimBase = 3;
+      const auto inputDimBase = 2;
 
-      assert(Jq.rows() == stateDim);
-      assert(Jq.cols() == stateDim);
-      assert(Jv.rows() == stateDim);
-      assert(Jv.cols() == stateDim);
-
-      matrix_t dfdu(stateDim, inputDim);
-      Eigen::Matrix<SCALAR, stateDim, inputDim> dxdu_base;
+      matrix_t dfdu(modeStateDim, modeInputDim);
+      Eigen::Matrix<SCALAR, 3, 2> dxdu_base;
       
       const SCALAR theta = state(2);
       dxdu_base << cos(theta), SCALAR(0),
                    sin(theta), SCALAR(0),
                    SCALAR(0), SCALAR(1.0);
       
-      dfdu.template leftCols<inputDim>() = Jv.template leftCols<stateDim>() * dxdu_base;
+      dfdu.template leftCols<inputDimBase>() = Jv.template leftCols<stateDimBase>() * dxdu_base;
       
       return {Jq, dfdu};
     }
       
     case ModelMode::ArmMotion:
     {
-      const auto stateDim = modelInfo_.robotArm.stateDim;
-      const auto inputDim = modelInfo_.robotArm.inputDim;
-
-      assert(Jq.rows() == stateDim);
-      assert(Jq.cols() == stateDim);
-      assert(Jv.rows() == stateDim);
-      assert(Jv.cols() == stateDim);
-
       return {Jq, Jv};
     }
 
     case ModelMode::WholeBodyMotion:
     {
-      const auto modeStateDim = modelInfo_.modeStateDim;
-      const auto modeInputDim = modelInfo_.modeInputDim;
-
-      assert(Jq.rows() == modeStateDim);
-      assert(Jq.cols() == modeStateDim);
-      assert(Jv.rows() == modeStateDim);
-      assert(Jv.cols() == modeStateDim);
-
       matrix_t dfdu(modeStateDim, modeInputDim);
 
       const auto stateDimBase = 3;
@@ -345,8 +336,8 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getOcs2Jacobian(const vector_
     
       const SCALAR theta = state(2);
       dxdu_base << cos(theta), SCALAR(0),
-                    sin(theta), SCALAR(0),
-                    SCALAR(0), SCALAR(1.0);
+                   sin(theta), SCALAR(0),
+                   SCALAR(0), SCALAR(1.0);
       
       dfdu.template leftCols<inputDimBase>() = Jv.template leftCols<stateDimBase>() * dxdu_base;
       dfdu.template rightCols(stateDimArm) = Jv.template rightCols(stateDimArm);

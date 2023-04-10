@@ -182,8 +182,6 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
   //std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE INF" << std::endl;
   //while(1);
 
-  //// NUA TODO: COMPLETE IT!
-  activateSelfCollision_ = false;
   // Self-collision avoidance constraint
   if (activateSelfCollision_) 
   {
@@ -641,13 +639,15 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
 
   PinocchioGeometryInterface geometryInterface(*pinocchioInterfacePtr_, collisionLinkPairs, collisionObjectPairs);
   const size_t numCollisionPairs = geometryInterface.getNumCollisionPairs();
-
-  std::cerr << "SelfCollision: Testing for " << numCollisionPairs << " collision pairs\n";
+  std::cerr << "[MobileManipulatorInterface::getSelfCollisionConstraint] Testing for " << numCollisionPairs << " collision pairs\n";
 
   std::unique_ptr<StateConstraint> constraint;
   
   if (usePreComputation_) 
   {
+    std::cout << "[MobileManipulatorInterface::getSelfCollisionConstraint] DEBUG INF" << std::endl;
+    while(1);
+
     constraint = std::unique_ptr<StateConstraint>(new MobileManipulatorSelfCollisionConstraint(MobileManipulatorPinocchioMapping(robotModelInfo_), 
                                                                                                 std::move(geometryInterface), 
                                                                                                 minimumDistance));

@@ -116,7 +116,8 @@ size_t SelfCollisionConstraintCppAd::getNumConstraints(scalar_t time) const
 /******************************************************************************************************/
 vector_t SelfCollisionConstraintCppAd::getValue(scalar_t time, const vector_t& state, const PreComputation&) const 
 {
-  //std::cout << "[SelfCollisionConstraintCppAd::getValue] NumConstraints: " << getNumConstraints(time) << std::endl;
+  std::cout << "[SelfCollisionConstraintCppAd::getValue(3)] DEBUG INF" << std::endl;
+  while(1);
 
   const auto q = mappingPtr_->getPinocchioJointPosition(state);
   const auto& model = pinocchioInterface_.getModel();
@@ -131,15 +132,19 @@ vector_t SelfCollisionConstraintCppAd::getValue(scalar_t time, const vector_t& s
 /******************************************************************************************************/
 vector_t SelfCollisionConstraintCppAd::getValue(scalar_t time, 
                                                 const vector_t& state, 
-                                                const vector_t& full_state, 
+                                                const vector_t& fullState, 
                                                 const PreComputation&) const 
 {
-  //std::cout << "[SelfCollisionConstraintCppAd::getValue] NumConstraints: " << getNumConstraints(time) << std::endl;
+  //std::cout << "[SelfCollisionConstraintCppAd::getValue(4)] START" << std::endl;
 
-  const auto q = mappingPtr_->getPinocchioJointPosition(state);
+  //std::cout << "[SelfCollisionConstraintCppAd::getValue(4)] NumConstraints: " << getNumConstraints(time) << std::endl;
+
+  const auto q = mappingPtr_->getPinocchioJointPosition(state, fullState);
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
   pinocchio::forwardKinematics(model, data, q);
+
+  //std::cout << "[SelfCollisionConstraintCppAd::getValue(4)] END" << std::endl;
 
   return selfCollision_.getValue(pinocchioInterface_);
 }
@@ -147,9 +152,38 @@ vector_t SelfCollisionConstraintCppAd::getValue(scalar_t time,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation SelfCollisionConstraintCppAd::getLinearApproximation(scalar_t time, const vector_t& state,
-                                                                                       const PreComputation&) const {
+VectorFunctionLinearApproximation SelfCollisionConstraintCppAd::getLinearApproximation(scalar_t time, 
+                                                                                       const vector_t& state,
+                                                                                       const PreComputation&) const 
+{
+  std::cout << "[SelfCollisionConstraintCppAd::getLinearApproximation] DEBUG INF" << std::endl;
+  while(1);
+
   const auto q = mappingPtr_->getPinocchioJointPosition(state);
+  const auto& model = pinocchioInterface_.getModel();
+  auto& data = pinocchioInterface_.getData();
+  pinocchio::forwardKinematics(model, data, q);
+  updateCallback_(state, pinocchioInterface_);
+
+  VectorFunctionLinearApproximation constraint;
+  matrix_t dfdq, dfdv;
+  std::tie(constraint.f, dfdq) = selfCollision_.getLinearApproximation(pinocchioInterface_, q);
+  dfdv.setZero(dfdq.rows(), dfdq.cols());
+  std::tie(constraint.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, dfdq, dfdv);
+  return constraint;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+VectorFunctionLinearApproximation SelfCollisionConstraintCppAd::getLinearApproximation(scalar_t time, 
+                                                                                       const vector_t& state,
+                                                                                       const vector_t& fullState,
+                                                                                       const PreComputation&) const 
+{
+  //std::cout << "[SelfCollisionConstraintCppAd::getLinearApproximation] START" << std::endl;
+
+  const auto q = mappingPtr_->getPinocchioJointPosition(state, fullState);
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
   pinocchio::forwardKinematics(model, data, q);

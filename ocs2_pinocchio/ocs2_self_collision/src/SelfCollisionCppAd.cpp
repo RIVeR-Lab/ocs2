@@ -256,13 +256,16 @@ void SelfCollisionCppAd::setADInterfaces(PinocchioInterfaceCppAd& pinocchioInter
                                                               modelName + "_distance_intermediate", 
                                                               modelFolder));
 
-  auto stateAndClosestPointsToLinkFrame = [&, this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) {
+  auto stateAndClosestPointsToLinkFrame = [&, this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) 
+  {
     Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, -1> matrixResult = computeLinkPointsAd(pinocchioInterfaceAd, x, p);
     y = Eigen::Map<Eigen::Matrix<ad_scalar_t, -1, 1>>(matrixResult.data(), matrixResult.size());
   };
   
-  cppAdInterfaceLinkPoints_.reset(new CppAdInterface(stateAndClosestPointsToLinkFrame, stateDim,
-                                                     numDistanceResults * numberOfParamsPerResult_, modelName + "_links_intermediate",
+  cppAdInterfaceLinkPoints_.reset(new CppAdInterface(stateAndClosestPointsToLinkFrame, 
+                                                     stateDim,
+                                                     numDistanceResults * numberOfParamsPerResult_, 
+                                                     modelName + "_links_intermediate",
                                                      modelFolder));
 }
 
