@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.03.04
+// LAST UPDATE: 2022.04.12
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -43,8 +43,9 @@ class ExtCollisionCppAd
      * @param [in] verbose : print information.
      */
     ExtCollisionCppAd(const PinocchioInterface& pinocchioInterface, 
-                      ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface,
-                      size_t modalMode,
+                      const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
+                      //ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface,
+                      //size_t modalMode,
                       std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
                       ocs2::scalar_t maxDistance,
                       std::shared_ptr<ExtMapUtility> emuPtr,
@@ -91,6 +92,10 @@ class ExtCollisionCppAd
     vector_t getValue(const PinocchioInterface& pinocchioInterface,
                       const vector_t& state) const;
 
+    vector_t getValue(const PinocchioInterface& pinocchioInterface,
+                      const vector_t& state,
+                      const vector_t& fullState) const;
+
     /**
      * Evaluate the linear approximation of the distance function
      *
@@ -100,16 +105,22 @@ class ExtCollisionCppAd
      * @param [in] q: pinocchio coordinates
      * @return: the pair of the distance violation and the first derivative of the distance against q
      */
-    std::pair<vector_t, matrix_t> getLinearApproximation(const PinocchioInterface& pinocchioInterface, const vector_t& q) const;
+    std::pair<vector_t, matrix_t> getLinearApproximation(const PinocchioInterface& pinocchioInterface, const vector_t& state) const;
+
+    std::pair<vector_t, matrix_t> getLinearApproximation(const PinocchioInterface& pinocchioInterface, 
+                                                         const vector_t& state, 
+                                                         const vector_t& fullState) const;
 
     /** NUA TODO: Description! */
-    void updateDistances(const vector_t& q) const;
+    void updateDistances(const vector_t& state) const;
+
+    void updateDistances(const vector_t& state, const vector_t& fullState) const;
 
   private:
     // From the current state of the robot, and the closest points in world frame, compute the positions of the points in link frame
     // In this case : size of state = stateDim, size of points = 3*2*number of collision pairs + 1 (for sign indicator)
     // Returns a vector that is of length |3*2*number of collision pairs + 1 (for sign indicator)|
-    ad_vector_t computeLinkPointsAd(PinocchioInterfaceCppAd& pinocchioInterfaceAd, const ad_vector_t& state, const ad_vector_t& points) const;
+    //ad_vector_t computeLinkPointsAd(PinocchioInterfaceCppAd& pinocchioInterfaceAd, const ad_vector_t& state, const ad_vector_t& points) const;
     
     // From the current state of the robot, and the closest points in link frames, calculate the distances wrt state
     // In this case : size of state = stateDim, size of points = 3*2*number of collision pairs + 1 (for sign indicator)
@@ -118,10 +129,19 @@ class ExtCollisionCppAd
                                       const ad_vector_t& state,
                                       const ad_vector_t& points) const;
 
+    ad_vector_t distanceCalculationAd(PinocchioInterfaceCppAd& pinocchioInterfaceAd,
+                                      const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
+                                      const ad_vector_t& state,
+                                      const ad_vector_t& fullState,
+                                      const ad_vector_t& points) const;
+
     /**
      * Sets all the required CppAdCodeGenInterfaces
      */
-    void setADInterfaces(PinocchioInterfaceCppAd& pinocchioInterfaceAd, const std::string& modelName, const std::string& modelFolder);
+    void setADInterfaces(PinocchioInterfaceCppAd& pinocchioInterfaceAd, 
+                         const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
+                         const std::string& modelName, 
+                         const std::string& modelFolder);
 
     // Number of params per result = 3 + 3 + 1 (nearest point 1, nearest point 2, sign indicator)
     const size_t numberOfParamsPerResult_ = 7;
@@ -130,14 +150,14 @@ class ExtCollisionCppAd
     std::unique_ptr<CppAdInterface> cppAdInterfaceDistanceCalculation_;
     //std::unique_ptr<CppAdInterface> cppAdInterfaceLinkPoints_;
 
-    ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface_;
+    //ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface_;
     
     //std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> interpolator_;
     //scalar_t minimumDistance_;
     //std::vector<std::vector<double>> points_;
 
     // NUA TODO: CLEAN BEFORE!
-    size_t modalMode_;
+    //size_t modalMode_;
     std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_;
     ocs2::scalar_t maxDistance_;
 

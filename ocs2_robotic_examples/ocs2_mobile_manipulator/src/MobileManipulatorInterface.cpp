@@ -179,9 +179,7 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
   }
   std::cout << "" << std::endl;
 
-  //std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE INF" << std::endl;
-  //while(1);
-
+  std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getSelfCollisionConstraint" << std::endl;
   // Self-collision avoidance constraint
   if (activateSelfCollision_) 
   {
@@ -192,8 +190,8 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
   }
   std::cout << "" << std::endl;
 
+  std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getExtCollisionConstraint" << std::endl;
   //// NUA TODO: COMPLETE IT!
-  activateExtCollision_ = false;
   // External-collision avoidance constraint
   if (activateExtCollision_) 
   {
@@ -208,14 +206,11 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
       pointsOnRobotPtr_->initialize(*pinocchioInterfacePtr_,
                                     MobileManipulatorPinocchioMapping(robotModelInfo_),
                                     MobileManipulatorPinocchioMappingCppAd(robotModelInfo_),
+                                    robotModelInfo_,
                                     "points_on_robot",
                                     libraryFolder_,
                                     recompileLibraries_,
-                                    false,
-                                    robotModelInfo_.mobileBase.baseFrame,
-                                    robotModelInfo_.robotArm.baseFrame,
-                                    robotModelInfo_.robotArm.eeFrame,
-                                    robotModelInfo_.robotArm.jointFrameNames);
+                                    false);
     } 
     else 
     {
@@ -238,7 +233,6 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
   std::cout << "" << std::endl;
 
   std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE Dynamics" << std::endl;
-  
   // Dynamics
   switch (robotModelInfo_.modelMode) 
   {
@@ -300,9 +294,6 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
 
   // Initialization
   auto modeInputDim = getModeInputDim(robotModelInfo_);
-
-  std::cout << "[MobileManipulatorInterface::setMPCProblem] modeInputDim: " << modeInputDim << std::endl;
-
   initializerPtr_.reset(new DefaultInitializer(modeInputDim));
 
   //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] DEBUG INF" << std::endl;
@@ -699,7 +690,10 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
   
   if (usePreComputation_) 
   {
-    std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] PRECOMPUTED!" << std::endl;
+    std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] usePreComputation_ true" << std::endl;
+
+    std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] DEBUG INF" << std::endl;
+    while(1);
 
     ///////// NUA TODO: NOT FUNCTIONAL AND COMPLETED YET!
     constraint = std::unique_ptr<StateConstraint>(new MobileManipulatorExtCollisionConstraint(MobileManipulatorPinocchioMapping(robotModelInfo_), 
@@ -712,12 +706,13 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
   }
   else
   {
-    std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] CPPAD!" << std::endl;
+    std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] usePreComputation_ false" << std::endl;
 
+    //// NUA TODO: LEFT HERE!!!!!!! CLEAN THE ExtCollisionConstraintCppAd since robotModelINfo is included in pointsOnRobotPtr_. Add MobileManipulatorPinocchioMapping in required functions!
     constraint = std::unique_ptr<StateConstraint>(new ExtCollisionConstraintCppAd(*pinocchioInterfacePtr_, 
                                                                                   MobileManipulatorPinocchioMapping(robotModelInfo_), 
-                                                                                  std::move(extCollisionPinocchioGeometryInterface), 
-                                                                                  modelModeInt,
+                                                                                  //std::move(extCollisionPinocchioGeometryInterface), 
+                                                                                  //modelModeInt,
                                                                                   pointsOnRobotPtr_,
                                                                                   maxDistance,
                                                                                   emuPtr_,

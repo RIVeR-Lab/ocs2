@@ -104,7 +104,7 @@ RobotModelInfo createRobotModelInfo(const RobotModelType& robotModelType,
     }
 
     default:
-      throw std::invalid_argument("[FactoryFunction::createRobotModelInfo] ERROR: Invalid manipulator model type!");
+      throw std::invalid_argument("[FactoryFunction::createRobotModelInfo] ERROR: Invalid robot model type!");
       break;
   }
 
@@ -133,7 +133,7 @@ size_t getModelModeInt(RobotModelInfo& robotModelInfo)
       break;
 
     default:
-      std::cerr << "[FactoryFunction::createRobotModelInfo] ERROR: Invalid manipulator model type!";
+      std::cerr << "[FactoryFunction::createRobotModelInfo] ERROR: Invalid model mode!";
       break;
   }
   return modelModeInt;
@@ -235,7 +235,7 @@ bool updateModelMode(RobotModelInfo& robotModelInfo, size_t& modelMode)
         break;
 
       default:
-        std::cerr << "[FactoryFunction::updateModelMode] ERROR: Invalid manipulator model type!";
+        std::cerr << "[FactoryFunction::updateModelMode] ERROR: Invalid model mode!";
         break;
     }
   }

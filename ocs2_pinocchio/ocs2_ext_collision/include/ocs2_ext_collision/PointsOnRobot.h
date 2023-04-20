@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.01.06
+// LAST UPDATE: 2022.04.12
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -20,6 +20,7 @@
 
 #include <pinocchio/multibody/geometry.hpp>
 
+#include "ocs2_core/dynamics/MultiModelFunctions.h"
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
@@ -46,27 +47,23 @@ class PointsOnRobot
     void initialize(ocs2::PinocchioInterface& pinocchioInterface,
                     const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
                     const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
+                    const ocs2::RobotModelInfo& robotModelInfo,
                     const std::string& modelName, 
                     const std::string& modelFolder, 
                     bool recompileLibraries, 
-                    bool verbose,
-                    const std::string& base_link_name, 
-                    const std::string& arm_mount_link_name, 
-                    const std::string& ee_link_name,
-                    const std::vector<std::string>& jointParentFrameNames);
-
-    /*
-    // DESCRIPTION: TODO...
-    Eigen::VectorXd getPointsPosition(ocs2::PinocchioInterface& pinocchioInterface, 
-                                      const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
-                                      const Eigen::VectorXd& state) const;
-    */
+                    bool verbose);
     
     // DESCRIPTION: TODO...
     Eigen::VectorXd getPointsPositionCppAd(const Eigen::VectorXd& state) const;
 
     // DESCRIPTION: TODO...
+    Eigen::VectorXd getPointsPositionCppAd(const Eigen::VectorXd& state, const Eigen::VectorXd& fullState) const;
+
+    // DESCRIPTION: TODO...
     Eigen::MatrixXd getPointsJacobianCppAd(const Eigen::VectorXd& state) const;
+
+    // DESCRIPTION: TODO...
+    ocs2::RobotModelInfo getRobotModelInfo() const;
 
     // DESCRIPTION: TODO...
     Eigen::VectorXd getRadii() const;
@@ -103,39 +100,15 @@ class PointsOnRobot
     Eigen::Matrix<ocs2::scalar_t, 3, 1> QuaternionToEuler(Eigen::Quaternion<ocs2::scalar_t>& quat) const;
 
     // DESCRIPTION: TODO...
-    //void setFixedTransformsTf2();
-
-    // DESCRIPTION: TODO...
-    //void updateTransformsTf2Relative() const;
-
-    // DESCRIPTION: TODO...
-    //void updateTransformsTf2World() const;
-
-    /*
-    // DESCRIPTION: TODO...
-    void updateTransformsPinocchio(ocs2::PinocchioInterface& pinocchioInterface,
-                                   const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
-                                   const Eigen::VectorXd& state) const;
-    */
-
-    /*
-    // DESCRIPTION: TODO...
-    void updateTransformsPinocchio(ocs2::PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
-                                   const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
-                                   const Eigen::Matrix<ad_scalar_t, -1, 1>& stateCppAd) const;
-    */
-
-    /*
-    // DESCRIPTION: TODO...
-    Eigen::Matrix<ocs2::scalar_t, 3, -1> computeState2PointsOnRobot(ocs2::PinocchioInterface& pinocchioInterface,
-                                                                    const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
-                                                                    const Eigen::Matrix<ocs2::scalar_t, -1, 1>& state) const;
-    */
+    Eigen::Matrix<ad_scalar_t, 3, -1> computeState2PointsOnRobotCppAd(ocs2::PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
+                                                                      const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
+                                                                      const Eigen::Matrix<ad_scalar_t, -1, 1>& stateCppAd) const;
 
     // DESCRIPTION: TODO...
     Eigen::Matrix<ad_scalar_t, 3, -1> computeState2PointsOnRobotCppAd(ocs2::PinocchioInterfaceCppAd& pinocchioInterfaceCppAd,
                                                                       const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
-                                                                      const Eigen::Matrix<ad_scalar_t, -1, 1>& stateCppAd) const;
+                                                                      const Eigen::Matrix<ad_scalar_t, -1, 1>& stateCppAd,
+                                                                      const Eigen::Matrix<ad_scalar_t, -1, 1>& fullStateCppAd) const;
 
   private:
     void setADInterfaces(ocs2::PinocchioInterface& pinocchioInterface,
@@ -158,9 +131,11 @@ class PointsOnRobot
     //std::unique_ptr<ocs2::PinocchioInterface> pinocchioInterfacePtr_;
     std::shared_ptr<ocs2::CppAdInterface> cppAdInterface_;
 
-    std::string base_link_name_;
-    std::string arm_mount_link_name_;
-    std::string ee_link_name_;
+    ocs2::RobotModelInfo robotModelInfo_;
+
+    //std::string base_link_name_;
+    //std::string arm_mount_link_name_;
+    //std::string ee_link_name_;
 
     std::vector<std::string> frameNames_;
     std::vector<size_t> frameIds_;

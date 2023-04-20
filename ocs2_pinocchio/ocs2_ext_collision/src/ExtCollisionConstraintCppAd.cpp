@@ -109,10 +109,17 @@ size_t ExtCollisionConstraintCppAd::getNumConstraints(scalar_t time) const
 /******************************************************************************************************/
 vector_t ExtCollisionConstraintCppAd::getValue(scalar_t time, const vector_t& state, const PreComputation&) const 
 {
+  std::cout << "[ExtCollisionConstraintCppAd::getValue] START" << std::endl;
+
+  std::cout << "[ExtCollisionConstraintCppAd::getValue] DEBUG INF" << std::endl;
+  while(1);
+
   const auto q = mappingPtr_->getPinocchioJointPosition(state);
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
   pinocchio::forwardKinematics(model, data, q);
+
+  std::cout << "[ExtCollisionConstraintCppAd::getValue] END" << std::endl;
 
   return extCollisionCppAd_.getValue(pinocchioInterface_, state);
 }
@@ -122,13 +129,17 @@ vector_t ExtCollisionConstraintCppAd::getValue(scalar_t time, const vector_t& st
 /******************************************************************************************************/
 vector_t ExtCollisionConstraintCppAd::getValue(scalar_t time, 
                                                const vector_t& state, 
-                                               const vector_t& full_state, 
+                                               const vector_t& fullState, 
                                                const PreComputation&) const 
 {
-  const auto q = mappingPtr_->getPinocchioJointPosition(state);
+  std::cout << "[ExtCollisionConstraintCppAd::getValue] START" << std::endl;
+
+  const auto q = mappingPtr_->getPinocchioJointPosition(state, fullState);
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
   pinocchio::forwardKinematics(model, data, q);
+
+  std::cout << "[ExtCollisionConstraintCppAd::getValue] END" << std::endl;
 
   return extCollisionCppAd_.getValue(pinocchioInterface_, state);
 }
@@ -140,6 +151,11 @@ VectorFunctionLinearApproximation ExtCollisionConstraintCppAd::getLinearApproxim
                                                                                       const vector_t& state,
                                                                                       const PreComputation&) const 
 {
+  std::cout << "[ExtCollisionConstraintCppAd::getLinearApproximation] START" << std::endl;
+
+  std::cout << "[ExtCollisionConstraintCppAd::getLinearApproximation] DEBUG INF" << std::endl;
+  while(1);
+
   const auto q = mappingPtr_->getPinocchioJointPosition(state);
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
@@ -151,6 +167,9 @@ VectorFunctionLinearApproximation ExtCollisionConstraintCppAd::getLinearApproxim
   std::tie(constraint.f, dfdq) = extCollisionCppAd_.getLinearApproximation(pinocchioInterface_, q);
   dfdv.setZero(dfdq.rows(), dfdq.cols());
   std::tie(constraint.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, dfdq, dfdv);
+  
+  std::cout << "[ExtCollisionConstraintCppAd::getLinearApproximation] END" << std::endl;
+
   return constraint;
 }
 
