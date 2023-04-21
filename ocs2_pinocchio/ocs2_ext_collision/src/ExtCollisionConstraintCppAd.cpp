@@ -29,8 +29,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(PinocchioInterface pinocchioInterface,
                                                          const PinocchioStateInputMapping<scalar_t>& mapping,
-                                                         ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface,
-                                                         size_t modalMode,
+                                                         const PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
+                                                         //ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface,
+                                                         //size_t modalMode,
                                                          std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
                                                          ocs2::scalar_t maxDistance,
                                                          std::shared_ptr<ExtMapUtility> emuPtr,
@@ -39,9 +40,10 @@ ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(PinocchioInterface pino
                                                          bool recompileLibraries, 
                                                          bool verbose)
   : ExtCollisionConstraintCppAd(std::move(pinocchioInterface), 
-                                mapping, 
-                                std::move(extCollisionPinocchioGeometryInterface), 
-                                modalMode,
+                                mapping,
+                                mappingCppAd, 
+                                //std::move(extCollisionPinocchioGeometryInterface), 
+                                //modalMode,
                                 pointsOnRobotPtr,
                                 maxDistance,
                                 emuPtr,
@@ -56,8 +58,9 @@ ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(PinocchioInterface pino
 /******************************************************************************************************/
 ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(PinocchioInterface pinocchioInterface,
                                                          const PinocchioStateInputMapping<scalar_t>& mapping,
-                                                         ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
-                                                         size_t modalMode,
+                                                         const PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
+                                                         //ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
+                                                         //size_t modalMode,
                                                          std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
                                                          ocs2::scalar_t maxDistance,
                                                          std::shared_ptr<ExtMapUtility> emuPtr,
@@ -69,8 +72,9 @@ ExtCollisionConstraintCppAd::ExtCollisionConstraintCppAd(PinocchioInterface pino
   : StateConstraint(ConstraintOrder::Linear),
     pinocchioInterface_(std::move(pinocchioInterface)),
     extCollisionCppAd_(pinocchioInterface_, 
-                       std::move(extCollisionPinocchioGeometryInterface), 
-                       modalMode,
+                       mappingCppAd,
+                       //std::move(extCollisionPinocchioGeometryInterface), 
+                       //modalMode,
                        pointsOnRobotPtr,
                        maxDistance,
                        emuPtr,
@@ -109,9 +113,9 @@ size_t ExtCollisionConstraintCppAd::getNumConstraints(scalar_t time) const
 /******************************************************************************************************/
 vector_t ExtCollisionConstraintCppAd::getValue(scalar_t time, const vector_t& state, const PreComputation&) const 
 {
-  std::cout << "[ExtCollisionConstraintCppAd::getValue] START" << std::endl;
+  std::cout << "[ExtCollisionConstraintCppAd::getValue(3)] START" << std::endl;
 
-  std::cout << "[ExtCollisionConstraintCppAd::getValue] DEBUG INF" << std::endl;
+  std::cout << "[ExtCollisionConstraintCppAd::getValue(3)] DEBUG INF" << std::endl;
   while(1);
 
   const auto q = mappingPtr_->getPinocchioJointPosition(state);
@@ -119,7 +123,7 @@ vector_t ExtCollisionConstraintCppAd::getValue(scalar_t time, const vector_t& st
   auto& data = pinocchioInterface_.getData();
   pinocchio::forwardKinematics(model, data, q);
 
-  std::cout << "[ExtCollisionConstraintCppAd::getValue] END" << std::endl;
+  std::cout << "[ExtCollisionConstraintCppAd::getValue(3)] END" << std::endl;
 
   return extCollisionCppAd_.getValue(pinocchioInterface_, state);
 }
@@ -132,16 +136,16 @@ vector_t ExtCollisionConstraintCppAd::getValue(scalar_t time,
                                                const vector_t& fullState, 
                                                const PreComputation&) const 
 {
-  std::cout << "[ExtCollisionConstraintCppAd::getValue] START" << std::endl;
+  //std::cout << "[ExtCollisionConstraintCppAd::getValue(4)] START" << std::endl;
 
   const auto q = mappingPtr_->getPinocchioJointPosition(state, fullState);
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
   pinocchio::forwardKinematics(model, data, q);
 
-  std::cout << "[ExtCollisionConstraintCppAd::getValue] END" << std::endl;
+  //std::cout << "[ExtCollisionConstraintCppAd::getValue(4)] END" << std::endl;
 
-  return extCollisionCppAd_.getValue(pinocchioInterface_, state);
+  return extCollisionCppAd_.getValue(pinocchioInterface_, state, fullState);
 }
 
 /******************************************************************************************************/
@@ -151,9 +155,9 @@ VectorFunctionLinearApproximation ExtCollisionConstraintCppAd::getLinearApproxim
                                                                                       const vector_t& state,
                                                                                       const PreComputation&) const 
 {
-  std::cout << "[ExtCollisionConstraintCppAd::getLinearApproximation] START" << std::endl;
+  std::cout << "[ExtCollisionConstraintCppAd::getLinearApproximation(3)] START" << std::endl;
 
-  std::cout << "[ExtCollisionConstraintCppAd::getLinearApproximation] DEBUG INF" << std::endl;
+  std::cout << "[ExtCollisionConstraintCppAd::getLinearApproximation(3)] DEBUG INF" << std::endl;
   while(1);
 
   const auto q = mappingPtr_->getPinocchioJointPosition(state);
@@ -168,7 +172,34 @@ VectorFunctionLinearApproximation ExtCollisionConstraintCppAd::getLinearApproxim
   dfdv.setZero(dfdq.rows(), dfdq.cols());
   std::tie(constraint.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, dfdq, dfdv);
   
-  std::cout << "[ExtCollisionConstraintCppAd::getLinearApproximation] END" << std::endl;
+  std::cout << "[ExtCollisionConstraintCppAd::getLinearApproximation(3)] END" << std::endl;
+
+  return constraint;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+VectorFunctionLinearApproximation ExtCollisionConstraintCppAd::getLinearApproximation(scalar_t time, 
+                                                                                      const vector_t& state,
+                                                                                      const vector_t& fullState,
+                                                                                      const PreComputation&) const 
+{
+  //std::cout << "[ExtCollisionConstraintCppAd::getLinearApproximation(4)] START" << std::endl;
+
+  const auto q = mappingPtr_->getPinocchioJointPosition(state, fullState);
+  const auto& model = pinocchioInterface_.getModel();
+  auto& data = pinocchioInterface_.getData();
+  pinocchio::forwardKinematics(model, data, q);
+  updateCallback_(state, pinocchioInterface_);
+
+  VectorFunctionLinearApproximation constraint;
+  matrix_t dfdq, dfdv;
+  std::tie(constraint.f, dfdq) = extCollisionCppAd_.getLinearApproximation(pinocchioInterface_, state, fullState);
+  dfdv.setZero(dfdq.rows(), dfdq.cols());
+  std::tie(constraint.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, dfdq, dfdv);
+  
+  //std::cout << "[ExtCollisionConstraintCppAd::getLinearApproximation(4)] END" << std::endl;
 
   return constraint;
 }

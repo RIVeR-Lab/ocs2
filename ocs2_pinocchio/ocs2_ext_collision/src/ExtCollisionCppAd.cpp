@@ -215,7 +215,7 @@ std::pair<vector_t, matrix_t> ExtCollisionCppAd::getLinearApproximation(const Pi
                                                                         const vector_t& state,
                                                                         const vector_t& fullState) const 
 {
-  std::cout << "[ExtCollisionCppAd::getLinearApproximation(3)] START" << std::endl;
+  //std::cout << "[ExtCollisionCppAd::getLinearApproximation(3)] START" << std::endl;
 
   vector_t distances;
   if (pointsOnRobotPtr_) 
@@ -270,7 +270,7 @@ std::pair<vector_t, matrix_t> ExtCollisionCppAd::getLinearApproximation(const Pi
   }
   */
 
-  std::cout << "[ExtCollisionCppAd::getLinearApproximation(3)] END" << std::endl << std::endl;
+  //std::cout << "[ExtCollisionCppAd::getLinearApproximation(3)] END" << std::endl << std::endl;
 
   return std::make_pair(f, dfdq);
 }
@@ -326,7 +326,7 @@ void ExtCollisionCppAd::updateDistances(const vector_t& state) const
 /******************************************************************************************************/
 void ExtCollisionCppAd::updateDistances(const vector_t& state, const vector_t& fullState) const
 {
-  std::cout << "[ExtCollisionCppAd::updateDistances(2)] START" << std::endl;
+  //std::cout << "[ExtCollisionCppAd::updateDistances(2)] START" << std::endl;
 
   int numPoints = pointsOnRobotPtr_->getNumOfPoints();
   Eigen::VectorXd positionPointsOnRobot = pointsOnRobotPtr_->getPointsPositionCppAd(state, fullState);
@@ -357,7 +357,7 @@ void ExtCollisionCppAd::updateDistances(const vector_t& state, const vector_t& f
 
   emuPtr_->fillOccDistanceArrayVisu(p0_vec_, p1_vec_);
 
-  std::cout << "[ExtCollisionCppAd::updateDistances(2)] END" << std::endl;
+  //std::cout << "[ExtCollisionCppAd::updateDistances(2)] END" << std::endl;
 }
 
 /******************************************************************************************************/

@@ -63,9 +63,7 @@ class PinocchioStateInputMapping
 
     /** Mapps pinocchio jacobians dfdq, dfdv to OCS2 jacobians dfdx, dfdu. */
     virtual std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const = 0;
-
-    virtual std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const vector_t& fullState, const matrix_t& Jq, const matrix_t& Jv) const = 0;
-
+    
     /** If the mapping requires PinocchioInterface, use this method and set an updated PinocchioInterface. */
     virtual void setPinocchioInterface(const PinocchioInterfaceTpl<SCALAR>& pinocchioInterface) {}
 

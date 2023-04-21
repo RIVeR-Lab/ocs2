@@ -121,8 +121,6 @@ class CentroidalModelPinocchioMappingTpl final : public PinocchioStateInputMappi
      */
     std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const override;
 
-    std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const vector_t& fullState, const matrix_t& Jq, const matrix_t& Jv) const override;
-
     /**
      * Returns a structure containing robot-specific information needed for the centroidal dynamics computations.
      */

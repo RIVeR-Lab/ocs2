@@ -46,8 +46,9 @@ class ExtCollisionConstraintCppAd final : public StateConstraint
      */
     ExtCollisionConstraintCppAd(PinocchioInterface pinocchioInterface, 
                                 const PinocchioStateInputMapping<scalar_t>& mapping,
-                                ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
-                                size_t modalMode,
+                                const PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
+                                //ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
+                                //size_t modalMode,
                                 std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
                                 ocs2::scalar_t maxDistance,
                                 std::shared_ptr<ExtMapUtility> emuPtr,
@@ -72,8 +73,9 @@ class ExtCollisionConstraintCppAd final : public StateConstraint
      */
     ExtCollisionConstraintCppAd(PinocchioInterface pinocchioInterface, 
                                 const PinocchioStateInputMapping<scalar_t>& mapping,
-                                ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
-                                size_t modalMode,
+                                const PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
+                                //ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface, 
+                                //size_t modalMode,
                                 std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
                                 ocs2::scalar_t maxDistance,
                                 std::shared_ptr<ExtMapUtility> emuPtr,
@@ -99,6 +101,11 @@ class ExtCollisionConstraintCppAd final : public StateConstraint
 
     /** Get the external collision distance approximation */
     VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const PreComputation&) const override;
+
+    VectorFunctionLinearApproximation getLinearApproximation(scalar_t time,
+                                                             const vector_t& state, 
+                                                             const vector_t& fullState, 
+                                                             const PreComputation&) const override;
 
   private:
     ExtCollisionConstraintCppAd(const ExtCollisionConstraintCppAd& rhs);

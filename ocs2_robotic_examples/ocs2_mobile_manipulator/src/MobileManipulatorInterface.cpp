@@ -133,7 +133,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 
   // NUA TODO: We don't need to do it here!
   //int modelMode = getModelModeInt(robotModelInfo_);
-  auto modelModeInt = 1;
+  auto modelModeInt = 2;
   setMPCProblem(modelModeInt, pointsAndRadii);
   
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END" << std::endl;
@@ -708,9 +708,9 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
   {
     std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] usePreComputation_ false" << std::endl;
 
-    //// NUA TODO: LEFT HERE!!!!!!! CLEAN THE ExtCollisionConstraintCppAd since robotModelINfo is included in pointsOnRobotPtr_. Add MobileManipulatorPinocchioMapping in required functions!
     constraint = std::unique_ptr<StateConstraint>(new ExtCollisionConstraintCppAd(*pinocchioInterfacePtr_, 
                                                                                   MobileManipulatorPinocchioMapping(robotModelInfo_), 
+                                                                                  MobileManipulatorPinocchioMappingCppAd(robotModelInfo_),
                                                                                   //std::move(extCollisionPinocchioGeometryInterface), 
                                                                                   //modelModeInt,
                                                                                   pointsOnRobotPtr_,

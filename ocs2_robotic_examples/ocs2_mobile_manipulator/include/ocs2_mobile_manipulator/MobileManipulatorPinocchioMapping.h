@@ -31,7 +31,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_pinocchio_interface/PinocchioStateInputMapping.h>
 #include "ocs2_core/dynamics/MultiModelFunctions.h"
-//#include "ocs2_core/dynamics/RobotModelInfo.h"
 
 namespace ocs2 {
 namespace mobile_manipulator {
@@ -100,9 +99,6 @@ class MobileManipulatorPinocchioMappingTpl final : public PinocchioStateInputMap
      * @return a pair {dfdx, dfdu} containing the jacobians with respect to the system state and input
      */
     std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const matrix_t& Jq, const matrix_t& Jv) const override;
-
-    //// NUA NOTE: DO WE NEED THIS?
-    std::pair<matrix_t, matrix_t> getOcs2Jacobian(const vector_t& state, const vector_t& fullState, const matrix_t& Jq, const matrix_t& Jv) const override;
 
   private:
     MobileManipulatorPinocchioMappingTpl(const MobileManipulatorPinocchioMappingTpl& rhs) = default;
