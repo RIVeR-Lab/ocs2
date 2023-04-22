@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <iostream>
 #include "ocs2_oc/synchronized_module/ReferenceManagerInterface.h"
 
 namespace ocs2 {
@@ -73,6 +74,8 @@ class ReferenceManagerDecorator : public ReferenceManagerInterface
 
     const TargetTrajectories& getTargetTrajectories() const override 
     { 
+      //std::cout << "[ReferenceManagerDecorator::getTargetTrajectories] START" << std::endl;
+
       return referenceManagerPtr_->getTargetTrajectories(); 
     }
     

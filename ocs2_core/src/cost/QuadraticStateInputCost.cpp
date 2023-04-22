@@ -27,6 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <iostream>
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
 
 namespace ocs2 {
@@ -52,14 +53,25 @@ QuadraticStateInputCost* QuadraticStateInputCost::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t QuadraticStateInputCost::getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                                           const TargetTrajectories& targetTrajectories, const PreComputation&) const {
+scalar_t QuadraticStateInputCost::getValue(scalar_t time, 
+                                           const vector_t& state, 
+                                           const vector_t& input,
+                                           const TargetTrajectories& targetTrajectories, 
+                                           const PreComputation&) const 
+{
+  //std::cout << "[QuadraticStateInputCost::getValue] START" << std::endl;
+
   vector_t stateDeviation, inputDeviation;
   std::tie(stateDeviation, inputDeviation) = getStateInputDeviation(time, state, input, targetTrajectories);
 
-  if (P_.size() == 0) {
+  //std::cout << "[QuadraticStateInputCost::getValue] END" << std::endl;
+
+  if (P_.size() == 0) 
+  {
     return 0.5 * stateDeviation.dot(Q_ * stateDeviation) + 0.5 * inputDeviation.dot(R_ * inputDeviation);
-  } else {
+  } 
+  else 
+  {
     return 0.5 * stateDeviation.dot(Q_ * stateDeviation) + 0.5 * inputDeviation.dot(R_ * inputDeviation) +
            inputDeviation.dot(P_ * stateDeviation);
   }
@@ -99,10 +111,26 @@ ScalarFunctionQuadraticApproximation QuadraticStateInputCost::getQuadraticApprox
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::pair<vector_t, vector_t> QuadraticStateInputCost::getStateInputDeviation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                                              const TargetTrajectories& targetTrajectories) const {
+std::pair<vector_t, vector_t> QuadraticStateInputCost::getStateInputDeviation(scalar_t time, 
+                                                                              const vector_t& state, 
+                                                                              const vector_t& input,
+                                                                              const TargetTrajectories& targetTrajectories) const 
+{
+  std::cout << "[QuadraticStateInputCost::getStateInputDeviation] START" << std::endl;
+
+  std::cout << "[QuadraticStateInputCost::getStateInputDeviation] DEBUG INF" << std::endl;
+  while(1);
+
+  std::cout << "[QuadraticStateInputCost::getStateInputDeviation] state size: " << state.size() << std::endl;
+
   const vector_t stateDeviation = state - targetTrajectories.getDesiredState(time);
+
+  std::cout << "[QuadraticStateInputCost::getStateInputDeviation] input size: " << input.size() << std::endl;
+
   const vector_t inputDeviation = input - targetTrajectories.getDesiredInput(time);
+
+  std::cout << "[QuadraticStateInputCost::getStateInputDeviation] END" << std::endl;
+
   return {stateDeviation, inputDeviation};
 }
 

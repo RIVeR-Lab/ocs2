@@ -83,8 +83,15 @@ PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const P
 
   for (const auto& bodyName : {robotModelInfo_.robotArm.eeFrame}) 
   {
-    endEffectorFrameIds_.push_back(pinocchioInterface.getModel().getBodyId(bodyName));
+    auto id = pinocchioInterface.getModel().getBodyId(bodyName);
+    endEffectorFrameIds_.push_back(id);
+
+    std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] bodyName: " << bodyName << std::endl;
+    std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] id: " << id << std::endl;
   }
+
+  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] DEBUG INF" << std::endl;
+  //while(1);
 
   // Initialize CppAD interface
   auto pinocchioInterfaceCppAd = pinocchioInterface.toCppAd();

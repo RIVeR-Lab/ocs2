@@ -63,9 +63,15 @@ StateInputCostCppAd::StateInputCostCppAd(const StateInputCostCppAd& rhs)
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t StateInputCostCppAd::getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                                       const TargetTrajectories& targetTrajectories, const PreComputation& preComputation) const {
+                                       const TargetTrajectories& targetTrajectories, const PreComputation& preComputation) const 
+{
+  std::cout << "[StateInputCostCppAd::getValue] START" << std::endl;
+  
   vector_t tapedTimeStateInput(1 + state.rows() + input.rows());
   tapedTimeStateInput << time, state, input;
+  
+  std::cout << "[StateInputCostCppAd::getValue] END" << std::endl;
+
   return adInterfacePtr_->getFunctionValue(tapedTimeStateInput, getParameters(time, targetTrajectories, preComputation))(0);
 }
 

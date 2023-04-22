@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.04.10
+// LAST UPDATE: 2022.04.20
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -26,10 +26,10 @@ int main(int argc, char** argv)
   std::cout << "[MobileManipulatorMpcNode::main] START" << std::endl;
 
   //std::string robotName = "jackal_ur5";
-  std::string robotModel = "mobile_manipulator";
+  std::string robotModelName = "mobile_manipulator";
 
   // Initialize ros node
-  ros::init(argc, argv, robotModel + "_mpc");
+  ros::init(argc, argv, robotModelName + "_mpc");
   ros::NodeHandle nodeHandle;
   
   // Get node parameters
@@ -103,7 +103,9 @@ int main(int argc, char** argv)
   //while(1);
 
   // ROS ReferenceManager
-  std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(new ocs2::RosReferenceManager(robotModel, interface.getReferenceManagerPtr()));
+  std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(new ocs2::RosReferenceManager(robotModelName, 
+                                                                                                  interface.getReferenceManagerPtr(),
+                                                                                                  interface.getRobotModelInfo()));
   rosReferenceManagerPtr->subscribe(nodeHandle);
 
   // MPC
@@ -116,7 +118,7 @@ int main(int argc, char** argv)
   mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
 
   // Launch MPC ROS node
-  MPC_ROS_Interface mpcNode(mpc, robotModel);
+  MPC_ROS_Interface mpcNode(mpc, robotModelName);
   mpcNode.launchNodes(nodeHandle);
 
   std::cout << "[MobileManipulatorMpcNode::main] END" << std::endl;

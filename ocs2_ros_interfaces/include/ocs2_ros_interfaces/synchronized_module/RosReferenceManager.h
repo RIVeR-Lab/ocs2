@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/ros.h>
 
+#include "ocs2_core/dynamics/MultiModelFunctions.h"
 #include <ocs2_oc/synchronized_module/ReferenceManagerDecorator.h>
 
 namespace ocs2 {
@@ -52,7 +53,12 @@ class RosReferenceManager final : public ReferenceManagerDecorator
      * @param [in] referenceManagerPtr: The ReferenceManager which will be decorated with ROS subscribers functionalities.
      * topics to receive user-commanded ModeSchedule and TargetTrajectories respectively.
      */
-    explicit RosReferenceManager(std::string topicPrefix, std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr);
+    explicit RosReferenceManager(std::string topicPrefix, 
+                                 std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr);
+
+    explicit RosReferenceManager(std::string topicPrefix, 
+                                 std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr,
+                                 RobotModelInfo robotModelInfo);
 
     ~RosReferenceManager() override = default;
 
@@ -76,6 +82,7 @@ class RosReferenceManager final : public ReferenceManagerDecorator
 
   private:
     const std::string topicPrefix_;
+    RobotModelInfo robotModelInfo_;
 
     ::ros::Subscriber modeScheduleSubscriber_;
     ::ros::Subscriber targetTrajectoriesSubscriber_;

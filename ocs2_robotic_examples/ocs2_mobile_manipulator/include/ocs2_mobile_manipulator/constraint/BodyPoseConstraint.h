@@ -25,7 +25,7 @@ namespace mobile_manipulator {
 class BodyPoseConstraint final : public StateConstraint 
 {
   public:
-    using vector3_t = Eigen::Matrix<scalar_t, 3, 1>;
+    using vector2_t = Eigen::Matrix<scalar_t, 2, 1>;
     using quaternion_t = Eigen::Quaternion<scalar_t>;
 
     BodyPoseConstraint(size_t modalMode, const ReferenceManager& referenceManager);
@@ -47,6 +47,11 @@ class BodyPoseConstraint final : public StateConstraint
                                                              const vector_t& state,
                                                              const PreComputation& preComputation) const override;
 
+    VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, 
+                                                             const vector_t& state,
+                                                             const vector_t& fullState,
+                                                             const PreComputation& preComputation) const override;
+
   private:
     BodyPoseConstraint(const BodyPoseConstraint& other) = default;
     
@@ -57,7 +62,7 @@ class BodyPoseConstraint final : public StateConstraint
     size_t numOriConst_;
     size_t numConst_;
 
-    vector3_t targetBodyPosition_;
+    vector2_t targetBodyPosition_;
     quaternion_t targetBodyOrientation_;
     
     const ReferenceManager* referenceManagerPtr_;

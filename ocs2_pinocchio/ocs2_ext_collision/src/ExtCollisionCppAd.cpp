@@ -26,8 +26,6 @@ namespace ocs2 {
 /******************************************************************************************************/
 ExtCollisionCppAd::ExtCollisionCppAd(const PinocchioInterface& pinocchioInterface, 
                                      const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,  
-                                     //ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface,    
-                                     //size_t modalMode,
                                      std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
                                      ocs2::scalar_t maxDistance,
                                      std::shared_ptr<ExtMapUtility> emuPtr,
@@ -39,8 +37,6 @@ ExtCollisionCppAd::ExtCollisionCppAd(const PinocchioInterface& pinocchioInterfac
     maxDistance_(maxDistance),
     distances_(pointsOnRobotPtr->getNumOfPoints()),
     emuPtr_(emuPtr)
-    //extCollisionPinocchioGeometryInterface_(std::move(extCollisionPinocchioGeometryInterface)), 
-    //modalMode_(modalMode),
 {
   std::cout << "[ExtCollisionCppAd::ExtCollisionCppAd] START" << std::endl;
 
@@ -68,9 +64,7 @@ ExtCollisionCppAd::ExtCollisionCppAd(const PinocchioInterface& pinocchioInterfac
 /******************************************************************************************************/
 /******************************************************************************************************/
 ExtCollisionCppAd::ExtCollisionCppAd(const ExtCollisionCppAd& rhs)
-  : //extCollisionPinocchioGeometryInterface_(rhs.extCollisionPinocchioGeometryInterface_),
-    cppAdInterfaceDistanceCalculation_(new CppAdInterface(*rhs.cppAdInterfaceDistanceCalculation_)),
-    //modalMode_(rhs.modalMode_),
+  : cppAdInterfaceDistanceCalculation_(new CppAdInterface(*rhs.cppAdInterfaceDistanceCalculation_)),
     pointsOnRobotPtr_(rhs.pointsOnRobotPtr_),
     maxDistance_(rhs.maxDistance_),
     distances_(rhs.distances_),

@@ -84,7 +84,7 @@ vector_t TargetTrajectories::getDesiredState(scalar_t time) const
 {
   if (this->empty()) 
   {
-    throw std::runtime_error("[TargetTrajectories] TargetTrajectories is empty!");
+    throw std::runtime_error("[TargetTrajectories::getDesiredState] TargetTrajectories is empty!");
   } 
   else 
   {
@@ -97,16 +97,28 @@ vector_t TargetTrajectories::getDesiredState(scalar_t time) const
 /***************************************************************************************************** */
 vector_t TargetTrajectories::getDesiredInput(scalar_t time) const 
 {
+  //std::cout << "[TargetTrajectories::getDesiredInput] START" << std::endl;
+
   if (this->empty()) 
   {
-    throw std::runtime_error("[TargetTrajectories] TargetTrajectories is empty!");
+    throw std::runtime_error("[TargetTrajectories::getDesiredInput] TargetTrajectories is empty!");
   } 
   else if (inputTrajectory.empty()) 
   {
-    throw std::runtime_error("[TargetTrajectories] TargetTrajectories does not have inputTrajectory!");
+    throw std::runtime_error("[TargetTrajectories::getDesiredInput] TargetTrajectories does not have inputTrajectory!");
   } 
   else 
   {
+    /*
+    std::cout << "[TargetTrajectories::getDesiredInput] inputTrajectory size: " << inputTrajectory.size() << std::endl;
+    for (size_t i = 0; i < inputTrajectory[0].size(); i++)
+    {
+      std::cout << i << " -> " << inputTrajectory[0][i] << std::endl;
+    }
+    */
+
+    //std::cout << "[TargetTrajectories::getDesiredInput] END" << std::endl;
+    
     return LinearInterpolation::interpolate(time, timeTrajectory, inputTrajectory);
   }
 }

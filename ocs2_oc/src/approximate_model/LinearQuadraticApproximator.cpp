@@ -180,6 +180,9 @@ void approximateIntermediateLQ(OptimalControlProblem& problem,
   }
   //std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] END Lagrangians" << std::endl;
 
+  //std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] DEBUG INF" << std::endl;
+  //while(1);
+
   //std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] END" << std::endl << std::endl;
 }
 
@@ -355,7 +358,10 @@ scalar_t computeCost(const OptimalControlProblem& problem,
 {
   //std::cout << "[LinearQuadraticApproximator::computeCost(5)] START" << std::endl;
 
+  //// NUA TODO: Absolutely no use! Remove targetTrajectoriesPtr from OCP and cost functions (getValue)!
   const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
+  //TargetTrajectories targetTrajectories(0);
+
   const auto& preComputation = *problem.preComputationPtr;
 
   // Compute and sum all costs
@@ -368,7 +374,6 @@ scalar_t computeCost(const OptimalControlProblem& problem,
   //std::cout << "[LinearQuadraticApproximator::computeCost(5)] END softConstraintPtr cost: " << cost << std::endl;
 
   //std::cout << "[LinearQuadraticApproximator::computeCost(5)] START stateCostPtr" << std::endl;
-  //cost += problem.stateCostPtr->getValue(time, state, targetTrajectories, preComputation);
   cost += problem.stateCostPtr->getValue(time, state, fullState, targetTrajectories, preComputation);
   //std::cout << "[LinearQuadraticApproximator::computeCost(5)] END stateCostPtr cost: " << cost << std::endl;
 
@@ -441,7 +446,9 @@ ScalarFunctionQuadraticApproximation approximateCost(const OptimalControlProblem
 {
   //std::cout << "[LinearQuadraticApproximator::approximateCost(5)] START" << std::endl;
 
+  //// NUA TODO: Absolutely no use! Remove targetTrajectoriesPtr from OCP and cost functions (getValue)!
   const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
+  //TargetTrajectories targetTrajectories(0);
   const auto& preComputation = *problem.preComputationPtr;
 
   //std::cout << "[LinearQuadraticApproximator::approximateCost(5)] START costPtr" << std::endl;
@@ -485,12 +492,20 @@ ScalarFunctionQuadraticApproximation approximateCost(const OptimalControlProblem
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t computeEventCost(const OptimalControlProblem& problem, const scalar_t& time, const vector_t& state) {
+scalar_t computeEventCost(const OptimalControlProblem& problem, const scalar_t& time, const vector_t& state) 
+{
+  std::cout << "[LinearQuadraticApproximator::computeEventCost] START" << std::endl;
+  
+  std::cout << "[LinearQuadraticApproximator::computeEventCost] DEBUG INF" << std::endl;
+  while(1);
+
   const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
   const auto& preComputation = *problem.preComputationPtr;
 
   auto cost = problem.preJumpCostPtr->getValue(time, state, targetTrajectories, preComputation);
   cost += problem.preJumpSoftConstraintPtr->getValue(time, state, targetTrajectories, preComputation);
+
+  std::cout << "[LinearQuadraticApproximator::computeEventCost] END" << std::endl;
 
   return cost;
 }
@@ -502,6 +517,11 @@ ScalarFunctionQuadraticApproximation approximateEventCost(const OptimalControlPr
                                                           const scalar_t& time,
                                                           const vector_t& state) 
 {
+  std::cout << "[LinearQuadraticApproximator::approximateEventCost] START" << std::endl;
+  
+  std::cout << "[LinearQuadraticApproximator::approximateEventCost] DEBUG INF" << std::endl;
+  while(1);
+
   const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
   const auto& preComputation = *problem.preComputationPtr;
 
@@ -510,6 +530,8 @@ ScalarFunctionQuadraticApproximation approximateEventCost(const OptimalControlPr
   {
     cost += problem.preJumpSoftConstraintPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
   }
+
+  std::cout << "[LinearQuadraticApproximator::approximateEventCost] END" << std::endl;
 
   return cost;
 }
@@ -547,7 +569,9 @@ scalar_t computeFinalCost(const OptimalControlProblem& problem,
 {
   //std::cout << "[LinearQuadraticApproximator::computeFinalCost(4)] START" << std::endl;
 
+  //// NUA TODO: Absolutely no use! Remove targetTrajectoriesPtr from OCP and cost functions (getValue)!
   const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
+  //TargetTrajectories targetTrajectories(0);
   const auto& preComputation = *problem.preComputationPtr;
 
   //auto cost = problem.finalCostPtr->getValue(time, state, targetTrajectories, preComputation);
@@ -560,6 +584,7 @@ scalar_t computeFinalCost(const OptimalControlProblem& problem,
 
   //std::cout << "[LinearQuadraticApproximator::computeFinalCost(4)] cost: " << cost << std::endl;
 
+  //std::cout << "[LinearQuadraticApproximator::computeFinalCost(4)] DEBUG INF" << std::endl;
   //while(1);
 
   //std::cout << "[LinearQuadraticApproximator::computeFinalCost(4)] END" << std::endl;
@@ -574,6 +599,11 @@ ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlPr
                                                           const scalar_t& time,
                                                           const vector_t& state) 
 {
+  std::cout << "[LinearQuadraticApproximator::approximateFinalCost(3)] START" << std::endl;
+
+  std::cout << "[LinearQuadraticApproximator::approximateFinalCost(3)] DEBUG INF" << std::endl;
+  while(1);
+
   const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
   const auto& preComputation = *problem.preComputationPtr;
 
@@ -582,6 +612,8 @@ ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlPr
   {
     cost += problem.finalSoftConstraintPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
   }
+
+  std::cout << "[LinearQuadraticApproximator::approximateFinalCost(3)] END" << std::endl;
 
   return cost;
 }
@@ -596,7 +628,9 @@ ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlPr
 {
   //std::cout << "[LinearQuadraticApproximator::approximateFinalCost(4)] START" << std::endl;
 
+  //// NUA TODO: Absolutely no use! Remove targetTrajectoriesPtr from OCP and cost functions (getValue)!
   const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
+  //TargetTrajectories targetTrajectories(0);
   const auto& preComputation = *problem.preComputationPtr;
 
   //std::cout << "[LinearQuadraticApproximator::approximateFinalCost(4)] START finalCostPtr" << std::endl;
@@ -624,7 +658,7 @@ MetricsCollection computeIntermediateMetrics(OptimalControlProblem& problem,
                                              const vector_t& input, 
                                              const MultiplierCollection& multipliers) 
 {
-  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(5)] START" << std::endl;
+  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(5)] START" << std::endl;
 
   std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(5)] DEBUG INF" << std::endl;
   while(1);
@@ -663,7 +697,7 @@ MetricsCollection computeIntermediateMetrics(OptimalControlProblem& problem,
   metrics.stateInputIneqLagrangian = problem.inequalityLagrangianPtr->getValue(time, state, input, multipliers.stateInputIneq, preComputation);
   //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(5)] END stateInputIneqLagrangian" << std::endl;
 
-  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(5)] END" << std::endl;
+  std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(5)] END" << std::endl;
 
   return metrics;
 }
@@ -721,8 +755,16 @@ MetricsCollection computeIntermediateMetrics(OptimalControlProblem& problem,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-MetricsCollection computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
-                                        const MultiplierCollection& multipliers) {
+MetricsCollection computePreJumpMetrics(OptimalControlProblem& problem, 
+                                        const scalar_t time, 
+                                        const vector_t& state,
+                                        const MultiplierCollection& multipliers) 
+{
+  std::cout << "[LinearQuadraticApproximator::computePreJumpMetrics] START" << std::endl;
+
+  std::cout << "[LinearQuadraticApproximator::computePreJumpMetrics] DEBUG INF" << std::endl;
+  while(1);
+
   auto& preComputation = *problem.preComputationPtr;
 
   MetricsCollection metrics;
@@ -736,6 +778,8 @@ MetricsCollection computePreJumpMetrics(OptimalControlProblem& problem, const sc
   // Lagrangians
   metrics.stateEqLagrangian = problem.preJumpEqualityLagrangianPtr->getValue(time, state, multipliers.stateEq, preComputation);
   metrics.stateIneqLagrangian = problem.preJumpInequalityLagrangianPtr->getValue(time, state, multipliers.stateIneq, preComputation);
+
+  std::cout << "[LinearQuadraticApproximator::computePreJumpMetrics] END" << std::endl;
 
   return metrics;
 }

@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <iostream>
 #include <ocs2_core/cost/QuadraticStateInputCost.h>
 
 namespace ocs2 {
@@ -54,6 +55,8 @@ class QuadraticInputCost final : public QuadraticStateInputCost
                                                          const vector_t& input,
                                                          const TargetTrajectories& targetTrajectories) const override 
     {
+      //std::cout << "[QuadraticInputCost::getStateInputDeviation] START" << std::endl;
+
       const vector_t inputDeviation = input - targetTrajectories.getDesiredInput(time);
       return {vector_t::Zero(stateDim_), inputDeviation};
     }

@@ -53,10 +53,18 @@ void PythonInterface::init(const RobotInterface& robot, std::unique_ptr<MPC_BASE
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void PythonInterface::reset(TargetTrajectories targetTrajectories) {
+void PythonInterface::reset(TargetTrajectories targetTrajectories) 
+{
+  std::cout << "[PythonInterface::reset] START" << std::endl;
+
+  std::cout << "[PythonInterface::reset] DEBUG INF" << std::endl;
+  while(1);
+
   targetTrajectories_ = std::move(targetTrajectories);
   mpcMrtInterface_->resetMpcNode(targetTrajectories_);
   problem_.targetTrajectoriesPtr = &targetTrajectories_;
+
+  std::cout << "[PythonInterface::reset] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -73,10 +81,18 @@ void PythonInterface::setObservation(scalar_t t, Eigen::Ref<const vector_t> x, E
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void PythonInterface::setTargetTrajectories(TargetTrajectories targetTrajectories) {
+void PythonInterface::setTargetTrajectories(TargetTrajectories targetTrajectories) 
+{
+  std::cout << "[PythonInterface::setTargetTrajectories] START" << std::endl;
+
+  std::cout << "[PythonInterface::setTargetTrajectories] DEBUG INF" << std::endl;
+  while(1);
+
   targetTrajectories_ = std::move(targetTrajectories);
   problem_.targetTrajectoriesPtr = &targetTrajectories_;
   mpcMrtInterface_->getReferenceManager().setTargetTrajectories(targetTrajectories_);
+
+  std::cout << "[PythonInterface::setTargetTrajectories] END" << std::endl;
 }
 
 /******************************************************************************************************/

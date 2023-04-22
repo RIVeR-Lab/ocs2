@@ -324,22 +324,31 @@ ScalarFunctionQuadraticApproximation GaussNewtonDDP::getValueFunctionImpl(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ScalarFunctionQuadraticApproximation GaussNewtonDDP::getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) {
+ScalarFunctionQuadraticApproximation GaussNewtonDDP::getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) 
+{
+  std::cout << "[GaussNewtonDDP::getHamiltonian] START" << std::endl;
+
+  std::cout << "[GaussNewtonDDP::getHamiltonian] DEBUG INF" << std::endl;
+  while(1);
+
   // perform the LQ approximation of the OC problem
   // note that the cost already includes:
   // - state-input intermediate cost
   // - state-input soft constraint cost
   // - state-only intermediate cost
   // - state-only soft constraint cost
-  const ModelData modelData = [&]() {
+  const ModelData modelData = [&]() 
+  {
     const auto multiplierCollection = getIntermediateDualSolution(time);
     return ocs2::approximateIntermediateLQ(optimalControlProblemStock_[0], time, state, input, multiplierCollection);
   }();
 
   // check sizes
-  if (ddpSettings_.checkNumericalStability_) {
+  if (ddpSettings_.checkNumericalStability_) 
+  {
     const auto err = checkSize(modelData, state.rows(), input.rows());
-    if (!err.empty()) {
+    if (!err.empty()) 
+    {
       throw std::runtime_error("[GaussNewtonDDP::getHamiltonian] Mismatch in dimensions at time: " + std::to_string(time) + "\n" + err);
     }
   }
@@ -366,6 +375,9 @@ ScalarFunctionQuadraticApproximation GaussNewtonDDP::getHamiltonian(scalar_t tim
   hamiltonian.dfdxx.noalias() += dVdxx_dfdx + dVdxx_dfdx.transpose();
   hamiltonian.dfdux.noalias() += modelData.dynamics.dfdu.transpose() * V.dfdxx;
   // dfduu is zero for the "future cost"
+
+
+  std::cout << "[GaussNewtonDDP::getHamiltonian] END" << std::endl;
 
   return hamiltonian;
 }
@@ -449,8 +461,10 @@ bool GaussNewtonDDP::rolloutInitialController(PrimalSolution& inputPrimalSolutio
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-bool GaussNewtonDDP::extractInitialTrajectories(PrimalSolution& inputPrimalSolution, PrimalSolution& outputPrimalSolution) {
-  if (inputPrimalSolution.timeTrajectory_.empty()) {
+bool GaussNewtonDDP::extractInitialTrajectories(PrimalSolution& inputPrimalSolution, PrimalSolution& outputPrimalSolution) 
+{
+  if (inputPrimalSolution.timeTrajectory_.empty()) 
+  {
     return false;
   }
 
@@ -1122,6 +1136,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
     std::cerr << getReferenceManager().getModeSchedule();
   }
 
+  //// NUA TODO: Absolutely no use! Remove targetTrajectoriesPtr from OCP!
   // set cost desired trajectories
   for (auto& ocp : optimalControlProblemStock_) 
   {
@@ -1283,6 +1298,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const
     std::cerr << getReferenceManager().getModeSchedule();
   }
 
+  //// NUA TODO: Absolutely no use! Remove targetTrajectoriesPtr from OCP!
   // set cost desired trajectories
   for (auto& ocp : optimalControlProblemStock_) 
   {
@@ -1388,7 +1404,6 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const
 
     //std::cout << "[GaussNewtonDDP::runImpl(4)] convergenceInfo: " << std::endl;
     //std::cout << convergenceInfo << std::endl;
-
     if (isConverged || (totalNumIterations_ - initIteration) == ddpSettings_.maxNumIterations_) 
     {
       break;

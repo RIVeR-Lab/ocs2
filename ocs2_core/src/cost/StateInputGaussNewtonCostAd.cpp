@@ -62,11 +62,17 @@ StateInputCostGaussNewtonAd::StateInputCostGaussNewtonAd(const StateInputCostGau
 /******************************************************************************************************/
 /******************************************************************************************************/
 scalar_t StateInputCostGaussNewtonAd::getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                                               const TargetTrajectories& targetTrajectories, const PreComputation& preComputation) const {
+                                               const TargetTrajectories& targetTrajectories, const PreComputation& preComputation) const 
+{
+  std::cout << "[StateInputCostGaussNewtonAd::getValue] START" << std::endl;
+
   vector_t timeStateInput(1 + state.rows() + input.rows());
   timeStateInput << time, state, input;
   const auto parameters = getParameters(time, targetTrajectories, preComputation);
   const auto costVector = adInterfacePtr_->getFunctionValue(timeStateInput, parameters);
+  
+  std::cout << "[StateInputCostGaussNewtonAd::getValue] END" << std::endl;
+
   return 0.5 * costVector.squaredNorm();
 }
 

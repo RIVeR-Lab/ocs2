@@ -191,7 +191,7 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
   std::cout << "" << std::endl;
 
   std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getExtCollisionConstraint" << std::endl;
-  //// NUA TODO: COMPLETE IT!
+
   // External-collision avoidance constraint
   if (activateExtCollision_) 
   {
@@ -360,8 +360,6 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCos
   std::cout << "[MobileManipulatorInterface::getQuadraticInputCost] modeInputDim: " << modeInputDim << std::endl;
 
   matrix_t R = matrix_t::Zero(modeInputDim, modeInputDim);
-
-  
 
   // Input cost of mobile base
   if (modelMode == 0 || modelMode == 2) 
@@ -711,8 +709,6 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
     constraint = std::unique_ptr<StateConstraint>(new ExtCollisionConstraintCppAd(*pinocchioInterfacePtr_, 
                                                                                   MobileManipulatorPinocchioMapping(robotModelInfo_), 
                                                                                   MobileManipulatorPinocchioMappingCppAd(robotModelInfo_),
-                                                                                  //std::move(extCollisionPinocchioGeometryInterface), 
-                                                                                  //modelModeInt,
                                                                                   pointsOnRobotPtr_,
                                                                                   maxDistance,
                                                                                   emuPtr_,

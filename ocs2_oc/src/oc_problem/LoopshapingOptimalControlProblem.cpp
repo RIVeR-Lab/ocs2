@@ -80,6 +80,11 @@ OptimalControlProblem create(const OptimalControlProblem& problem, std::shared_p
   augmentedProblem.preComputationPtr.reset(new LoopshapingPreComputation(*problem.preComputationPtr, loopshapingDefinition));
 
   /** The cost desired trajectories (will be substitute by ReferenceManager) */
+
+  
+    std::cout << "[LoopshapingOptimalControlProblem::create] DEBUG INF" << std::endl;
+    while(1);
+
   augmentedProblem.targetTrajectoriesPtr = problem.targetTrajectoriesPtr;
 
   return augmentedProblem;

@@ -44,6 +44,8 @@ void ReferenceManager::preSolverRun(scalar_t initTime, scalar_t finalTime, const
 {
   //std::cout << "[ReferenceManager::preSolverRun] START" << std::endl;
 
+  //std::cout << "[ReferenceManager::preSolverRun] targetTrajectories_ size: " << targetTrajectories_.get().size() << std::endl;
+
   targetTrajectories_.updateFromBuffer();
   modeSchedule_.updateFromBuffer();
 

@@ -29,8 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <iostream>
 #include <ostream>
-
 #include "ocs2_core/Types.h"
 
 namespace ocs2 {
@@ -47,8 +47,9 @@ struct TargetTrajectories
                      vector_array_t desiredInputTrajectory = vector_array_t());
   
   void clear();
+  
   bool empty() const 
-  { 
+  {
     return timeTrajectory.empty() || stateTrajectory.empty(); 
   }
   
@@ -58,12 +59,14 @@ struct TargetTrajectories
   }
 
   bool operator==(const TargetTrajectories& other);
+  
   bool operator!=(const TargetTrajectories& other) 
   { 
     return !(*this == other); 
   }
 
   vector_t getDesiredState(scalar_t time) const;
+
   vector_t getDesiredInput(scalar_t time) const;
 
   scalar_array_t timeTrajectory;

@@ -27,6 +27,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <iostream>
 #include <ocs2_core/cost/StateInputCostCollection.h>
 
 namespace ocs2 {
@@ -39,20 +40,27 @@ StateInputCostCollection::StateInputCostCollection(const StateInputCostCollectio
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-StateInputCostCollection* StateInputCostCollection::clone() const {
+StateInputCostCollection* StateInputCostCollection::clone() const 
+{
   return new StateInputCostCollection(*this);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t StateInputCostCollection::getValue(scalar_t time, const vector_t& state, const vector_t& input,
-                                            const TargetTrajectories& targetTrajectories, const PreComputation& preComp) const {
+scalar_t StateInputCostCollection::getValue(scalar_t time, 
+                                            const vector_t& state, 
+                                            const vector_t& input,
+                                            const TargetTrajectories& targetTrajectories, 
+                                            const PreComputation& preComp) const 
+{
   scalar_t cost = 0.0;
 
   // accumulate cost terms
-  for (const auto& costTerm : this->terms_) {
-    if (costTerm->isActive(time)) {
+  for (const auto& costTerm : this->terms_) 
+  {
+    if (costTerm->isActive(time)) 
+    {
       cost += costTerm->getValue(time, state, input, targetTrajectories, preComp);
     }
   }
@@ -63,22 +71,31 @@ scalar_t StateInputCostCollection::getValue(scalar_t time, const vector_t& state
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ScalarFunctionQuadraticApproximation StateInputCostCollection::getQuadraticApproximation(scalar_t time, const vector_t& state,
+ScalarFunctionQuadraticApproximation StateInputCostCollection::getQuadraticApproximation(scalar_t time, const 
+                                                                                         vector_t& state,
                                                                                          const vector_t& input,
                                                                                          const TargetTrajectories& targetTrajectories,
-                                                                                         const PreComputation& preComp) const {
-  const auto firstActive = std::find_if(terms_.begin(), terms_.end(),
-                                        [time](const std::unique_ptr<StateInputCost>& costTerm) { return costTerm->isActive(time); });
+                                                                                         const PreComputation& preComp) const 
+{
+  const auto firstActive = std::find_if(terms_.begin(), 
+                                        terms_.end(),
+                                        [time](const std::unique_ptr<StateInputCost>& costTerm) 
+  { 
+    return costTerm->isActive(time); 
+  });
 
   // No active terms (or terms is empty).
-  if (firstActive == terms_.end()) {
+  if (firstActive == terms_.end()) 
+  {
     return ScalarFunctionQuadraticApproximation::Zero(state.rows(), input.rows());
   }
 
   // Initialize with first active term, accumulate potentially other active terms.
   auto cost = (*firstActive)->getQuadraticApproximation(time, state, input, targetTrajectories, preComp);
-  std::for_each(std::next(firstActive), terms_.end(), [&](const std::unique_ptr<StateInputCost>& costTerm) {
-    if (costTerm->isActive(time)) {
+  std::for_each(std::next(firstActive), terms_.end(), [&](const std::unique_ptr<StateInputCost>& costTerm) 
+  {
+    if (costTerm->isActive(time)) 
+    {
       cost += costTerm->getQuadraticApproximation(time, state, input, targetTrajectories, preComp);
     }
   });

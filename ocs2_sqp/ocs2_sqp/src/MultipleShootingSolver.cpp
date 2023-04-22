@@ -143,12 +143,18 @@ ScalarFunctionQuadraticApproximation MultipleShootingSolver::getValueFunction(sc
   }
 }
 
-void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
+void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) 
+{
+  std::cout << "[MultipleShootingSolver::runImpl] START" << std::endl;
+
   if (settings_.printSolverStatus || settings_.printLinesearch) {
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
     std::cerr << "\n+++++++++++++ SQP solver is initialized ++++++++++++++";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
   }
+
+  std::cout << "[MultipleShootingSolver::runImpl] DEBUG INF" << std::endl;
+  while(1);
 
   // Determine time discretization, taking into account event times.
   const auto& eventTimes = this->getReferenceManager().getModeSchedule().eventTimes;
@@ -169,8 +175,10 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
 
   int iter = 0;
   multiple_shooting::Convergence convergence = multiple_shooting::Convergence::FALSE;
-  while (convergence == multiple_shooting::Convergence::FALSE) {
-    if (settings_.printSolverStatus || settings_.printLinesearch) {
+  while (convergence == multiple_shooting::Convergence::FALSE) 
+  {
+    if (settings_.printSolverStatus || settings_.printLinesearch) 
+    {
       std::cerr << "\nSQP iteration: " << iter << "\n";
     }
     // Make QP approximation
@@ -211,6 +219,9 @@ void MultipleShootingSolver::runImpl(scalar_t initTime, const vector_t& initStat
     std::cerr << "\n+++++++++++++ SQP solver has terminated ++++++++++++++";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
   }
+
+  std::cout << "[MultipleShootingSolver::runImpl] END" << std::endl;
+
 }
 
 void MultipleShootingSolver::runParallel(std::function<void(int)> taskFunction) {

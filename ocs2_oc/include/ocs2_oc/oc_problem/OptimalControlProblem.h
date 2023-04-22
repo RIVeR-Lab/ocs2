@@ -45,7 +45,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 
 /** Optimal Control Problem definition */
-struct OptimalControlProblem {
+struct OptimalControlProblem 
+{
   /* Cost */
   /** Intermediate cost */
   std::unique_ptr<StateInputCostCollection> costPtr;

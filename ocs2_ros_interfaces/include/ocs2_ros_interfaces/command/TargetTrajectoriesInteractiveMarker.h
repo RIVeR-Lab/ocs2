@@ -66,10 +66,14 @@ class TargetTrajectoriesInteractiveMarker final
     /**
      * Spins ROS to update the interactive markers.
      */
-    void publishInteractiveMarker() { ::ros::spin(); }
+    void publishInteractiveMarker() 
+    { 
+      ::ros::spin(); 
+    }
 
   private:
     visualization_msgs::InteractiveMarker createInteractiveMarker() const;
+    
     void processFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
 
     interactive_markers::MenuHandler menuHandler_;
