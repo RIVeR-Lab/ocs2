@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.04.10
+// LAST UPDATE: 2022.04.25
 //
 // AUTHOR: Neset Unver Akmandor  (NUA)
 //
@@ -166,22 +166,26 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
   std::cout << "" << std::endl;
 
   // Mobile base or End-effector state constraint
+  std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getEndEffectorConstraint" << std::endl;
+  problem_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint("endEffector"));
+  problem_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint("finalEndEffector"));
+
+  /*
   if (robotModelInfo_.modelMode == ModelMode::BaseMotion)
   {
     ///////// NUA TODO: COMPLETE!
   }
   else
   {
-    std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getEndEffectorConstraint" << std::endl;
-
-    problem_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint("endEffector"));
-    problem_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint("finalEndEffector"));
+    
   }
+  */
+
   std::cout << "" << std::endl;
 
   std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getSelfCollisionConstraint" << std::endl;
   // Self-collision avoidance constraint
-  if (activateSelfCollision_) 
+  if (activateSelfCollision_ && robotModelInfo_.modelMode != ModelMode::BaseMotion) 
   {
     if (robotModelInfo_.modelMode == ModelMode::ArmMotion || robotModelInfo_.modelMode == ModelMode::WholeBodyMotion)
     {
@@ -191,8 +195,8 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
   std::cout << "" << std::endl;
 
   std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getExtCollisionConstraint" << std::endl;
-
   // External-collision avoidance constraint
+  activateExtCollision_ = false;
   if (activateExtCollision_) 
   {
     createPointsOnRobotPtr(pointsAndRadii);
@@ -589,8 +593,11 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
                                                      recompileLibraries_, 
                                                      false);
     std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] AFTER eeKinematics" << std::endl;
-    constraint.reset(new EndEffectorConstraint(eeKinematics, *referenceManagerPtr_));
+    constraint.reset(new EndEffectorConstraint(eeKinematics, *referenceManagerPtr_, robotModelInfo_));
   }
+
+  //std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] DEBUG INF" << std::endl;
+  //while(1);
 
   std::vector<std::unique_ptr<PenaltyBase>> penaltyArray(6);
   std::generate_n(penaltyArray.begin(), 3, [&] { return std::unique_ptr<PenaltyBase>(new QuadraticPenalty(muPosition)); });

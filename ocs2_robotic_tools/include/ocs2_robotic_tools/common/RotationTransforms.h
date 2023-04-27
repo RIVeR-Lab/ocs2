@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <Eigen/Core>
+#include <Eigen/Dense>
 #include <array>
 #include <cmath>
 
@@ -37,6 +38,96 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_core/automatic_differentiation/Types.h>
 
 namespace ocs2 {
+
+/** Convert the quaternion to a 3x3 rotation matrix. The quaternion is required to
+  * be normalized, otherwise the result is undefined.
+  */
+template<class SCALAR_T>
+Eigen::Matrix<SCALAR_T, 3, 3> quaternionToRotationMatrix(Eigen::Quaternion<SCALAR_T> quat)
+{
+  // NOTE if inlined, then gcc 4.2 and 4.4 get rid of the temporary (not gcc 4.3 !!)
+  // if not inlined then the cost of the return by value is huge ~ +35%,
+  // however, not inlining this function is an order of magnitude slower, so
+  // it has to be inlined, and so the return by value is not an issue
+  Eigen::Matrix<SCALAR_T, 3, 3> res;
+
+  const SCALAR_T tx  = SCALAR_T(2) * quat.x();
+  const SCALAR_T ty  = 2 * quat.y();
+  const SCALAR_T tz  = 2 * quat.z();
+  const SCALAR_T twx = tx * quat.w();
+  const SCALAR_T twy = ty * quat.w();
+  const SCALAR_T twz = tz * quat.w();
+  const SCALAR_T txx = tx * quat.x();
+  const SCALAR_T txy = ty * quat.x();
+  const SCALAR_T txz = tz * quat.x();
+  const SCALAR_T tyy = ty * quat.y();
+  const SCALAR_T tyz = tz * quat.y();
+  const SCALAR_T tzz = tz * quat.z();
+
+  res.coeffRef(0,0) = 1 - (tyy+tzz);
+  res.coeffRef(0,1) = txy - twz;
+  res.coeffRef(0,2) = txz + twy;
+  res.coeffRef(1,0) = txy + twz;
+  res.coeffRef(1,1) = 1 - (txx+tzz);
+  res.coeffRef(1,2) = tyz - twx;
+  res.coeffRef(2,0) = txz - twy;
+  res.coeffRef(2,1) = tyz + twx;
+  res.coeffRef(2,2) = 1 - (txx+tyy);
+
+  return res;
+}
+
+template<typename SCALAR_T>
+Eigen::Matrix<SCALAR_T, 3, 1> rotationMatrixToEulerAngles(Eigen::Matrix<SCALAR_T, 3, 3>& rotMat)
+{
+  SCALAR_T pi(M_PI);
+
+  Eigen::Matrix<SCALAR_T, 3, 1> res;
+  SCALAR_T psi, psi1, psi2,
+           theta, theta1, theta2, 
+           phi, phi1, phi2;
+  
+  if (abs(rotMat(2,0)) != 1)
+  {
+    theta1 = -asin(rotMat(2,0));
+    theta2 = pi - theta1;
+    
+    psi1 = atan2(rotMat(2,1) / cos(theta1), rotMat(2,2) / cos(theta1));
+    psi2 = atan2(rotMat(2,1) / cos(theta2), rotMat(2,2) / cos(theta2));
+
+    phi1 = atan2(rotMat(1,0) / cos(theta1), rotMat(0,0) / cos(theta1));
+    phi2 = atan2(rotMat(1,0) / cos(theta2), rotMat(0,0) / cos(theta2));
+  
+    psi = psi1;
+    theta = theta1;
+    phi = phi1;
+  }
+  else
+  {
+    phi = 0;
+    if(rotMat(2,0) == -1)
+    {
+      theta = 0.5 * pi;
+      psi = phi + atan2(rotMat(0,1), rotMat(0,2));
+    }
+    else
+    {
+      theta = -0.5 * pi;
+      psi = -phi + atan2(-rotMat(0,1), -rotMat(0,2));
+    }
+  }
+
+  // Rot z
+  res(0) = phi;
+  
+  // Rot y
+  res(1) = theta;
+  
+  // Rot x
+  res(2) = psi; 
+
+  return res;
+}
 
 /**
  * Compute the quaternion distance measure
@@ -48,7 +139,8 @@ namespace ocs2 {
  * quaternions, the measured and desired frames are aligned if this vector is 0.
  */
 template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 3, 1> quaternionDistance(const Eigen::Quaternion<SCALAR_T>& q, const Eigen::Quaternion<SCALAR_T>& qRef) {
+Eigen::Matrix<SCALAR_T, 3, 1> quaternionDistance(const Eigen::Quaternion<SCALAR_T>& q, const Eigen::Quaternion<SCALAR_T>& qRef) 
+{
   return q.w() * qRef.vec() - qRef.w() * q.vec() + q.vec().cross(qRef.vec());
 }
 
@@ -61,12 +153,13 @@ Eigen::Matrix<SCALAR_T, 3, 1> quaternionDistance(const Eigen::Quaternion<SCALAR_
  * The columns are the partial derivatives of [q.x, q.y, q,z, qw] (default Eigen order)
  */
 template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 3, 4> quaternionDistanceJacobian(const Eigen::Quaternion<SCALAR_T>& q, const Eigen::Quaternion<SCALAR_T>& qRef) {
+Eigen::Matrix<SCALAR_T, 3, 4> quaternionDistanceJacobian(const Eigen::Quaternion<SCALAR_T>& q, const Eigen::Quaternion<SCALAR_T>& qRef) 
+{
   Eigen::Matrix<SCALAR_T, 3, 4> jacobian;
   // clang-format off
-  jacobian << -qRef.w(), qRef.z(), -qRef.y(), qRef.x(),
-              -qRef.z(), -qRef.w(), qRef.x(), qRef.y(),
-              qRef.y(), -qRef.x(), -qRef.w(), qRef.z();
+  jacobian << -qRef.w(), qRef.z(),  -qRef.y(), qRef.x(),
+              -qRef.z(), -qRef.w(), qRef.x(),  qRef.y(),
+               qRef.y(), -qRef.x(), -qRef.w(), qRef.z();
   // clang-format on
   return jacobian;
 }
@@ -78,12 +171,28 @@ Eigen::Matrix<SCALAR_T, 3, 4> quaternionDistanceJacobian(const Eigen::Quaternion
  * @return The corresponding quaternion
  */
 template <typename SCALAR_T>
-Eigen::Quaternion<SCALAR_T> getQuaternionFromEulerAnglesZyx(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAnglesZyx) {
+Eigen::Quaternion<SCALAR_T> getQuaternionFromEulerAnglesZyx(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAnglesZyx) 
+{
   // clang-format off
   return Eigen::AngleAxis<SCALAR_T>(eulerAnglesZyx(0), Eigen::Matrix<SCALAR_T, 3, 1>::UnitZ()) *
          Eigen::AngleAxis<SCALAR_T>(eulerAnglesZyx(1), Eigen::Matrix<SCALAR_T, 3, 1>::UnitY()) *
          Eigen::AngleAxis<SCALAR_T>(eulerAnglesZyx(2), Eigen::Matrix<SCALAR_T, 3, 1>::UnitX());
   // clang-format on
+}
+
+/**
+ * Compute the euler angles zyx corresponding to quaternion 
+ *
+ * @param [in] quat
+ * @return The corresponding euler angles (z,y,x)
+ */
+template <typename SCALAR_T>
+Eigen::Matrix<SCALAR_T, 3, 1> getEulerAnglesZyxFromQuaternion(const Eigen::Quaternion<SCALAR_T>& quat)
+{
+  auto rotMat = quaternionToRotationMatrix(quat);
+  auto eulerZYX = rotationMatrixToEulerAngles(rotMat);
+
+  return eulerZYX;
 }
 
 /**
@@ -93,7 +202,8 @@ Eigen::Quaternion<SCALAR_T> getQuaternionFromEulerAnglesZyx(const Eigen::Matrix<
  * @return The corresponding rotation matrix
  */
 template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 3, 3> getRotationMatrixFromZyxEulerAngles(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
+Eigen::Matrix<SCALAR_T, 3, 3> getRotationMatrixFromZyxEulerAngles(const Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) 
+{
   const SCALAR_T z = eulerAngles(0);
   const SCALAR_T y = eulerAngles(1);
   const SCALAR_T x = eulerAngles(2);
@@ -124,46 +234,71 @@ Eigen::Matrix<SCALAR_T, 3, 3> getRotationMatrixFromZyxEulerAngles(const Eigen::M
  * @note Works for Euler Angles XYZ and ZYX alike
  */
 template <typename SCALAR_T>
-void makeEulerAnglesUnique(Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
+void makeEulerAnglesUnique(Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) 
+{
   SCALAR_T tol(1e-9);  // FIXME(jcarius) magic number
   SCALAR_T pi(M_PI);
 
-  if (eulerAngles.y() < -pi / 2 - tol) {
-    if (eulerAngles.x() < 0) {
+  if (eulerAngles.y() < -pi / 2 - tol) 
+  {
+    if (eulerAngles.x() < 0) 
+    {
       eulerAngles.x() = eulerAngles.x() + pi;
-    } else {
+    } 
+    else 
+    {
       eulerAngles.x() = eulerAngles.x() - pi;
     }
 
     eulerAngles.y() = -(eulerAngles.y() + pi);
 
-    if (eulerAngles.z() < 0) {
+    if (eulerAngles.z() < 0) 
+    {
       eulerAngles.z() = eulerAngles.z() + pi;
-    } else {
+    } 
+    else 
+    {
       eulerAngles.z() = eulerAngles.z() - pi;
     }
-  } else if (-pi / 2 - tol <= eulerAngles.y() && eulerAngles.y() <= -pi / 2 + tol) {
+  } 
+  
+  else if (-pi / 2 - tol <= eulerAngles.y() && eulerAngles.y() <= -pi / 2 + tol) 
+  {
     eulerAngles.x() -= eulerAngles.z();
     eulerAngles.z() = 0;
-  } else if (-pi / 2 + tol < eulerAngles.y() && eulerAngles.y() < pi / 2 - tol) {
+  } 
+  
+  else if (-pi / 2 + tol < eulerAngles.y() && eulerAngles.y() < pi / 2 - tol) 
+  {
     // ok
-  } else if (pi / 2 - tol <= eulerAngles.y() && eulerAngles.y() <= pi / 2 + tol) {
+  } 
+  
+  else if (pi / 2 - tol <= eulerAngles.y() && eulerAngles.y() <= pi / 2 + tol) 
+  {
     // todo: pi/2 should not be in range, other formula?
     eulerAngles.x() += eulerAngles.z();
     eulerAngles.z() = 0;
-  } else  // pi/2 + tol < eulerAngles.y()
+  } 
+  
+  else  // pi/2 + tol < eulerAngles.y()
   {
-    if (eulerAngles.x() < 0) {
+    if (eulerAngles.x() < 0) 
+    {
       eulerAngles.x() = eulerAngles.x() + pi;
-    } else {
+    } 
+    else 
+    {
       eulerAngles.x() = eulerAngles.x() - pi;
     }
 
     eulerAngles.y() = -(eulerAngles.y() - pi);
 
-    if (eulerAngles.z() < 0) {
+    if (eulerAngles.z() < 0) 
+    {
       eulerAngles.z() = eulerAngles.z() + pi;
-    } else {
+    } 
+    else 
+    {
       eulerAngles.z() = eulerAngles.z() - pi;
     }
   }
@@ -176,7 +311,8 @@ void makeEulerAnglesUnique(Eigen::Matrix<SCALAR_T, 3, 1>& eulerAngles) {
  * @return A quaternion representing an equivalent rotation to R.
  */
 template <typename SCALAR_T>
-Eigen::Quaternion<SCALAR_T> matrixToQuaternion(const Eigen::Matrix<SCALAR_T, 3, 3>& R) {
+Eigen::Quaternion<SCALAR_T> matrixToQuaternion(const Eigen::Matrix<SCALAR_T, 3, 3>& R) 
+{
   return Eigen::Quaternion<SCALAR_T>(R);
 }
 
@@ -204,11 +340,14 @@ Eigen::Quaternion<ad_scalar_t> matrixToQuaternion(const Eigen::Matrix<ad_scalar_
  * @return 3x1 rotation vector, theta * n, with theta equal to the rotation angle, and n equal to the rotation axis.
  */
 template <typename SCALAR_T>
-Eigen::Matrix<SCALAR_T, 3, 1> rotationMatrixToRotationVector(const Eigen::Matrix<SCALAR_T, 3, 3>& rotationMatrix) {
+Eigen::Matrix<SCALAR_T, 3, 1> rotationMatrixToRotationVector(const Eigen::Matrix<SCALAR_T, 3, 3>& rotationMatrix) 
+{
   // Helper function to select a 3d vector compatible with CppAd
   auto selectSolutionGt = [](SCALAR_T left, SCALAR_T right, const Eigen::Matrix<SCALAR_T, 3, 1>& if_true,
-                             const Eigen::Matrix<SCALAR_T, 3, 1>& if_false) -> Eigen::Matrix<SCALAR_T, 3, 1> {
-    return {CppAD::CondExpGt(left, right, if_true[0], if_false[0]), CppAD::CondExpGt(left, right, if_true[1], if_false[1]),
+                             const Eigen::Matrix<SCALAR_T, 3, 1>& if_false) -> Eigen::Matrix<SCALAR_T, 3, 1> 
+  {
+    return {CppAD::CondExpGt(left, right, if_true[0], if_false[0]), 
+            CppAD::CondExpGt(left, right, if_true[1], if_false[1]),
             CppAD::CondExpGt(left, right, if_true[2], if_false[2])};
   };
   const auto& R = rotationMatrix;
@@ -222,9 +361,10 @@ Eigen::Matrix<SCALAR_T, 3, 1> rotationMatrixToRotationVector(const Eigen::Matrix
   const SCALAR_T largeAngleThreshold = -SCALAR_T(1.0) + eps;  // select quaternionSol if trace < -1.0 + eps
 
   // Clip trace away from singularities, to be used in branches that might result in NaN.
-  const SCALAR_T safeHighTrace =
-      CppAD::CondExpGt(trace, smallAngleThreshold, smallAngleThreshold, trace);  // this trace is lower than 3 - eps
-  const SCALAR_T safeTrace = CppAD::CondExpGt(safeHighTrace, largeAngleThreshold, safeHighTrace,
+  const SCALAR_T safeHighTrace = CppAD::CondExpGt(trace, smallAngleThreshold, smallAngleThreshold, trace);  // this trace is lower than 3 - eps
+  const SCALAR_T safeTrace = CppAD::CondExpGt(safeHighTrace, 
+                                              largeAngleThreshold, 
+                                              safeHighTrace,
                                               largeAngleThreshold);  // this trace is also higher than -1.0 + eps
 
   // Rotation close to zero -> use taylor expansion, use when trace > 3.0 - eps
@@ -248,7 +388,9 @@ Eigen::Matrix<SCALAR_T, 3, 1> rotationMatrixToRotationVector(const Eigen::Matrix
   Eigen::Matrix<SCALAR_T, 3, 1> quaternionSol = SCALAR_T(4.0) * atan(qVecNorm / (q.w() + SCALAR_T(1.0))) * q.vec() / qVecNorm;
 
   // Select solution
-  return selectSolutionGt(trace, largeAngleThreshold, selectSolutionGt(trace, smallAngleThreshold, taylorExpansionSol, normalSol),
+  return selectSolutionGt(trace, 
+                          largeAngleThreshold, 
+                          selectSolutionGt(trace, smallAngleThreshold, taylorExpansionSol, normalSol),
                           quaternionSol);
 }
 
@@ -266,7 +408,8 @@ Eigen::Matrix<SCALAR_T, 3, 1> rotationMatrixToRotationVector(const Eigen::Matrix
  */
 template <typename SCALAR_T>
 Eigen::Matrix<SCALAR_T, 3, 1> rotationErrorInWorld(const Eigen::Matrix<SCALAR_T, 3, 3>& rotationMatrixLhs,
-                                                   const Eigen::Matrix<SCALAR_T, 3, 3>& rotationMatrixRhs) {
+                                                   const Eigen::Matrix<SCALAR_T, 3, 3>& rotationMatrixRhs) 
+{
   /* Note that this error (W_R_lhs * rhs_R_W) does not follow the usual concatination of rotations.
    * It follows from simplifying:
    *    errorInWorld = W_R_lhs * angleAxis(rhs_R_W * W_R_lhs)
@@ -294,7 +437,8 @@ Eigen::Matrix<SCALAR_T, 3, 1> rotationErrorInWorld(const Eigen::Matrix<SCALAR_T,
  */
 template <typename SCALAR_T>
 Eigen::Matrix<SCALAR_T, 3, 1> rotationErrorInLocal(const Eigen::Matrix<SCALAR_T, 3, 3>& rotationMatrixLhs,
-                                                   const Eigen::Matrix<SCALAR_T, 3, 3>& rotationMatrixRhs) {
+                                                   const Eigen::Matrix<SCALAR_T, 3, 3>& rotationMatrixRhs) 
+{
   const Eigen::Matrix<SCALAR_T, 3, 3> rotationErrorInLocal = rotationMatrixRhs.transpose() * rotationMatrixLhs;
   return rotationMatrixToRotationVector(rotationErrorInLocal);
 }

@@ -41,6 +41,7 @@ template <typename SCALAR_T>
 class EndEffectorKinematics 
 {
   public:
+    using vector2_t = Eigen::Matrix<SCALAR_T, 2, 1>;
     using vector3_t = Eigen::Matrix<SCALAR_T, 3, 1>;
     using matrix3x_t = Eigen::Matrix<SCALAR_T, 3, Eigen::Dynamic>;
     using vector_t = Eigen::Matrix<SCALAR_T, Eigen::Dynamic, 1>;

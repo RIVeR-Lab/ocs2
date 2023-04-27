@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 #include <ocs2_robotic_tools/end_effector/EndEffectorKinematics.h>
 
+#include "ocs2_core/dynamics/MultiModelFunctions.h"
 #include <ocs2_core/constraint/StateConstraint.h>
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
 
@@ -47,12 +48,16 @@ class EndEffectorConstraint final : public StateConstraint
     using quaternion_t = Eigen::Quaternion<scalar_t>;
 
     EndEffectorConstraint(const EndEffectorKinematics<scalar_t>& endEffectorKinematics, const ReferenceManager& referenceManager);
+
+    EndEffectorConstraint(const EndEffectorKinematics<scalar_t>& endEffectorKinematics, 
+                          const ReferenceManager& referenceManager, 
+                          RobotModelInfo& robotModelInfo);
     
     ~EndEffectorConstraint() override = default;
     
     EndEffectorConstraint* clone() const override 
     { 
-      return new EndEffectorConstraint(*endEffectorKinematicsPtr_, *referenceManagerPtr_); 
+      return new EndEffectorConstraint(*endEffectorKinematicsPtr_, *referenceManagerPtr_, *robotModelInfoPtr_); 
     }
 
     size_t getNumConstraints(scalar_t time) const override;
@@ -79,9 +84,11 @@ class EndEffectorConstraint final : public StateConstraint
     PinocchioEndEffectorKinematics* pinocchioEEKinPtr_ = nullptr;
 
     vector3_t eeDesiredPosition_;
-    
+
     quaternion_t eeDesiredOrientation_;
     
+    std::unique_ptr<RobotModelInfo> robotModelInfoPtr_;
+
     std::unique_ptr<EndEffectorKinematics<scalar_t>> endEffectorKinematicsPtr_;
     
     const ReferenceManager* referenceManagerPtr_;

@@ -69,7 +69,7 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
      */
     PinocchioEndEffectorKinematicsCppAd(const PinocchioInterface& pinocchioInterface, 
                                         const PinocchioStateInputMapping<ad_scalar_t>& mapping,
-                                        RobotModelInfo robotModelInfo,
+                                        RobotModelInfo& robotModelInfo,
                                         const std::string& modelName, 
                                         const std::string& modelFolder = "/tmp/ocs2",
                                         bool recompileLibraries = true, 
@@ -89,7 +89,7 @@ class PinocchioEndEffectorKinematicsCppAd final : public EndEffectorKinematics<s
      */
     PinocchioEndEffectorKinematicsCppAd(const PinocchioInterface& pinocchioInterface, 
                                         const PinocchioStateInputMapping<ad_scalar_t>& mapping,
-                                        RobotModelInfo robotModelInfo,
+                                        RobotModelInfo& robotModelInfo,
                                         update_pinocchio_interface_callback updateCallback, 
                                         const std::string& modelName,
                                         const std::string& modelFolder = "/tmp/ocs2", 

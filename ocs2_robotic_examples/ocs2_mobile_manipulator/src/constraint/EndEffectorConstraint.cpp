@@ -44,15 +44,42 @@ EndEffectorConstraint::EndEffectorConstraint(const EndEffectorKinematics<scalar_
     endEffectorKinematicsPtr_(endEffectorKinematics.clone()),
     referenceManagerPtr_(&referenceManager) 
 {
-  std::cout << "[EndEffectorConstraint::EndEffectorConstraint] START " << std::endl;
+  std::cout << "[EndEffectorConstraint::EndEffectorConstraint(2)] START " << std::endl;
+
+  std::cout << "[EndEffectorConstraint::EndEffectorConstraint(2)] DEBUG INF" << std:: endl;
+  while(1);
 
   if (endEffectorKinematics.getEndEffectorFrameNames().size() != 1) 
   {
-    throw std::runtime_error("[EndEffectorConstraint] endEffectorKinematics has wrong number of end effector IDs.");
+    throw std::runtime_error("[EndEffectorConstraint::EndEffectorConstraint(2)] ERROR: Wrong number of end effector IDs.");
   }
   pinocchioEEKinPtr_ = dynamic_cast<PinocchioEndEffectorKinematics*>(endEffectorKinematicsPtr_.get());
 
-  std::cout << "[EndEffectorConstraint::EndEffectorConstraint] END " << std::endl;
+  std::cout << "[EndEffectorConstraint::EndEffectorConstraint(2)] END " << std::endl;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+EndEffectorConstraint::EndEffectorConstraint(const EndEffectorKinematics<scalar_t>& endEffectorKinematics,
+                                             const ReferenceManager& referenceManager,
+                                             RobotModelInfo& robotModelInfo)
+  : StateConstraint(ConstraintOrder::Linear),
+    endEffectorKinematicsPtr_(endEffectorKinematics.clone()),
+    referenceManagerPtr_(&referenceManager),
+    robotModelInfoPtr_(&robotModelInfo)
+{
+  std::cout << "[EndEffectorConstraint::EndEffectorConstraint(3)] START " << std::endl;
+
+  std::cout << "[EndEffectorConstraint::EndEffectorConstraint(3)] modelModeString: " << getModelModeString(*robotModelInfoPtr_) << std::endl;
+
+  if (endEffectorKinematics.getEndEffectorFrameNames().size() != 1) 
+  {
+    throw std::runtime_error("[EndEffectorConstraint::EndEffectorConstraint(3)] ERROR: Wrong number of end effector IDs.");
+  }
+  pinocchioEEKinPtr_ = dynamic_cast<PinocchioEndEffectorKinematics*>(endEffectorKinematicsPtr_.get());
+
+  std::cout << "[EndEffectorConstraint::EndEffectorConstraint(3)] END " << std::endl;
 }
 
 /******************************************************************************************************/
@@ -60,8 +87,16 @@ EndEffectorConstraint::EndEffectorConstraint(const EndEffectorKinematics<scalar_
 /******************************************************************************************************/
 size_t EndEffectorConstraint::getNumConstraints(scalar_t time) const 
 {
-  // xyz + rpy
-  return 6;
+  if (robotModelInfoPtr_->modelMode == ModelMode::BaseMotion)
+  {
+    // xy + yaw
+    return 3;
+  }
+  else
+  {
+    // xyz + rpy
+    return 6;
+  }
 }
 
 /******************************************************************************************************/
@@ -119,22 +154,47 @@ vector_t EndEffectorConstraint::getValue(scalar_t time,
   // PinocchioEndEffectorKinematics requires pre-computation with shared PinocchioInterface.
   if (pinocchioEEKinPtr_ != nullptr) 
   {
+    std::cout << "[EndEffectorConstraint::getValue(4)] DEBUG INF" << std::endl;
+    while(1);
+
     const auto& preCompMM = cast<MobileManipulatorPreComputation>(preComputation);
     pinocchioEEKinPtr_->setPinocchioInterface(preCompMM.getPinocchioInterface());
   }
 
+  vector_t constraint;
   const auto desiredPositionOrientation = interpolateEndEffectorPose(time);
 
-  vector_t constraint(6);
-  constraint.head<3>() = endEffectorKinematicsPtr_->getPosition(state, fullState).front() - desiredPositionOrientation.first;
-  //constraint.head<3>() = endEffectorKinematicsPtr_->getPosition(fullState).front() - desiredPositionOrientation.first;
+  auto posDiff = endEffectorKinematicsPtr_->getPosition(state, fullState).front() - desiredPositionOrientation.first;
+  auto oriDiff = endEffectorKinematicsPtr_->getOrientationError(state, fullState, {desiredPositionOrientation.second}).front();
 
-  constraint.tail<3>() = endEffectorKinematicsPtr_->getOrientationError(state, fullState, {desiredPositionOrientation.second}).front();
-  //constraint.tail<3>() = endEffectorKinematicsPtr_->getOrientationError(fullState, {desiredPositionOrientation.second}).front();
+  /*
+  std::cout << "[EndEffectorConstraint::getValue(4)] modeStateDim: " << robotModelInfoPtr_->modeStateDim << std::endl;
+  std::cout << "[EndEffectorConstraint::getValue(4)] modeInputDim: " << robotModelInfoPtr_->modeInputDim << std::endl;
 
-  // NUA NOTE: These constraints should not be negative, however they can be with the above implementation!
-  //           This can be fixed while integrating these constraints to the cost function later (since it was 
-  //           also working well without my edit), but I haven't verified that yet!
+  std::cout << "[EndEffectorConstraint::getValue(4)] posDiff size: " << posDiff.size() << std::endl;
+  std::cout << posDiff << std::endl;
+  std::cout << "[EndEffectorConstraint::getValue(4)] oriDiff size: " << oriDiff.size() << std::endl;
+  std::cout << oriDiff << std::endl;
+  */
+
+  if (robotModelInfoPtr_->modelMode == ModelMode::BaseMotion)
+  {
+    //std::cout << "[EndEffectorConstraint::getValue(4)] BaseMotion" << std::endl;
+    constraint.resize(3);
+    constraint.head<2>() = posDiff.head(2);
+    constraint.tail<1>() = oriDiff.head(1);
+  }
+  else
+  {
+    //std::cout << "[EndEffectorConstraint::getValue(4)] NOT BaseMotion" << std::endl;
+    constraint.resize(6);
+    constraint.head<3>() = posDiff;
+    constraint.tail<3>() = oriDiff;
+  }
+
+  //// NUA NOTE: These constraints should not be negative, however they can be with the above implementation!
+  //             This can be fixed while integrating these constraints to the cost function later (since it was 
+  //             also working well without my edit), but I haven't verified that yet!
   for (size_t i = 0; i < constraint.size(); i++)
   {
     if (constraint[i] < 0)
@@ -142,6 +202,12 @@ vector_t EndEffectorConstraint::getValue(scalar_t time,
       constraint[i] = abs(constraint[i]);
     }
   }
+
+  std::cout << "[EndEffectorConstraint::getValue(4)] constraint: " << std::endl;
+  std::cout << constraint << std::endl;
+
+  //std::cout << "[EndEffectorConstraint::getValue(4)] DEBUG INF" << std::endl;
+  //while(1);
 
   //std::cout << "[EndEffectorConstraint::getValue(4)] END" << std:: endl << std::endl;
 
@@ -198,21 +264,50 @@ VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(
   // PinocchioEndEffectorKinematics requires pre-computation with shared PinocchioInterface.
   if (pinocchioEEKinPtr_ != nullptr) 
   {
+    std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] DEBUG INF" << std::endl;
+    while(1);
+
     const auto& preCompMM = cast<MobileManipulatorPreComputation>(preComputation);
     pinocchioEEKinPtr_->setPinocchioInterface(preCompMM.getPinocchioInterface());
   }
 
   const auto desiredPositionOrientation = interpolateEndEffectorPose(time);
 
-  auto approximation = VectorFunctionLinearApproximation(6, state.rows(), 0);
+  auto constraintDim = getNumConstraints(time);
+  auto approximation = VectorFunctionLinearApproximation(constraintDim, state.rows(), 0);
 
   const auto eePosition = endEffectorKinematicsPtr_->getPositionLinearApproximation(state, fullState).front();
-  approximation.f.head<3>() = eePosition.f - desiredPositionOrientation.first;
-  approximation.dfdx.topRows<3>() = eePosition.dfdx;
-
   const auto eeOrientationError = endEffectorKinematicsPtr_->getOrientationErrorLinearApproximation(state, fullState, {desiredPositionOrientation.second}).front();
-  approximation.f.tail<3>() = eeOrientationError.f;
-  approximation.dfdx.bottomRows<3>() = eeOrientationError.dfdx;
+  
+  std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] eePosition.f.size: " << eePosition.f.size() << std::endl;
+  std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] eePosition.dfdx.rows: " << eePosition.dfdx.rows() << std::endl;
+  std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] eePosition.dfdx.cols: " << eePosition.dfdx.cols() << std::endl;
+  std::cout << eePosition.dfdx << std::endl;
+  std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] desiredPositionOrientation.first.size: " << desiredPositionOrientation.first.size() << std::endl;
+
+  std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] eeOrientationError.f.size: " << eeOrientationError.f.size() << std::endl;
+  std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] eeOrientationError.dfdx.rows: " << eeOrientationError.dfdx.rows() << std::endl;
+  std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] eeOrientationError.dfdx.cols: " << eeOrientationError.dfdx.cols() << std::endl;
+
+  if (robotModelInfoPtr_->modelMode == ModelMode::BaseMotion)
+  {
+    approximation.f.head<2>() = eePosition.f - desiredPositionOrientation.first;
+    approximation.dfdx.topRows<2>() = eePosition.dfdx;
+
+    approximation.f.tail<1>() = eeOrientationError.f;
+    approximation.dfdx.bottomRows<1>() = eeOrientationError.dfdx;
+  }
+  else
+  {
+    approximation.f.head<3>() = eePosition.f - desiredPositionOrientation.first;
+    approximation.dfdx.topRows<3>() = eePosition.dfdx;
+
+    approximation.f.tail<3>() = eeOrientationError.f;
+    approximation.dfdx.bottomRows<3>() = eeOrientationError.dfdx;
+  }
+
+  //std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] DEBUG INF" << std:: endl;
+  //while(1);
 
   //std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] END" << std:: endl;
 

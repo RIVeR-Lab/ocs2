@@ -48,7 +48,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const PinocchioInterface& pinocchioInterface,
                                                                          const PinocchioStateInputMapping<ad_scalar_t>& mapping,
-                                                                         RobotModelInfo robotModelInfo,
+                                                                         RobotModelInfo& robotModelInfo,
                                                                          const std::string& modelName,
                                                                          const std::string& modelFolder, 
                                                                          bool recompileLibraries,
@@ -68,7 +68,7 @@ PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const P
 /******************************************************************************************************/
 PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const PinocchioInterface& pinocchioInterface, 
                                                                          const PinocchioStateInputMapping<ad_scalar_t>& mapping,
-                                                                         RobotModelInfo robotModelInfo,
+                                                                         RobotModelInfo& robotModelInfo,
                                                                          update_pinocchio_interface_callback updateCallback,
                                                                          const std::string& modelName, 
                                                                          const std::string& modelFolder, 
@@ -79,14 +79,26 @@ PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const P
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] START" << std::endl;
 
   endEffectorFrameNames_.clear();
-  endEffectorFrameNames_.push_back(robotModelInfo_.robotArm.eeFrame);
+  endEffectorFrameIds_.clear();
 
-  for (const auto& bodyName : {robotModelInfo_.robotArm.eeFrame}) 
+  if (robotModelInfo.modelMode == ModelMode::BaseMotion)
+  {
+    std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] BaseMotion" << std::endl;
+    endEffectorFrameNames_.push_back(robotModelInfo_.mobileBase.baseFrame);
+  }
+  else
+  {
+    //// NUA NOTE: DONT FORGET TO CHANGE BACK AFTER DEBUGGING!!!
+    endEffectorFrameNames_.push_back(robotModelInfo_.robotArm.eeFrame);
+    //endEffectorFrameNames_.push_back(robotModelInfo_.mobileBase.baseFrame);
+  }
+
+  for (const auto& bodyName : endEffectorFrameNames_) 
   {
     auto id = pinocchioInterface.getModel().getBodyId(bodyName);
     endEffectorFrameIds_.push_back(id);
 
-    std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] bodyName: " << bodyName << std::endl;
+    std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] eeName: " << bodyName << std::endl;
     std::cout << "[PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd] id: " << id << std::endl;
   }
 
@@ -228,6 +240,7 @@ PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const P
 /******************************************************************************************************/
 PinocchioEndEffectorKinematicsCppAd::PinocchioEndEffectorKinematicsCppAd(const PinocchioEndEffectorKinematicsCppAd& rhs)
   : EndEffectorKinematics<scalar_t>(rhs),
+    robotModelInfo_(rhs.robotModelInfo_),
     positionCppAdInterfacePtr_(new CppAdInterface(*rhs.positionCppAdInterfacePtr_)),
     //velocityCppAdInterfacePtr_(new CppAdInterface(*rhs.velocityCppAdInterfacePtr_)),
     orientationErrorCppAdInterfacePtr_(new CppAdInterface(*rhs.orientationErrorCppAdInterfacePtr_)),
@@ -308,13 +321,27 @@ ad_vector_t PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(PinocchioInter
   pinocchio::forwardKinematics(model, data, q);
   pinocchio::updateFramePlacements(model, data);
 
-  ad_vector_t positions(3 * endEffectorFrameIds_.size());
-  for (int i = 0; i < endEffectorFrameIds_.size(); i++) 
+  ad_vector_t positions;
+  if (robotModelInfo_.modelMode == ModelMode::BaseMotion)
   {
-    const size_t frameId = endEffectorFrameIds_[i];
-    positions.segment<3>(3 * i) = data.oMf[frameId].translation();
+    std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(4)] BaseMotion" << std::endl;
+    positions.resize(2 * endEffectorFrameIds_.size());
+    for (int i = 0; i < endEffectorFrameIds_.size(); i++) 
+    {
+      const size_t frameId = endEffectorFrameIds_[i];
+      positions.segment<2>(2 * i) = data.oMf[frameId].translation().head(2);
+    }
   }
-
+  else
+  {
+    positions.resize(3 * endEffectorFrameIds_.size());
+    for (int i = 0; i < endEffectorFrameIds_.size(); i++) 
+    {
+      const size_t frameId = endEffectorFrameIds_[i];
+      positions.segment<3>(3 * i) = data.oMf[frameId].translation();
+    }
+  }
+  
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionCppAd(4)] END" << std::endl;
 
   return positions;
@@ -353,17 +380,34 @@ auto PinocchioEndEffectorKinematicsCppAd::getPosition(const vector_t& state, con
 
   const vector_t positionValues = positionCppAdInterfacePtr_->getFunctionValue(state, fullState);
 
-  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPosition(2)] positionValues: " << std::endl;
+  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPosition(2)] BEFORE positionValues: " << std::endl;
   //std::cout << positionValues << std::endl;
+
+  std::vector<vector3_t> positions;
+  if (robotModelInfo_.modelMode == ModelMode::BaseMotion)
+  {
+    std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPosition(2)] BaseMotion" << std::endl;    
+    for (int i = 0; i < endEffectorFrameIds_.size(); i++) 
+    {
+      vector3_t posi;
+      posi.head(2) = positionValues.segment<2>(2 * i);
+      positions.emplace_back(posi);
+    }
+  }
+  else
+  {
+    std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPosition(2)] NOT BaseMotion" << std::endl;  
+    for (int i = 0; i < endEffectorFrameIds_.size(); i++) 
+    {
+      positions.emplace_back(positionValues.segment<3>(3 * i));
+    }
+  }
+
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPosition(2)] AFTER positionValues size: " << positionValues.size() << std::endl;
+  std::cout << positionValues << std::endl;
 
   //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPosition(2)] DEBUG INF" << std::endl;
   //while(1);
-
-  std::vector<vector3_t> positions;
-  for (int i = 0; i < endEffectorFrameIds_.size(); i++) 
-  {
-    positions.emplace_back(positionValues.segment<3>(3 * i));
-  }
 
   //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPosition(2)] END" << std::endl;
 
@@ -404,7 +448,7 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCpp
 std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation(const vector_t& state,
                                                                                                                    const vector_t& fullState) const 
 {
-  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation] START" << std::endl;
+  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation(2)] START" << std::endl;
 
   //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation(2)] DEBUG INF" << std::endl;
   //while(1);
@@ -412,25 +456,42 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCpp
   const vector_t positionValues = positionCppAdInterfacePtr_->getFunctionValue(state, fullState);
   const matrix_t positionJacobian = positionCppAdInterfacePtr_->getJacobian(state, fullState);
 
-  /*
-  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation] positionValues: " << std::endl;
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation(2)] modeStateDim: " << robotModelInfo_.modeStateDim << std::endl;
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation(2)] modeInputDim: " << robotModelInfo_.modeInputDim << std::endl;
+
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation(2)] positionValues size: " << positionValues.size() << std::endl;
   std::cout << positionValues << std::endl << std::endl;
 
-  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation] positionJacobian: " << std::endl;
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation(2)] positionJacobian rows: " << positionJacobian.rows() << std::endl;
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation(2)] positionJacobian cols: " << positionJacobian.cols() << std::endl;
   std::cout << positionJacobian << std::endl;
-
-  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation] DEBUG INF" << std::endl;
-  while(1);
-  */
 
   std::vector<VectorFunctionLinearApproximation> positions;
   for (int i = 0; i < endEffectorFrameIds_.size(); i++) 
   {
     VectorFunctionLinearApproximation pos;
-    pos.f = positionValues.segment<3>(3 * i);
-    pos.dfdx = positionJacobian.block(3 * i, 0, 3, state.rows());
-    positions.emplace_back(std::move(pos));
+    
+    if (robotModelInfo_.modelMode == ModelMode::BaseMotion)
+    {
+      std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation(2)] BaseMotion" << std::endl;
+      pos.f = positionValues.segment<2>(2 * i);
+      pos.dfdx = positionJacobian.block(2 * i, 0, 2, state.rows());
+      positions.emplace_back(std::move(pos));
+    }
+    else
+    {
+      std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation] NOT BaseMotion" << std::endl;
+      pos.f = positionValues.segment<3>(3 * i);
+      pos.dfdx = positionJacobian.block(3 * i, 0, 3, state.rows());
+      positions.emplace_back(std::move(pos));
+    }
   }
+
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation] dfdx rows: " << positions[0].dfdx.rows() << std::endl;
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation] dfdx cols: " << positions[0].dfdx.cols() << std::endl;
+
+  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation] DEBUG INF" << std::endl;
+  //while(1);
 
   //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getPositionLinearApproximation] END" << std::endl;
 
@@ -447,6 +508,7 @@ ad_vector_t PinocchioEndEffectorKinematicsCppAd::getVelocityCppAd(PinocchioInter
 {
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::getVelocityCppAd] START" << std::endl;
 
+  //// NUA NOTE: NOT ENTERING THIS FUNCTION!
   std::cout << "[PinocchioEndEffectorKinematicsCppAd::getVelocityCppAd(4)] DEBUG INF" << std::endl;
   while(1);
 
@@ -597,11 +659,37 @@ auto PinocchioEndEffectorKinematicsCppAd::getOrientationError(const vector_t& st
 
   const vector_t errorValues = orientationErrorCppAdInterfacePtr_->getFunctionValue(state, params);
 
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationError(3)] errorValues size: " << errorValues.size() << std::endl;
+  std::cout << errorValues << std::endl;
+
+  /*
+  double pi = 3.14159265359;
+  auto yaw = 180 * errorValues(0) / pi;
+  auto pitch = 180 * errorValues(1) / pi;
+  auto roll = 180 * errorValues(2) / pi;
+
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationError(3)] yaw: " << yaw << std::endl;
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationError(3)] pitch: " << pitch << std::endl;
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationError(3)] roll: " << roll << std::endl;
+  */
+
   std::vector<vector3_t> errors;
   for (int i = 0; i < endEffectorFrameIds_.size(); i++) 
   {
-    errors.emplace_back(errorValues.segment<3>(3 * i));
+    if (robotModelInfo_.modelMode == ModelMode::BaseMotion)
+    {
+      vector3_t error;
+      error.head(1) = errorValues.segment<1>(i);
+      errors.emplace_back(error);
+    }
+    else
+    {
+      errors.emplace_back(errorValues.segment<3>(3 * i));
+    }
   }
+  
+  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationError(3)] DEBUG INF" << std::endl;
+  //while(1);
 
   //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationError(3)] END" << std::endl;
 
@@ -651,19 +739,6 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCpp
 {
   //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(3)] END" << std::endl;
 
-  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(3)] DEBUG INF" << std::endl;
-  //while(1);
-
-  /*
-  if(fullState.size() != 9)
-  {
-    std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(3)] state.size(): " << state.size() << std::endl;
-    std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(3)] fullState.size(): " << fullState.size() << std::endl;
-    std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(3)] DEBUG INF" << std::endl;
-    //while(1);
-  }
-  */
-
   auto stateDim = fullState.size();
   vector_t params(stateDim + 4 * endEffectorFrameIds_.size());
 
@@ -676,14 +751,36 @@ std::vector<VectorFunctionLinearApproximation> PinocchioEndEffectorKinematicsCpp
   const vector_t errorValues = orientationErrorCppAdInterfacePtr_->getFunctionValue(state, params);
   const matrix_t errorJacobian = orientationErrorCppAdInterfacePtr_->getJacobian(state, params);
 
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(3)] errorValues size: " << errorValues.size() << std::endl;
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(3)] errorJacobian size: " << errorJacobian.size() << std::endl;
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(3)] errorJacobian rows: " << errorJacobian.rows() << std::endl;
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(3)] errorJacobian cols: " << errorJacobian.cols() << std::endl;
+  std::cout << errorJacobian << std::endl;
+
   std::vector<VectorFunctionLinearApproximation> errors;
   for (int i = 0; i < endEffectorFrameIds_.size(); i++) 
   {
     VectorFunctionLinearApproximation err;
-    err.f = errorValues.segment<3>(3 * i);
-    err.dfdx = errorJacobian.block(3 * i, 0, 3, state.rows());
-    errors.emplace_back(std::move(err));
+    
+    if (robotModelInfo_.modelMode == ModelMode::BaseMotion)
+    {
+      err.f = errorValues.segment<1>(i);
+      err.dfdx = errorJacobian.block(i, 0, 1, state.rows());
+      errors.emplace_back(std::move(err));
+    }
+    else
+    {
+      err.f = errorValues.segment<3>(3 * i);
+      err.dfdx = errorJacobian.block(3 * i, 0, 3, state.rows());
+      errors.emplace_back(std::move(err));
+    }
   }
+  
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(3)] dfdx rows: " << errors[0].dfdx.rows() << std::endl;
+  std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(3)] dfdx cols: " << errors[0].dfdx.cols() << std::endl;
+
+  //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(3)] DEBUG INF" << std::endl;
+  //while(1);
 
   //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorLinearApproximation(3)] END" << std::endl;
 
@@ -715,16 +812,41 @@ ad_vector_t PinocchioEndEffectorKinematicsCppAd::getOrientationErrorCppAd(Pinocc
   pinocchio::forwardKinematics(model, data, q);
   pinocchio::updateFramePlacements(model, data);
 
-  ad_vector_t errors(3 * endEffectorFrameIds_.size());
-  for (int i = 0; i < endEffectorFrameIds_.size(); i++) 
+  ad_vector_t errors;
+  if (robotModelInfo_.modelMode == ModelMode::BaseMotion)
   {
-    const size_t frameId = endEffectorFrameIds_[i];
-    const ad_quaternion_t eeOrientation = matrixToQuaternion(data.oMf[frameId].rotation());
-    ad_quaternion_t eeReferenceOrientation;
-    eeReferenceOrientation.coeffs() = pp.segment<4>(i*4);
-    errors.segment<3>(3 * i) = ocs2::quaternionDistance(eeOrientation, eeReferenceOrientation);
-  }
+    errors.resize((endEffectorFrameIds_.size()));
+    for (int i = 0; i < endEffectorFrameIds_.size(); i++) 
+    {
+      const size_t frameId = endEffectorFrameIds_[i];
+      const ad_quaternion_t eeOrientation = matrixToQuaternion(data.oMf[frameId].rotation());
+      Eigen::Matrix<ad_scalar_t, 3, 1> eeEulerZYX = getEulerAnglesZyxFromQuaternion(eeOrientation);
+      
+      ad_quaternion_t eeReferenceOrientation;
+      eeReferenceOrientation.coeffs() = pp.segment<4>(i*4);
+      Eigen::Matrix<ad_scalar_t, 3, 1> eeRefEulerZYX = getEulerAnglesZyxFromQuaternion(eeOrientation);
 
+      auto yawDiff = eeEulerZYX - eeRefEulerZYX;
+      //auto yawDiff = eeEulerZYX;
+      errors.segment<1>(i) = yawDiff.segment<1>(0);
+    }
+  }
+  else
+  {
+    errors.resize((3 * endEffectorFrameIds_.size()));
+    for (int i = 0; i < endEffectorFrameIds_.size(); i++) 
+    {
+      const size_t frameId = endEffectorFrameIds_[i];
+      const ad_quaternion_t eeOrientation = matrixToQuaternion(data.oMf[frameId].rotation());
+      ad_quaternion_t eeReferenceOrientation;
+      eeReferenceOrientation.coeffs() = pp.segment<4>(i*4);
+      errors.segment<3>(3 * i) = ocs2::quaternionDistance(eeOrientation, eeReferenceOrientation);
+
+      //Eigen::Matrix<ad_scalar_t, 3, 1> eeRefEulerZYX = getEulerAnglesZyxFromQuaternion(eeOrientation);
+      //errors.segment<3>(3 * i) = eeRefEulerZYX;
+    }
+  }
+  
   //std::cout << "[PinocchioEndEffectorKinematicsCppAd::getOrientationErrorCppAd] END" << std::endl;
 
   return errors;
