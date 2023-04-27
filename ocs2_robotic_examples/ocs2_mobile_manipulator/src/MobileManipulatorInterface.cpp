@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.04.25
+// LAST UPDATE: 2022.04.27
 //
 // AUTHOR: Neset Unver Akmandor  (NUA)
 //
@@ -133,7 +133,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 
   // NUA TODO: We don't need to do it here!
   //int modelMode = getModelModeInt(robotModelInfo_);
-  auto modelModeInt = 2;
+  auto modelModeInt = 0;
   setMPCProblem(modelModeInt, pointsAndRadii);
   
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END" << std::endl;
@@ -169,23 +169,11 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
   std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getEndEffectorConstraint" << std::endl;
   problem_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint("endEffector"));
   problem_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint("finalEndEffector"));
-
-  /*
-  if (robotModelInfo_.modelMode == ModelMode::BaseMotion)
-  {
-    ///////// NUA TODO: COMPLETE!
-  }
-  else
-  {
-    
-  }
-  */
-
   std::cout << "" << std::endl;
 
   std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getSelfCollisionConstraint" << std::endl;
   // Self-collision avoidance constraint
-  if (activateSelfCollision_ && robotModelInfo_.modelMode != ModelMode::BaseMotion) 
+  if (activateSelfCollision_) 
   {
     if (robotModelInfo_.modelMode == ModelMode::ArmMotion || robotModelInfo_.modelMode == ModelMode::WholeBodyMotion)
     {
@@ -196,7 +184,7 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
 
   std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getExtCollisionConstraint" << std::endl;
   // External-collision avoidance constraint
-  activateExtCollision_ = false;
+  //activateExtCollision_ = false;
   if (activateExtCollision_) 
   {
     createPointsOnRobotPtr(pointsAndRadii);
@@ -215,8 +203,8 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
                                     libraryFolder_,
                                     recompileLibraries_,
                                     false);
-    } 
-    else 
+    }
+    else
     {
       pointsOnRobotPtr_ = nullptr;
     }

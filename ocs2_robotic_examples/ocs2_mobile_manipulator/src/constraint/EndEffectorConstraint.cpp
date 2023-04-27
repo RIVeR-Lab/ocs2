@@ -87,6 +87,8 @@ EndEffectorConstraint::EndEffectorConstraint(const EndEffectorKinematics<scalar_
 /******************************************************************************************************/
 size_t EndEffectorConstraint::getNumConstraints(scalar_t time) const 
 {
+  return 6;
+  /*
   if (robotModelInfoPtr_->modelMode == ModelMode::BaseMotion)
   {
     // xy + yaw
@@ -97,6 +99,7 @@ size_t EndEffectorConstraint::getNumConstraints(scalar_t time) const
     // xyz + rpy
     return 6;
   }
+  */
 }
 
 /******************************************************************************************************/
@@ -161,11 +164,10 @@ vector_t EndEffectorConstraint::getValue(scalar_t time,
     pinocchioEEKinPtr_->setPinocchioInterface(preCompMM.getPinocchioInterface());
   }
 
-  vector_t constraint;
   const auto desiredPositionOrientation = interpolateEndEffectorPose(time);
 
-  auto posDiff = endEffectorKinematicsPtr_->getPosition(state, fullState).front() - desiredPositionOrientation.first;
-  auto oriDiff = endEffectorKinematicsPtr_->getOrientationError(state, fullState, {desiredPositionOrientation.second}).front();
+  vector_t posDiff = endEffectorKinematicsPtr_->getPosition(state, fullState).front() - desiredPositionOrientation.first;
+  vector_t oriDiff = endEffectorKinematicsPtr_->getOrientationError(state, fullState, {desiredPositionOrientation.second}).front();
 
   /*
   std::cout << "[EndEffectorConstraint::getValue(4)] modeStateDim: " << robotModelInfoPtr_->modeStateDim << std::endl;
@@ -176,7 +178,9 @@ vector_t EndEffectorConstraint::getValue(scalar_t time,
   std::cout << "[EndEffectorConstraint::getValue(4)] oriDiff size: " << oriDiff.size() << std::endl;
   std::cout << oriDiff << std::endl;
   */
-
+  
+  ///*
+  vector_t constraint;
   if (robotModelInfoPtr_->modelMode == ModelMode::BaseMotion)
   {
     //std::cout << "[EndEffectorConstraint::getValue(4)] BaseMotion" << std::endl;
@@ -191,6 +195,13 @@ vector_t EndEffectorConstraint::getValue(scalar_t time,
     constraint.head<3>() = posDiff;
     constraint.tail<3>() = oriDiff;
   }
+  //*/
+
+  /*
+  vector_t constraint(6);
+  constraint.head<3>() = endEffectorKinematicsPtr_->getPosition(state, fullState).front() - desiredPositionOrientation.first;
+  constraint.tail<3>() = endEffectorKinematicsPtr_->getOrientationError(state, fullState, {desiredPositionOrientation.second}).front();
+  */
 
   //// NUA NOTE: These constraints should not be negative, however they can be with the above implementation!
   //             This can be fixed while integrating these constraints to the cost function later (since it was 
@@ -203,8 +214,8 @@ vector_t EndEffectorConstraint::getValue(scalar_t time,
     }
   }
 
-  std::cout << "[EndEffectorConstraint::getValue(4)] constraint: " << std::endl;
-  std::cout << constraint << std::endl;
+  //std::cout << "[EndEffectorConstraint::getValue(4)] constraint: " << std::endl;
+  //std::cout << constraint << std::endl;
 
   //std::cout << "[EndEffectorConstraint::getValue(4)] DEBUG INF" << std::endl;
   //while(1);
@@ -279,6 +290,7 @@ VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(
   const auto eePosition = endEffectorKinematicsPtr_->getPositionLinearApproximation(state, fullState).front();
   const auto eeOrientationError = endEffectorKinematicsPtr_->getOrientationErrorLinearApproximation(state, fullState, {desiredPositionOrientation.second}).front();
   
+  /*
   std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] eePosition.f.size: " << eePosition.f.size() << std::endl;
   std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] eePosition.dfdx.rows: " << eePosition.dfdx.rows() << std::endl;
   std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] eePosition.dfdx.cols: " << eePosition.dfdx.cols() << std::endl;
@@ -288,6 +300,7 @@ VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(
   std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] eeOrientationError.f.size: " << eeOrientationError.f.size() << std::endl;
   std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] eeOrientationError.dfdx.rows: " << eeOrientationError.dfdx.rows() << std::endl;
   std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] eeOrientationError.dfdx.cols: " << eeOrientationError.dfdx.cols() << std::endl;
+  */
 
   if (robotModelInfoPtr_->modelMode == ModelMode::BaseMotion)
   {
