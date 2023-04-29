@@ -444,7 +444,7 @@ ScalarFunctionQuadraticApproximation approximateCost(const OptimalControlProblem
                                                      const vector_t& fullState,
                                                      const vector_t& input) 
 {
-  //std::cout << "[LinearQuadraticApproximator::approximateCost(5)] START" << std::endl;
+  std::cout << "[LinearQuadraticApproximator::approximateCost(5)] START" << std::endl;
 
   //// NUA TODO: Absolutely no use! Remove targetTrajectoriesPtr from OCP and cost functions (getValue)!
   const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
@@ -474,17 +474,20 @@ ScalarFunctionQuadraticApproximation approximateCost(const OptimalControlProblem
   }
   //std::cout << "[LinearQuadraticApproximator::approximateCost(5)] END stateCostPtr" << std::endl;
 
-  //std::cout << "[LinearQuadraticApproximator::approximateCost(5)] START stateSoftConstraintPtr" << std::endl;
+  std::cout << "[LinearQuadraticApproximator::approximateCost(5)] START stateSoftConstraintPtr" << std::endl;
   if (!problem.stateSoftConstraintPtr->empty()) 
   {
     auto stateCost = problem.stateSoftConstraintPtr->getQuadraticApproximation(time, state, fullState, targetTrajectories, preComputation);
     cost.f += stateCost.f;
     cost.dfdx += stateCost.dfdx;
     cost.dfdxx += stateCost.dfdxx;
-  }
-  //std::cout << "[LinearQuadraticApproximator::approximateCost(5)] END stateSoftConstraintPtr" << std::endl;
 
-  //std::cout << "[LinearQuadraticApproximator::approximateCost(5)] END" << std::endl;
+    std::cout << "[LinearQuadraticApproximator::approximateCost(5)] TOTAL cost.f: " << cost.f << std::endl;
+  }
+  std::cout << "[LinearQuadraticApproximator::approximateCost(5)] END stateSoftConstraintPtr" << std::endl;
+
+  std::cout << "[LinearQuadraticApproximator::approximateCost(5)] END" << std::endl << std::endl;
+  std::cout << "-----------------------------------------" << std::endl << std::endl;
 
   return cost;
 }

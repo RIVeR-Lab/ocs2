@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.04.12
+// LAST UPDATE: 2022.04.27
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -13,6 +13,7 @@
 
 //#include <voxblox/interpolator/interpolator.h>
 
+#include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include "ocs2_ext_collision/ExtCollisionPinocchioGeometryInterface.h"
@@ -112,9 +113,9 @@ class ExtCollisionCppAd
                                                          const vector_t& fullState) const;
 
     /** NUA TODO: Description! */
-    void updateDistances(const vector_t& state) const;
+    void updateDistances(const vector_t& state, bool normalize_flag=false) const;
 
-    void updateDistances(const vector_t& state, const vector_t& fullState) const;
+    void updateDistances(const vector_t& state, const vector_t& fullState, bool normalize_flag=false) const;
 
   private:
     // From the current state of the robot, and the closest points in world frame, compute the positions of the points in link frame
@@ -143,6 +144,8 @@ class ExtCollisionCppAd
                          const std::string& modelName, 
                          const std::string& modelFolder);
 
+    bool normalize_flag_;
+
     // Number of params per result = 3 + 3 + 1 (nearest point 1, nearest point 2, sign indicator)
     const size_t numberOfParamsPerResult_ = 7;
 
@@ -168,6 +171,9 @@ class ExtCollisionCppAd
     //mutable Eigen::MatrixXd gradientsVoxblox_;
     //mutable Eigen::Matrix<scalar_t, -1, -1> gradients_;
     std::shared_ptr<ExtMapUtility> emuPtr_;
+
+    mutable ocs2::benchmark::RepeatedTimer timer1_;
+    mutable ocs2::benchmark::RepeatedTimer timer2_;
 };
 
 } /* namespace ocs2 */

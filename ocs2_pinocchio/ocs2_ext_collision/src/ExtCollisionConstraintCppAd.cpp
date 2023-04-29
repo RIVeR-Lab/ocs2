@@ -130,14 +130,19 @@ vector_t ExtCollisionConstraintCppAd::getValue(scalar_t time,
 {
   //std::cout << "[ExtCollisionConstraintCppAd::getValue(4)] START" << std::endl;
 
-  const auto q = mappingPtr_->getPinocchioJointPosition(state, fullState);
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
-  pinocchio::forwardKinematics(model, data, q);
+  const auto q = mappingPtr_->getPinocchioJointPosition(state, fullState);
 
+  pinocchio::forwardKinematics(model, data, q);
+  vector_t result = extCollisionCppAd_.getValue(pinocchioInterface_, state, fullState);
+
+  //std::cout << "[ExtCollisionConstraintCppAd::getValue(4)] result:" << std::endl;
+  //std::cout << result << std::endl;
+  
   //std::cout << "[ExtCollisionConstraintCppAd::getValue(4)] END" << std::endl;
 
-  return extCollisionCppAd_.getValue(pinocchioInterface_, state, fullState);
+  return result;
 }
 
 /******************************************************************************************************/
@@ -179,9 +184,10 @@ VectorFunctionLinearApproximation ExtCollisionConstraintCppAd::getLinearApproxim
 {
   //std::cout << "[ExtCollisionConstraintCppAd::getLinearApproximation(4)] START" << std::endl;
 
-  const auto q = mappingPtr_->getPinocchioJointPosition(state, fullState);
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
+  const auto q = mappingPtr_->getPinocchioJointPosition(state, fullState);
+  
   pinocchio::forwardKinematics(model, data, q);
   updateCallback_(state, pinocchioInterface_);
 

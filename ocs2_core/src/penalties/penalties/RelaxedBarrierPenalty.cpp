@@ -34,13 +34,37 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t RelaxedBarrierPenalty::getValue(scalar_t t, scalar_t h) const {
-  if (h > config_.delta) {
-    return -config_.mu * log(h);
-  } else {
+scalar_t RelaxedBarrierPenalty::getValue(scalar_t t, scalar_t h) const 
+{
+  //std::cout << "[RelaxedBarrierPenalty::getValue] START" << std::endl;
+
+  scalar_t result;
+
+  if (h > config_.delta) 
+  {
+    //std::cout << "[RelaxedBarrierPenalty::getValue] IF" << std::endl;
+    result = -config_.mu * log(h);
+    //return -config_.mu * log(h);
+  } 
+  else 
+  {
+    //std::cout << "[RelaxedBarrierPenalty::getValue] ELSE" << std::endl;
     const scalar_t delta_h = (h - 2.0 * config_.delta) / config_.delta;
-    return config_.mu * (-log(config_.delta) + 0.5 * delta_h * delta_h - 0.5);
+    result = config_.mu * (-log(config_.delta) + 0.5 * delta_h * delta_h - 0.5);
+    //return config_.mu * (-log(config_.delta) + 0.5 * delta_h * delta_h - 0.5);
   };
+
+  /*
+  if (h > 1)
+  {
+    std::cout << "[RelaxedBarrierPenalty::getValue] h: " << h << std::endl;
+    std::cout << "[RelaxedBarrierPenalty::getValue] result: " << result << std::endl;
+    //std::cout << "[RelaxedBarrierPenalty::getValue] DEBUG INF" << std::endl;
+    //while(1);
+  }
+  */
+
+  return result;
 }
 
 /******************************************************************************************************/

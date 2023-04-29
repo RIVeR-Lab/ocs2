@@ -83,16 +83,38 @@ void StateInputSoftBoxConstraint::sortByIndex(std::vector<BoxConstraint>& boxCon
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void StateInputSoftBoxConstraint::initializeOffset(scalar_t time, const vector_t& state, const vector_t& input) {
+void StateInputSoftBoxConstraint::initializeOffset(scalar_t time, const vector_t& state, const vector_t& input) 
+{
   offset_ = -getValue(time, state, stateBoxConstraints_) - getValue(time, input, inputBoxConstraints_);
+
+  //std::cout << "[StateInputSoftBoxConstraint::initializeOffset] offset_: " << offset_ << std::endl;
+
+  //std::cout << "[StateInputSoftBoxConstraint::initializeOffset] DEBUG INF: " << std::endl;
+  //while(1);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t StateInputSoftBoxConstraint::getValue(scalar_t time, const vector_t& state, const vector_t& input, const TargetTrajectories&,
-                                               const PreComputation& preComp) const {
-  return getValue(time, state, stateBoxConstraints_) + getValue(time, input, inputBoxConstraints_) + offset_;
+scalar_t StateInputSoftBoxConstraint::getValue(scalar_t time, 
+                                               const vector_t& state, 
+                                               const vector_t& input, 
+                                               const TargetTrajectories&,
+                                               const PreComputation& preComp) const 
+{
+  scalar_t val = getValue(time, state, stateBoxConstraints_) + getValue(time, input, inputBoxConstraints_) + offset_;
+  
+  if (val < 0)
+  {
+    std::cout << "[StateInputSoftBoxConstraint::getValue] val: " << val << std::endl;
+    std::cout << "[StateInputSoftBoxConstraint::getValue] DEBUG INF: " << std::endl;
+    while(1);
+  }
+  
+  return val;
+
+
+
 }
 
 /******************************************************************************************************/
@@ -112,16 +134,27 @@ ScalarFunctionQuadraticApproximation StateInputSoftBoxConstraint::getQuadraticAp
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-scalar_t StateInputSoftBoxConstraint::getValue(scalar_t t, const vector_t& h, const std::vector<BoxConstraint>& boxConstraints) const {
+scalar_t StateInputSoftBoxConstraint::getValue(scalar_t t, const vector_t& h, const std::vector<BoxConstraint>& boxConstraints) const 
+{
+  //std::cout << "[StateInputSoftBoxConstraint::getValue] START" << std::endl;
+
   scalar_t f = scalar_t(0.0);
-  for (const auto& boxConstraint : boxConstraints) {
+  for (const auto& boxConstraint : boxConstraints) 
+  {
     const auto i = boxConstraint.index;
     const auto& p = *boxConstraint.penaltyPtr;
     const scalar_t upperBoundDistance = boxConstraint.upperBound - h(i);
     const scalar_t lowerBoundDistance = h(i) - boxConstraint.lowerBound;
 
+    //std::cout << i << " -> h: " << h(i) << std::endl;
+    //std::cout << i << " -> upperBoundDistance: " << upperBoundDistance << std::endl;
+    //std::cout << i << " -> lowerBoundDistance: " << lowerBoundDistance << std::endl;
+
     f += p.getValue(t, lowerBoundDistance) + p.getValue(t, upperBoundDistance);
   }
+
+  //std::cout << "[StateInputSoftBoxConstraint::getValue] END" << std::endl;
+
   return f;
 }
 

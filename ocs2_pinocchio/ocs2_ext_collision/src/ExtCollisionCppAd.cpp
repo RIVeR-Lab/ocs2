@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.04.10
+// LAST UPDATE: 2022.04.27
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -39,6 +39,8 @@ ExtCollisionCppAd::ExtCollisionCppAd(const PinocchioInterface& pinocchioInterfac
     emuPtr_(emuPtr)
 {
   std::cout << "[ExtCollisionCppAd::ExtCollisionCppAd] START" << std::endl;
+
+  normalize_flag_ = true;
 
   PinocchioInterfaceCppAd pinocchioInterfaceCppAd = pinocchioInterface.toCppAd();
 
@@ -91,11 +93,9 @@ vector_t ExtCollisionCppAd::getValue(const PinocchioInterface& pinocchioInterfac
   while(1);
 
   vector_t violations;
-
   if (pointsOnRobotPtr_) 
   { 
-    updateDistances(state);
-
+    updateDistances(state, normalize_flag_);
     violations = distances_;
 
     //assert(gradients_.rows() == gradientsVoxblox_.rows());
@@ -120,11 +120,9 @@ vector_t ExtCollisionCppAd::getValue(const PinocchioInterface& pinocchioInterfac
                                      const vector_t& fullState) const 
 {
   vector_t violations;
-
   if (pointsOnRobotPtr_) 
   { 
-    updateDistances(state, fullState);
-
+    updateDistances(state, fullState, normalize_flag_);
     violations = distances_;
 
     //assert(gradients_.rows() == gradientsVoxblox_.rows());
@@ -135,6 +133,9 @@ vector_t ExtCollisionCppAd::getValue(const PinocchioInterface& pinocchioInterfac
     std::cout << "[ExtCollisionCppAd::getValue] ERROR: No points on robot!" << std::endl;
     violations = vector_t::Zero(1);
   }
+
+  //std::cout << "[ExtCollisionCppAd::getValue] violations: " << std::endl;
+  //std::cout << violations << std::endl;
 
   return violations;
 }
@@ -153,7 +154,7 @@ std::pair<vector_t, matrix_t> ExtCollisionCppAd::getLinearApproximation(const Pi
   vector_t distances;
   if (pointsOnRobotPtr_) 
   { 
-    updateDistances(state);
+    updateDistances(state, normalize_flag_);
     distances = distances_;
   }
   else
@@ -214,7 +215,7 @@ std::pair<vector_t, matrix_t> ExtCollisionCppAd::getLinearApproximation(const Pi
   vector_t distances;
   if (pointsOnRobotPtr_) 
   { 
-    updateDistances(state, fullState);
+    updateDistances(state, fullState, normalize_flag_);
     distances = distances_;
   }
   else
@@ -264,6 +265,9 @@ std::pair<vector_t, matrix_t> ExtCollisionCppAd::getLinearApproximation(const Pi
   }
   */
 
+  //std::cout << "[ExtCollisionCppAd::getLinearApproximation(3)] DEBUG INF" << std::endl;
+  //while(1);
+  
   //std::cout << "[ExtCollisionCppAd::getLinearApproximation(3)] END" << std::endl << std::endl;
 
   return std::make_pair(f, dfdq);
@@ -272,7 +276,7 @@ std::pair<vector_t, matrix_t> ExtCollisionCppAd::getLinearApproximation(const Pi
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ExtCollisionCppAd::updateDistances(const vector_t& state) const
+void ExtCollisionCppAd::updateDistances(const vector_t& state, bool normalize_flag) const
 {
   std::cout << "[ExtCollisionCppAd::updateDistances(1)] START" << std::endl;
 
@@ -304,10 +308,20 @@ void ExtCollisionCppAd::updateDistances(const vector_t& state) const
     p0_vec_.push_back(p0);
 
     geometry_msgs::Point p1;
-    distance = emuPtr_->getNearestOccupancyDist2(position(0), position(1), position(2), p1, maxDistance_, false);
+    distance = emuPtr_->getNearestOccupancyDist2(position(0), 
+                                                 position(1), 
+                                                 position(2), 
+                                                 p1, 
+                                                 maxDistance_,
+                                                 false);
     p1_vec_.push_back(p1);
 
     distances_[i] = distance - radii(i);
+
+    if (normalize_flag)
+    {
+      distances_[i] /= maxDistance_ - radii(i);
+    }
   }
 
   emuPtr_->fillOccDistanceArrayVisu(p0_vec_, p1_vec_);
@@ -318,24 +332,28 @@ void ExtCollisionCppAd::updateDistances(const vector_t& state) const
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void ExtCollisionCppAd::updateDistances(const vector_t& state, const vector_t& fullState) const
+void ExtCollisionCppAd::updateDistances(const vector_t& state, const vector_t& fullState, bool normalize_flag) const
 {
   //std::cout << "[ExtCollisionCppAd::updateDistances(2)] START" << std::endl;
 
   int numPoints = pointsOnRobotPtr_->getNumOfPoints();
   Eigen::VectorXd positionPointsOnRobot = pointsOnRobotPtr_->getPointsPositionCppAd(state, fullState);
   Eigen::VectorXd radii = pointsOnRobotPtr_->getRadii();
-  
+
   assert(positionPointsOnRobot.size() % 3 == 0);
   
   float distance;
   p0_vec_.clear();
   p1_vec_.clear();
 
+  timer1_.startTimer();
+  //std::cout << "[ExtCollisionCppAd::updateDistances(2)] numPoints: " << numPoints << std::endl;
   for (int i = 0; i < numPoints; i++)
   {
     Eigen::Ref<Eigen::Matrix<scalar_t, 3, 1>> position = positionPointsOnRobot.segment<3>(i * 3);
-    
+  
+    //std::cout << i << " -> " << position(0) << ", " << position(1) << ", " << position(2) << std::endl;
+
     geometry_msgs::Point p0;
     p0.x = position(0);
     p0.y = position(1);
@@ -347,9 +365,39 @@ void ExtCollisionCppAd::updateDistances(const vector_t& state, const vector_t& f
     p1_vec_.push_back(p1);
 
     distances_[i] = distance - radii(i);
-  }
 
+    if (normalize_flag)
+    {
+      distances_[i] /= maxDistance_ - radii(i);
+    }
+
+    //std::cout << "distance: " << distance << std::endl;
+    //std::cout << "radii: " << radii(i) << std::endl;
+    //std::cout << "distances_: " << distances_[i] << std::endl;
+  }
+  timer1_.endTimer();
+
+  timer2_.startTimer();
   emuPtr_->fillOccDistanceArrayVisu(p0_vec_, p1_vec_);
+  timer2_.endTimer();
+
+  /*
+  std::cout << "[ExtCollisionCppAd::updateDistances(2)] distances_ size: " << distances_.size() << std::endl;
+  std::cout << distances_ << std::endl;
+
+  std::cout << "### MPC_ROS Benchmarking timer1_" << std::endl;
+  std::cout << "###   Maximum : " << timer1_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer1_.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer1_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+
+  std::cout << "### MPC_ROS Benchmarking timer2_" << std::endl;
+  std::cout << "###   Maximum : " << timer2_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer2_.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer2_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+  */
+
+  //std::cout << "[ExtCollisionCppAd::updateDistances(2)] DEBUG INF" << std::endl;
+  //while(1);
 
   //std::cout << "[ExtCollisionCppAd::updateDistances(2)] END" << std::endl;
 }
@@ -392,7 +440,21 @@ ad_vector_t ExtCollisionCppAd::distanceCalculationAd(PinocchioInterfaceCppAd& pi
     const ad_vector_t p0_wrt_base_cppAd = transform_Base_wrt_World_cppAd.inverse() * p0_wrt_World_cppAd;
     const ad_vector_t p1_wrt_base_cppAd = transform_Base_wrt_World_cppAd.inverse() * p1_wrt_World_cppAd;
 
-    results(i, 1) = points[i * numberOfParamsPerResult_ + 6] * (p1_wrt_base_cppAd - p0_wrt_base_cppAd).norm() - radii(i);
+    auto dist = (p1_wrt_base_cppAd - p0_wrt_base_cppAd).norm();
+
+    if(dist > maxDistance_)
+    {
+      dist = maxDistance_;
+    }
+
+    dist -= radii(i);
+
+    if (normalize_flag_)
+    {
+      dist /= maxDistance_ - radii(i);
+    }
+
+    results(i, 1) = points[i * numberOfParamsPerResult_ + 6] * dist;
   }
   return results;
 }
@@ -406,7 +468,7 @@ ad_vector_t ExtCollisionCppAd::distanceCalculationAd(PinocchioInterfaceCppAd& pi
                                                      const ad_vector_t& fullState,
                                                      const ad_vector_t& points) const 
 {
-  std::cout << "[ExtCollisionCppAd::distanceCalculationAd(5)] START" << std::endl;
+  //std::cout << "[ExtCollisionCppAd::distanceCalculationAd(5)] START" << std::endl;
 
   Eigen::Matrix<ad_scalar_t, 4, 4> transform_Base_wrt_World_cppAd = Eigen::Matrix<ocs2::scalar_t, 4, 4>::Identity().cast<ad_scalar_t>();
   Eigen::Matrix<ad_scalar_t, 4, 1> p0_wrt_World_cppAd = transform_Base_wrt_World_cppAd.col(3);
@@ -435,10 +497,24 @@ ad_vector_t ExtCollisionCppAd::distanceCalculationAd(PinocchioInterfaceCppAd& pi
     const ad_vector_t p0_wrt_base_cppAd = transform_Base_wrt_World_cppAd.inverse() * p0_wrt_World_cppAd;
     const ad_vector_t p1_wrt_base_cppAd = transform_Base_wrt_World_cppAd.inverse() * p1_wrt_World_cppAd;
 
-    results(i, 1) = points[i * numberOfParamsPerResult_ + 6] * (p1_wrt_base_cppAd - p0_wrt_base_cppAd).norm() - radii(i);
+    auto dist = (p1_wrt_base_cppAd - p0_wrt_base_cppAd).norm();
+    
+    if(dist > maxDistance_)
+    {
+      dist = maxDistance_;
+    }
+    
+    dist -= radii(i);
+
+    if (normalize_flag_)
+    {
+      dist /= maxDistance_ - radii(i);
+    }
+
+    results(i, 1) = points[i * numberOfParamsPerResult_ + 6] * dist;
   }
 
-  std::cout << "[ExtCollisionCppAd::distanceCalculationAd(5)] END" << std::endl;
+  //std::cout << "[ExtCollisionCppAd::distanceCalculationAd(5)] END" << std::endl;
 
   return results;
 }
@@ -451,7 +527,7 @@ void ExtCollisionCppAd::setADInterfaces(PinocchioInterfaceCppAd& pinocchioInterf
                                         const std::string& modelName,
                                         const std::string& modelFolder)
 {
-  std::cout << "[ExtCollisionCppAd::setADInterfaces] START" << std::endl;
+  //std::cout << "[ExtCollisionCppAd::setADInterfaces] START" << std::endl;
 
   auto robotModelInfo = pointsOnRobotPtr_->getRobotModelInfo();
   auto modeStateDim = getModeStateDim(robotModelInfo);
@@ -488,7 +564,7 @@ void ExtCollisionCppAd::setADInterfaces(PinocchioInterfaceCppAd& pinocchioInterf
                                                               modelName + "_distance_intermediate", 
                                                               modelFolder));
 
-  std::cout << "[ExtCollisionCppAd::setADInterfaces] END" << std::endl;
+  //std::cout << "[ExtCollisionCppAd::setADInterfaces] END" << std::endl;
 }
 
 } /* namespace ocs2 */

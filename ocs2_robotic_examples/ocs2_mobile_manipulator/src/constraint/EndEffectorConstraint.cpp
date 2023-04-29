@@ -87,8 +87,7 @@ EndEffectorConstraint::EndEffectorConstraint(const EndEffectorKinematics<scalar_
 /******************************************************************************************************/
 size_t EndEffectorConstraint::getNumConstraints(scalar_t time) const 
 {
-  return 6;
-  /*
+  //return 6;
   if (robotModelInfoPtr_->modelMode == ModelMode::BaseMotion)
   {
     // xy + yaw
@@ -99,7 +98,6 @@ size_t EndEffectorConstraint::getNumConstraints(scalar_t time) const
     // xyz + rpy
     return 6;
   }
-  */
 }
 
 /******************************************************************************************************/

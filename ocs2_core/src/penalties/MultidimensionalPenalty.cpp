@@ -46,8 +46,16 @@ class PenaltyBaseWrapper final : public augmented::AugmentedPenaltyBase {
   std::string name() const override { return penaltyPtr_->name(); }
 
   scalar_t getValue(scalar_t t, scalar_t l, scalar_t h) const override { return penaltyPtr_->getValue(t, h); }
-  scalar_t getDerivative(scalar_t t, scalar_t l, scalar_t h) const override { return penaltyPtr_->getDerivative(t, h); }
-  scalar_t getSecondDerivative(scalar_t t, scalar_t l, scalar_t h) const override { return penaltyPtr_->getSecondDerivative(t, h); }
+  
+  scalar_t getDerivative(scalar_t t, scalar_t l, scalar_t h) const override 
+  { 
+    return penaltyPtr_->getDerivative(t, h); 
+  }
+  
+  scalar_t getSecondDerivative(scalar_t t, scalar_t l, scalar_t h) const override 
+  { 
+    return penaltyPtr_->getSecondDerivative(t, h); 
+  }
 
   scalar_t updateMultiplier(scalar_t t, scalar_t l, scalar_t h) const override {
     throw std::runtime_error("[" + name() + "] This penalty is only applicable to soft constraints!");
@@ -66,7 +74,8 @@ std::unique_ptr<PenaltyBaseWrapper> createWrapper(std::unique_ptr<PenaltyBase> p
   return std::unique_ptr<PenaltyBaseWrapper>(new PenaltyBaseWrapper(std::move(penaltyPtr)));
 }
 
-scalar_t getMultiplier(const vector_t* l, size_t ind) {
+scalar_t getMultiplier(const vector_t* l, size_t ind) 
+{
   return (l == nullptr) ? 0.0 : (*l)(ind);
 }
 
@@ -139,9 +148,18 @@ scalar_t MultidimensionalPenalty::getValue(scalar_t t, const vector_t& h, const 
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation MultidimensionalPenalty::getQuadraticApproximation(scalar_t t,
                                                                                         const VectorFunctionLinearApproximation& h,
-                                                                                        const vector_t* l) const {
+                                                                                        const vector_t* l) const 
+{
+  std::cout << "[MultidimensionalPenalty::getQuadraticApproximation] START" << std::endl;
+
+  std::cout << "[MultidimensionalPenalty::getQuadraticApproximation] h.f: " << std::endl;
+  std::cout << h.f << std::endl;
+
   const auto stateDim = h.dfdx.cols();
   const auto inputDim = h.dfdu.cols();
+
+  //std::cout << "[MultidimensionalPenalty::getQuadraticApproximation] stateDim: " << stateDim << std::endl;
+  //std::cout << "[MultidimensionalPenalty::getQuadraticApproximation] inputDim: " << inputDim << std::endl;
 
   scalar_t penaltyValue = 0.0;
   vector_t penaltyDerivative, penaltySecondDerivative;
@@ -154,11 +172,15 @@ ScalarFunctionQuadraticApproximation MultidimensionalPenalty::getQuadraticApprox
   penaltyApproximation.f = penaltyValue;
   penaltyApproximation.dfdx.noalias() = h.dfdx.transpose() * penaltyDerivative;
   penaltyApproximation.dfdxx.noalias() = h.dfdx.transpose() * penaltySecondDev_dhdx;
-  if (inputDim > 0) {
+  
+  if (inputDim > 0) 
+  {
     penaltyApproximation.dfdu.noalias() = h.dfdu.transpose() * penaltyDerivative;
     penaltyApproximation.dfdux.noalias() = h.dfdu.transpose() * penaltySecondDev_dhdx;
     penaltyApproximation.dfduu.noalias() = h.dfdu.transpose() * penaltySecondDerivative.asDiagonal() * h.dfdu;
   }
+
+  std::cout << "[MultidimensionalPenalty::getQuadraticApproximation] END" << std::endl;
 
   return penaltyApproximation;
 }
@@ -204,20 +226,38 @@ ScalarFunctionQuadraticApproximation MultidimensionalPenalty::getQuadraticApprox
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::tuple<scalar_t, vector_t, vector_t> MultidimensionalPenalty::getPenaltyValue1stDev2ndDev(scalar_t t, const vector_t& h,
-                                                                                              const vector_t* l) const {
+std::tuple<scalar_t, vector_t, vector_t> MultidimensionalPenalty::getPenaltyValue1stDev2ndDev(scalar_t t, 
+                                                                                              const vector_t& h,
+                                                                                              const vector_t* l) const 
+{
+  std::cout << "[MultidimensionalPenalty::getPenaltyValue1stDev2ndDev] START" << std::endl;
+
   const auto numConstraints = h.rows();
   assert(penaltyPtrArray_.size() == 1 || penaltyPtrArray_.size() == numConstraints);
 
   scalar_t penaltyValue = 0.0;
   vector_t penaltyDerivative(numConstraints);
   vector_t penaltySecondDerivative(numConstraints);
-  for (size_t i = 0; i < numConstraints; i++) {
+
+  std::cout << "[MultidimensionalPenalty::getPenaltyValue1stDev2ndDev] numConstraints: " << numConstraints << std::endl;
+
+  for (size_t i = 0; i < numConstraints; i++) 
+  {
     const auto& penaltyTerm = (penaltyPtrArray_.size() == 1) ? penaltyPtrArray_[0] : penaltyPtrArray_[i];
     penaltyValue += penaltyTerm->getValue(t, getMultiplier(l, i), h(i));
+
+    std::cout << i << " -> " << h(i) << std::endl;
+    std::cout << "penaltyValue: " << penaltyValue << std::endl;
+
     penaltyDerivative(i) = penaltyTerm->getDerivative(t, getMultiplier(l, i), h(i));
     penaltySecondDerivative(i) = penaltyTerm->getSecondDerivative(t, getMultiplier(l, i), h(i));
   }  // end of i loop
+
+  std::cout << "[MultidimensionalPenalty::getPenaltyValue1stDev2ndDev] penaltyValue: " << penaltyValue << std::endl;
+
+  //std::cout << "[MultidimensionalPenalty::getPenaltyValue1stDev2ndDev] DEBUG INF: " << std::endl;
+  //while(1);
+  std::cout << "[MultidimensionalPenalty::getPenaltyValue1stDev2ndDev] END" << std::endl;
 
   return {penaltyValue, penaltyDerivative, penaltySecondDerivative};
 }

@@ -139,9 +139,10 @@ vector_t SelfCollisionConstraintCppAd::getValue(scalar_t time,
 
   //std::cout << "[SelfCollisionConstraintCppAd::getValue(4)] NumConstraints: " << getNumConstraints(time) << std::endl;
 
-  const auto q = mappingPtr_->getPinocchioJointPosition(state, fullState);
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
+  const auto q = mappingPtr_->getPinocchioJointPosition(state, fullState);
+  
   pinocchio::forwardKinematics(model, data, q);
 
   //std::cout << "[SelfCollisionConstraintCppAd::getValue(4)] END" << std::endl;
@@ -194,6 +195,10 @@ VectorFunctionLinearApproximation SelfCollisionConstraintCppAd::getLinearApproxi
   std::tie(constraint.f, dfdq) = selfCollision_.getLinearApproximation(pinocchioInterface_, q);
   dfdv.setZero(dfdq.rows(), dfdq.cols());
   std::tie(constraint.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, dfdq, dfdv);
+
+  std::cout << "[SelfCollisionConstraintCppAd::getLinearApproximation] constraint.f: " << std::endl;
+  std::cout << constraint.f << std::endl;
+
   return constraint;
 }
 

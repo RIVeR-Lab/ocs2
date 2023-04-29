@@ -130,13 +130,25 @@ ScalarFunctionQuadraticApproximation::ScalarFunctionQuadraticApproximation(int n
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::operator+=(const ScalarFunctionQuadraticApproximation& rhs) {
+ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::operator+=(const ScalarFunctionQuadraticApproximation& rhs) 
+{
+  std::cout << "[ScalarFunctionQuadraticApproximation::operator] " << std::endl;
+
+  std::cout << "[ScalarFunctionQuadraticApproximation::operator] BEFORE f: " << f << std::endl;
+  std::cout << "[ScalarFunctionQuadraticApproximation::operator] BEFORE rhs.f: " << rhs.f << std::endl;
+
   f += rhs.f;
   dfdx += rhs.dfdx;
   dfdu += rhs.dfdu;
   dfdxx += rhs.dfdxx;
   dfdux += rhs.dfdux;
   dfduu += rhs.dfduu;
+
+  std::cout << "[ScalarFunctionQuadraticApproximation::operator] AFTER f: " << f << std::endl;
+  std::cout << "[ScalarFunctionQuadraticApproximation::operator] AFTER rhs.f: " << rhs.f << std::endl;
+
+  std::cout << "[ScalarFunctionQuadraticApproximation::operator] " << std::endl;
+
   return *this;
 }
 

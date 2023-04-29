@@ -84,14 +84,39 @@ vector_t SelfCollisionCppAd::getValue(const PinocchioInterface& pinocchioInterfa
 
   const std::vector<hpp::fcl::DistanceResult> distanceArray = pinocchioGeometryInterface_.computeDistances(pinocchioInterface);
 
-  //std::cout << "[SelfCollisionCppAd::getValue] points" << std::endl;
+  //std::cout << "[SelfCollisionCppAd::getValue] distanceArray" << std::endl;
   vector_t violations = vector_t::Zero(distanceArray.size());
   for (size_t i = 0; i < distanceArray.size(); ++i) 
   {
     violations[i] = distanceArray[i].min_distance - minimumDistance_;
-    //std::cout << i << " -> " << violations[i] << std::endl;
+
+    /*
+    if(violations[i] > 1 || distanceArray[i].min_distance < 0)
+    {
+      std::cout << "[SelfCollisionCppAd::getValue] violations[i]: " << violations[i] << std::endl;
+      std::cout << "[SelfCollisionCppAd::getValue] distanceArray[i].min_distance: " << distanceArray[i].min_distance << std::endl;
+      std::cout << "[SelfCollisionCppAd::getValue] DEBUG INF" << std::endl;
+      while(1);
+    }
+
+    if (bench_min_dist_ > violations[i])
+    {
+      bench_min_dist_ = violations[i];
+    }
+
+    if (bench_max_dist_ < violations[i])
+    {
+      bench_max_dist_ = violations[i];
+    }
+    */
+
+    //std::cout << "[SelfCollisionCppAd::getValue] distanceArray[i].min_distance:" << i << " -> " << distanceArray[i].min_distance << std::endl;
+    //std::cout << "[SelfCollisionCppAd::getValue] minimumDistance_:" << minimumDistance_ << std::endl;
+    //std::cout << "[SelfCollisionCppAd::getValue] violations:" << i << " -> " << violations[i] << std::endl;
   }
 
+  //std::cout << "[SelfCollisionCppAd::getValue] bench_min_dist_: " << bench_min_dist_ << std::endl;
+  //std::cout << "[SelfCollisionCppAd::getValue] bench_max_dist_: " << bench_max_dist_ << std::endl;
   //std::cout << "[SelfCollisionCppAd::getValue] END" << std::endl;
 
   return violations;
@@ -205,6 +230,8 @@ ad_vector_t SelfCollisionCppAd::distanceCalculationAd(PinocchioInterfaceCppAd& p
                                                       const ad_vector_t& state,
                                                       const ad_vector_t& points) const 
 {
+  //std::cout << "[SelfCollisionCppAd::distanceCalculationAd] START" << std::endl;
+
   const auto& geometryModel = pinocchioGeometryInterface_.getGeometryModel();
   const auto& model = pinocchioInterfaceAd.getModel();
   auto& data = pinocchioInterfaceAd.getData();
@@ -231,6 +258,12 @@ ad_vector_t SelfCollisionCppAd::distanceCalculationAd(PinocchioInterfaceCppAd& p
 
     results[i] = points[i * numberOfParamsPerResult_ + 6] * (point2InWorld - point1InWorld).norm() - minimumDistance_;
   }
+
+  //std::cout << "[SelfCollisionCppAd::distanceCalculationAd] DEBUG INF" << std::endl;
+  //while(1);
+
+  //std::cout << "[SelfCollisionCppAd::distanceCalculationAd] END" << std::endl;
+
   return results;
 }
 

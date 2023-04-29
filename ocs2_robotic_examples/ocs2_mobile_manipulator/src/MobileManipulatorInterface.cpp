@@ -131,7 +131,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   // Set Reference Manager
   referenceManagerPtr_.reset(new ReferenceManager);
 
-  // NUA TODO: We don't need to do it here!
+  // NUA TODO: We don't need to set it here!
   //int modelMode = getModelModeInt(robotModelInfo_);
   auto modelModeInt = 0;
   setMPCProblem(modelModeInt, pointsAndRadii);
@@ -522,6 +522,9 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftCon
   std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] inputLimits size: " << inputLimits.size() << std::endl;
 
   auto boxConstraints = std::unique_ptr<StateInputSoftBoxConstraint>(new StateInputSoftBoxConstraint(stateLimits, inputLimits));
+
+  std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] HELLO" << std::endl;
+
   boxConstraints -> initializeOffset(0.0, vector_t::Zero(modeStateDim), vector_t::Zero(modeInputDim));
 
   //std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] DEBUG INF" << std::endl;

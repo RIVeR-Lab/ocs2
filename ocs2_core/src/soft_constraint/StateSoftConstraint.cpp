@@ -129,16 +129,16 @@ ScalarFunctionQuadraticApproximation StateSoftConstraint::getQuadraticApproximat
                                                                                     const TargetTrajectories&,
                                                                                     const PreComputation& preComp) const 
 {
-  //std::cout << "[StateSoftConstraint::getQuadraticApproximation(5)] START" << std::endl;
+  std::cout << "[StateSoftConstraint::getQuadraticApproximation(5)] START" << std::endl;
 
   switch (constraintPtr_->getOrder()) 
   {
     case ConstraintOrder::Linear:
-      //std::cout << "[StateSoftConstraint::getQuadraticApproximation(5)] START Linear" << std::endl;
+      std::cout << "[StateSoftConstraint::getQuadraticApproximation(5)] START Linear" << std::endl;
       return penalty_.getQuadraticApproximation(time, constraintPtr_->getLinearApproximation(time, state, fullState, preComp));
     
     case ConstraintOrder::Quadratic:
-      //std::cout << "[StateSoftConstraint::getQuadraticApproximation(5)] START Quadratic" << std::endl;
+      std::cout << "[StateSoftConstraint::getQuadraticApproximation(5)] START Quadratic" << std::endl;
       return penalty_.getQuadraticApproximation(time, constraintPtr_->getQuadraticApproximation(time, state, fullState, preComp));
     
     default:

@@ -118,6 +118,9 @@ class SelfCollisionCppAd
 
     PinocchioGeometryInterface pinocchioGeometryInterface_;
     scalar_t minimumDistance_;
+
+    mutable scalar_t bench_min_dist_ = 100000;
+    mutable scalar_t bench_max_dist_ = -100000;
 };
 
 } /* namespace ocs2 */
