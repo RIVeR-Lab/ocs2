@@ -104,12 +104,14 @@ scalar_t StateInputSoftBoxConstraint::getValue(scalar_t time,
 {
   scalar_t val = getValue(time, state, stateBoxConstraints_) + getValue(time, input, inputBoxConstraints_) + offset_;
   
+  /*
   if (val < 0)
   {
     std::cout << "[StateInputSoftBoxConstraint::getValue] val: " << val << std::endl;
     std::cout << "[StateInputSoftBoxConstraint::getValue] DEBUG INF: " << std::endl;
     while(1);
   }
+  */
   
   return val;
 

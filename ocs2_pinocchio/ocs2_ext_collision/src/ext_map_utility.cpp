@@ -2331,6 +2331,21 @@ void ExtMapUtility::sensorMsgToOctomapCallback(const ros::TimerEvent& e)
   publishOctMsg();
 }
 
+void getPointOnLine(geometry_msgs::Point& origin, geometry_msgs::Point& end, double dist)
+{
+  geometry_msgs::Point end_tmp = end;
+
+  double alpha = (end_tmp.y - origin.y) * (end_tmp.y - origin.y) / ((end_tmp.x - origin.x) * (end_tmp.x - origin.x));
+  double beta = (end_tmp.z - origin.z) * (end_tmp.z - origin.z) / ((end_tmp.x - origin.x) * (end_tmp.x - origin.x));
+
+  end.x = dist / sqrt(1 + alpha + beta) + origin.x;
+
+  double m = (end.x - origin.x) / (end_tmp.x - origin.x);
+
+  end.y = m * (end_tmp.y - origin.y) + origin.y;
+  end.z = m * (end_tmp.z - origin.z) + origin.z;
+}
+
 double ExtMapUtility::getNearestOccupancyDist(double x, double y, double z, geometry_msgs::Point& min_p, double max_dist, bool pub_flag)
 {
   //std::cout << "[ExtMapUtility::getNearestOccupancyDist] START" << std::endl;
@@ -2431,6 +2446,8 @@ double ExtMapUtility::getNearestOccupancyDist(double x, double y, double z, geom
 
 double ExtMapUtility::getNearestOccupancyDist2(double x, double y, double z, geometry_msgs::Point& min_p, double max_dist, bool pub_flag) const
 {
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist2] START" << std::endl;
+
   octomap::ColorOcTree::iterator it = oct -> begin();  
 
   if (it == NULL)
@@ -2456,6 +2473,9 @@ double ExtMapUtility::getNearestOccupancyDist2(double x, double y, double z, geo
     }
     else
     {
+      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] DEBUG INF" << std::endl;
+      while(1);
+
       return max_dist;
     }
 
@@ -2473,10 +2493,38 @@ double ExtMapUtility::getNearestOccupancyDist2(double x, double y, double z, geo
       }
     }
 
+    if (dist_min > max_dist)
+    {
+      geometry_msgs::Point end_tmp;
+      end_tmp.x = min_p.x;
+      end_tmp.y = min_p.y;
+      end_tmp.z = min_p.z;
+
+      double alpha = (end_tmp.y - query_p.y) * (end_tmp.y - query_p.y) / ((end_tmp.x - query_p.x) * (end_tmp.x - query_p.x));
+      double beta = (end_tmp.z - query_p.z) * (end_tmp.z - query_p.z) / ((end_tmp.x - query_p.x) * (end_tmp.x - query_p.x));
+
+      min_p.x = query_p.x + max_dist / sqrt(1 + alpha + beta);
+
+      double m = (min_p.x - query_p.x) / (end_tmp.x - query_p.x);
+
+      if (m < 0)
+      {
+        min_p.x = query_p.x - max_dist / sqrt(1 + alpha + beta);
+        m = (min_p.x - query_p.x) / (end_tmp.x - query_p.x);
+      }
+
+      min_p.y = query_p.y + m * (end_tmp.y - query_p.y);
+      min_p.z = query_p.z + m * (end_tmp.z - query_p.z);
+
+      dist_min = max_dist;
+    }
+
     if (pub_flag)
     {
       fillOccDistanceVisu(query_p, min_p);
     }
+
+    //std::cout << "[ExtMapUtility::getNearestOccupancyDist2] END" << std::endl;
 
     return dist_min;
   }

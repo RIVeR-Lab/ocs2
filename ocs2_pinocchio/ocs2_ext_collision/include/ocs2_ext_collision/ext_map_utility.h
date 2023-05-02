@@ -677,6 +677,9 @@ class ExtMapUtility
     void sensorMsgToOctomapCallback(const ros::TimerEvent& e);
 
     // DESCRIPTION: TODO...
+    void getPointOnLine(geometry_msgs::Point& origin, geometry_msgs::Point& end, double dist);
+
+    // DESCRIPTION: TODO...
     double getNearestOccupancyDist(double x, double y, double z, geometry_msgs::Point& min_point, double max_dist, bool pub_flag=true);
 
     // DESCRIPTION: TODO...

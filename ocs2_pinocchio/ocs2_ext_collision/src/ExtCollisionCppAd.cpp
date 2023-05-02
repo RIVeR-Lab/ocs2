@@ -441,12 +441,6 @@ ad_vector_t ExtCollisionCppAd::distanceCalculationAd(PinocchioInterfaceCppAd& pi
     const ad_vector_t p1_wrt_base_cppAd = transform_Base_wrt_World_cppAd.inverse() * p1_wrt_World_cppAd;
 
     auto dist = (p1_wrt_base_cppAd - p0_wrt_base_cppAd).norm();
-
-    if(dist > maxDistance_)
-    {
-      dist = maxDistance_;
-    }
-
     dist -= radii(i);
 
     if (normalize_flag_)
@@ -498,12 +492,6 @@ ad_vector_t ExtCollisionCppAd::distanceCalculationAd(PinocchioInterfaceCppAd& pi
     const ad_vector_t p1_wrt_base_cppAd = transform_Base_wrt_World_cppAd.inverse() * p1_wrt_World_cppAd;
 
     auto dist = (p1_wrt_base_cppAd - p0_wrt_base_cppAd).norm();
-    
-    if(dist > maxDistance_)
-    {
-      dist = maxDistance_;
-    }
-    
     dist -= radii(i);
 
     if (normalize_flag_)
