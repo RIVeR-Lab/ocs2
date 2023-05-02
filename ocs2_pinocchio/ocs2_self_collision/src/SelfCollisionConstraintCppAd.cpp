@@ -196,8 +196,8 @@ VectorFunctionLinearApproximation SelfCollisionConstraintCppAd::getLinearApproxi
   dfdv.setZero(dfdq.rows(), dfdq.cols());
   std::tie(constraint.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, dfdq, dfdv);
 
-  std::cout << "[SelfCollisionConstraintCppAd::getLinearApproximation] constraint.f: " << std::endl;
-  std::cout << constraint.f << std::endl;
+  //std::cout << "[SelfCollisionConstraintCppAd::getLinearApproximation] constraint.f: " << std::endl;
+  //std::cout << constraint.f << std::endl;
 
   return constraint;
 }

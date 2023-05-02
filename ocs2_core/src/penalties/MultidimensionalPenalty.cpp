@@ -150,10 +150,10 @@ ScalarFunctionQuadraticApproximation MultidimensionalPenalty::getQuadraticApprox
                                                                                         const VectorFunctionLinearApproximation& h,
                                                                                         const vector_t* l) const 
 {
-  std::cout << "[MultidimensionalPenalty::getQuadraticApproximation] START" << std::endl;
+  //std::cout << "[MultidimensionalPenalty::getQuadraticApproximation] START" << std::endl;
 
-  std::cout << "[MultidimensionalPenalty::getQuadraticApproximation] h.f: " << std::endl;
-  std::cout << h.f << std::endl;
+  //std::cout << "[MultidimensionalPenalty::getQuadraticApproximation] h.f: " << std::endl;
+  //std::cout << h.f << std::endl;
 
   const auto stateDim = h.dfdx.cols();
   const auto inputDim = h.dfdu.cols();
@@ -180,7 +180,7 @@ ScalarFunctionQuadraticApproximation MultidimensionalPenalty::getQuadraticApprox
     penaltyApproximation.dfduu.noalias() = h.dfdu.transpose() * penaltySecondDerivative.asDiagonal() * h.dfdu;
   }
 
-  std::cout << "[MultidimensionalPenalty::getQuadraticApproximation] END" << std::endl;
+  //std::cout << "[MultidimensionalPenalty::getQuadraticApproximation] END" << std::endl;
 
   return penaltyApproximation;
 }
@@ -230,7 +230,7 @@ std::tuple<scalar_t, vector_t, vector_t> MultidimensionalPenalty::getPenaltyValu
                                                                                               const vector_t& h,
                                                                                               const vector_t* l) const 
 {
-  std::cout << "[MultidimensionalPenalty::getPenaltyValue1stDev2ndDev] START" << std::endl;
+  //std::cout << "[MultidimensionalPenalty::getPenaltyValue1stDev2ndDev] START" << std::endl;
 
   const auto numConstraints = h.rows();
   assert(penaltyPtrArray_.size() == 1 || penaltyPtrArray_.size() == numConstraints);
@@ -239,25 +239,25 @@ std::tuple<scalar_t, vector_t, vector_t> MultidimensionalPenalty::getPenaltyValu
   vector_t penaltyDerivative(numConstraints);
   vector_t penaltySecondDerivative(numConstraints);
 
-  std::cout << "[MultidimensionalPenalty::getPenaltyValue1stDev2ndDev] numConstraints: " << numConstraints << std::endl;
+  //std::cout << "[MultidimensionalPenalty::getPenaltyValue1stDev2ndDev] numConstraints: " << numConstraints << std::endl;
 
   for (size_t i = 0; i < numConstraints; i++) 
   {
     const auto& penaltyTerm = (penaltyPtrArray_.size() == 1) ? penaltyPtrArray_[0] : penaltyPtrArray_[i];
     penaltyValue += penaltyTerm->getValue(t, getMultiplier(l, i), h(i));
 
-    std::cout << i << " -> " << h(i) << std::endl;
-    std::cout << "penaltyValue: " << penaltyValue << std::endl;
+    //std::cout << i << " -> " << h(i) << std::endl;
+    //std::cout << "penaltyValue: " << penaltyValue << std::endl;
 
     penaltyDerivative(i) = penaltyTerm->getDerivative(t, getMultiplier(l, i), h(i));
     penaltySecondDerivative(i) = penaltyTerm->getSecondDerivative(t, getMultiplier(l, i), h(i));
   }  // end of i loop
 
-  std::cout << "[MultidimensionalPenalty::getPenaltyValue1stDev2ndDev] penaltyValue: " << penaltyValue << std::endl;
+  //std::cout << "[MultidimensionalPenalty::getPenaltyValue1stDev2ndDev] penaltyValue: " << penaltyValue << std::endl;
 
   //std::cout << "[MultidimensionalPenalty::getPenaltyValue1stDev2ndDev] DEBUG INF: " << std::endl;
   //while(1);
-  std::cout << "[MultidimensionalPenalty::getPenaltyValue1stDev2ndDev] END" << std::endl;
+  //std::cout << "[MultidimensionalPenalty::getPenaltyValue1stDev2ndDev] END" << std::endl;
 
   return {penaltyValue, penaltyDerivative, penaltySecondDerivative};
 }

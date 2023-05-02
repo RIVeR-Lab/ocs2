@@ -99,7 +99,8 @@ ScalarFunctionLinearApproximation ScalarFunctionLinearApproximation::Zero(int nx
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::string checkSize(int stateDim, int inputDim, const ScalarFunctionLinearApproximation& data, const std::string& dataName) {
+std::string checkSize(int stateDim, int inputDim, const ScalarFunctionLinearApproximation& data, const std::string& dataName) 
+{
   std::stringstream errorDescription;
   if (data.dfdx.size() != stateDim) {
     errorDescription << dataName << ".dfdx.size() != " << stateDim << "\n";
@@ -113,7 +114,8 @@ std::string checkSize(int stateDim, int inputDim, const ScalarFunctionLinearAppr
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::ostream& operator<<(std::ostream& out, const ScalarFunctionLinearApproximation& f) {
+std::ostream& operator<<(std::ostream& out, const ScalarFunctionLinearApproximation& f) 
+{
   out << "f: " << f.f << '\n';
   out << "dfdx: " << f.dfdx.transpose() << '\n';
   out << "dfdu: " << f.dfdu.transpose() << '\n';
@@ -132,10 +134,10 @@ ScalarFunctionQuadraticApproximation::ScalarFunctionQuadraticApproximation(int n
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::operator+=(const ScalarFunctionQuadraticApproximation& rhs) 
 {
-  std::cout << "[ScalarFunctionQuadraticApproximation::operator] " << std::endl;
+  //std::cout << "[ScalarFunctionQuadraticApproximation::operator] " << std::endl;
 
-  std::cout << "[ScalarFunctionQuadraticApproximation::operator] BEFORE f: " << f << std::endl;
-  std::cout << "[ScalarFunctionQuadraticApproximation::operator] BEFORE rhs.f: " << rhs.f << std::endl;
+  //std::cout << "[ScalarFunctionQuadraticApproximation::operator] BEFORE f: " << f << std::endl;
+  //std::cout << "[ScalarFunctionQuadraticApproximation::operator] BEFORE rhs.f: " << rhs.f << std::endl;
 
   f += rhs.f;
   dfdx += rhs.dfdx;
@@ -144,10 +146,10 @@ ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::oper
   dfdux += rhs.dfdux;
   dfduu += rhs.dfduu;
 
-  std::cout << "[ScalarFunctionQuadraticApproximation::operator] AFTER f: " << f << std::endl;
-  std::cout << "[ScalarFunctionQuadraticApproximation::operator] AFTER rhs.f: " << rhs.f << std::endl;
+  //std::cout << "[ScalarFunctionQuadraticApproximation::operator] AFTER f: " << f << std::endl;
+  //std::cout << "[ScalarFunctionQuadraticApproximation::operator] AFTER rhs.f: " << rhs.f << std::endl;
 
-  std::cout << "[ScalarFunctionQuadraticApproximation::operator] " << std::endl;
+  //std::cout << "[ScalarFunctionQuadraticApproximation::operator] " << std::endl;
 
   return *this;
 }
@@ -480,7 +482,8 @@ VectorFunctionQuadraticApproximation VectorFunctionQuadraticApproximation::Zero(
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::ostream& operator<<(std::ostream& out, const VectorFunctionQuadraticApproximation& f) {
+std::ostream& operator<<(std::ostream& out, const VectorFunctionQuadraticApproximation& f) 
+{
   out << "f: " << f.f.transpose() << '\n';
   out << "dfdx:\n" << f.dfdx << '\n';
   out << "dfdu:\n" << f.dfdu << '\n';

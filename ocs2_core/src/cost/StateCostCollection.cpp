@@ -167,13 +167,13 @@ ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximat
     return ScalarFunctionQuadraticApproximation::Zero(state.rows());
   }
 
-  int ctr = 0;
-  int ctr2 = 0;
-  std::cout << "[StateCostCollection::getQuadraticApproximation(5)] START getQuadraticApproximation" << std::endl;
+  //int ctr = 0;
+  //int ctr2 = 0;
+  //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] START getQuadraticApproximation" << std::endl;
   // Initialize with first active term, accumulate potentially other active terms.
   auto cost = (*firstActive)->getQuadraticApproximation(time, state, fullState, targetTrajectories, preComp);
 
-  std::cout << "[StateCostCollection::getQuadraticApproximation(5)] cost.f: " << cost.f << std::endl;
+  //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] cost.f: " << cost.f << std::endl;
 
   std::for_each(std::next(firstActive), terms_.end(), [&](const std::unique_ptr<StateCost>& costTerm) 
   {
@@ -184,15 +184,15 @@ ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximat
       cost.dfdx += costTermApproximation.dfdx;
       cost.dfdxx += costTermApproximation.dfdxx;
 
-      std::cout << "[StateCostCollection::getQuadraticApproximation(5)] " <<  ctr << " -> costTermApproximation.f: " << costTermApproximation.f << std::endl;
-      std::cout << "[StateCostCollection::getQuadraticApproximation(5)] " <<  ctr << " -> cost.f: " << cost.f << std::endl;
-      ctr++;
+      //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] " <<  ctr << " -> costTermApproximation.f: " << costTermApproximation.f << std::endl;
+      //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] " <<  ctr << " -> cost.f: " << cost.f << std::endl;
+      //ctr++;
     }
-    ctr2++;
+    //ctr2++;
   });
-  std::cout << "[StateCostCollection::getQuadraticApproximation(5)] ctr: " << ctr << std::endl;
-  std::cout << "[StateCostCollection::getQuadraticApproximation(5)] ctr2: " << ctr2 << std::endl;
-  std::cout << "[StateCostCollection::getQuadraticApproximation(5)] END getQuadraticApproximation" << std::endl << std::endl;
+  //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] ctr: " << ctr << std::endl;
+  //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] ctr2: " << ctr2 << std::endl;
+  //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] END getQuadraticApproximation" << std::endl << std::endl;
 
   // Make sure that input derivatives are empty
   cost.dfdu = vector_t();
