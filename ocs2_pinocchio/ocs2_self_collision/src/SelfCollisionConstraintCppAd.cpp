@@ -47,7 +47,9 @@ namespace ocs2 {
 /******************************************************************************************************/
 SelfCollisionConstraintCppAd::SelfCollisionConstraintCppAd(PinocchioInterface pinocchioInterface,
                                                            const PinocchioStateInputMapping<scalar_t>& mapping,
+                                                           const PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
                                                            PinocchioGeometryInterface pinocchioGeometryInterface, 
+                                                           RobotModelInfo& robotModelInfo,
                                                            scalar_t minimumDistance,
                                                            const std::string& modelName, 
                                                            const std::string& modelFolder,
@@ -55,7 +57,9 @@ SelfCollisionConstraintCppAd::SelfCollisionConstraintCppAd(PinocchioInterface pi
                                                            bool verbose)
   : SelfCollisionConstraintCppAd(std::move(pinocchioInterface), 
                                  mapping, 
+                                 mappingCppAd,
                                  std::move(pinocchioGeometryInterface), 
+                                 robotModelInfo,
                                  minimumDistance,
                                  defaultUpdatePinocchioInterface, 
                                  modelName, 
@@ -68,7 +72,9 @@ SelfCollisionConstraintCppAd::SelfCollisionConstraintCppAd(PinocchioInterface pi
 /******************************************************************************************************/
 SelfCollisionConstraintCppAd::SelfCollisionConstraintCppAd(PinocchioInterface pinocchioInterface,
                                                            const PinocchioStateInputMapping<scalar_t>& mapping,
+                                                           const PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
                                                            PinocchioGeometryInterface pinocchioGeometryInterface, 
+                                                           RobotModelInfo& robotModelInfo,
                                                            scalar_t minimumDistance,
                                                            update_pinocchio_interface_callback updateCallback, 
                                                            const std::string& modelName,
@@ -79,6 +85,8 @@ SelfCollisionConstraintCppAd::SelfCollisionConstraintCppAd(PinocchioInterface pi
     pinocchioInterface_(std::move(pinocchioInterface)),
     selfCollision_(pinocchioInterface_, 
                    std::move(pinocchioGeometryInterface), 
+                   mappingCppAd,
+                   robotModelInfo,
                    minimumDistance, 
                    modelName, 
                    modelFolder,
@@ -192,7 +200,8 @@ VectorFunctionLinearApproximation SelfCollisionConstraintCppAd::getLinearApproxi
 
   VectorFunctionLinearApproximation constraint;
   matrix_t dfdq, dfdv;
-  std::tie(constraint.f, dfdq) = selfCollision_.getLinearApproximation(pinocchioInterface_, q);
+  //std::tie(constraint.f, dfdq) = selfCollision_.getLinearApproximation(pinocchioInterface_, q);
+  std::tie(constraint.f, dfdq) = selfCollision_.getLinearApproximation(pinocchioInterface_, state, fullState);
   dfdv.setZero(dfdq.rows(), dfdq.cols());
   std::tie(constraint.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, dfdq, dfdv);
 

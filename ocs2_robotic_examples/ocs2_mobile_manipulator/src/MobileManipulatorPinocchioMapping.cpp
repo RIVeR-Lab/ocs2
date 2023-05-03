@@ -120,7 +120,7 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(con
           {
             std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] fullState.size(): " << fullState.size() << std::endl;
             std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] state.size(): " << state.size() << std::endl;
-            std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF" << std::endl;
+            std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF BaseMotion" << std::endl;
             while(1);
           }
           
@@ -137,7 +137,7 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(con
           {
             std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] fullState.size(): " << fullState.size() << std::endl;
             std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] state.size(): " << state.size() << std::endl;
-            std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF" << std::endl;
+            std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF ArmMotion" << std::endl;
             while(1);
           }
           
@@ -156,7 +156,7 @@ auto MobileManipulatorPinocchioMappingTpl<SCALAR>::getPinocchioJointPosition(con
           {
             std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] fullState.size(): " << fullState.size() << std::endl;
             std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] state.size(): " << state.size() << std::endl;
-            std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF" << std::endl;
+            std::cout << "[MobileManipulatorPinocchioMappingTpl::getPinocchioJointPosition(2)] DEBUG INF WholeBodyMotion" << std::endl;
             while(1);
           }
           

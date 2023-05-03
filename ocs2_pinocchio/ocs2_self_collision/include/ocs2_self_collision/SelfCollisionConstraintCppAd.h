@@ -47,8 +47,7 @@ namespace ocs2 {
 class SelfCollisionConstraintCppAd final : public StateConstraint 
 {
   public:
-    using update_pinocchio_interface_callback =
-        std::function<void(const vector_t& state, PinocchioInterfaceTpl<scalar_t>& pinocchioInterface)>;
+    using update_pinocchio_interface_callback = std::function<void(const vector_t& state, PinocchioInterfaceTpl<scalar_t>& pinocchioInterface)>;
 
     /**
      * Constructor
@@ -65,7 +64,9 @@ class SelfCollisionConstraintCppAd final : public StateConstraint
      */
     SelfCollisionConstraintCppAd(PinocchioInterface pinocchioInterface, 
                                  const PinocchioStateInputMapping<scalar_t>& mapping,
+                                 const PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
                                  PinocchioGeometryInterface pinocchioGeometryInterface, 
+                                 RobotModelInfo& robotModelInfo,
                                  scalar_t minimumDistance,
                                  const std::string& modelName, 
                                  const std::string& modelFolder = "/tmp/ocs2", 
@@ -89,7 +90,9 @@ class SelfCollisionConstraintCppAd final : public StateConstraint
      */
     SelfCollisionConstraintCppAd(PinocchioInterface pinocchioInterface, 
                                 const PinocchioStateInputMapping<scalar_t>& mapping,
+                                const PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
                                 PinocchioGeometryInterface pinocchioGeometryInterface, 
+                                RobotModelInfo& robotModelInfo,
                                 scalar_t minimumDistance,
                                 update_pinocchio_interface_callback updateCallback, 
                                 const std::string& modelName,

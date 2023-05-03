@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.04.27
+// LAST UPDATE: 2022.05.02
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -43,8 +43,6 @@ ExtCollisionCppAd::ExtCollisionCppAd(const PinocchioInterface& pinocchioInterfac
   normalize_flag_ = true;
 
   PinocchioInterfaceCppAd pinocchioInterfaceCppAd = pinocchioInterface.toCppAd();
-
-  // pinocchioInterface to mapping
   std::unique_ptr<ocs2::PinocchioStateInputMapping<ad_scalar_t>> mappingCppAdPtr(mappingCppAd.clone());
   mappingCppAdPtr->setPinocchioInterface(pinocchioInterfaceCppAd);
 
@@ -521,7 +519,7 @@ void ExtCollisionCppAd::setADInterfaces(PinocchioInterfaceCppAd& pinocchioInterf
   auto modeStateDim = getModeStateDim(robotModelInfo);
   auto stateDim = getStateDim(robotModelInfo);
   const size_t numDistanceResults = distances_.size();
-  auto n_points_param = numDistanceResults * numberOfParamsPerResult_;
+  const size_t n_points_param = numDistanceResults * numberOfParamsPerResult_;
 
   /*
   auto stateAndClosestPointsToDistance = [&, this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) 

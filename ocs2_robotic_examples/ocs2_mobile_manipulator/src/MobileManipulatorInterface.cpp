@@ -643,7 +643,9 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
   {
     constraint = std::unique_ptr<StateConstraint>(new SelfCollisionConstraintCppAd(*pinocchioInterfacePtr_, 
                                                                                     MobileManipulatorPinocchioMapping(robotModelInfo_), 
+                                                                                    MobileManipulatorPinocchioMappingCppAd(robotModelInfo_),
                                                                                     std::move(geometryInterface), 
+                                                                                    robotModelInfo_,
                                                                                     minimumDistance,
                                                                                     "self_collision", 
                                                                                     libraryFolder_, 
