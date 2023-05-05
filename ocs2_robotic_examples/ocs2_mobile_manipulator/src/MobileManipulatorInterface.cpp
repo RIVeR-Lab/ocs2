@@ -133,7 +133,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 
   // NUA TODO: We don't need to set it here!
   //int modelMode = getModelModeInt(robotModelInfo_);
-  auto modelModeInt = 1;
+  auto modelModeInt = 2;
   setMPCProblem(modelModeInt, pointsAndRadii);
   
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END" << std::endl;
@@ -212,9 +212,9 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
     emuPtr_.reset(new ExtMapUtility());
     
     //// NUA TODO: Set these parameters in taskfile!
-    string world_frame_name = "world";
-    string pub_name_oct_dist_visu = "occ_dist";
-    string pub_name_oct_dist_array_visu = "occ_dist_array";
+    std::string world_frame_name = "world";
+    std::string pub_name_oct_dist_visu = "occ_dist";
+    std::string pub_name_oct_dist_array_visu = "occ_dist_array";
 
     emuPtr_->setWorldFrameName(world_frame_name);
     emuPtr_->setPubOccDistVisu(pub_name_oct_dist_visu);
@@ -312,8 +312,8 @@ void MobileManipulatorInterface::tfCallback(const tf2_msgs::TFMessage::ConstPtr&
 /******************************************************************************************************/
 void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
 {
-  string oct_msg_name = "octomap_scan";
-  string tf_msg_name = "tf";
+  std::string oct_msg_name = "octomap_scan";
+  std::string tf_msg_name = "tf";
   double dt = 0.1;
 
   if (emuPtr_)
