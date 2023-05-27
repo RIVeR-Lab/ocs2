@@ -423,8 +423,11 @@ vector_t GaussNewtonDDP::getStateInputEqualityConstraintLagrangianImpl(scalar_t 
 /******************************************************************************************************/
 bool GaussNewtonDDP::rolloutInitialController(PrimalSolution& inputPrimalSolution, PrimalSolution& outputPrimalSolution) 
 {
+  std::cout << "[GaussNewtonDDP::rolloutInitialController] START" << std::endl;
+
   if (inputPrimalSolution.controllerPtr_->empty()) 
   {
+    std::cout << "[GaussNewtonDDP::rolloutInitialController] END false" << std::endl;
     return false;
   }
 
@@ -433,8 +436,10 @@ bool GaussNewtonDDP::rolloutInitialController(PrimalSolution& inputPrimalSolutio
 
   // adjust in-place the controller
   std::ignore = trajectorySpread(inputPrimalSolution.modeSchedule_, getReferenceManager().getModeSchedule(), inputLinearController);
+  
   // after adjustment it might become empty
-  if (inputLinearController.empty()) {
+  if (inputLinearController.empty()) 
+  {
     return false;
   }
 
@@ -447,13 +452,28 @@ bool GaussNewtonDDP::rolloutInitialController(PrimalSolution& inputPrimalSolutio
       std::cerr << "[GaussNewtonDDP::rolloutInitialController] for t = [" << initTime_ << ", " << finalTime_ << "]\n";
       std::cerr << "\twill use controller for t = [" << initTime_ << ", " << finalTime << "]\n";
     }
+
+    std::cout << "[GaussNewtonDDP::rolloutInitialController] BEFORE rolloutTrajectory inputPrimalSolution.stateTrajectory_.size: " << inputPrimalSolution.stateTrajectory_.size() << std::endl;
+    if (inputPrimalSolution.timeTrajectory_.size() > 0)
+    {
+      std::cout << "[GaussNewtonDDP::rolloutInitialController] BEFORE rolloutTrajectory inputPrimalSolution first: " << inputPrimalSolution.timeTrajectory_[0] << std::endl;
+      std::cout << "[GaussNewtonDDP::rolloutInitialController] BEFORE rolloutTrajectory inputPrimalSolution last: " << inputPrimalSolution.timeTrajectory_[inputPrimalSolution.inputTrajectory_.size()-1] << std::endl;
+    }
+
     outputPrimalSolution.controllerPtr_.swap(inputPrimalSolution.controllerPtr_);
     std::ignore = rolloutTrajectory(*dynamicsForwardRolloutPtrStock_[0], initTime_, initState_, finalTime, outputPrimalSolution);
-    return true;
+    
+    std::cout << "[GaussNewtonDDP::rolloutInitialController] AFTER rolloutTrajectory outputPrimalSolution.stateTrajectory_.size: " << outputPrimalSolution.stateTrajectory_.size() << std::endl;
+    std::cout << "[GaussNewtonDDP::rolloutInitialController] AFTER rolloutTrajectory outputPrimalSolution horizon: " << outputPrimalSolution.timeTrajectory_[outputPrimalSolution.inputTrajectory_.size()-1] << std::endl;
+    std::cout << "[GaussNewtonDDP::rolloutInitialController] AFTER rolloutTrajectory initTime_: " << initTime_ << std::endl;
+    std::cout << "[GaussNewtonDDP::rolloutInitialController] AFTER rolloutTrajectory finalTime: " << finalTime << std::endl;
 
+    std::cout << "[GaussNewtonDDP::rolloutInitialController] END if true" << std::endl;
+    return true;
   } 
   else 
   {
+    std::cout << "[GaussNewtonDDP::rolloutInitialController] END else false" << std::endl;
     return false;
   }
 }
@@ -463,6 +483,8 @@ bool GaussNewtonDDP::rolloutInitialController(PrimalSolution& inputPrimalSolutio
 /******************************************************************************************************/
 bool GaussNewtonDDP::extractInitialTrajectories(PrimalSolution& inputPrimalSolution, PrimalSolution& outputPrimalSolution) 
 {
+  std::cout << "[GaussNewtonDDP::extractInitialTrajectories] START" << std::endl;
+
   if (inputPrimalSolution.timeTrajectory_.empty()) 
   {
     return false;
@@ -471,21 +493,46 @@ bool GaussNewtonDDP::extractInitialTrajectories(PrimalSolution& inputPrimalSolut
   // adjust in-place the primalSolution
   std::ignore = trajectorySpread(inputPrimalSolution.modeSchedule_, getReferenceManager().getModeSchedule(), inputPrimalSolution);
   // after adjustment it might become empty
-  if (inputPrimalSolution.timeTrajectory_.empty()) {
+  
+  if (inputPrimalSolution.timeTrajectory_.empty()) 
+  {
+    std::cout << "[GaussNewtonDDP::extractInitialTrajectories] END false 1" << std::endl;
     return false;
   }
 
   const auto finalTime = std::max(initTime_, std::min(inputPrimalSolution.timeTrajectory_.back(), finalTime_));
 
-  if (initTime_ < finalTime) {
-    if (ddpSettings_.debugPrintRollout_) {
+  if (initTime_ < finalTime) 
+  {
+    if (ddpSettings_.debugPrintRollout_) 
+    {
       std::cerr << "[GaussNewtonDDP::extractInitialTrajectories] for t = [" << initTime_ << ", " << finalTime_ << "]\n";
       std::cerr << "\twill use PrimalSolution trajectory for t = [" << initTime_ << ", " << finalTime << "]\n";
     }
-    extractPrimalSolution({initTime_, finalTime}, inputPrimalSolution, outputPrimalSolution);
-    return true;
 
-  } else {
+    std::cout << "[GaussNewtonDDP::extractInitialTrajectories] BEFORE inputPrimalSolution.stateTrajectory_.size: " << inputPrimalSolution.stateTrajectory_.size() << std::endl;
+    if (inputPrimalSolution.timeTrajectory_.size() > 0)
+    {
+      std::cout << "[GaussNewtonDDP::extractInitialTrajectories] BEFORE inputPrimalSolution.timeTrajectory_ first: " << inputPrimalSolution.timeTrajectory_[0] << std::endl;
+      std::cout << "[GaussNewtonDDP::extractInitialTrajectories] BEFORE inputPrimalSolution.timeTrajectory_ last: " << inputPrimalSolution.timeTrajectory_[inputPrimalSolution.timeTrajectory_.size()-1] << std::endl;
+    }
+    std::cout << "[GaussNewtonDDP::extractInitialTrajectories] BEFORE initTime_: " << initTime_ << std::endl;
+    std::cout << "[GaussNewtonDDP::extractInitialTrajectories] BEFORE finalTime: " << finalTime << std::endl;
+
+    extractPrimalSolution({initTime_, finalTime}, inputPrimalSolution, outputPrimalSolution);
+    
+    std::cout << "[GaussNewtonDDP::extractInitialTrajectories] AFTER inputPrimalSolution.stateTrajectory_.size: " << inputPrimalSolution.stateTrajectory_.size() << std::endl;
+    if (inputPrimalSolution.timeTrajectory_.size() > 0)
+    {
+      std::cout << "[GaussNewtonDDP::extractInitialTrajectories] AFTER inputPrimalSolution.timeTrajectory_ last: " << inputPrimalSolution.timeTrajectory_[inputPrimalSolution.timeTrajectory_.size()-1] << std::endl;
+    }
+
+    std::cout << "[GaussNewtonDDP::extractInitialTrajectories] END true" << std::endl;
+    return true;
+  } 
+  else 
+  {
+    std::cout << "[GaussNewtonDDP::extractInitialTrajectories] END false 2" << std::endl;
     return false;
   }
 }
@@ -493,7 +540,10 @@ bool GaussNewtonDDP::extractInitialTrajectories(PrimalSolution& inputPrimalSolut
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::rolloutInitializer(PrimalSolution& primalSolution) {
+void GaussNewtonDDP::rolloutInitializer(PrimalSolution& primalSolution) 
+{
+  std::cout << "[GaussNewtonDDP::rolloutInitializer] START" << std::endl;
+
   // create alias
   auto& modeSchedule = primalSolution.modeSchedule_;
   auto& timeTrajectory = primalSolution.timeTrajectory_;
@@ -501,14 +551,45 @@ void GaussNewtonDDP::rolloutInitializer(PrimalSolution& primalSolution) {
   auto& inputTrajectory = primalSolution.inputTrajectory_;
   auto& postEventIndices = primalSolution.postEventIndices_;
 
+  std::cout << "[GaussNewtonDDP::rolloutInitializer] BEFORE timeTrajectory size: " << timeTrajectory.size() << std::endl;
+  if (timeTrajectory.size() > 0)
+  {
+    std::cout << "timeTrajectory horizon: " << timeTrajectory[timeTrajectory.size()-1] << std::endl;
+  }
+  /*for (size_t i = 0; i < timeTrajectory.size(); i++)
+  {
+    std::cout << i << " -> " << timeTrajectory[i] << std::endl;
+  }*/
+
+  std::cout << "[GaussNewtonDDP::rolloutInitializer] BEFORE inputTrajectory size: " << inputTrajectory.size() << std::endl;
+  /*for (size_t i = 0; i < inputTrajectory.size(); i++)
+  {
+    std::cout << i << " -> " << inputTrajectory[i].size() << std::endl;
+  }*/
+
+  std::cout << "[GaussNewtonDDP::rolloutInitializer] BEFORE stateTrajectory size: " << stateTrajectory.size() << std::endl;
+  /*for (size_t i = 0; i < stateTrajectory.size(); i++)
+  {
+    std::cout << i << " -> " << stateTrajectory[i].size() << std::endl;
+  }*/
+  
+
   // finish rollout with Initializer
-  if (timeTrajectory.empty() || timeTrajectory.back() < finalTime_) {
+  if (timeTrajectory.empty() || timeTrajectory.back() < finalTime_) 
+  {
     scalar_t initTime = timeTrajectory.empty() ? initTime_ : timeTrajectory.back();
     const vector_t initState = stateTrajectory.empty() ? initState_ : stateTrajectory.back();
 
+    for (size_t i = 0; i < initState.size(); i++)
+    {
+      std::cout << i << " -> " << initState[i] << std::endl;
+    }
+    
     // Remove last point of the rollout if it is directly past an event. Here where we want to use the Initializer
     // instead. However, we do start the integration at the state after the event. i.e. the jump map remains applied.
-    if (!postEventIndices.empty() && postEventIndices.back() == (timeTrajectory.size() - 1)) {
+    if (!postEventIndices.empty() && postEventIndices.back() == (timeTrajectory.size() - 1)) 
+    {
+      std::cout << "[GaussNewtonDDP::rolloutInitializer] CHECKOUT stateTrajectory size: " << stateTrajectory.size() << std::endl;
       // Start new integration at the time point after the event
       timeTrajectory.pop_back();
       stateTrajectory.pop_back();
@@ -524,26 +605,85 @@ void GaussNewtonDDP::rolloutInitializer(PrimalSolution& primalSolution) {
     size_array_t postEventIndicesTail;
     vector_array_t stateTrajectoryTail;
     vector_array_t inputTrajectoryTail;
-    std::ignore = initializerRolloutPtr_->run(initTime, initState, finalTime_, nullptr, modeSchedule, timeTrajectoryTail,
-                                              postEventIndicesTail, stateTrajectoryTail, inputTrajectoryTail);
+    std::ignore = initializerRolloutPtr_->run(initTime, 
+                                              initState, 
+                                              finalTime_, 
+                                              nullptr, 
+                                              modeSchedule, 
+                                              timeTrajectoryTail,
+                                              postEventIndicesTail, 
+                                              stateTrajectoryTail, 
+                                              inputTrajectoryTail);
 
     // Add controller rollout length to event past the indeces
-    for (auto& eventIndex : postEventIndicesTail) {
+    for (auto& eventIndex : postEventIndicesTail) 
+    {
       eventIndex += stateTrajectory.size();  // the size of the old trajectory is missing when counting event's index
     }
+
+    std::cout << "[GaussNewtonDDP::rolloutInitializer] BEFORE CONCAT timeTrajectory size: " << timeTrajectory.size() << std::endl;
+    if (timeTrajectory.size() > 0)
+    {
+      std::cout << "[GaussNewtonDDP::rolloutInitializer] BEFORE CONCAT timeTrajectory last: " << timeTrajectory[timeTrajectory.size()-1] << std::endl;
+    }
+    /*for (size_t i = 0; i < timeTrajectory.size(); i++)
+    {
+      std::cout << i << " -> " << timeTrajectory[i] << std::endl;
+    }*/
+    
+    std::cout << "[GaussNewtonDDP::rolloutInitializer] BEFORE CONCAT inputTrajectory size: " << inputTrajectory.size() << std::endl;
+    std::cout << "[GaussNewtonDDP::rolloutInitializer] BEFORE CONCAT stateTrajectory size: " << stateTrajectory.size() << std::endl;
 
     // Concatenate
     timeTrajectory.insert(timeTrajectory.end(), timeTrajectoryTail.begin(), timeTrajectoryTail.end());
     postEventIndices.insert(postEventIndices.end(), postEventIndicesTail.begin(), postEventIndicesTail.end());
     stateTrajectory.insert(stateTrajectory.end(), stateTrajectoryTail.begin(), stateTrajectoryTail.end());
     inputTrajectory.insert(inputTrajectory.end(), inputTrajectoryTail.begin(), inputTrajectoryTail.end());
+
+    std::cout << "[GaussNewtonDDP::rolloutInitializer] AFTER CONCAT timeTrajectory size: " << timeTrajectory.size() << std::endl;
+    if (timeTrajectory.size() > 0)
+    {
+      std::cout << "[GaussNewtonDDP::rolloutInitializer] AFTER CONCAT timeTrajectory first: " << timeTrajectory[0] << std::endl;
+      std::cout << "[GaussNewtonDDP::rolloutInitializer] AFTER CONCAT timeTrajectory last: " << timeTrajectory[timeTrajectory.size()-1] << std::endl;
+    }
+    /*for (size_t i = 0; i < timeTrajectory.size(); i++)
+    {
+      std::cout << i << " -> " << timeTrajectory[i] << std::endl;
+    }*/
+    std::cout << "[GaussNewtonDDP::rolloutInitializer] AFTER CONCAT inputTrajectory size: " << inputTrajectory.size() << std::endl;
+    std::cout << "[GaussNewtonDDP::rolloutInitializer] AFTER CONCAT stateTrajectory size: " << stateTrajectory.size() << std::endl;
   }
+
+  std::cout << "[GaussNewtonDDP::rolloutInitializer] AFTER timeTrajectory size: " << timeTrajectory.size() << std::endl;
+  if (timeTrajectory.size() > 0)
+  {
+    std::cout << "timeTrajectory last: " << timeTrajectory[timeTrajectory.size()-1] << std::endl;
+  }
+  /*for (size_t i = 0; i < timeTrajectory.size(); i++)
+  {
+    std::cout << i << " -> " << timeTrajectory[i] << std::endl;
+  }*/
+
+  std::cout << "[GaussNewtonDDP::rolloutInitializer] AFTER inputTrajectory size: " << inputTrajectory.size() << std::endl;
+  /*for (size_t i = 0; i < inputTrajectory.size(); i++)
+  {
+    std::cout << i << " -> " << inputTrajectory[i].size() << std::endl;
+  }*/
+
+  std::cout << "[GaussNewtonDDP::rolloutInitializer] AFTER stateTrajectory size: " << stateTrajectory.size() << std::endl;
+  /*for (size_t i = 0; i < stateTrajectory.size(); i++)
+  {
+    std::cout << i << " -> " << stateTrajectory[i].size() << std::endl;
+  }*/
+
+  std::cout << "[GaussNewtonDDP::rolloutInitializer] END" << std::endl;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void GaussNewtonDDP::printRolloutInfo() const {
+void GaussNewtonDDP::printRolloutInfo() const 
+{
   std::cerr << performanceIndex_ << '\n';
   std::cerr << "forward pass average time step:  " << avgTimeStepFP_ * 1e+3 << " [ms].\n";
   std::cerr << "backward pass average time step: " << avgTimeStepBP_ * 1e+3 << " [ms].\n";
@@ -909,6 +1049,8 @@ void GaussNewtonDDP::updateConstraintPenalties(scalar_t equalityConstraintsSSE) 
 /******************************************************************************************************/
 bool GaussNewtonDDP::initializePrimalSolution() 
 {
+  std::cout << "[GaussNewtonDDP::initializePrimalSolution] START" << std::endl;
+
   try 
   {
     // clear before starting to fill
@@ -919,30 +1061,52 @@ bool GaussNewtonDDP::initializePrimalSolution()
 
     // try to initialize with controller
     bool initialSolutionExists = rolloutInitialController(optimizedPrimalSolution_, nominalPrimalData_.primalSolution);
+    
+    //std::cout << "[GaussNewtonDDP::initializePrimalSolution] DEBUG: SET IT BACK!!!" << std::endl;
+    //bool initialSolutionExists = false;
+
+    std::cout << "[GaussNewtonDDP::initializePrimalSolution] initialSolutionExists: " << initialSolutionExists << std::endl;
+    std::cout << "[GaussNewtonDDP::initializePrimalSolution] initTime_: " << initTime_ << std::endl;
+    std::cout << "[GaussNewtonDDP::initializePrimalSolution] primalSolution.stateTrajectory_.size(): " << nominalPrimalData_.primalSolution.stateTrajectory_.size() << std::endl;
 
     // if rolloutInitialController failed, try to initialize with PrimalSolution's state-input trajectories
-    if (!initialSolutionExists) {
+    if (!initialSolutionExists) 
+    {
+      std::cout << "[GaussNewtonDDP::initializePrimalSolution] FAILED initialSolutionExists!!!" << std::endl;
+
       // display
-      if (ddpSettings_.displayInfo_) {
-        std::cerr << "Initial controller is unavailable. Solver resorts to use PrimalSolution trajectories ...\n";
+      if (ddpSettings_.displayInfo_) 
+      {
+        std::cerr << "[GaussNewtonDDP::initializePrimalSolution] ERROR: Initial controller is unavailable. Solver resorts to use PrimalSolution trajectories ...\n";
       }
 
+      std::cout << "[GaussNewtonDDP::initializePrimalSolution] START extractInitialTrajectories" << std::endl;
       initialSolutionExists = extractInitialTrajectories(optimizedPrimalSolution_, nominalPrimalData_.primalSolution);
+      std::cout << "[GaussNewtonDDP::initializePrimalSolution] END extractInitialTrajectories" << std::endl;
+
+      std::cout << "[GaussNewtonDDP::initializePrimalSolution] AGAIN primalSolution.getDesiredState().size(): " << nominalPrimalData_.primalSolution.stateTrajectory_.size() << std::endl;
     }
 
     // display
-    if (!initialSolutionExists && ddpSettings_.displayInfo_) {
-      std::cerr << "Initial PrimalSolution trajectories are unavailable. Solver resorts to use Initializer ...\n";
+    if (!initialSolutionExists && ddpSettings_.displayInfo_) 
+    {
+      std::cerr << "[GaussNewtonDDP::initializePrimalSolution] ERROR: Initial PrimalSolution trajectories are unavailable. Solver resorts to use Initializer ...\n";
     }
 
     // finish rollout with Initializer
+    std::cout << "[GaussNewtonDDP::initializePrimalSolution] START rolloutInitializer" << std::endl;
     rolloutInitializer(nominalPrimalData_.primalSolution);
+    std::cout << "[GaussNewtonDDP::initializePrimalSolution] END rolloutInitializer" << std::endl;
+
+    std::cout << "[GaussNewtonDDP::initializePrimalSolution] END" << std::endl;
 
     // true if the rollout is not purely from the Initializer
     return initialSolutionExists;
 
-  } catch (const std::exception& error) {
-    const std::string msg = "[GaussNewtonDDP::initializePrimalSolution] the initial rollout is unstable!\n";
+  } 
+  catch (const std::exception& error) 
+  {
+    const std::string msg = "[GaussNewtonDDP::initializePrimalSolution] ERROR: The initial rollout is unstable!\n";
     throw std::runtime_error(msg + error.what());
   }
 }
@@ -1287,7 +1451,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 /******************************************************************************************************/
 void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const vector_t& initFullState, scalar_t finalTime) 
 {
-  //std::cout << "[GaussNewtonDDP::runImpl] START(4)" << std::endl;
+  std::cout << "[GaussNewtonDDP::runImpl] START(4)" << std::endl;
 
   if (ddpSettings_.displayInfo_) 
   {
@@ -1329,11 +1493,13 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const
 
   // optimized --> nominal: initializes the nominal primal and dual solutions based on the optimized ones
   initializationTimer_.startTimer();
+  std::cout << "[GaussNewtonDDP::runImpl(4)] START initializePrimalSolution" << std::endl;
   bool initialSolutionExists = initializePrimalSolution();  // true if the rollout is not purely from the Initializer
+  std::cout << "[GaussNewtonDDP::runImpl(4)] END initializePrimalSolution" << std::endl;
 
-  //std::cout << "[GaussNewtonDDP::runImpl(4)] START initializeDualSolutionAndMetrics" << std::endl;
+  std::cout << "[GaussNewtonDDP::runImpl(4)] START initializeDualSolutionAndMetrics" << std::endl;
   initializeDualSolutionAndMetrics();
-  //std::cout << "[GaussNewtonDDP::runImpl(4)] END initializeDualSolutionAndMetrics" << std::endl;
+  std::cout << "[GaussNewtonDDP::runImpl(4)] END initializeDualSolutionAndMetrics" << std::endl;
 
   performanceIndexHistory_.push_back(performanceIndex_);
   initializationTimer_.endTimer();
@@ -1351,6 +1517,8 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const
   // DDP main loop
   while (true) 
   {
+    std::cout << "[GaussNewtonDDP::runImpl(4)] START DDP LOOP" << std::endl;
+
     if (ddpSettings_.displayInfo_) 
     {
       std::cerr << "\n###################";
@@ -1406,6 +1574,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const
     //std::cout << convergenceInfo << std::endl;
     if (isConverged || (totalNumIterations_ - initIteration) == ddpSettings_.maxNumIterations_) 
     {
+      std::cout << "[GaussNewtonDDP::runImpl(4)] END DDP LOOP" << std::endl;
       break;
     } 
     else 
@@ -1419,6 +1588,8 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const
       optimizedDualSolution_.swap(nominalDualData_.dualSolution);
       optimizedPrimalSolution_.swap(nominalPrimalData_.primalSolution);
       optimizedProblemMetrics_.swap(nominalPrimalData_.problemMetrics);
+
+      std::cout << "[GaussNewtonDDP::runImpl(4)] CONTINUE DDP LOOP" << std::endl;
     }
     //ctr++;
   }  // end of while loop
@@ -1426,7 +1597,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const
   // display
   if (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_) 
   {
-    std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+    std::cerr << "\n[GaussNewtonDDP::runImpl(4)]++++++++++++++++++++++++++++++++++++++++++++++++++++++";
     std::cerr << "\n++++++++++++++ " + ddp::toAlgorithmName(ddpSettings_.algorithm_) + " solver has terminated +++++++++++++";
     std::cerr << "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
     std::cerr << "Time Period:          [" << initTime_ << " ," << finalTime_ << "]\n";
@@ -1440,16 +1611,22 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const
     } 
     else if (totalNumIterations_ - initIteration == ddpSettings_.maxNumIterations_) 
     {
-      std::cerr << "The algorithm has terminated as: \n";
+      std::cerr << "[GaussNewtonDDP::runImpl(4)] ERROR: The algorithm has terminated as: \n";
       std::cerr << "    * The maximum number of iterations (i.e., " << ddpSettings_.maxNumIterations_ << ") has reached." << std::endl;
     } 
     else 
     {
-      std::cerr << "The algorithm has terminated for an unknown reason!" << std::endl;
+      std::cerr << "[GaussNewtonDDP::runImpl(4)] ERROR: The algorithm has terminated for an unknown reason!" << std::endl;
     }
   }
 
-  //std::cout << "[GaussNewtonDDP::runImpl(4)] END" << std::endl << std::endl;
+  if (initTime_ > 0.0)
+  {
+    std::cout << "[GaussNewtonDDP::runImpl(4)] DEBUG INF initTime_: " << initTime_ << std::endl;
+    while(1);
+  }
+
+  std::cout << "[GaussNewtonDDP::runImpl(4)] END" << std::endl << std::endl;
 }
 
 }  // namespace ocs2

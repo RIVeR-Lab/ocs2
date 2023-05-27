@@ -20,6 +20,7 @@
 
 using namespace ocs2;
 using namespace mobile_manipulator;
+using namespace std;
 
 int main(int argc, char** argv) 
 {
@@ -33,7 +34,7 @@ int main(int argc, char** argv)
   ros::NodeHandle nodeHandle;
   
   // Get node parameters
-  string taskFile, libFolder, urdfFile;
+  std::string taskFile, libFolder, urdfFile;
 
   nodeHandle.getParam("/taskFile", taskFile);
   nodeHandle.getParam("/libFolder", libFolder);

@@ -54,8 +54,12 @@ class DefaultInitializer final : public Initializer
 
     void compute(scalar_t time, const vector_t& state, scalar_t nextTime, vector_t& input, vector_t& nextState) override 
     {
+      //std::cout << "[DefaultInitializer::compute] START" << std::endl;
+
       input.setZero(inputDim_);
       nextState = state;
+
+      //std::cout << "[DefaultInitializer::compute] END" << std::endl;
     }
 
   protected:
