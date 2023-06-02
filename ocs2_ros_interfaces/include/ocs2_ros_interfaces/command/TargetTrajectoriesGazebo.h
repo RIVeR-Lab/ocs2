@@ -1,31 +1,10 @@
-/******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-* Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-
-* Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
-* Neither the name of the copyright holder nor the names of its
-  contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-******************************************************************************/
+// LAST UPDATE: 2022.05.30
+//
+// AUTHOR: Neset Unver Akmandor
+//
+// E-MAIL: akmandor.n@northeastern.edu
+//
+// DESCRIPTION: TODO...
 
 #pragma once
 
@@ -33,7 +12,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 #include <mutex>
 
+#include <visualization_msgs/MarkerArray.h>
 #include <gazebo_msgs/ModelStates.h>
+#include <tf/transform_listener.h>
+#include <tf/transform_broadcaster.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <interactive_markers/interactive_marker_server.h>
+#include <interactive_markers/menu_handler.h>
 
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_ros_interfaces/command/TargetTrajectoriesRosPublisher.h>
@@ -58,31 +43,116 @@ class TargetTrajectoriesGazebo final
      * observation is be expected on "topicPrefix_mpc_observation" topic.
      * @param [in] goalPoseToTargetTrajectories: A function which transforms the commanded pose to TargetTrajectories.
      */
-    TargetTrajectoriesGazebo(::ros::NodeHandle& nodeHandle, 
+    TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
                              const std::string& topicPrefix,
+                             const std::string& gazeboModelMsgName,
+                             std::string robotName,
+                             std::vector<std::string>& targetNames,
                              GoalPoseToTargetTrajectories goalPoseToTargetTrajectories);
 
-    /**
-     * Spins ROS to update the interactive markers.
-     */
-    void publishInteractiveMarker() 
-    { 
-      ::ros::spin(); 
-    }
+    // DESCRIPTION: TODO...
+    ~TargetTrajectoriesGazebo();
+
+    // DESCRIPTION: TODO...
+    TargetTrajectoriesGazebo(const TargetTrajectoriesGazebo& ttg);
+
+    // DESCRIPTION: TODO...
+  	TargetTrajectoriesGazebo& operator=(const TargetTrajectoriesGazebo& ttg);
+
+    // DESCRIPTION: TODO...
+    void updateObservationAndTarget();
+
+    // DESCRIPTION: TODO...
+    void initializeInteractiveMarker();
 
   private:
+    /// FUNCTIONS:
+    // DESCRIPTION: TODO...
+    void transformPose(std::string& frame_from,
+                       std::string& frame_to,
+                       geometry_msgs::Pose& p_from,
+                       geometry_msgs::Pose& p_to);
+
+    // DESCRIPTION: TODO...
+    void rotateQuaternion(Eigen::Quaterniond& quat, Eigen::Vector3d& rpy_rot, Eigen::Quaterniond& quat_new);
+
+    // DESCRIPTION: TODO...
+    void print(geometry_msgs::Point po);
+
+    // DESCRIPTION: TODO...
+    int isIn(std::vector<std::string>& vec, std::string& s);
+
+    // DESCRIPTION: TODO...
+    double calculateEuclideanDistance(Eigen::Vector3d& p1, geometry_msgs::Pose& p2);
+
+    // DESCRIPTION: TODO...
+    std::pair<double, int> findClosestDistance(std::vector<Eigen::Vector3d>& pos_vec, geometry_msgs::Pose& query_p);
+
+    // DESCRIPTION: TODO...
     void gazeboModelStatesCallback(const gazebo_msgs::ModelStatesPtr& feedback);
 
-    //interactive_markers::MenuHandler menuHandler_;
-    //interactive_markers::InteractiveMarkerServer server_;
+    // DESCRIPTION: TODO...
+    void updateTarget();
+
+    // DESCRIPTION: TODO...
+    void updateGraspPose();
+
+    // DESCRIPTION: TODO...
+    void fillTargetVisu();
+
+    // DESCRIPTION: TODO...
+    void publishTargetVisu();
+
+    // DESCRIPTION: TODO...
+    void publishGraspFrame();
+
+    // DESCRIPTION: TODO...
+    visualization_msgs::InteractiveMarker createInteractiveMarker() const;
+
+    // DESCRIPTION: TODO...
+    void processFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
+
+    /// VARIABLES:
+    bool initFlag_ = false;
+
+    int ctr_ = 0;
+
+    std::string worldFrameName_ = "world";
+    std::string robotFrameName_ = "base_link";
+
+    std::vector<std::string> targetNames_;
+    std::string robotName_;
+    geometry_msgs::Pose robotPose_;
+
+    std::string currentTargetName_;
+    Eigen::Vector3d currentTargetPosition_;
+    Eigen::Quaterniond currentTargetOrientation_;
+    
+    Eigen::Vector3d graspPosOffset_;
+    Eigen::Vector3d currentGraspPosition_;
+    Eigen::Quaterniond currentGraspOrientation_;
+    
+    std::vector<std::string> currentTargetNames_;
+    std::vector<Eigen::Vector3d> currentTargetPositions_;
+    std::vector<Eigen::Quaterniond> currentTargetOrientations_;
+
+    visualization_msgs::MarkerArray targetMarkerArray_;
+    ros::Publisher targetMarkerArrayPublisher_;
 
     GoalPoseToTargetTrajectories goalPoseToTargetTrajectories_;
 
     std::unique_ptr<TargetTrajectoriesRosPublisher> targetTrajectoriesPublisherPtr_;
 
-    ::ros::Subscriber observationSubscriber_;
-    ::ros::Subscriber gazeboModelStatesSubscriber_;
+    tf::TransformListener* tflistenerPtr_;
+
+    interactive_markers::MenuHandler menuHandler_;
+    interactive_markers::InteractiveMarkerServer server_;
+
+    ros::Subscriber observationSubscriber_;
+    ros::Subscriber gazeboModelStatesSubscriber_;
+
     mutable std::mutex latestObservationMutex_;
+    
     SystemObservation latestObservation_;
 };
 

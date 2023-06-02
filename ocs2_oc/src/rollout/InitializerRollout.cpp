@@ -60,13 +60,13 @@ vector_t InitializerRollout::run(scalar_t initTime,
                                  vector_array_t& stateTrajectory, 
                                  vector_array_t& inputTrajectory) 
 {
-  std::cout << "[InitializerRollout::run] START" << std::endl;
+  //std::cout << "[InitializerRollout::run] START" << std::endl;
 
-  std::cout << "[InitializerRollout::run] initTime: " << initTime << std::endl;
-  std::cout << "[InitializerRollout::run] initState size: " << initState.size() << std::endl;
-  std::cout << "[InitializerRollout::run] timeTrajectory size: " << timeTrajectory.size() << std::endl;
-  std::cout << "[InitializerRollout::run] stateTrajectory size: " << stateTrajectory.size() << std::endl;
-  std::cout << "[InitializerRollout::run] inputTrajectory size: " << inputTrajectory.size() << std::endl;
+  //std::cout << "[InitializerRollout::run] initTime: " << initTime << std::endl;
+  //std::cout << "[InitializerRollout::run] initState size: " << initState.size() << std::endl;
+  //std::cout << "[InitializerRollout::run] timeTrajectory size: " << timeTrajectory.size() << std::endl;
+  //std::cout << "[InitializerRollout::run] stateTrajectory size: " << stateTrajectory.size() << std::endl;
+  //std::cout << "[InitializerRollout::run] inputTrajectory size: " << inputTrajectory.size() << std::endl;
 
   if (initTime > finalTime) 
   {
@@ -79,9 +79,9 @@ vector_t InitializerRollout::run(scalar_t initTime,
   const auto numEvents = numSubsystems - 1;
   const size_t maxNumSteps = (timeIntervalArray.back().second - timeIntervalArray.front().first) / settings().timeStep;
 
-  std::cout << "[InitializerRollout::run] numSubsystems: " << numSubsystems << std::endl;
-  std::cout << "[InitializerRollout::run] numEvents: " << numEvents << std::endl;
-  std::cout << "[InitializerRollout::run] maxNumSteps: " << maxNumSteps << std::endl;
+  //std::cout << "[InitializerRollout::run] numSubsystems: " << numSubsystems << std::endl;
+  //std::cout << "[InitializerRollout::run] numEvents: " << numEvents << std::endl;
+  //std::cout << "[InitializerRollout::run] maxNumSteps: " << maxNumSteps << std::endl;
 
   // clearing the output trajectories
   timeTrajectory.clear();
@@ -101,8 +101,8 @@ vector_t InitializerRollout::run(scalar_t initTime,
     const size_t numSteps = (timeIntervalArray[i].second - timeIntervalArray[i].first) / settings().timeStep;
     const scalar_t remainderTime = timeIntervalArray[i].second - (timeIntervalArray[i].first + numSteps * settings().timeStep);
 
-    std::cout << "[InitializerRollout::run] numSteps: " << numSteps << std::endl;
-    std::cout << "[InitializerRollout::run] remainderTime: " << remainderTime << std::endl;
+    //std::cout << "[InitializerRollout::run] numSteps: " << numSteps << std::endl;
+    //std::cout << "[InitializerRollout::run] remainderTime: " << remainderTime << std::endl;
 
     // take (numSteps + 1) steps from timeIntervalArray[i].first to (timeIntervalArray[i].second - remainderTime)
     for (size_t k = 0; k < numSteps + 1; k++) 
@@ -111,10 +111,12 @@ vector_t InitializerRollout::run(scalar_t initTime,
       stateTrajectory.push_back(state);
       const scalar_t timeStep = k < numSteps ? settings().timeStep : remainderTime;
 
+      /*
       if (k == 0)
       {
         std::cout << "[InitializerRollout::run] timeStep: " << timeStep << std::endl;
       }
+      */
 
       initializerPtr_->compute(timeTrajectory.back(), stateTrajectory.back(), timeTrajectory.back() + timeStep, input, state);
       
@@ -139,9 +141,9 @@ vector_t InitializerRollout::run(scalar_t initTime,
     }
   }  // end of i loop
 
-  std::cout << "[InitializerRollout::run] AFTER stateTrajectory size: " << stateTrajectory.size() << std::endl;
+  //std::cout << "[InitializerRollout::run] AFTER stateTrajectory size: " << stateTrajectory.size() << std::endl;
 
-  std::cout << "[InitializerRollout::run] END" << std::endl;
+  //std::cout << "[InitializerRollout::run] END" << std::endl;
 
   return stateTrajectory.back();
 }

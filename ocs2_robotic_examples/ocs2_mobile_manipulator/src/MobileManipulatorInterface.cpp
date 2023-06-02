@@ -133,7 +133,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 
   // NUA TODO: We don't need to set it here!
   //int modelMode = getModelModeInt(robotModelInfo_);
-  auto modelModeInt = 2;
+  auto modelModeInt = 1;
   setMPCProblem(modelModeInt, pointsAndRadii);
   
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END" << std::endl;

@@ -1,35 +1,16 @@
-/******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
+// LAST UPDATE: 2022.05.30
+//
+// AUTHOR: Neset Unver Akmandor
+//
+// E-MAIL: akmandor.n@northeastern.edu
+//
+// DESCRIPTION: TODO...
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
- * Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-
- * Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
- * Neither the name of the copyright holder nor the names of its
-  contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
 #include <ocs2_ros_interfaces/command/TargetTrajectoriesGazebo.h>
 #include <ocs2_ros_interfaces/command/TargetTrajectoriesInteractiveMarker.h>
 
 using namespace ocs2;
+using namespace std;
 
 /**
  * Converts the pose of the interactive marker to TargetTrajectories.
@@ -53,17 +34,51 @@ TargetTrajectories goalPoseToTargetTrajectories(const Eigen::Vector3d& position,
 
 int main(int argc, char* argv[]) 
 {
+  cout << "[MobileManipulatorTarget::main] START" << endl;
+
   const std::string robotMode = "mobile_manipulator";
-  ::ros::init(argc, argv, robotMode + "_target");
-  ::ros::NodeHandle nodeHandle;
+  ros::init(argc, argv, robotMode + "_target");
+  
+  // INITIALIZE TRANSFORM LISTENER
+  tf::TransformListener tflistener;
+
+  // INITIALIZE THE MAIN ROS NODE HANDLE
+  ros::NodeHandle nh;
+
+  // INITIALIZE THE ROS NODE HANDLE FOR PARAMETERS
+  ros::NodeHandle pnh("~");
+
+  // INITIALIZE AND SET PARAMETERS
+  std::string world_frame_name, gz_model_msg_name, robot_name;
+  std::vector<std::string> name_pkgs_ign, name_pkgs_man, scan_data_path_pkgs_ign, scan_data_path_pkgs_man, target_names;
+  double map_resolution;
+
+  pnh.param<std::string>("/world_frame_name", world_frame_name, "");
+  pnh.param<std::string>("/gz_model_msg_name", gz_model_msg_name, "");
+  robot_name = "mobiman";
+  target_names = {"normal_pkg","long_pkg","longwide_pkg","red_cube","green_cube","blue_cube"};
+
+  //cout << "[MobileManipulatorTarget::main] DEBUG INF" << endl;
+  //while(1);
 
   // Gazebo
-  //TargetTrajectoriesGazebo targetPoseCommand(nodeHandle, robotName, &goalPoseToTargetTrajectories);
-  //targetPoseCommand.publishInteractiveMarker();
+  TargetTrajectoriesGazebo gu(nh, robotMode, gz_model_msg_name, robot_name, target_names, &goalPoseToTargetTrajectories);
+  gu.initializeInteractiveMarker();
+
+  ros::Rate r(100);
+  while(ros::ok)
+  {
+    //gu.updateObservationAndTarget();
+
+    ros::spinOnce();
+    r.sleep();
+  }
 
   // Interactive Marker
-  TargetTrajectoriesInteractiveMarker targetPoseCommand(nodeHandle, robotMode, &goalPoseToTargetTrajectories);
-  targetPoseCommand.publishInteractiveMarker();
+  //TargetTrajectoriesInteractiveMarker targetPoseCommand(nh, robotMode, &goalPoseToTargetTrajectories);
+  //targetPoseCommand.publishInteractiveMarker();
+
+  cout << "[MobileManipulatorTarget::main] END" << endl;
 
   // Successful exit
   return 0;
