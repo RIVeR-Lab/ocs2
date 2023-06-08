@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.04.10
+// LAST UPDATE: 2022.06.07
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -160,6 +160,26 @@ class MobileManipulatorInterface final : public RobotInterface
       return pointsOnRobotPtr_;
     }
 
+    std::string getBaseStateMsg() 
+    { 
+      return baseStateMsg_;
+    }
+
+    std::string getArmStateMsg() 
+    { 
+      return armStateMsg_;
+    }
+
+    std::string getBaseControlMsg() 
+    { 
+      return baseControlMsg_;
+    }
+
+    std::string getArmControlMsg() 
+    { 
+      return armControlMsg_;
+    }
+
     /*
     std::shared_ptr<voxblox::EsdfCachingServer> getEsdfCachingServerPtr() 
     { 
@@ -227,14 +247,6 @@ class MobileManipulatorInterface final : public RobotInterface
     ddp::Settings ddpSettings_;
     mpc::Settings mpcSettings_;
 
-    //size_t modelBaseStateDim_;
-    //size_t modelArmStateDim_;
-    //size_t modelStateDim_;
-    
-    //size_t modelBaseInputDim_;
-    //size_t modelArmInputDim_;
-    //size_t modelInputDim_;
-
     OptimalControlProblem problem_;
     std::shared_ptr<ReferenceManager> referenceManagerPtr_;
     std::unique_ptr<RolloutBase> rolloutPtr_;
@@ -243,7 +255,11 @@ class MobileManipulatorInterface final : public RobotInterface
     std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
     RobotModelInfo robotModelInfo_;
 
-    //vector_t initialState_;
+    std::string baseStateMsg_;
+    std::string armStateMsg_;
+
+    std::string baseControlMsg_;
+    std::string armControlMsg_;
 
     std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_;
     std::shared_ptr<ExtMapUtility> emuPtr_;

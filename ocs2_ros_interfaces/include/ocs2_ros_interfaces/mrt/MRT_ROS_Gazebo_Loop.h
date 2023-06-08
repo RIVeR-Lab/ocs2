@@ -62,6 +62,10 @@ class MRT_ROS_Gazebo_Loop
     MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                         MRT_ROS_Interface& mrt,
                         std::string worldFrameName,
+                        std::string baseStateMsg,
+                        std::string armStateMsg,
+                        std::string baseControlMsg,
+                        std::string armControlMsg,
                         scalar_t mrtDesiredFrequency,
                         scalar_t mpcDesiredFrequency = -1);
 
@@ -113,7 +117,7 @@ class MRT_ROS_Gazebo_Loop
     void mrtLoop();
 
     /** NUA TODO: Add description */
-    void setStateIndexMap();
+    void setStateIndexMap(std::string& armStateMsg);
 
     /** NUA TODO: Add description */
     void tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg);

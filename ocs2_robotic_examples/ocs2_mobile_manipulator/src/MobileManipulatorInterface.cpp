@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.04.27
+// LAST UPDATE: 2022.06.07
 //
 // AUTHOR: Neset Unver Akmandor  (NUA)
 //
@@ -78,6 +78,10 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   loadData::loadPtreeValue<std::string>(pt, baseFrame, "model_information.baseFrame", false);
   loadData::loadPtreeValue<std::string>(pt, armBaseFrame, "model_information.armBaseFrame", false);
   loadData::loadPtreeValue<std::string>(pt, eeFrame, "model_information.eeFrame", false);
+  loadData::loadPtreeValue<std::string>(pt, baseStateMsg_, "model_information.baseStateMsg", false);
+  loadData::loadPtreeValue<std::string>(pt, armStateMsg_, "model_information.armStateMsg", false);
+  loadData::loadPtreeValue<std::string>(pt, baseControlMsg_, "model_information.baseControlMsg", false);
+  loadData::loadPtreeValue<std::string>(pt, armControlMsg_, "model_information.armControlMsg", false);
 
   std::cerr << "\n #### Model Information:";
   std::cerr << "\n #### =============================================================================\n";
@@ -100,6 +104,10 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   std::cerr << "\n #### model_information.baseFrame: \"" << baseFrame << "\"";
   std::cerr << "\n #### model_information.armBaseFrame: \"" << armBaseFrame << "\"";
   std::cerr << "\n #### model_information.eeFrame: \"" << eeFrame << "\"";
+  std::cerr << "\n #### model_information.baseStateMsg: \"" << baseStateMsg_ << "\"";
+  std::cerr << "\n #### model_information.armStateMsg: \"" << armStateMsg_ << "\"";
+  std::cerr << "\n #### model_information.baseControlMsg: \"" << baseControlMsg_ << "\"";
+  std::cerr << "\n #### model_information.armControlMsg: \"" << armControlMsg_ << "\"";
   std::cerr << " #### =============================================================================" << std::endl;
 
   // Create pinocchio interface
@@ -133,7 +141,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 
   // NUA TODO: We don't need to set it here!
   //int modelMode = getModelModeInt(robotModelInfo_);
-  auto modelModeInt = 1;
+  auto modelModeInt = 2;
   setMPCProblem(modelModeInt, pointsAndRadii);
   
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END" << std::endl;
@@ -184,7 +192,7 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
 
   std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getExtCollisionConstraint" << std::endl;
   // External-collision avoidance constraint
-  //activateExtCollision_ = false;
+  activateExtCollision_ = false;
   if (activateExtCollision_) 
   {
     createPointsOnRobotPtr(pointsAndRadii);
@@ -522,8 +530,6 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftCon
   std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] inputLimits size: " << inputLimits.size() << std::endl;
 
   auto boxConstraints = std::unique_ptr<StateInputSoftBoxConstraint>(new StateInputSoftBoxConstraint(stateLimits, inputLimits));
-
-  std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] HELLO" << std::endl;
 
   boxConstraints -> initializeOffset(0.0, vector_t::Zero(modeStateDim), vector_t::Zero(modeInputDim));
 
