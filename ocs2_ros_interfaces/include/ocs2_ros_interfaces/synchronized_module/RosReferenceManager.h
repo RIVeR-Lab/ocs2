@@ -84,8 +84,9 @@ class RosReferenceManager final : public ReferenceManagerDecorator
     const std::string topicPrefix_;
     RobotModelInfo robotModelInfo_;
 
-    ::ros::Subscriber modeScheduleSubscriber_;
-    ::ros::Subscriber targetTrajectoriesSubscriber_;
+    ros::Subscriber modeScheduleSubscriber_;
+    ros::Subscriber targetTrajectoriesSubscriber_;
+    ros::Subscriber modelModeSubscriber_;
 };
 
 /******************************************************************************************************/

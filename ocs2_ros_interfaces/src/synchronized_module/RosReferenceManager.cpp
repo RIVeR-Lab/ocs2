@@ -94,13 +94,6 @@ void RosReferenceManager::subscribe(ros::NodeHandle& nodeHandle)
     {
       std::cout << i << " -> " << targetTrajectories.inputTrajectory[0][i] << std::endl;
     }
-    
-    /*
-    if (robotModelInfo_.modelMode == ModelMode::BaseMotion)
-    {
-      targetTrajectories.
-    }
-    */
 
     std::cout << "[RosReferenceManager::subscribe::targetTrajectoriesCallback] targetTrajectories size: " << std::endl;
 
@@ -110,6 +103,22 @@ void RosReferenceManager::subscribe(ros::NodeHandle& nodeHandle)
     std::cout << "" << std::endl;
   };
   targetTrajectoriesSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mpc_target_trajectories>(topicPrefix_ + "_mpc_target", 1, targetTrajectoriesCallback);
+
+  // ModelMode
+  auto modelModeCallback = [this](const std_msgs::UInt8::ConstPtr& msg) 
+  {
+    std::cout << "[RosReferenceManager::subscribe::modelModeCallback] START" << std::endl;
+
+    auto modelModeInt = msg->data;
+
+    std::cout << "[RosReferenceManager::subscribe::modelModeCallback] modelModeInt: " << modelModeInt << std::endl;
+
+    referenceManagerPtr_->setModelModeInt(modelModeInt);
+
+    std::cout << "[RosReferenceManager::subscribe::modelModeCallback] END" << std::endl;
+    std::cout << "" << std::endl;
+  };
+  modelModeSubscriber_ = nodeHandle.subscribe<std_msgs::UInt8>(topicPrefix_ + "_model_mode", 1, modelModeCallback);
 }
 
 }  // namespace ocs2
