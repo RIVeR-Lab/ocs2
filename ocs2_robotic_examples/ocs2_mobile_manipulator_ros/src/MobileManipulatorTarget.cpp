@@ -63,7 +63,8 @@ int main(int argc, char* argv[])
 
   // Gazebo
   TargetTrajectoriesGazebo gu(nh, robotMode, gz_model_msg_name, robot_name, target_names, &goalPoseToTargetTrajectories);
-  gu.initializeInteractiveMarker();
+  gu.initializeInteractiveMarkerTarget();
+  gu.initializeInteractiveMarkerModelMode();
 
   ros::Rate r(100);
   while(ros::ok)

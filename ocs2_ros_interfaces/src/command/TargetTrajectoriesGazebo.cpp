@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.05.30
+// LAST UPDATE: 2022.06.17
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -22,7 +22,11 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
                                                    std::string robotName,
                                                    std::vector<std::string>& targetNames,
                                                    GoalPoseToTargetTrajectories goalPoseToTargetTrajectories)
-  : server_("simple_marker"), robotName_(robotName), targetNames_(targetNames), goalPoseToTargetTrajectories_(std::move(goalPoseToTargetTrajectories)) 
+  : targetServer_("target_marker"), 
+    modelModeServer_("model_mode_marker", "", false), 
+    robotName_(robotName), 
+    targetNames_(targetNames), 
+    goalPoseToTargetTrajectories_(std::move(goalPoseToTargetTrajectories)) 
 {
   tflistenerPtr_ = new tf::TransformListener;
 
@@ -32,7 +36,7 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
 
   /// Interactive Marker
   // create an interactive marker for our server
-  menuHandler_.insert("Send target pose", boost::bind(&TargetTrajectoriesGazebo::processFeedback, this, _1));
+  menuHandlerTarget_.insert("Send target pose", boost::bind(&TargetTrajectoriesGazebo::processFeedbackTarget, this, _1));
 
   /// Subscribers
   auto observationCallback = [this](const ocs2_msgs::mpc_observation::ConstPtr& msg) 
@@ -46,6 +50,7 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
 
   /// Publishers
   targetTrajectoriesPublisherPtr_.reset(new TargetTrajectoriesRosPublisher(nodeHandle, topicPrefix));
+  modelModePublisher_ = nodeHandle.advertise<std_msgs::UInt8>(topicPrefix + "_model_mode", 1, false);
 
   targetMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(topicPrefix + "_target", 10);
 }
@@ -59,7 +64,9 @@ TargetTrajectoriesGazebo::~TargetTrajectoriesGazebo()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(const TargetTrajectoriesGazebo& ttg) : server_("simple_marker")
+TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(const TargetTrajectoriesGazebo& ttg)
+  : targetServer_("target_marker"), 
+    modelModeServer_("model_mode_marker", "", false)
 {
   initFlag_ = ttg.initFlag_;
   worldFrameName_ = ttg.worldFrameName_;
@@ -84,7 +91,11 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(const TargetTrajectoriesGazeb
 
   tflistenerPtr_ = ttg.tflistenerPtr_;
 
-  menuHandler_ = ttg.menuHandler_;
+  h_first_entry_ = ttg.h_first_entry_;
+  h_mode_last_ = ttg.h_mode_last_;
+
+  menuHandlerTarget_ = ttg.menuHandlerTarget_;
+  menuHandlerModelMode_ = ttg.menuHandlerModelMode_;
 
   latestObservation_ = ttg.latestObservation_;
 }
@@ -117,7 +128,11 @@ TargetTrajectoriesGazebo& TargetTrajectoriesGazebo::operator=(const TargetTrajec
 
   tflistenerPtr_ = ttg.tflistenerPtr_;
 
-  menuHandler_ = ttg.menuHandler_;
+  h_first_entry_ = ttg.h_first_entry_;
+  h_mode_last_ = ttg.h_mode_last_;
+
+  menuHandlerTarget_ = ttg.menuHandlerTarget_;
+  menuHandlerModelMode_ = ttg.menuHandlerModelMode_;
 
   latestObservation_ = ttg.latestObservation_;
 
@@ -156,20 +171,49 @@ void TargetTrajectoriesGazebo::updateObservationAndTarget()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void TargetTrajectoriesGazebo::initializeInteractiveMarker()
+void TargetTrajectoriesGazebo::initializeInteractiveMarkerTarget()
 {
+  //std::cout << "[TargetTrajectoriesGazebo::initializeInteractiveMarkerTarget] START" << std::endl;
+
   while (initFlag_);
   
   // create an interactive marker for our server
-  auto interactiveMarker = createInteractiveMarker();
+  auto interactiveMarker = createInteractiveMarkerTarget();
 
   // add the interactive marker to our collection &
   // tell the server to call processFeedback() when feedback arrives for it
-  server_.insert(interactiveMarker);  //, boost::bind(&TargetTrajectoriesInteractiveMarker::processFeedback, this, _1));
-  menuHandler_.apply(server_, interactiveMarker.name);
+  targetServer_.insert(interactiveMarker);
+  menuHandlerTarget_.apply(targetServer_, interactiveMarker.name);
 
   // 'commit' changes and send to all clients
-  server_.applyChanges();
+  targetServer_.applyChanges();
+
+  //std::cout << "[TargetTrajectoriesGazebo::initializeInteractiveMarkerTarget] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::initializeInteractiveMarkerModelMode()
+{
+  //std::cout << "[TargetTrajectoriesGazebo::initializeInteractiveMarkerModelMode] START" << std::endl;
+
+  while (initFlag_);
+  
+  // create an interactive marker for our server
+  auto interactiveMarker = createInteractiveMarkerModelMode();
+
+  createMenuModelMode();
+
+  // add the interactive marker to our collection &
+  // tell the server to call processFeedback() when feedback arrives for it
+  modelModeServer_.insert(interactiveMarker);
+  menuHandlerModelMode_.apply(modelModeServer_, interactiveMarker.name);
+
+  // 'commit' changes and send to all clients
+  modelModeServer_.applyChanges();
+
+  //std::cout << "[TargetTrajectoriesGazebo::initializeInteractiveMarkerModelMode] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -561,7 +605,6 @@ void TargetTrajectoriesGazebo::publishGraspFrame()
   Eigen::Vector3d currentGraspPosition = currentGraspPosition_;
   Eigen::Quaterniond currentGraspOrientation = currentGraspOrientation_;
 
-
   static tf::TransformBroadcaster tf_br;
   tf::Transform tf_virtual;
   tf_virtual.setOrigin(tf::Vector3(currentGraspPosition.x(), currentGraspPosition.y(), currentGraspPosition.z()));
@@ -575,7 +618,7 @@ void TargetTrajectoriesGazebo::publishGraspFrame()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-visualization_msgs::InteractiveMarker TargetTrajectoriesGazebo::createInteractiveMarker() const 
+visualization_msgs::InteractiveMarker TargetTrajectoriesGazebo::createInteractiveMarkerTarget() const 
 {
   visualization_msgs::InteractiveMarker interactiveMarker;
   interactiveMarker.header.frame_id = "world";
@@ -655,8 +698,123 @@ visualization_msgs::InteractiveMarker TargetTrajectoriesGazebo::createInteractiv
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void TargetTrajectoriesGazebo::processFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback) 
+visualization_msgs::InteractiveMarker TargetTrajectoriesGazebo::createInteractiveMarkerModelMode() const
 {
+  //std::cout << "[TargetTrajectoriesGazebo::createInteractiveMarkerModelMode] START" << std::endl;
+
+  visualization_msgs::InteractiveMarker interactiveMarker;
+  interactiveMarker.header.frame_id = "world";
+  interactiveMarker.header.stamp = ros::Time::now();
+  interactiveMarker.name = "ModelMode";
+  interactiveMarker.scale = 0.2;
+  interactiveMarker.description = "Right click to send command";
+  interactiveMarker.pose.position.x = 0.0;
+  interactiveMarker.pose.position.y = 0.0;
+  interactiveMarker.pose.position.z = 1.0;
+
+  // create a grey box marker
+  const auto boxMarker = []() 
+  {
+    visualization_msgs::Marker marker;
+    marker.type = visualization_msgs::Marker::CUBE;
+    marker.scale.x = 0.1;
+    marker.scale.y = 0.1;
+    marker.scale.z = 0.1;
+    marker.color.r = 0.5;
+    marker.color.g = 0.5;
+    marker.color.b = 0.5;
+    marker.color.a = 0.5;
+    return marker;
+  }();
+
+  // create a non-interactive control which contains the box
+  visualization_msgs::InteractiveMarkerControl boxControl;
+  boxControl.always_visible = 1;
+  boxControl.markers.push_back(boxMarker);
+  boxControl.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_ROTATE_3D;
+
+  // add the control to the interactive marker
+  interactiveMarker.controls.push_back(boxControl);
+
+  // create a control which will move the box
+  // this control does not contain any markers,
+  // which will cause RViz to insert two arrows
+  visualization_msgs::InteractiveMarkerControl control;
+
+  control.orientation.w = 1;
+  control.orientation.x = 1;
+  control.orientation.y = 0;
+  control.orientation.z = 0;
+  control.name = "rotate_x";
+  control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
+  interactiveMarker.controls.push_back(control);
+  control.name = "move_x";
+  control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
+  interactiveMarker.controls.push_back(control);
+
+  control.orientation.w = 1;
+  control.orientation.x = 0;
+  control.orientation.y = 1;
+  control.orientation.z = 0;
+  control.name = "rotate_z";
+  control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
+  interactiveMarker.controls.push_back(control);
+  control.name = "move_z";
+  control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
+  interactiveMarker.controls.push_back(control);
+
+  control.orientation.w = 1;
+  control.orientation.x = 0;
+  control.orientation.y = 0;
+  control.orientation.z = 1;
+  control.name = "rotate_y";
+  control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
+  interactiveMarker.controls.push_back(control);
+  control.name = "move_y";
+  control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
+  interactiveMarker.controls.push_back(control);
+
+  // create menu marker
+  visualization_msgs::InteractiveMarkerControl control_button;
+
+  control.interaction_mode = visualization_msgs::InteractiveMarkerControl::BUTTON;
+  //control.always_visible = true;
+  interactiveMarker.controls.push_back(control_button);
+
+  //std::cout << "[TargetTrajectoriesGazebo::createInteractiveMarkerModelMode] END" << std::endl;
+
+  return interactiveMarker;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::createMenuModelMode()
+{
+  //std::cout << "[TargetTrajectoriesGazebo::createMenuModelMode] START" << std::endl;
+
+  h_mode_last_ = menuHandlerModelMode_.insert("ModelMode::BaseMotion", boost::bind(&TargetTrajectoriesGazebo::processFeedbackModelMode, this, _1));
+  menuHandlerModelMode_.setCheckState( h_mode_last_, interactive_markers::MenuHandler::UNCHECKED );
+
+  h_mode_last_ = menuHandlerModelMode_.insert("ModelMode::ArmMotion", boost::bind(&TargetTrajectoriesGazebo::processFeedbackModelMode, this, _1));
+  menuHandlerModelMode_.setCheckState( h_mode_last_, interactive_markers::MenuHandler::UNCHECKED );
+
+  h_mode_last_ = menuHandlerModelMode_.insert("ModelMode::WholeBodyMotion", boost::bind(&TargetTrajectoriesGazebo::processFeedbackModelMode, this, _1));
+  menuHandlerModelMode_.setCheckState( h_mode_last_, interactive_markers::MenuHandler::UNCHECKED );
+
+  //check the very last entry
+  menuHandlerModelMode_.setCheckState( h_mode_last_, interactive_markers::MenuHandler::CHECKED );
+
+  //std::cout << "[TargetTrajectoriesGazebo::createMenuModelMode] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::processFeedbackTarget(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback) 
+{
+  std::cout << "[TargetTrajectoriesGazebo::processFeedbackTarget] START" << std::endl;
+
   // Desired state trajectory
   const Eigen::Vector3d position(feedback->pose.position.x, feedback->pose.position.y, feedback->pose.position.z);
   const Eigen::Quaterniond orientation(feedback->pose.orientation.w, 
@@ -676,6 +834,51 @@ void TargetTrajectoriesGazebo::processFeedback(const visualization_msgs::Interac
 
   // publish TargetTrajectories
   targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
+
+  std::cout << "[TargetTrajectoriesGazebo::processFeedbackTarget] END" << std::endl;
+}
+
+void TargetTrajectoriesGazebo::processFeedbackModelMode(const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback)
+{
+  //std::cout << "[TargetTrajectoriesGazebo::processFeedbackModelMode] START" << std::endl;
+  std_msgs::UInt8 model_mode_int;
+  menuHandlerModelMode_.setCheckState( h_mode_last_, interactive_markers::MenuHandler::UNCHECKED );
+  h_mode_last_ = feedback->menu_entry_id;
+  menuHandlerModelMode_.setCheckState( h_mode_last_, interactive_markers::MenuHandler::CHECKED );
+
+  switch (feedback->menu_entry_id) 
+  {
+    case 1:
+    {
+      std::cout << "[TargetTrajectoriesGazebo::processFeedbackModelMode] Switching to ModelMode::BaseMotion" << std::endl;
+      model_mode_int.data = 0;
+      break;
+    }
+    
+    case 2:
+    {
+      std::cout << "[TargetTrajectoriesGazebo::processFeedbackModelMode] Switching to ModelMode::ArmMotion" << std::endl;
+      model_mode_int.data = 1;
+      break;
+    }
+    
+    case 3: 
+    {
+      std::cout << "[TargetTrajectoriesGazebo::processFeedbackModelMode] Switching to ModelMode::WholeBodyMotion" << std::endl;
+      model_mode_int.data = 2;
+      break;
+    }
+
+    default:
+      throw std::invalid_argument("[TargetTrajectoriesGazebo::processFeedbackModelMode] ERROR: Invalid menu entry id");
+  }
+
+  menuHandlerModelMode_.reApply(modelModeServer_);
+  modelModeServer_.applyChanges();
+
+  modelModePublisher_.publish(model_mode_int);
+
+  //std::cout << "[TargetTrajectoriesGazebo::processFeedbackModelMode] END" << std::endl;
 }
 
 }  // namespace ocs2

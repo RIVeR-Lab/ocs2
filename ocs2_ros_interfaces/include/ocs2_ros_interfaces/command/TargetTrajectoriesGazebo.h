@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.05.30
+// LAST UPDATE: 2022.06.17
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -12,6 +12,7 @@
 #include <memory>
 #include <mutex>
 
+#include <std_msgs/UInt8.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <gazebo_msgs/ModelStates.h>
 #include <tf/transform_listener.h>
@@ -63,7 +64,10 @@ class TargetTrajectoriesGazebo final
     void updateObservationAndTarget();
 
     // DESCRIPTION: TODO...
-    void initializeInteractiveMarker();
+    void initializeInteractiveMarkerTarget();
+
+    // DESCRIPTION: TODO...
+    void initializeInteractiveMarkerModelMode();
 
   private:
     /// FUNCTIONS:
@@ -107,10 +111,19 @@ class TargetTrajectoriesGazebo final
     void publishGraspFrame();
 
     // DESCRIPTION: TODO...
-    visualization_msgs::InteractiveMarker createInteractiveMarker() const;
+    visualization_msgs::InteractiveMarker createInteractiveMarkerTarget() const;
 
     // DESCRIPTION: TODO...
-    void processFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
+    visualization_msgs::InteractiveMarker createInteractiveMarkerModelMode() const;
+
+    // DESCRIPTION: TODO...
+    void createMenuModelMode();
+
+    // DESCRIPTION: TODO...
+    void processFeedbackTarget(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
+
+    // DESCRIPTION: TODO...
+    void processFeedbackModelMode(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
 
     /// VARIABLES:
     bool initFlag_ = false;
@@ -142,11 +155,17 @@ class TargetTrajectoriesGazebo final
     GoalPoseToTargetTrajectories goalPoseToTargetTrajectories_;
 
     std::unique_ptr<TargetTrajectoriesRosPublisher> targetTrajectoriesPublisherPtr_;
+    ros::Publisher modelModePublisher_;
 
     tf::TransformListener* tflistenerPtr_;
 
-    interactive_markers::MenuHandler menuHandler_;
-    interactive_markers::InteractiveMarkerServer server_;
+    interactive_markers::MenuHandler::EntryHandle h_mode_last_;
+    interactive_markers::MenuHandler::EntryHandle h_first_entry_;
+
+    interactive_markers::MenuHandler menuHandlerTarget_;
+    interactive_markers::MenuHandler menuHandlerModelMode_;
+    interactive_markers::InteractiveMarkerServer targetServer_;
+    interactive_markers::InteractiveMarkerServer modelModeServer_;
 
     ros::Subscriber observationSubscriber_;
     ros::Subscriber gazeboModelStatesSubscriber_;
