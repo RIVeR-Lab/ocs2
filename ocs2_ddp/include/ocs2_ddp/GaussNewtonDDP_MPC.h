@@ -57,21 +57,16 @@ class GaussNewtonDDP_MPC final : public MPC_BASE
                        const RolloutBase& rollout,
                        const OptimalControlProblem& optimalControlProblem, 
                        const Initializer& initializer)
-      : MPC_BASE(std::move(mpcSettings)) 
+      : MPC_BASE(std::move(mpcSettings)),
+        mpcSettings_(mpcSettings), 
+        ddpSettings_(ddpSettings), 
+        optimalControlProblem_(optimalControlProblem)
     {
-      switch (ddpSettings.algorithm_) 
-      {
-        case ddp::Algorithm::SLQ:
-          ddpPtr_.reset(new SLQ(std::move(ddpSettings), rollout, optimalControlProblem, initializer));
-          break;
-        
-        case ddp::Algorithm::ILQR:
-          ddpPtr_.reset(new ILQR(std::move(ddpSettings), rollout, optimalControlProblem, initializer));
-          break;
-        
-        default:
-          throw std::runtime_error("Undefined ddp::Algorithm type!");
-      }
+      initializeMPC(mpcSettings, 
+                    ddpSettings, 
+                    rollout,
+                    optimalControlProblem, 
+                    initializer);
     }
 
     /** Default destructor. */
@@ -85,6 +80,27 @@ class GaussNewtonDDP_MPC final : public MPC_BASE
     const GaussNewtonDDP* getSolverPtr() const override 
     { 
       return ddpPtr_.get(); 
+    }
+
+    void initializeMPC(mpc::Settings mpcSettings, 
+                       ddp::Settings ddpSettings, 
+                       const RolloutBase& rollout,
+                       const OptimalControlProblem& optimalControlProblem, 
+                       const Initializer& initializer)
+    {
+      switch (ddpSettings.algorithm_) 
+      {
+        case ddp::Algorithm::SLQ:
+          ddpPtr_.reset(new SLQ(std::move(ddpSettings), rollout, optimalControlProblem, initializer));
+          break;
+        
+        case ddp::Algorithm::ILQR:
+          ddpPtr_.reset(new ILQR(std::move(ddpSettings), rollout, optimalControlProblem, initializer));
+          break;
+        
+        default:
+          throw std::runtime_error("[GaussNewtonDDP_MPC::initializeMPC] Undefined ddp::Algorithm type!");
+      }
     }
 
   private:
@@ -108,6 +124,10 @@ class GaussNewtonDDP_MPC final : public MPC_BASE
       }
       ddpPtr_->run(initTime, initState, initFullState, finalTime);
     }
+
+    ddp::Settings ddpSettings_;
+    mpc::Settings mpcSettings_;
+    OptimalControlProblem optimalControlProblem_;
 
     std::unique_ptr<GaussNewtonDDP> ddpPtr_;
 };

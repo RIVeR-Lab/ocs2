@@ -29,7 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <std_msgs/UInt8.h>
 #include <iostream>
 #include "ocs2_core/thread_support/BufferedValue.h"
 #include "ocs2_oc/synchronized_module/ReferenceManagerInterface.h"
@@ -61,11 +60,13 @@ class ReferenceManager : public ReferenceManagerInterface
       return targetTrajectories_.get(); 
     }
 
-    const uint8_t& getModelModeInt() const override 
+    /*
+    const int getModelModeInt() const override 
     {
       //std::cout << "[ReferenceManager::getModelMode] START" << std::endl;
-      return modelModeInt_.get(); 
+      return modelModeInt_; 
     }
+    */
     
     void setModeSchedule(const ModeSchedule& modeSchedule) override 
     { 
@@ -87,15 +88,12 @@ class ReferenceManager : public ReferenceManagerInterface
       return targetTrajectories_.setBuffer(std::move(targetTrajectories));
     }
 
-    void setModelModeInt(const uint8_t& modelModeInt) override 
+    /*
+    void setModelModeInt(int modelModeInt) override 
     {
-      modelModeInt_.setBuffer(modelModeInt);
+      modelModeInt_ = modelModeInt;
     }
-
-    void setModelModeInt(uint8_t&& modelModeInt) override 
-    {
-      modelModeInt_.setBuffer(std::move(modelModeInt));
-    }
+    */
 
   protected:
     /**
@@ -118,7 +116,7 @@ class ReferenceManager : public ReferenceManagerInterface
   private:
     BufferedValue<ModeSchedule> modeSchedule_;
     BufferedValue<TargetTrajectories> targetTrajectories_;
-    BufferedValue<uint8_t> modelModeInt_;
+    //int modelModeInt_;
 };
 
 }  // namespace ocs2

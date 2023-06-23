@@ -32,9 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ocs2 {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 MPC_ROS_Interface::MPC_ROS_Interface(MPC_BASE& mpc, std::string topicPrefix)
   : mpc_(mpc),
     topicPrefix_(std::move(topicPrefix)),
@@ -53,17 +53,68 @@ MPC_ROS_Interface::MPC_ROS_Interface(MPC_BASE& mpc, std::string topicPrefix)
 #endif
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+/*
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+MPC_ROS_Interface::MPC_ROS_Interface(MPC_BASE& mpc, std::string topicPrefix)
+  : mpc_baseMotion_(mpc),
+    mpc_armMotion_(mpc),
+    mpc_wholeBodyMotion_(mpc),
+    topicPrefix_(std::move(topicPrefix)),
+    bufferPrimalSolutionPtr_(new PrimalSolution()),
+    publisherPrimalSolutionPtr_(new PrimalSolution()),
+    bufferCommandPtr_(new CommandData()),
+    publisherCommandPtr_(new CommandData()),
+    bufferPerformanceIndicesPtr_(new PerformanceIndex),
+    publisherPerformanceIndicesPtr_(new PerformanceIndex) 
+{
+  //esdfCachingServerPtr_.reset(new voxblox::EsdfCachingServer(ros::NodeHandle(), ros::NodeHandle("~")));
+
+  // start thread for publishing
+#ifdef PUBLISH_THREAD
+  publisherWorker_ = std::thread(&MPC_ROS_Interface::publisherWorker, this);
+#endif
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+MPC_ROS_Interface::MPC_ROS_Interface(MPC_BASE& mpc_baseMotion, 
+                                     MPC_BASE& mpc_armMotion, 
+                                     MPC_BASE& mpc_wholeBodyMotion, 
+                                     std::string topicPrefix)
+  : mpc_baseMotion_(mpc_baseMotion),
+    mpc_armMotion_(mpc_armMotion),
+    mpc_wholeBodyMotion_(mpc_wholeBodyMotion),
+    topicPrefix_(std::move(topicPrefix)),
+    bufferPrimalSolutionPtr_(new PrimalSolution()),
+    publisherPrimalSolutionPtr_(new PrimalSolution()),
+    bufferCommandPtr_(new CommandData()),
+    publisherCommandPtr_(new CommandData()),
+    bufferPerformanceIndicesPtr_(new PerformanceIndex),
+    publisherPerformanceIndicesPtr_(new PerformanceIndex) 
+{
+  //esdfCachingServerPtr_.reset(new voxblox::EsdfCachingServer(ros::NodeHandle(), ros::NodeHandle("~")));
+
+  // start thread for publishing
+#ifdef PUBLISH_THREAD
+  publisherWorker_ = std::thread(&MPC_ROS_Interface::publisherWorker, this);
+#endif
+}
+*/
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 MPC_ROS_Interface::~MPC_ROS_Interface() 
 {
   shutdownNode();
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 /*
 void MPC_ROS_Interface::setEsdfCachingServer(std::shared_ptr<voxblox::EsdfCachingServer> new_esdfCachingServerPtr)
 {
@@ -71,23 +122,32 @@ void MPC_ROS_Interface::setEsdfCachingServer(std::shared_ptr<voxblox::EsdfCachin
 }
 */
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::resetMpcNode(TargetTrajectories&& initTargetTrajectories) 
 {
   std::lock_guard<std::mutex> resetLock(resetMutex_);
+  
   mpc_.reset();
+  //mpc_baseMotion_.reset();
+  //mpc_armMotion_.reset();
+  //mpc_wholeBodyMotion_.reset();
+
   mpc_.getSolverPtr()->getReferenceManager().setTargetTrajectories(std::move(initTargetTrajectories));
+  //mpc_baseMotion_.getSolverPtr()->getReferenceManager().setTargetTrajectories(std::move(initTargetTrajectories));
+  //mpc_armMotion_.getSolverPtr()->getReferenceManager().setTargetTrajectories(std::move(initTargetTrajectories));
+  //mpc_wholeBodyMotion_.getSolverPtr()->getReferenceManager().setTargetTrajectories(std::move(initTargetTrajectories));
+  
   mpcTimer_.reset();
   resetRequestedEver_ = true;
   terminateThread_ = false;
   readyToPublish_ = false;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_msgs::reset::Response& res) 
 {
   if (static_cast<bool>(req.reset)) 
@@ -106,14 +166,40 @@ bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_ms
   } 
   else 
   {
-    ROS_WARN_STREAM("[MPC_ROS_Interface] Reset request failed!");
+    ROS_WARN_STREAM("[MPC_ROS_Interface::resetMpcCallback] Reset request failed!");
     return false;
   }
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+bool MPC_ROS_Interface::updateModelModeCallback(ocs2_msgs::reset::Request& req, ocs2_msgs::reset::Response& res) 
+{
+  if (static_cast<bool>(req.reset)) 
+  {
+    auto targetTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(req.targetTrajectories);
+    resetMpcNode(std::move(targetTrajectories));
+    res.done = static_cast<uint8_t>(true);
+
+    std::cerr << "\n#####################################################"
+              << "\n#####################################################"
+              << "\n#####  Model Mode is switched to  ###################"
+              << "\n#####################################################"
+              << "\n#####################################################\n";
+    return true;
+
+  } 
+  else 
+  {
+    ROS_WARN_STREAM("[MPC_ROS_Interface::updateModeModeCallback] Reset request failed!");
+    return false;
+  }
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(const PrimalSolution& primalSolution,
                                                                           const CommandData& commandData,
                                                                           const PerformanceIndex& performanceIndices) 
@@ -211,9 +297,9 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(const 
   return mpcPolicyMsg;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::publisherWorker() 
 {
   //std::cout << "[MPC_ROS_Interface::publisherWorker] START" << std::endl;
@@ -249,9 +335,9 @@ void MPC_ROS_Interface::publisherWorker()
   //std::cout << "[MPC_ROS_Interface::publisherWorker] END" << std::endl;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::copyToBuffer(const SystemObservation& mpcInitObservation) 
 {
   //std::cout << "[MPC_ROS_Interface::copyToBuffer] START" << std::endl;
@@ -259,27 +345,94 @@ void MPC_ROS_Interface::copyToBuffer(const SystemObservation& mpcInitObservation
   // buffer policy mutex
   std::lock_guard<std::mutex> policyBufferLock(bufferMutex_);
 
-  // get solution
-  scalar_t finalTime = mpcInitObservation.time + mpc_.settings().solutionTimeWindow_;
+  scalar_t finalTime;
+  // Get solution
+  finalTime = mpcInitObservation.time + mpc_.settings().solutionTimeWindow_;
   if (mpc_.settings().solutionTimeWindow_ < 0) 
   {
     finalTime = mpc_.getSolverPtr()->getFinalTime();
   }
   mpc_.getSolverPtr()->getPrimalSolution(finalTime, bufferPrimalSolutionPtr_.get());
 
-  // command
+  // Command
   bufferCommandPtr_->mpcInitObservation_ = mpcInitObservation;
   bufferCommandPtr_->mpcTargetTrajectories_ = mpc_.getSolverPtr()->getReferenceManager().getTargetTrajectories();
 
-  // performance indices
+  // Performance indices
   *bufferPerformanceIndicesPtr_ = mpc_.getSolverPtr()->getPerformanceIndeces();
+
+  /*
+  switch (modelModeInt_)
+  {
+    case 0:
+    {
+      // Get solution
+      finalTime = mpcInitObservation.time + mpc_baseMotion_.settings().solutionTimeWindow_;
+      if (mpc_baseMotion_.settings().solutionTimeWindow_ < 0) 
+      {
+        finalTime = mpc_baseMotion_.getSolverPtr()->getFinalTime();
+      }
+      mpc_baseMotion_.getSolverPtr()->getPrimalSolution(finalTime, bufferPrimalSolutionPtr_.get());
+
+      // Command
+      bufferCommandPtr_->mpcInitObservation_ = mpcInitObservation;
+      bufferCommandPtr_->mpcTargetTrajectories_ = mpc_baseMotion_.getSolverPtr()->getReferenceManager().getTargetTrajectories();
+
+      // Performance indices
+      *bufferPerformanceIndicesPtr_ = mpc_baseMotion_.getSolverPtr()->getPerformanceIndeces();
+      break;
+    }
+
+    case 1:
+    {
+      // get solution
+      finalTime = mpcInitObservation.time + mpc_armMotion_.settings().solutionTimeWindow_;
+      if (mpc_armMotion_.settings().solutionTimeWindow_ < 0) 
+      {
+        finalTime = mpc_armMotion_.getSolverPtr()->getFinalTime();
+      }
+      mpc_armMotion_.getSolverPtr()->getPrimalSolution(finalTime, bufferPrimalSolutionPtr_.get());
+
+      // command
+      bufferCommandPtr_->mpcInitObservation_ = mpcInitObservation;
+      bufferCommandPtr_->mpcTargetTrajectories_ = mpc_armMotion_.getSolverPtr()->getReferenceManager().getTargetTrajectories();
+
+      // performance indices
+      *bufferPerformanceIndicesPtr_ = mpc_armMotion_.getSolverPtr()->getPerformanceIndeces();
+      break;
+    }
+
+    case 2:
+    {
+      // get solution
+      finalTime = mpcInitObservation.time + mpc_wholeBodyMotion_.settings().solutionTimeWindow_;
+      if (mpc_wholeBodyMotion_.settings().solutionTimeWindow_ < 0) 
+      {
+        finalTime = mpc_wholeBodyMotion_.getSolverPtr()->getFinalTime();
+      }
+      mpc_wholeBodyMotion_.getSolverPtr()->getPrimalSolution(finalTime, bufferPrimalSolutionPtr_.get());
+
+      // command
+      bufferCommandPtr_->mpcInitObservation_ = mpcInitObservation;
+      bufferCommandPtr_->mpcTargetTrajectories_ = mpc_wholeBodyMotion_.getSolverPtr()->getReferenceManager().getTargetTrajectories();
+
+      // performance indices
+      *bufferPerformanceIndicesPtr_ = mpc_wholeBodyMotion_.getSolverPtr()->getPerformanceIndeces();
+      break;
+    }
+
+    default:
+      std::cout << "[MPC_ROS_Interface::copyToBuffer] ERROR: Invalid model mode: " << modelModeInt_ << std::endl;
+      break;
+  }
+  */
 
   //std::cout << "[MPC_ROS_Interface::copyToBuffer] END" << std::endl;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg) 
 {
   //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START" << std::endl;
@@ -288,9 +441,11 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
 
   if (!resetRequestedEver_.load()) 
   {
-    ROS_WARN_STREAM("MPC should be reset first. Either call MPC_ROS_Interface::reset() or use the reset service.");
+    ROS_WARN_STREAM("[MPC_ROS_Interface::mpcObservationCallback] MPC should be reset first. Either call MPC_ROS_Interface::reset() or use the reset service.");
     return;
   }
+
+  int modelModeInt = modelModeInt_; 
 
   // current time, state, input, and subsystem
   const auto currentObservation = ros_msg_conversions::readObservationMsg(*msg);
@@ -312,7 +467,36 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START mpc_.run" << std::endl;
   // run MPC
   //bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state);
-  bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state, currentObservation.full_state);
+  bool controllerIsUpdated;
+  controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state, currentObservation.full_state);
+
+  /*
+  switch (modelModeInt_)
+  {
+    case 0:
+    {
+      controllerIsUpdated = mpc_baseMotion_.run(currentObservation.time, currentObservation.state, currentObservation.full_state);
+      break;
+    }
+
+    case 1:
+    {
+      controllerIsUpdated = mpc_armMotion_.run(currentObservation.time, currentObservation.state, currentObservation.full_state);
+      break;
+    }
+
+    case 2:
+    {
+      controllerIsUpdated = mpc_wholeBodyMotion_.run(currentObservation.time, currentObservation.state, currentObservation.full_state);
+      break;
+    }
+
+    default:
+      std::cout << "[MPC_ROS_Interface::mpcObservationCallback] ERROR: Invalid model mode: " << modelModeInt_ << std::endl;
+      break;
+  }
+  */
+  
   if (!controllerIsUpdated) 
   {
     return;
@@ -320,11 +504,12 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   copyToBuffer(currentObservation);
   //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END mpc_.run" << std::endl;
 
-  // measure the delay for sending ROS messages
+  // Measure the delay for sending ROS messages
   mpcTimer_.endTimer();
 
-  // check MPC delay and solution window compatibility
-  scalar_t timeWindow = mpc_.settings().solutionTimeWindow_;
+  // Check MPC delay and solution window compatibility
+  scalar_t timeWindow;
+  timeWindow = mpc_.settings().solutionTimeWindow_;
   if (mpc_.settings().solutionTimeWindow_ < 0) 
   {
     timeWindow = mpc_.getSolverPtr()->getFinalTime() - currentObservation.time;
@@ -332,10 +517,10 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
 
   if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) 
   {
-    std::cerr << "WARNING: The solution time window might be shorter than the MPC delay!\n";
+    std::cerr << "[MPC_ROS_Interface::mpcObservationCallback] WARNING: The solution time window might be shorter than the MPC delay!\n";
   }
 
-  // display
+  // Display time benchmarks
   if (mpc_.settings().debugPrint_) 
   {
     std::cerr << '\n';
@@ -344,6 +529,90 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
     std::cerr << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].";
     std::cerr << "\n###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
   }
+
+  /*
+  switch (modelModeInt_)
+  {
+    case 0:
+    {
+      timeWindow = mpc_baseMotion_.settings().solutionTimeWindow_;
+      if (mpc_baseMotion_.settings().solutionTimeWindow_ < 0) 
+      {
+        timeWindow = mpc_baseMotion_.getSolverPtr()->getFinalTime() - currentObservation.time;
+      }
+
+      if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) 
+      {
+        std::cerr << "[MPC_ROS_Interface::mpcObservationCallback] WARNING: The solution time window might be shorter than the MPC delay!\n";
+      }
+
+      // Display time benchmarks
+      if (mpc_baseMotion_.settings().debugPrint_) 
+      {
+        std::cerr << '\n';
+        std::cerr << "\n### MPC_ROS Benchmarking";
+        std::cerr << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
+        std::cerr << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].";
+        std::cerr << "\n###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+      }
+      break;
+    }
+
+    case 1:
+    {
+      timeWindow = mpc_armMotion_.settings().solutionTimeWindow_;
+      if (mpc_armMotion_.settings().solutionTimeWindow_ < 0) 
+      {
+        timeWindow = mpc_armMotion_.getSolverPtr()->getFinalTime() - currentObservation.time;
+      }
+
+      if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) 
+      {
+        std::cerr << "[MPC_ROS_Interface::mpcObservationCallback] WARNING: The solution time window might be shorter than the MPC delay!\n";
+      }
+
+      // Display time benchmarks
+      if (mpc_armMotion_.settings().debugPrint_) 
+      {
+        std::cerr << '\n';
+        std::cerr << "\n### MPC_ROS Benchmarking";
+        std::cerr << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
+        std::cerr << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].";
+        std::cerr << "\n###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+      }
+      break;
+    }
+
+    case 2:
+    {
+      timeWindow = mpc_wholeBodyMotion_.settings().solutionTimeWindow_;
+      if (mpc_wholeBodyMotion_.settings().solutionTimeWindow_ < 0) 
+      {
+        timeWindow = mpc_wholeBodyMotion_.getSolverPtr()->getFinalTime() - currentObservation.time;
+      }
+
+      if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) 
+      {
+        std::cerr << "[MPC_ROS_Interface::mpcObservationCallback] WARNING: The solution time window might be shorter than the MPC delay!\n";
+      }
+
+      // Display time benchmarks
+      if (mpc_wholeBodyMotion_.settings().debugPrint_) 
+      {
+        std::cerr << '\n';
+        std::cerr << "\n### MPC_ROS Benchmarking";
+        std::cerr << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
+        std::cerr << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].";
+        std::cerr << "\n###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+      }
+      break;
+    }
+
+    default:
+      std::cout << "[MPC_ROS_Interface::mpcObservationCallback] ERROR: Invalid model mode!" << std::endl;
+      break;
+  }
+  */
 
 #ifdef PUBLISH_THREAD
   std::unique_lock<std::mutex> lk(publisherMutex_);
@@ -358,9 +627,9 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END" << std::endl << std::endl;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::shutdownNode() 
 {
 #ifdef PUBLISH_THREAD
@@ -383,9 +652,9 @@ void MPC_ROS_Interface::shutdownNode()
   mpcPolicyPublisher_.shutdown();
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::spin() 
 {
   ROS_INFO_STREAM("Start spinning now ...");
@@ -396,27 +665,38 @@ void MPC_ROS_Interface::spin()
   }
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) 
 {
   ROS_INFO_STREAM("MPC node is setting up ...");
 
-  // Observation subscriber
+  // Subscribe Observation 
   mpcObservationSubscriber_ = nodeHandle.subscribe(topicPrefix_ + "_mpc_observation", 
                                                    1, 
                                                    &MPC_ROS_Interface::mpcObservationCallback, 
                                                    this,
                                                    ::ros::TransportHints().tcpNoDelay());
 
-  // MPC publisher
+  // Subscribe Model Mode
+  auto modelModeCallback = [this](const std_msgs::UInt8::ConstPtr& msg) 
+  {
+    std::cout << "[MPC_ROS_Interface::launchNodes] START" << std::endl;
+
+    modelModeInt_ = msg->data;
+    std::cout << "[MPC_ROS_Interface::launchNodes] modelModeInt: " << modelModeInt_ << std::endl;
+    std::cout << "[MPC_ROS_Interface::launchNodes] END" << std::endl;
+    std::cout << "" << std::endl;
+  };
+  ros::Subscriber modelModeSubscriber_;
+
+  // Publish MPC Policy
   mpcPolicyPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_flattened_controller>(topicPrefix_ + "_mpc_policy", 1, true);
 
-  // MPC reset service server
+  // Service Server to reset MPC
   mpcResetServiceServer_ = nodeHandle.advertiseService(topicPrefix_ + "_mpc_reset", &MPC_ROS_Interface::resetMpcCallback, this);
 
-  // display
 #ifdef PUBLISH_THREAD
   ROS_INFO_STREAM("Publishing SLQ-MPC messages on a separate thread.");
 #endif

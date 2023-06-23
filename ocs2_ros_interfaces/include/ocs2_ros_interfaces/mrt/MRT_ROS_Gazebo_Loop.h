@@ -35,8 +35,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gazebo_msgs/LinkStates.h>
 #include <sensor_msgs/JointState.h>
 #include <control_msgs/JointTrajectoryControllerState.h>
+#include <control_msgs/JointControllerState.h>
 #include <geometry_msgs/Twist.h>
 #include <trajectory_msgs/JointTrajectory.h>
+#include <std_msgs/Float64.h>
 
 #include "ocs2_ros_interfaces/mrt/DummyObserver.h"
 #include "ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h"
@@ -135,6 +137,24 @@ class MRT_ROS_Gazebo_Loop
     void jointTrajectoryControllerStateCallback(const control_msgs::JointTrajectoryControllerState::ConstPtr& msg);
 
     /** NUA TODO: Add description */
+    void joint1ControllerStateCallback(const control_msgs::JointControllerState::ConstPtr& msg);
+
+    /** NUA TODO: Add description */
+    void joint2ControllerStateCallback(const control_msgs::JointControllerState::ConstPtr& msg);
+
+    /** NUA TODO: Add description */
+    void joint3ControllerStateCallback(const control_msgs::JointControllerState::ConstPtr& msg);
+
+    /** NUA TODO: Add description */
+    void joint4ControllerStateCallback(const control_msgs::JointControllerState::ConstPtr& msg);
+
+    /** NUA TODO: Add description */
+    void joint5ControllerStateCallback(const control_msgs::JointControllerState::ConstPtr& msg);
+
+    /** NUA TODO: Add description */
+    void joint6ControllerStateCallback(const control_msgs::JointControllerState::ConstPtr& msg);
+
+    /** NUA TODO: Add description */
     void updateFullModelState();
 
     /** NUA TODO: Add description */
@@ -151,6 +171,12 @@ class MRT_ROS_Gazebo_Loop
 
     bool initFlagBaseState_ = false;
     bool initFlagArmState_ = false;
+    bool initFlagArm1State_ = false;
+    bool initFlagArm2State_ = false;
+    bool initFlagArm3State_ = false;
+    bool initFlagArm4State_ = false;
+    bool initFlagArm5State_ = false;
+    bool initFlagArm6State_ = false;
 
     std::vector<int> stateIndexMap_;
 
@@ -179,15 +205,33 @@ class MRT_ROS_Gazebo_Loop
     geometry_msgs::Twist robotBaseTwistMsg_;
     sensor_msgs::JointState jointStateMsg_;
     control_msgs::JointTrajectoryControllerState jointTrajectoryControllerStateMsg_;
+    control_msgs::JointControllerState joint1ControllerStateMsg_;
+    control_msgs::JointControllerState joint2ControllerStateMsg_;
+    control_msgs::JointControllerState joint3ControllerStateMsg_;
+    control_msgs::JointControllerState joint4ControllerStateMsg_;
+    control_msgs::JointControllerState joint5ControllerStateMsg_;
+    control_msgs::JointControllerState joint6ControllerStateMsg_;
 
     ros::Subscriber tfSub_;
     ros::Subscriber odometrySub_;
     ros::Subscriber linkStateSub_;
     ros::Subscriber jointStateSub_;
     ros::Subscriber jointTrajectoryPControllerStateSub_;
+    ros::Subscriber joint1PControllerStateSub_;
+    ros::Subscriber joint2PControllerStateSub_;
+    ros::Subscriber joint3PControllerStateSub_;
+    ros::Subscriber joint4PControllerStateSub_;
+    ros::Subscriber joint5PControllerStateSub_;
+    ros::Subscriber joint6PControllerStateSub_;
 
     ros::Publisher baseTwistPub_;
     ros::Publisher armJointTrajectoryPub_;
+    ros::Publisher armJoint1TrajectoryPub_;
+    ros::Publisher armJoint2TrajectoryPub_;
+    ros::Publisher armJoint3TrajectoryPub_;
+    ros::Publisher armJoint4TrajectoryPub_;
+    ros::Publisher armJoint5TrajectoryPub_;
+    ros::Publisher armJoint6TrajectoryPub_;
 };
 
 }  // namespace ocs2

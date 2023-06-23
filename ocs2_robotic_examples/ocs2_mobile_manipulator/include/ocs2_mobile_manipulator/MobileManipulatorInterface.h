@@ -91,7 +91,8 @@ class MobileManipulatorInterface final : public RobotInterface
     MobileManipulatorInterface(const std::string& taskFile, 
                                const std::string& libraryFolder, 
                                const std::string& urdfFile,
-                               PointsOnRobot::points_radii_t pointsAndRadii = std::vector<std::vector<std::pair<double, double>>>());
+                               PointsOnRobot::points_radii_t pointsAndRadii = std::vector<std::vector<std::pair<double, double>>>(),
+                               int modelModeInt=2);
 
     /*
     const vector_t& getInitialState()

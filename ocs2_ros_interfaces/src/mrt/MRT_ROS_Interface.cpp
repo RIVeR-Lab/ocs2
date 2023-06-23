@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.04.10
+// LAST UPDATE: 2023.06.19
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -77,11 +77,11 @@ void MRT_ROS_Interface::resetMpcNode(const TargetTrajectories& initTargetTraject
 
   while (!mpcResetServiceClient_.waitForExistence(ros::Duration(5.0)) && ::ros::ok() && ::ros::master::check()) 
   {
-    ROS_ERROR_STREAM("Failed to call service to reset MPC, retrying...");
+    ROS_ERROR_STREAM("[MRT_ROS_Interface::resetMpcNode] Failed to call service to reset MPC, retrying...");
   }
 
   mpcResetServiceClient_.call(resetSrv);
-  ROS_INFO_STREAM("MPC node has been reset.");
+  ROS_INFO_STREAM("[MRT_ROS_Interface::resetMpcNode] MPC node has been reset.");
 }
 
 /******************************************************************************************************/
@@ -153,17 +153,17 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
 
   if (N == 0) 
   {
-    throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] controller message is empty!");
+    throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] ERROR: Controller message is empty!");
   }
 
   if (msg.stateTrajectory.size() != N && msg.inputTrajectory.size() != N) 
   {
-    throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] state and input trajectories must have same length!");
+    throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] ERROR: State and input trajectories must have same length!");
   }
 
   if (msg.data.size() != N) 
   {
-    throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] Data has the wrong length!");
+    throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] ERROR: Data has the wrong length!");
   }
 
   primalSolution.clear();
@@ -214,7 +214,7 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
     }
 
     default:
-      throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] Unknown controllerType!");
+      throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] ERROR: Unknown controllerType!");
   }
 }
 
@@ -235,13 +235,14 @@ void MRT_ROS_Interface::mpcPolicyCallback(const ocs2_msgs::mpc_flattened_control
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::shutdownNodes() {
+void MRT_ROS_Interface::shutdownNodes() 
+{
 #ifdef PUBLISH_THREAD
-  ROS_INFO_STREAM("Shutting down workers ...");
+  ROS_INFO_STREAM("[MRT_ROS_Interface::shutdownNodes] Shutting down workers ...");
 
   shutdownPublisher();
 
-  ROS_INFO_STREAM("All workers are shut down.");
+  ROS_INFO_STREAM("[MRT_ROS_Interface::shutdownNodes] All workers are shut down.");
 #endif
 
   // clean up callback queue
@@ -255,14 +256,16 @@ void MRT_ROS_Interface::shutdownNodes() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void MRT_ROS_Interface::shutdownPublisher() {
+void MRT_ROS_Interface::shutdownPublisher() 
+{
   std::unique_lock<std::mutex> lk(publisherMutex_);
   terminateThread_ = true;
   lk.unlock();
 
   msgReady_.notify_all();
 
-  if (publisherWorker_.joinable()) {
+  if (publisherWorker_.joinable()) 
+  {
     publisherWorker_.join();
   }
 }
@@ -286,34 +289,44 @@ void MRT_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
 {
   this->reset();
 
-  // display
-  ROS_INFO_STREAM("MRT node is setting up ...");
+  ROS_INFO_STREAM("[MRT_ROS_Interface::launchNodes] MRT node is setting up ...");
 
-  // observation publisher
+  // Publish Observation
   mpcObservationPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_observation>(topicPrefix_ + "_mpc_observation", 1);
 
-  // policy subscriber
+  // Subscribe Policy
   auto ops = ros::SubscribeOptions::create<ocs2_msgs::mpc_flattened_controller>(
-      topicPrefix_ + "_mpc_policy",                                                       // topic name
-      1,                                                                                  // queue length
-      boost::bind(&MRT_ROS_Interface::mpcPolicyCallback, this, boost::placeholders::_1),  // callback
-      ros::VoidConstPtr(),                                                                // tracked object
-      &mrtCallbackQueue_                                                                  // pointer to callback queue object
+    topicPrefix_ + "_mpc_policy",                                                       // topic name
+    1,                                                                                  // queue length
+    boost::bind(&MRT_ROS_Interface::mpcPolicyCallback, this, boost::placeholders::_1),  // callback
+    ros::VoidConstPtr(),                                                                // tracked object
+    &mrtCallbackQueue_                                                                  // pointer to callback queue object
   );
   ops.transport_hints = mrtTransportHints_;
   mpcPolicySubscriber_ = nodeHandle.subscribe(ops);
 
-  // MPC reset service client
+  // Subscribe Model Mode
+  auto modelModeCallback = [this](const std_msgs::UInt8::ConstPtr& msg) 
+  {
+    std::cout << "[MRT_ROS_Interface::launchNodes] START" << std::endl;
+
+    size_t modelModeInt = msg->data;
+    std::cout << "[MRT_ROS_Interface::launchNodes] modelModeInt: " << modelModeInt << std::endl;
+    updateModelMode(robotModelInfo_, modelModeInt);
+
+    std::cout << "[MRT_ROS_Interface::launchNodes] END" << std::endl;
+    std::cout << "" << std::endl;
+  };
+  modelModeSubscriber_ = nodeHandle.subscribe<std_msgs::UInt8>(topicPrefix_ + "_model_mode", 1, modelModeCallback);
+
+  // Service client to reset MPC 
   mpcResetServiceClient_ = nodeHandle.serviceClient<ocs2_msgs::reset>(topicPrefix_ + "_mpc_reset");
 
-
-
-  // display
 #ifdef PUBLISH_THREAD
-  ROS_INFO_STREAM("Publishing MRT messages on a separate thread.");
+  ROS_INFO_STREAM("[MRT_ROS_Interface::launchNodes] Publishing MRT messages on a separate thread.");
 #endif
 
-  ROS_INFO_STREAM("MRT node is ready.");
+  ROS_INFO_STREAM("[MRT_ROS_Interface::launchNodes] MRT node is ready.");
 
   spinMRT();
 }

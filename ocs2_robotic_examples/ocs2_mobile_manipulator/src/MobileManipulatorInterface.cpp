@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.06.07
+// LAST UPDATE: 2022.06.19
 //
 // AUTHOR: Neset Unver Akmandor  (NUA)
 //
@@ -15,13 +15,14 @@
 namespace ocs2 {
 namespace mobile_manipulator {
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFile, 
                                                        const std::string& libraryFolder,
                                                        const std::string& urdfFile,
-                                                       PointsOnRobot::points_radii_t pointsAndRadii)
+                                                       PointsOnRobot::points_radii_t pointsAndRadii,
+                                                       int modelModeInt)
   : taskFile_(taskFile), libraryFolder_(libraryFolder), urdfFile_(urdfFile)
 {
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START" << std::endl;
@@ -139,22 +140,20 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   // Set Reference Manager
   referenceManagerPtr_.reset(new ReferenceManager);
 
-  // NUA TODO: We don't need to set it here!
-  //int modelMode = getModelModeInt(robotModelInfo_);
-  auto modelModeInt = 2;
+  // Set MPC Problem
   setMPCProblem(modelModeInt, pointsAndRadii);
   
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END" << std::endl;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobot::points_radii_t& pointsAndRadii)
 {
   std::cout << "[MobileManipulatorInterface::setMPCProblem] START" << std::endl;
 
-  std::cout << "[MobileManipulatorInterface::setMPCProblem] modelMode: " << modelModeInt << std::endl;
+  std::cout << "[MobileManipulatorInterface::setMPCProblem] modelModeInt: " << modelModeInt << std::endl;
 
   bool isModeUpdated = updateModelMode(robotModelInfo_, modelModeInt);
 
@@ -303,9 +302,9 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
 }
 
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg)
 {
   std::cout << "[MobileManipulatorInterface::tfCallback] START" << std::endl;
@@ -315,9 +314,9 @@ void MobileManipulatorInterface::tfCallback(const tf2_msgs::TFMessage::ConstPtr&
   std::cout << "[MobileManipulatorInterface::tfCallback] END" << std::endl << std::endl;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
 {
   std::string oct_msg_name = "octomap_scan";
@@ -342,9 +341,9 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
   //spin();
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCost() 
 {
   //const size_t modeStateDim = getStateDimTmp(robotModelInfo_);
@@ -393,9 +392,9 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCos
   return std::unique_ptr<StateInputCost>(new QuadraticInputCost(std::move(R), modeStateDim));
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftConstraint() 
 {
   auto modelMode = getModelModeInt(robotModelInfo_);
@@ -539,9 +538,9 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftCon
   return boxConstraints;
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(const std::string& prefix) 
 {
   std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] START prefix: " << prefix << std::endl;
@@ -553,6 +552,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
   //const int modeStateDim = getModeStateDim(robotModelInfo_);
   //const int modeInputDim = getModeInputDim(robotModelInfo_);
 
+  std::string modelName = getModelModeString(robotModelInfo_) + "_end_effector_kinematics";
   scalar_t muPosition = 1.0;
   scalar_t muOrientation = 1.0;
   std::cerr << "\n #### " << prefix << " Settings: ";
@@ -585,7 +585,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
     PinocchioEndEffectorKinematicsCppAd eeKinematics(*pinocchioInterfacePtr_,
                                                      pinocchioMappingCppAd, 
                                                      robotModelInfo_,
-                                                     "end_effector_kinematics", 
+                                                     modelName, 
                                                      libraryFolder_, 
                                                      recompileLibraries_, 
                                                      false);
@@ -605,9 +605,9 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
   return std::unique_ptr<StateCost>(new StateSoftConstraint(std::move(constraint), std::move(penaltyArray)));
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstraint(const std::string& prefix) 
 {
   std::cout << "[MobileManipulatorInterface::getSelfCollisionConstraint] START" << std::endl;
@@ -666,9 +666,9 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
   return std::unique_ptr<StateCost>(new StateSoftConstraint(std::move(constraint), std::move(penalty)));
 }
 
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint(const std::string& prefix) 
 {
   std::cout << "[MobileManipulatorInterface::getExtCollisionConstraint] START" << std::endl;

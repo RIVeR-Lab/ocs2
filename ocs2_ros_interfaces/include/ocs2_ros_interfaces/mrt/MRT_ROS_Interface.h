@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <thread>
 
+#include <std_msgs/UInt8.h>
 #include <ros/callback_queue.h>
 #include <ros/ros.h>
 #include <ros/transport_hints.h>
@@ -143,6 +144,7 @@ class MRT_ROS_Interface : public MRT_BASE
     // Subscribers
     ros::Subscriber mpcPolicySubscriber_;
     ros::Subscriber sub_tf_;
+    ros::Subscriber modelModeSubscriber_;
 
     // Publishers
     ros::Publisher mpcObservationPublisher_;

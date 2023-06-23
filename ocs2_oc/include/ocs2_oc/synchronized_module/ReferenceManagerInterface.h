@@ -29,7 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <std_msgs/UInt8.h>
 #include <ocs2_core/Types.h>
 #include <ocs2_core/reference/ModeSchedule.h>
 #include <ocs2_core/reference/TargetTrajectories.h>
@@ -70,7 +69,7 @@ class ReferenceManagerInterface
     virtual const TargetTrajectories& getTargetTrajectories() const = 0;
 
     /** Returns a const reference to the active TargetTrajectories. */
-    virtual const uint8_t& getModelModeInt() const = 0;
+    //virtual const int getModelModeInt() const = 0;
 
     /**
      * Sets the ModeSchedule to the buffer. The buffer will move to active ModeSchedule once preSolverRun() is called.
@@ -97,16 +96,9 @@ class ReferenceManagerInterface
     virtual void setTargetTrajectories(TargetTrajectories&& targetTrajectories) = 0;
 
     /**
-     * Sets the TargetTrajectories to the buffer. The buffer will move to active ModeSchedule once preSolverRun() is called.
-     * @note: This method must be thread safe.
+     * NUA TODO: Add description.
      */
-    virtual void setModelModeInt(const uint8_t& modelModeInt) = 0;
-
-    /**
-     * Move the TargetTrajectories to the buffer. The buffer will move to active ModeSchedule once preSolverRun() is called.
-     * @note: This method must be thread safe.
-     */
-    virtual void setModelModeInt(uint8_t&& modelModeInt) = 0;
+    //virtual void setModelModeInt(const int modelModeInt) = 0;
 };
 
 }  // namespace ocs2

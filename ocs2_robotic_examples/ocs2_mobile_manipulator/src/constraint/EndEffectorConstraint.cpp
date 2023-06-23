@@ -69,9 +69,9 @@ EndEffectorConstraint::EndEffectorConstraint(const EndEffectorKinematics<scalar_
     referenceManagerPtr_(&referenceManager),
     robotModelInfoPtr_(&robotModelInfo)
 {
-  std::cout << "[EndEffectorConstraint::EndEffectorConstraint(3)] START " << std::endl;
+  //std::cout << "[EndEffectorConstraint::EndEffectorConstraint(3)] START " << std::endl;
 
-  std::cout << "[EndEffectorConstraint::EndEffectorConstraint(3)] modelModeString: " << getModelModeString(*robotModelInfoPtr_) << std::endl;
+  //std::cout << "[EndEffectorConstraint::EndEffectorConstraint(3)] modelModeString: " << getModelModeString(*robotModelInfoPtr_) << std::endl;
 
   if (endEffectorKinematics.getEndEffectorFrameNames().size() != 1) 
   {
@@ -79,7 +79,7 @@ EndEffectorConstraint::EndEffectorConstraint(const EndEffectorKinematics<scalar_
   }
   pinocchioEEKinPtr_ = dynamic_cast<PinocchioEndEffectorKinematics*>(endEffectorKinematicsPtr_.get());
 
-  std::cout << "[EndEffectorConstraint::EndEffectorConstraint(3)] END " << std::endl;
+  //std::cout << "[EndEffectorConstraint::EndEffectorConstraint(3)] END " << std::endl;
 }
 
 /******************************************************************************************************/

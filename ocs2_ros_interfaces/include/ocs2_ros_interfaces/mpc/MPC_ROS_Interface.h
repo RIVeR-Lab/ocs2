@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <thread>
 #include <vector>
 
+#include <std_msgs/UInt8.h>
 #include <ros/callback_queue.h>
 #include <ros/ros.h>
 #include <ros/transport_hints.h>
@@ -76,6 +77,20 @@ class MPC_ROS_Interface
      * @param [in] topicPrefix: The robot's name.
      */
     explicit MPC_ROS_Interface(MPC_BASE& mpc, std::string topicPrefix = "anonymousRobot");
+
+    /**
+     * Constructor.
+     *
+     * NUA TODO: Update description.
+     * @param [in] mpc: The underlying MPC class to be used.
+     * @param [in] mpc: The underlying MPC class to be used.
+     * @param [in] mpc: The underlying MPC class to be used.
+     * @param [in] topicPrefix: The robot's name.
+     */
+    explicit MPC_ROS_Interface(MPC_BASE& mpc_mobileBase, 
+                               MPC_BASE& mpc_robotArm, 
+                               MPC_BASE& mpc_mobileManipulator, 
+                               std::string topicPrefix = "anonymousRobot");
 
     /**
      * Destructor.
@@ -126,6 +141,14 @@ class MPC_ROS_Interface
     bool resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_msgs::reset::Response& res);
 
     /**
+     * NUA TODO: Add description.
+     *
+     * @param req: Service request.
+     * @param res: Service response.
+     */
+    bool updateModelModeCallback(ocs2_msgs::reset::Request& req, ocs2_msgs::reset::Response& res);
+
+    /**
      * Creates MPC Policy message.
      *
      * @param [in] primalSolution: The policy data of the MPC.
@@ -161,6 +184,11 @@ class MPC_ROS_Interface
     * Variables
     */
     MPC_BASE& mpc_;
+    //MPC_BASE& mpc_baseMotion_;
+    //MPC_BASE& mpc_armMotion_;
+    //MPC_BASE& mpc_wholeBodyMotion_;
+
+    int modelModeInt_ = 2;
 
     std::string topicPrefix_;
 

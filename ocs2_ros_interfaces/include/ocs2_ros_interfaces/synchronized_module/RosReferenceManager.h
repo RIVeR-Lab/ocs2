@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <utility>
 
+#include <std_msgs/UInt8.h>
 #include <ros/ros.h>
 
 #include "ocs2_core/dynamics/MultiModelFunctions.h"
@@ -83,6 +84,8 @@ class RosReferenceManager final : public ReferenceManagerDecorator
   private:
     const std::string topicPrefix_;
     RobotModelInfo robotModelInfo_;
+
+    int modelModeInt_;
 
     ros::Subscriber modeScheduleSubscriber_;
     ros::Subscriber targetTrajectoriesSubscriber_;

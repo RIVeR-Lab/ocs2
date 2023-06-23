@@ -109,11 +109,9 @@ void RosReferenceManager::subscribe(ros::NodeHandle& nodeHandle)
   {
     std::cout << "[RosReferenceManager::subscribe::modelModeCallback] START" << std::endl;
 
-    auto modelModeInt = msg->data;
+    modelModeInt_ = msg->data;
 
-    std::cout << "[RosReferenceManager::subscribe::modelModeCallback] modelModeInt: " << modelModeInt << std::endl;
-
-    referenceManagerPtr_->setModelModeInt(modelModeInt);
+    std::cout << "[RosReferenceManager::subscribe::modelModeCallback] modelModeInt: " << modelModeInt_ << std::endl;
 
     std::cout << "[RosReferenceManager::subscribe::modelModeCallback] END" << std::endl;
     std::cout << "" << std::endl;

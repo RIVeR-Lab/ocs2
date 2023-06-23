@@ -61,6 +61,12 @@ class ReferenceManagerDecorator : public ReferenceManagerInterface
     { 
       return referenceManagerPtr_->getModeSchedule(); 
     }
+
+    const TargetTrajectories& getTargetTrajectories() const override 
+    { 
+      //std::cout << "[ReferenceManagerDecorator::getTargetTrajectories] START" << std::endl;
+      return referenceManagerPtr_->getTargetTrajectories(); 
+    }
     
     void setModeSchedule(const ModeSchedule& modeSchedule) override 
     { 
@@ -70,13 +76,6 @@ class ReferenceManagerDecorator : public ReferenceManagerInterface
     void setModeSchedule(ModeSchedule&& modeSchedule) override 
     { 
       referenceManagerPtr_->setModeSchedule(std::move(modeSchedule)); 
-    }
-
-    const TargetTrajectories& getTargetTrajectories() const override 
-    { 
-      //std::cout << "[ReferenceManagerDecorator::getTargetTrajectories] START" << std::endl;
-
-      return referenceManagerPtr_->getTargetTrajectories(); 
     }
     
     void setTargetTrajectories(const TargetTrajectories& targetTrajectories) override 
