@@ -217,21 +217,25 @@ class MRT_ROS_Gazebo_Loop
     ros::Subscriber linkStateSub_;
     ros::Subscriber jointStateSub_;
     ros::Subscriber jointTrajectoryPControllerStateSub_;
+    /*
     ros::Subscriber joint1PControllerStateSub_;
     ros::Subscriber joint2PControllerStateSub_;
     ros::Subscriber joint3PControllerStateSub_;
     ros::Subscriber joint4PControllerStateSub_;
     ros::Subscriber joint5PControllerStateSub_;
     ros::Subscriber joint6PControllerStateSub_;
+    */
 
     ros::Publisher baseTwistPub_;
     ros::Publisher armJointTrajectoryPub_;
+    /*
     ros::Publisher armJoint1TrajectoryPub_;
     ros::Publisher armJoint2TrajectoryPub_;
     ros::Publisher armJoint3TrajectoryPub_;
     ros::Publisher armJoint4TrajectoryPub_;
     ros::Publisher armJoint5TrajectoryPub_;
     ros::Publisher armJoint6TrajectoryPub_;
+    */
 };
 
 }  // namespace ocs2
