@@ -141,6 +141,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   referenceManagerPtr_.reset(new ReferenceManager);
 
   // Set MPC Problem
+  modelModeInt = 2;
   setMPCProblem(modelModeInt, pointsAndRadii);
   
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END" << std::endl;
