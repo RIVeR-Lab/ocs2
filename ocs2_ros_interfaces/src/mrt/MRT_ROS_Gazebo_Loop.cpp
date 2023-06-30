@@ -230,7 +230,7 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
   ros::Rate simRate(mrtDesiredFrequency_);
   while (ros::ok() && ros::master::check()) 
   {
-    robotModelInfo_ = mrt_.getRobotModelInfo();
+    //robotModelInfo_ = mrt_.getRobotModelInfo();
     //std::cout << "---------------" << std::endl;
     //std::cout << "[OCS2_MRT_Loop::mrtLoop] START while" << std::endl;
 
@@ -258,12 +258,12 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
     // Update observers for visualization
     for (auto& observer : observers_) 
     {
-      observer->update(currentObservation, mrt_.getPolicy(), mrt_.getCommand());
+      observer->update(currentObservation, currentPolicy, mrt_.getCommand());
     }
 
     //std::cout << "[OCS2_MRT_Loop::mrtLoop] START publishCommand" << std::endl;
     // Publish the control command 
-    publishCommand();
+    publishCommand(currentPolicy);
 
     time_ += dt_;
 
@@ -731,7 +731,7 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MRT_ROS_Gazebo_Loop::publishCommand()
+void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy)
 {
   //std::cout << "[OCS2_MRT_Loop::publishCommand] START" << std::endl;
 
@@ -764,8 +764,9 @@ void MRT_ROS_Gazebo_Loop::publishCommand()
     int n_joints = mrt_.getRobotModelInfo().robotArm.jointNames.size();
     armJointTrajectoryMsg.joint_names.resize(n_joints);
 
-    PrimalSolution primalSolution = mrt_.getPolicy();
-    auto nextState = primalSolution.getDesiredState(time_ + dt_);
+    //PrimalSolution primalSolution = mrt_.getPolicy();
+    //PrimalSolution primalSolution = currentPolicy;
+    auto nextState = currentPolicy.getDesiredState(time_ + dt_);
 
     trajectory_msgs::JointTrajectoryPoint jtp;
     jtp.positions.resize(n_joints);

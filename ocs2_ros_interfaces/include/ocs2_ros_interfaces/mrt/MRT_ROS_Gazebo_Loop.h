@@ -162,7 +162,7 @@ class MRT_ROS_Gazebo_Loop
 
     /** NUA TODO: Add description */
     //void publishCommand(const PrimalSolution& primalSolution);
-    void publishCommand();
+    void publishCommand(const PrimalSolution& currentPolicy);
 
     std::string worldFrameName_;
     std::string baseFrameName_;
