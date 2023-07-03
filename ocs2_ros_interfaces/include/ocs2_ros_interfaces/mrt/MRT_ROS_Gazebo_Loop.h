@@ -169,6 +169,7 @@ class MRT_ROS_Gazebo_Loop
 
     RobotModelInfo robotModelInfo_;
 
+    bool tfFlag_ = false;
     bool initFlagBaseState_ = false;
     bool initFlagArmState_ = false;
     bool initFlagArm1State_ = false;

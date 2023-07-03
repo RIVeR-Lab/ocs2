@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.06.23
+// LAST UPDATE: 2023.07.03
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -57,8 +57,15 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   // SUBSCRIBE TO STATE INFO
   //// NUA TODO: Consider localization error
   //odometrySub_ = nh.subscribe("/jackal_velocity_controller/odom", 10, &MRT_ROS_Gazebo_Loop::odometryCallback, this);
-  linkStateSub_ = nh.subscribe(baseStateMsg, 5, &MRT_ROS_Gazebo_Loop::linkStateCallback, this);
-  //tfSub_ = nh.subscribe("/tf", 10, &MRT_ROS_Gazebo_Loop::tfCallback, this);
+  if (baseStateMsg != "")
+  {
+    linkStateSub_ = nh.subscribe(baseStateMsg, 5, &MRT_ROS_Gazebo_Loop::linkStateCallback, this);
+  }
+  else
+  {
+    tfFlag_ = true;
+    tfSub_ = nh.subscribe("/tf", 5, &MRT_ROS_Gazebo_Loop::tfCallback, this);
+  }
   
   //jointStateSub_ = nh.subscribe("/joint_states", 10, &MRT_ROS_Gazebo_Loop::jointStateCallback, this);
   //jointTrajectoryPControllerStateSub_ = nh.subscribe("/arm_controller/state", 10, &MRT_ROS_Gazebo_Loop::jointTrajectoryControllerStateCallback, this);
@@ -90,7 +97,7 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
     ROS_WARN_STREAM("[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] Warning: MPC loop is not realtime! For realtime setting, set mpcDesiredFrequency to any negative number.");
   }
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] END" << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -138,13 +145,15 @@ bool MRT_ROS_Gazebo_Loop::isStateInitialized()
 //-------------------------------------------------------------------------------------------------------
 void MRT_ROS_Gazebo_Loop::run(vector_t initTarget) 
 {
-  ROS_INFO_STREAM("[MRT_ROS_Gazebo_Loop::run] Waiting for the initial policy ...");
+  ROS_INFO_STREAM("[MRT_ROS_Gazebo_Loop::run] Waiting for the initial policy...");
   
   while(!isStateInitialized())
   {
     //std::cout << "[MRT_ROS_Gazebo_Loop::updateFullModelState] WARNING: State not initialized!" << std::endl;
     ros::spinOnce();
   }
+
+  ROS_INFO_STREAM("[MRT_ROS_Gazebo_Loop::run] BEFORE getCurrentObservation");
 
   SystemObservation initObservation = getCurrentObservation(true);
   const TargetTrajectories initTargetTrajectories({0}, {initTarget}, {initObservation.input});
@@ -280,7 +289,7 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
 //-------------------------------------------------------------------------------------------------------
 void MRT_ROS_Gazebo_Loop::setStateIndexMap(std::string& armStateMsg)
 {
-  std::cout << "[MRT_ROS_Gazebo_Loop::setStateIndexMap] START" << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::setStateIndexMap] START" << std::endl;
 
   boost::shared_ptr<control_msgs::JointTrajectoryControllerState const> jointTrajectoryControllerStatePtrMsg = ros::topic::waitForMessage<control_msgs::JointTrajectoryControllerState>(armStateMsg);
   
@@ -320,7 +329,7 @@ void MRT_ROS_Gazebo_Loop::setStateIndexMap(std::string& armStateMsg)
   }
   */
 
-  std::cout << "[MRT_ROS_Gazebo_Loop::setStateIndexMap] END" << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::setStateIndexMap] END" << std::endl;
 }
 
 void MRT_ROS_Gazebo_Loop::tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg)
@@ -328,7 +337,16 @@ void MRT_ROS_Gazebo_Loop::tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg)
   //std::cerr << "[MRT_ROS_Gazebo_Loop::tfCallback] START " << std::endl;
   //tf2_msgs::TFMessage tf_msg = *msg;
 
-  tfListener_.lookupTransform(worldFrameName_, baseFrameName_, ros::Time(0), tf_robot_wrt_world_);
+  try
+  {
+    tfListener_.waitForTransform(worldFrameName_, baseFrameName_, ros::Time::now(), ros::Duration(1.0));
+    tfListener_.lookupTransform(worldFrameName_, baseFrameName_, ros::Time(0), tf_robot_wrt_world_);
+  }
+  catch (tf::TransformException ex)
+  {
+    ROS_INFO("[MRT_ROS_Gazebo_Loop::tfCallback] ERROR: Couldn't get transform!");
+    ROS_ERROR("%s", ex.what());
+  }
 
   initFlagBaseState_ = true;
 
@@ -478,7 +496,7 @@ void MRT_ROS_Gazebo_Loop::updateFullModelState()
   stateArm_.clear();
 
   //while(!initFlagBaseState_);
-  //tf::StampedTransform tf_robot_wrt_world = tf_robot_wrt_world_;
+  tf::StampedTransform tf_robot_wrt_world = tf_robot_wrt_world_;
   geometry_msgs::Pose robotBasePoseMsg = robotBasePoseMsg_;
   geometry_msgs::Twist robotBaseTwistMsg = robotBaseTwistMsg_;
 
@@ -492,16 +510,28 @@ void MRT_ROS_Gazebo_Loop::updateFullModelState()
   //control_msgs::JointControllerState joint6ControllerStateMsg = joint6ControllerStateMsg_;
 
   // Set mobile base state
-  tf::Quaternion quat_robot_wrt_world(robotBasePoseMsg.orientation.x, 
-                                      robotBasePoseMsg.orientation.y, 
-                                      robotBasePoseMsg.orientation.z, 
-                                      robotBasePoseMsg.orientation.w);
-  tf::Matrix3x3 matrix_robot_wrt_world = tf::Matrix3x3(quat_robot_wrt_world);
+  tf::Matrix3x3 matrix_robot_wrt_world;
+  if (tfFlag_)
+  {
+    stateBase_.push_back(tf_robot_wrt_world.getOrigin().x());
+    stateBase_.push_back(tf_robot_wrt_world.getOrigin().y());\
+
+    matrix_robot_wrt_world = tf::Matrix3x3(tf_robot_wrt_world.getRotation());
+  }
+  else
+  {
+    stateBase_.push_back(robotBasePoseMsg.position.x);
+    stateBase_.push_back(robotBasePoseMsg.position.y);
+
+    tf::Quaternion quat_robot_wrt_world(robotBasePoseMsg.orientation.x, 
+                                        robotBasePoseMsg.orientation.y, 
+                                        robotBasePoseMsg.orientation.z, 
+                                        robotBasePoseMsg.orientation.w);
+    matrix_robot_wrt_world = tf::Matrix3x3(quat_robot_wrt_world);
+  }
+  
   double roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world;
   matrix_robot_wrt_world.getRPY(roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world);
-
-  stateBase_.push_back(robotBasePoseMsg.position.x);
-  stateBase_.push_back(robotBasePoseMsg.position.y);
   stateBase_.push_back(yaw_robot_wrt_world);
 
   // Set mobile base input
