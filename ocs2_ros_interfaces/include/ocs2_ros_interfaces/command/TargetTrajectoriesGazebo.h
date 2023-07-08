@@ -69,6 +69,9 @@ class TargetTrajectoriesGazebo final
     // DESCRIPTION: TODO...
     void initializeInteractiveMarkerModelMode();
 
+    // DESCRIPTION: TODO...
+    void publishTargetVisu();
+
   private:
     /// FUNCTIONS:
     // DESCRIPTION: TODO...
@@ -99,13 +102,16 @@ class TargetTrajectoriesGazebo final
     void updateTarget();
 
     // DESCRIPTION: TODO...
+    void updateTarget(const Eigen::Vector3d& targetPos, const Eigen::Quaterniond& targetOri);
+
+    // DESCRIPTION: TODO...
     void updateGraspPose();
 
     // DESCRIPTION: TODO...
-    void fillTargetVisu();
+    void updateGraspPose(Eigen::Vector3d& graspPos, Eigen::Quaterniond& graspOri);
 
     // DESCRIPTION: TODO...
-    void publishTargetVisu();
+    void fillTargetVisu(bool graspFlag);
 
     // DESCRIPTION: TODO...
     void publishGraspFrame();

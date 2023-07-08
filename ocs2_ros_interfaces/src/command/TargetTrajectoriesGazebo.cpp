@@ -52,7 +52,7 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
   targetTrajectoriesPublisherPtr_.reset(new TargetTrajectoriesRosPublisher(nodeHandle, topicPrefix));
   modelModePublisher_ = nodeHandle.advertise<std_msgs::UInt8>(topicPrefix + "_model_mode", 1, false);
 
-  targetMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(topicPrefix + "_target", 10);
+  targetMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(topicPrefix + "_goal", 10);
 }
 
 TargetTrajectoriesGazebo::~TargetTrajectoriesGazebo()
@@ -155,14 +155,14 @@ void TargetTrajectoriesGazebo::updateObservationAndTarget()
       observation = latestObservation_;
     }
 
-    // Update Target
-    updateTarget();
-
-    // Set TargetTrajectories
+    // Set TargetTrajectories for ocs2 mpc
     const auto targetTrajectories = goalPoseToTargetTrajectories_(currentTargetPosition_, currentTargetOrientation_, observation);
 
-    // Publish TargetTrajectories
+    // Publish TargetTrajectories for ocs2 mpc
     targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
+
+    // Update and publish target visualization
+    updateTarget();
   }
 
   //std::cout << "[TargetTrajectoriesGazebo::updateObservationAndTarget] END" << std::endl;
@@ -438,7 +438,7 @@ void TargetTrajectoriesGazebo::updateTarget()
   }
   else
   {
-    std::cout << "[TargetTrajectoriesGazebo::updateTarget] SWITCH" << std::endl;
+    //std::cout << "[TargetTrajectoriesGazebo::updateTarget] SWITCH" << std::endl;
 
     /*
     std::cout << "[TargetTrajectoriesGazebo::updateTarget] idx: " << idx << std::endl;
@@ -474,7 +474,7 @@ void TargetTrajectoriesGazebo::updateTarget()
     */
   }
 
-  fillTargetVisu();
+  fillTargetVisu(true);
   publishTargetVisu();
   publishGraspFrame();
 
@@ -482,6 +482,25 @@ void TargetTrajectoriesGazebo::updateTarget()
   //while(1);
 
   //std::cout << "[TargetTrajectoriesGazebo::updateTarget] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::updateTarget(const Eigen::Vector3d& targetPos, const Eigen::Quaterniond& targetOri)
+{
+  //std::cout << "[TargetTrajectoriesGazebo::updateTarget(2)] START" << std::endl;
+
+  currentTargetPosition_ = targetPos;
+  currentTargetOrientation_ = targetOri;
+  
+  fillTargetVisu(false);
+  publishTargetVisu();
+
+  //std::cout << "[TargetTrajectoriesGazebo::updateTarget(2)] DEBUG INF" << std::endl;
+  //while(1);
+
+  //std::cout << "[TargetTrajectoriesGazebo::updateTarget(2)] END" << std::endl;
 }
 
 void TargetTrajectoriesGazebo::updateGraspPose()
@@ -516,14 +535,28 @@ void TargetTrajectoriesGazebo::updateGraspPose()
 
   currentGraspPosition_ = graspPos;
   currentGraspOrientation_ = graspOri;
+
   //std::cout << "[TargetTrajectoriesGazebo::getGraspPose] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void TargetTrajectoriesGazebo::fillTargetVisu()
+void TargetTrajectoriesGazebo::updateGraspPose(Eigen::Vector3d& graspPos, Eigen::Quaterniond& graspOri)
 {
+  //std::cout << "[TargetTrajectoriesGazebo::getGraspPose(2)] START" << std::endl;
+  currentGraspPosition_ = graspPos;
+  currentGraspOrientation_ = graspOri;
+  //std::cout << "[TargetTrajectoriesGazebo::getGraspPose(2)] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::fillTargetVisu(bool graspFlag)
+{
+  //std::cout << "[TargetTrajectoriesGazebo::fillTargetVisu] START" << std::endl;
+
   targetMarkerArray_.markers.clear();
 
   /// NUA TODO: User should able to add more target!
@@ -532,15 +565,24 @@ void TargetTrajectoriesGazebo::fillTargetVisu()
   for(int i = 0; i < target_size; i++)
   {
     Eigen::Vector3d currentTargetPosition = currentTargetPosition_;
+    Eigen::Quaterniond currentTargetOrientation = currentTargetOrientation_;
     geometry_msgs::Point target_point;
+    geometry_msgs::Point grasp_point;
     target_point.x = currentTargetPosition.x();
     target_point.y = currentTargetPosition.y();
     target_point.z = currentTargetPosition.z();
+    grasp_point = target_point;
 
-    updateGraspPose();
+    if (graspFlag)
+    {
+      updateGraspPose();
+    }
+    else
+    {
+      updateGraspPose(currentTargetPosition, currentTargetOrientation);
+    }
 
     Eigen::Vector3d currentGraspPosition = currentGraspPosition_;
-    geometry_msgs::Point grasp_point;
     grasp_point.x = currentGraspPosition.x();
     grasp_point.y = currentGraspPosition.y();
     grasp_point.z = currentGraspPosition.z();
@@ -573,6 +615,8 @@ void TargetTrajectoriesGazebo::fillTargetVisu()
 
     targetMarkerArray_.markers.push_back(target_visu);
   }
+
+  //std::cout << "[TargetTrajectoriesGazebo::fillTargetVisu] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -580,19 +624,25 @@ void TargetTrajectoriesGazebo::fillTargetVisu()
 //-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::publishTargetVisu()
 {
+  //std::cout << "[TargetTrajectoriesGazebo::publishTargetVisu] START" << std::endl;
+
   /// NUA TODO: User should able to add more target!
-  int target_size = 1;
+  visualization_msgs::MarkerArray targetMarkerArray = targetMarkerArray_;
+  int target_size = targetMarkerArray.markers.size();
 
   if (target_size > 0)
   {
     for(int i = 0; i < target_size; i++)
     {
-      targetMarkerArray_.markers[i].header.seq++;
-      targetMarkerArray_.markers[i].header.stamp = ros::Time::now();
+      targetMarkerArray.markers[i].header.seq++;
+      targetMarkerArray.markers[i].header.stamp = ros::Time::now();
     }
-        
-    targetMarkerArrayPublisher_.publish(targetMarkerArray_);
+    targetMarkerArrayPublisher_.publish(targetMarkerArray);
+
+    publishGraspFrame();
   }
+
+  //std::cout << "[TargetTrajectoriesGazebo::publishTargetVisu] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -816,7 +866,9 @@ void TargetTrajectoriesGazebo::processFeedbackTarget(const visualization_msgs::I
   std::cout << "[TargetTrajectoriesGazebo::processFeedbackTarget] START" << std::endl;
 
   // Desired state trajectory
-  const Eigen::Vector3d position(feedback->pose.position.x, feedback->pose.position.y, feedback->pose.position.z);
+  const Eigen::Vector3d position(feedback->pose.position.x, 
+                                 feedback->pose.position.y, 
+                                 feedback->pose.position.z);
   const Eigen::Quaterniond orientation(feedback->pose.orientation.w, 
                                        feedback->pose.orientation.x, 
                                        feedback->pose.orientation.y,
@@ -828,6 +880,8 @@ void TargetTrajectoriesGazebo::processFeedbackTarget(const visualization_msgs::I
     std::lock_guard<std::mutex> lock(latestObservationMutex_);
     observation = latestObservation_;
   }
+
+  updateTarget(position, orientation);
 
   // get TargetTrajectories
   const auto targetTrajectories = goalPoseToTargetTrajectories_(position, orientation, observation);

@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
   std::string world_frame_name, gz_model_msg_name, robot_name;
   std::vector<std::string> name_pkgs_ign, name_pkgs_man, scan_data_path_pkgs_ign, scan_data_path_pkgs_man, target_names;
   double map_resolution;
-
+  
   pnh.param<std::string>("/world_frame_name", world_frame_name, "");
   pnh.param<std::string>("/gz_model_msg_name", gz_model_msg_name, "");
   robot_name = "mobiman";
@@ -70,6 +70,7 @@ int main(int argc, char* argv[])
   while(ros::ok)
   {
     //gu.updateObservationAndTarget();
+    gu.publishTargetVisu();
 
     ros::spinOnce();
     r.sleep();
