@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.06.19
+// LAST UPDATE: 2023.07.12
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -77,11 +77,27 @@ void MRT_ROS_Interface::resetMpcNode(const TargetTrajectories& initTargetTraject
 
   while (!mpcResetServiceClient_.waitForExistence(ros::Duration(5.0)) && ::ros::ok() && ::ros::master::check()) 
   {
-    ROS_ERROR_STREAM("[MRT_ROS_Interface::resetMpcNode] Failed to call service to reset MPC, retrying...");
+    ROS_ERROR_STREAM("[MRT_ROS_Interface::resetMpcNode] ERROR: Failed to call service to reset MPC, retrying...");
   }
 
   mpcResetServiceClient_.call(resetSrv);
   ROS_INFO_STREAM("[MRT_ROS_Interface::resetMpcNode] MPC node has been reset.");
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+int MRT_ROS_Interface::getModelModeInt()
+{
+  return modelModeInt_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+bool MRT_ROS_Interface::getShutDownFlag()
+{
+  return shutDownFlag_;
 }
 
 /******************************************************************************************************/
@@ -192,11 +208,12 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
   }
 
   std::vector<std::vector<float> const*> controllerDataPtrArray(N, nullptr);
-  for (int i = 0; i < N; i++) {
+  for (int i = 0; i < N; i++) 
+  {
     controllerDataPtrArray[i] = &(msg.data[i].data);
   }
 
-  // instantiate the correct controller
+  // Instantiate the correct controller
   switch (msg.controllerType) 
   {
     case ocs2_msgs::mpc_flattened_controller::CONTROLLER_FEEDFORWARD: 
@@ -239,9 +256,7 @@ void MRT_ROS_Interface::shutdownNodes()
 {
 #ifdef PUBLISH_THREAD
   ROS_INFO_STREAM("[MRT_ROS_Interface::shutdownNodes] Shutting down workers ...");
-
   shutdownPublisher();
-
   ROS_INFO_STREAM("[MRT_ROS_Interface::shutdownNodes] All workers are shut down.");
 #endif
 
@@ -276,9 +291,7 @@ void MRT_ROS_Interface::shutdownPublisher()
 void MRT_ROS_Interface::spinMRT() 
 {
   //std::cout << "[MRT_ROS_Interface::spinMRT] START" << std::endl;
-
   mrtCallbackQueue_.callOne();
-
   //std::cout << "[MRT_ROS_Interface::spinMRT] END" << std::endl;
 };
 
@@ -305,17 +318,21 @@ void MRT_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
   ops.transport_hints = mrtTransportHints_;
   mpcPolicySubscriber_ = nodeHandle.subscribe(ops);
 
+  std::cout << "[MRT_ROS_Interface::launchNodes] modelModeCallback: " << topicPrefix_ + "_model_mode" << std::endl;
   // Subscribe Model Mode
   auto modelModeCallback = [this](const std_msgs::UInt8::ConstPtr& msg) 
   {
     std::cout << "[MRT_ROS_Interface::launchNodes] START" << std::endl;
 
-    size_t modelModeInt = msg->data;
-    std::cout << "[MRT_ROS_Interface::launchNodes] modelModeInt: " << modelModeInt << std::endl;
-    updateModelMode(robotModelInfo_, modelModeInt);
+    modelModeInt_ = msg->data;
+    std::cout << "[MRT_ROS_Interface::launchNodes] modelModeInt: " << modelModeInt_ << std::endl;
+    //updateModelMode(robotModelInfo_, modelModeInt);
 
     std::cout << "[MRT_ROS_Interface::launchNodes] END" << std::endl;
     std::cout << "" << std::endl;
+
+    //shutdownNodes();
+    shutDownFlag_ = true;
   };
   modelModeSubscriber_ = nodeHandle.subscribe<std_msgs::UInt8>(topicPrefix_ + "_model_mode", 1, modelModeCallback);
 

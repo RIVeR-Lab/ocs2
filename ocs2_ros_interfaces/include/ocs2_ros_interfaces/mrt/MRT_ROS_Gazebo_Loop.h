@@ -77,9 +77,6 @@ class MRT_ROS_Gazebo_Loop
     virtual ~MRT_ROS_Gazebo_Loop() = default;
 
     /** NUA TODO: Add description */
-    //void setRobotModelType(std::string robotModelType);
-
-    /** NUA TODO: Add description */
     bool isArmStateInitialized();
 
     /** NUA TODO: Add description */
@@ -102,13 +99,9 @@ class MRT_ROS_Gazebo_Loop
      */
     void subscribeObservers(const std::vector<std::shared_ptr<DummyObserver>>& observers) { observers_ = observers; }
 
-  protected:
-    /**
-     * A user-defined function which modifies the observation before publishing.
-     *
-     * @param [in] observation: The current observation.
-     */
-    virtual void modifyObservation(SystemObservation& observation) {}
+    void getInitTarget(vector_t& initTarget);
+
+    void getCurrentState(vector_t& currentState);
 
   private:
 
@@ -135,24 +128,6 @@ class MRT_ROS_Gazebo_Loop
 
     /** NUA TODO: Add description */
     void jointTrajectoryControllerStateCallback(const control_msgs::JointTrajectoryControllerState::ConstPtr& msg);
-
-    /** NUA TODO: Add description */
-    void joint1ControllerStateCallback(const control_msgs::JointControllerState::ConstPtr& msg);
-
-    /** NUA TODO: Add description */
-    void joint2ControllerStateCallback(const control_msgs::JointControllerState::ConstPtr& msg);
-
-    /** NUA TODO: Add description */
-    void joint3ControllerStateCallback(const control_msgs::JointControllerState::ConstPtr& msg);
-
-    /** NUA TODO: Add description */
-    void joint4ControllerStateCallback(const control_msgs::JointControllerState::ConstPtr& msg);
-
-    /** NUA TODO: Add description */
-    void joint5ControllerStateCallback(const control_msgs::JointControllerState::ConstPtr& msg);
-
-    /** NUA TODO: Add description */
-    void joint6ControllerStateCallback(const control_msgs::JointControllerState::ConstPtr& msg);
 
     /** NUA TODO: Add description */
     void updateFullModelState();

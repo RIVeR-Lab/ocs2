@@ -63,11 +63,11 @@ EndEffectorConstraint::EndEffectorConstraint(const EndEffectorKinematics<scalar_
 /******************************************************************************************************/
 EndEffectorConstraint::EndEffectorConstraint(const EndEffectorKinematics<scalar_t>& endEffectorKinematics,
                                              const ReferenceManager& referenceManager,
-                                             RobotModelInfo& robotModelInfo)
+                                             const RobotModelInfo& robotModelInfo)
   : StateConstraint(ConstraintOrder::Linear),
     endEffectorKinematicsPtr_(endEffectorKinematics.clone()),
     referenceManagerPtr_(&referenceManager),
-    robotModelInfoPtr_(&robotModelInfo)
+    robotModelInfo_(robotModelInfo)
 {
   //std::cout << "[EndEffectorConstraint::EndEffectorConstraint(3)] START " << std::endl;
 
@@ -88,7 +88,7 @@ EndEffectorConstraint::EndEffectorConstraint(const EndEffectorKinematics<scalar_
 size_t EndEffectorConstraint::getNumConstraints(scalar_t time) const 
 {
   //return 6;
-  if (robotModelInfoPtr_->modelMode == ModelMode::BaseMotion)
+  if (robotModelInfo_.modelMode == ModelMode::BaseMotion)
   {
     // xy + yaw
     return 3;
@@ -179,7 +179,7 @@ vector_t EndEffectorConstraint::getValue(scalar_t time,
   
   ///*
   vector_t constraint;
-  if (robotModelInfoPtr_->modelMode == ModelMode::BaseMotion)
+  if (robotModelInfo_.modelMode == ModelMode::BaseMotion)
   {
     //std::cout << "[EndEffectorConstraint::getValue(4)] BaseMotion" << std::endl;
     constraint.resize(3);
@@ -300,7 +300,7 @@ VectorFunctionLinearApproximation EndEffectorConstraint::getLinearApproximation(
   std::cout << "[EndEffectorConstraint::getLinearApproximation(4)] eeOrientationError.dfdx.cols: " << eeOrientationError.dfdx.cols() << std::endl;
   */
 
-  if (robotModelInfoPtr_->modelMode == ModelMode::BaseMotion)
+  if (robotModelInfo_.modelMode == ModelMode::BaseMotion)
   {
     approximation.f.head<2>() = eePosition.f - desiredPositionOrientation.first;
     approximation.dfdx.topRows<2>() = eePosition.dfdx;

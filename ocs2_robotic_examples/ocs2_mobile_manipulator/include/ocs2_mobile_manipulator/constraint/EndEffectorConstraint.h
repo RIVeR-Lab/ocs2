@@ -51,13 +51,13 @@ class EndEffectorConstraint final : public StateConstraint
 
     EndEffectorConstraint(const EndEffectorKinematics<scalar_t>& endEffectorKinematics, 
                           const ReferenceManager& referenceManager, 
-                          RobotModelInfo& robotModelInfo);
+                          const RobotModelInfo& robotModelInfo);
     
     ~EndEffectorConstraint() override = default;
     
     EndEffectorConstraint* clone() const override 
     { 
-      return new EndEffectorConstraint(*endEffectorKinematicsPtr_, *referenceManagerPtr_, *robotModelInfoPtr_); 
+      return new EndEffectorConstraint(*endEffectorKinematicsPtr_, *referenceManagerPtr_, robotModelInfo_); 
     }
 
     size_t getNumConstraints(scalar_t time) const override;
@@ -87,7 +87,7 @@ class EndEffectorConstraint final : public StateConstraint
 
     quaternion_t eeDesiredOrientation_;
     
-    std::unique_ptr<RobotModelInfo> robotModelInfoPtr_;
+    RobotModelInfo robotModelInfo_;
 
     std::unique_ptr<EndEffectorKinematics<scalar_t>> endEffectorKinematicsPtr_;
     

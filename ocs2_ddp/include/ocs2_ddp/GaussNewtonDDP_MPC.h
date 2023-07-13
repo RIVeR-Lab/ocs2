@@ -88,25 +88,31 @@ class GaussNewtonDDP_MPC final : public MPC_BASE
                        const OptimalControlProblem& optimalControlProblem, 
                        const Initializer& initializer)
     {
+      //std::cout << "[GaussNewtonDDP_MPC::initializeMPC] START" << std::endl;
+
       switch (ddpSettings.algorithm_) 
       {
         case ddp::Algorithm::SLQ:
+          //std::cout << "[GaussNewtonDDP_MPC::initializeMPC] BEFORE SLQ" << std::endl;
           ddpPtr_.reset(new SLQ(std::move(ddpSettings), rollout, optimalControlProblem, initializer));
           break;
         
         case ddp::Algorithm::ILQR:
+          //std::cout << "[GaussNewtonDDP_MPC::initializeMPC] BEFORE ILQR" << std::endl;
           ddpPtr_.reset(new ILQR(std::move(ddpSettings), rollout, optimalControlProblem, initializer));
           break;
         
         default:
           throw std::runtime_error("[GaussNewtonDDP_MPC::initializeMPC] Undefined ddp::Algorithm type!");
       }
+      
+      //std::cout << "[GaussNewtonDDP_MPC::initializeMPC] END" << std::endl;
     }
 
   private:
     void calculateController(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override 
     {
-      //std::cout << "[GaussNewtonDDP_MPC::calculateController(3)] DEBUG INF LOOP!" << std::endl;
+      //std::cout << "[GaussNewtonDDP_MPC::calculateController(3)] DEBUG INF" << std::endl;
       //while(1);
 
       if (settings().coldStart_) 

@@ -25,7 +25,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
                                                        int modelModeInt)
   : taskFile_(taskFile), libraryFolder_(libraryFolder), urdfFile_(urdfFile)
 {
-  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START" << std::endl;
+  //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START" << std::endl;
 
   /// Check that task file exists
   boost::filesystem::path taskFilePath(taskFile_);
@@ -52,7 +52,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   /// Create library folder if it does not exist
   boost::filesystem::path libraryFolderPath(libraryFolder_);
   boost::filesystem::create_directories(libraryFolderPath);
-  std::cerr << "[MobileManipulatorInterface::MobileManipulatorInterface] Generated library path: " << libraryFolderPath << std::endl;
+  //std::cerr << "[MobileManipulatorInterface::MobileManipulatorInterface] Generated library path: " << libraryFolderPath << std::endl;
 
   /// Read the task file
   boost::property_tree::ptree pt;
@@ -64,57 +64,59 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 
   // Read the joints to make fixed
   std::vector<std::string> removeJointNames;
-  loadData::loadStdVector<std::string>(taskFile_, "model_information.removeJoints", removeJointNames, false);
+  loadData::loadStdVector<std::string>(taskFile_, "model_information.removeJoints", removeJointNames, printOutFlag_);
   
   // Read the link names of joints
   std::vector<std::string> armJointFrameNames;
-  loadData::loadStdVector<std::string>(taskFile_, "model_information.armJointFrameNames", armJointFrameNames, false);
+  loadData::loadStdVector<std::string>(taskFile_, "model_information.armJointFrameNames", armJointFrameNames, printOutFlag_);
 
   // Read the names of joints
   std::vector<std::string> armJointNames;
-  loadData::loadStdVector<std::string>(taskFile_, "model_information.armJointNames", armJointNames, false);
+  loadData::loadStdVector<std::string>(taskFile_, "model_information.armJointNames", armJointNames, printOutFlag_);
 
   // Read the frame names
   std::string baseFrame, armBaseFrame, eeFrame;
-  loadData::loadPtreeValue<std::string>(pt, baseFrame, "model_information.baseFrame", false);
-  loadData::loadPtreeValue<std::string>(pt, armBaseFrame, "model_information.armBaseFrame", false);
-  loadData::loadPtreeValue<std::string>(pt, eeFrame, "model_information.eeFrame", false);
-  loadData::loadPtreeValue<std::string>(pt, baseStateMsg_, "model_information.baseStateMsg", false);
-  loadData::loadPtreeValue<std::string>(pt, armStateMsg_, "model_information.armStateMsg", false);
-  loadData::loadPtreeValue<std::string>(pt, baseControlMsg_, "model_information.baseControlMsg", false);
-  loadData::loadPtreeValue<std::string>(pt, armControlMsg_, "model_information.armControlMsg", false);
+  loadData::loadPtreeValue<std::string>(pt, baseFrame, "model_information.baseFrame", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, armBaseFrame, "model_information.armBaseFrame", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, eeFrame, "model_information.eeFrame", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, baseStateMsg_, "model_information.baseStateMsg", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, armStateMsg_, "model_information.armStateMsg", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, baseControlMsg_, "model_information.baseControlMsg", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, armControlMsg_, "model_information.armControlMsg", printOutFlag_);
 
-  std::cerr << "\n #### Model Information:";
-  std::cerr << "\n #### =============================================================================\n";
-  std::cerr << "\n #### model_information.robotModelType: " << static_cast<int>(robotModelType);
-  std::cerr << "\n #### model_information.removeJoints: ";
-  for (const auto& name : removeJointNames) 
+  if (printOutFlag_)
   {
-    std::cerr << "\"" << name << "\" ";
+    std::cerr << "\n #### Model Information:";
+    std::cerr << "\n #### =============================================================================\n";
+    std::cerr << "\n #### model_information.robotModelType: " << static_cast<int>(robotModelType);
+    std::cerr << "\n #### model_information.removeJoints: ";
+    for (const auto& name : removeJointNames) 
+    {
+      std::cerr << "\"" << name << "\" ";
+    }
+    std::cerr << "\n #### model_information.armJointFrameNames: ";
+    for (const auto& name : armJointFrameNames) 
+    {
+      std::cerr << "\"" << name << "\" ";
+    }
+    std::cerr << "\n #### model_information.jointNames: ";
+    for (const auto& name : armJointNames) 
+    {
+      std::cerr << "\"" << name << "\" ";
+    }
+    std::cerr << "\n #### model_information.baseFrame: \"" << baseFrame << "\"";
+    std::cerr << "\n #### model_information.armBaseFrame: \"" << armBaseFrame << "\"";
+    std::cerr << "\n #### model_information.eeFrame: \"" << eeFrame << "\"";
+    std::cerr << "\n #### model_information.baseStateMsg: \"" << baseStateMsg_ << "\"";
+    std::cerr << "\n #### model_information.armStateMsg: \"" << armStateMsg_ << "\"";
+    std::cerr << "\n #### model_information.baseControlMsg: \"" << baseControlMsg_ << "\"";
+    std::cerr << "\n #### model_information.armControlMsg: \"" << armControlMsg_ << "\"";
+    std::cerr << " #### =============================================================================" << std::endl;
   }
-  std::cerr << "\n #### model_information.armJointFrameNames: ";
-  for (const auto& name : armJointFrameNames) 
-  {
-    std::cerr << "\"" << name << "\" ";
-  }
-  std::cerr << "\n #### model_information.jointNames: ";
-  for (const auto& name : armJointNames) 
-  {
-    std::cerr << "\"" << name << "\" ";
-  }
-  std::cerr << "\n #### model_information.baseFrame: \"" << baseFrame << "\"";
-  std::cerr << "\n #### model_information.armBaseFrame: \"" << armBaseFrame << "\"";
-  std::cerr << "\n #### model_information.eeFrame: \"" << eeFrame << "\"";
-  std::cerr << "\n #### model_information.baseStateMsg: \"" << baseStateMsg_ << "\"";
-  std::cerr << "\n #### model_information.armStateMsg: \"" << armStateMsg_ << "\"";
-  std::cerr << "\n #### model_information.baseControlMsg: \"" << baseControlMsg_ << "\"";
-  std::cerr << "\n #### model_information.armControlMsg: \"" << armControlMsg_ << "\"";
-  std::cerr << " #### =============================================================================" << std::endl;
 
   // Create pinocchio interface
   pinocchioInterfacePtr_.reset(new PinocchioInterface(createPinocchioInterface(urdfFile_, robotModelType, removeJointNames)));
-
-  std::cerr << *pinocchioInterfacePtr_;
+  //std::cerr << *pinocchioInterfacePtr_;
 
   // Set Robot Model Info
   robotModelInfo_ = createRobotModelInfo(robotModelType,
@@ -125,26 +127,26 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
                                          armJointNames);
 
   // Set Model Settings
-  std::cerr << "\n #### Model Settings:";
-  std::cerr << "\n #### =============================================================================\n";
-  loadData::loadPtreeValue(pt, usePreComputation_, "model_settings.usePreComputation", true);
-  loadData::loadPtreeValue(pt, recompileLibraries_, "model_settings.recompileLibraries", true);
-  loadData::loadPtreeValue(pt, activateSelfCollision_, "selfCollision.activate", true);
-  loadData::loadPtreeValue(pt, activateExtCollision_, "extCollision.activate", false);
-  std::cerr << " #### =============================================================================\n";
+  //std::cerr << "\n #### Model Settings:";
+  //std::cerr << "\n #### =============================================================================\n";
+  loadData::loadPtreeValue(pt, usePreComputation_, "model_settings.usePreComputation", printOutFlag_);
+  loadData::loadPtreeValue(pt, recompileLibraries_, "model_settings.recompileLibraries", printOutFlag_);
+  loadData::loadPtreeValue(pt, activateSelfCollision_, "selfCollision.activate", printOutFlag_);
+  loadData::loadPtreeValue(pt, activateExtCollision_, "extCollision.activate", printOutFlag_);
+  //std::cerr << " #### =============================================================================\n";
 
   // Set DDP-MPC settings
-  ddpSettings_ = ddp::loadSettings(taskFile_, "ddp");
-  mpcSettings_ = mpc::loadSettings(taskFile_, "mpc");
+  ddpSettings_ = ddp::loadSettings(taskFile_, "ddp", printOutFlag_);
+  mpcSettings_ = mpc::loadSettings(taskFile_, "mpc", printOutFlag_);
 
   // Set Reference Manager
   referenceManagerPtr_.reset(new ReferenceManager);
 
   // Set MPC Problem
-  modelModeInt = 2;
-  setMPCProblem(modelModeInt, pointsAndRadii);
+  //modelModeInt = 2;
+  //setMPCProblem(modelModeInt, pointsAndRadii);
   
-  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END" << std::endl;
+  //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -152,13 +154,16 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobot::points_radii_t& pointsAndRadii)
 {
-  std::cout << "[MobileManipulatorInterface::setMPCProblem] START" << std::endl;
+  //std::cout << "[MobileManipulatorInterface::setMPCProblem] START" << std::endl;
 
-  std::cout << "[MobileManipulatorInterface::setMPCProblem] modelModeInt: " << modelModeInt << std::endl;
+  problem_.costPtr->clear();
+  problem_.softConstraintPtr->clear();
+  problem_.stateSoftConstraintPtr->clear();
+  problem_.finalSoftConstraintPtr->clear();
 
+  //std::cout << "[MobileManipulatorInterface::setMPCProblem] modelModeInt: " << modelModeInt << std::endl;
   bool isModeUpdated = updateModelMode(robotModelInfo_, modelModeInt);
-
-  printRobotModelInfo(robotModelInfo_);
+  //printRobotModelInfo(robotModelInfo_);
 
   //std::cout << "[MobileManipulatorInterface::setMPCProblem] DEBUG INF" << std::endl;
   //while(1);
@@ -166,20 +171,24 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
   //// Optimal control problem
   /// Cost
   problem_.costPtr->add("inputCost", getQuadraticInputCost());
-  std::cout << "" << std::endl;
+  //std::cout << "" << std::endl;
 
   /// Constraints
   // Joint limits constraint
   problem_.softConstraintPtr->add("jointLimits", getJointLimitSoftConstraint());
-  std::cout << "" << std::endl;
+  //std::cout << "" << std::endl;
 
   // Mobile base or End-effector state constraint
-  std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getEndEffectorConstraint" << std::endl;
+  //std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getEndEffectorConstraint" << std::endl;
   problem_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint("endEffector"));
+  //std::cout << "[MobileManipulatorInterface::setMPCProblem] AFTER getEndEffectorConstraint" << std::endl;
   problem_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint("finalEndEffector"));
-  std::cout << "" << std::endl;
+  //std::cout << "" << std::endl;
 
-  std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getSelfCollisionConstraint" << std::endl;
+  //std::cout << "[MobileManipulatorInterface::setMPCProblem] DEBUG INF" << std::endl;
+  //while(1);
+
+  //std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getSelfCollisionConstraint" << std::endl;
   // Self-collision avoidance constraint
   if (activateSelfCollision_) 
   {
@@ -188,9 +197,9 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
       problem_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint("selfCollision"));
     }
   }
-  std::cout << "" << std::endl;
+  //std::cout << "" << std::endl;
 
-  std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getExtCollisionConstraint" << std::endl;
+  //std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getExtCollisionConstraint" << std::endl;
   // External-collision avoidance constraint
   activateExtCollision_ = false;
   if (activateExtCollision_) 
@@ -230,66 +239,65 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
     
     problem_.stateSoftConstraintPtr->add("extCollision", getExtCollisionConstraint("extCollision"));
   }
-  std::cout << "" << std::endl;
+  //std::cout << "" << std::endl;
 
-  std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE Dynamics" << std::endl;
   // Dynamics
+  //std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE Dynamics" << std::endl;
   switch (robotModelInfo_.modelMode) 
   {
     case ModelMode::BaseMotion:
     {
-      std::cout << "[MobileManipulatorInterface::setMPCProblem] Mobile Base" << std::endl;
+      //std::cout << "[MobileManipulatorInterface::setMPCProblem] Mobile Base" << std::endl;
       problem_.dynamicsPtr.reset(new MobileBaseDynamics(robotModelInfo_, 
                                                         "MobileBaseDynamics", 
                                                         libraryFolder_, 
                                                         recompileLibraries_, 
-                                                        true));
+                                                        printOutFlag_));
       break;
     }
     
     case ModelMode::ArmMotion:
     {
-      std::cout << "[MobileManipulatorInterface::setMPCProblem] Robotics Arm" << std::endl;
+      //std::cout << "[MobileManipulatorInterface::setMPCProblem] Robotics Arm" << std::endl;
       problem_.dynamicsPtr.reset(new RobotArmDynamics(robotModelInfo_, 
                                                       "RobotArmDynamics", 
                                                       libraryFolder_, 
                                                       recompileLibraries_, 
-                                                      true));
+                                                      printOutFlag_));
       break;
     }
     
     case ModelMode::WholeBodyMotion: 
     {
-      std::cout << "[MobileManipulatorInterface::setMPCProblem] Mobile Manipulator" << std::endl;
+      //std::cout << "[MobileManipulatorInterface::setMPCProblem] Mobile Manipulator" << std::endl;
       problem_.dynamicsPtr.reset(new MobileManipulatorDynamics(robotModelInfo_, 
                                                                "MobileManipulatorDynamics", 
                                                                libraryFolder_, 
                                                                recompileLibraries_, 
-                                                               true));
+                                                               printOutFlag_));
       break;
     }
 
     default:
       throw std::invalid_argument("[MobileManipulatorInterface::setMPCProblem] ERROR: Invalid model mode!");
   }
-  std::cout << "" << std::endl;
+  //std::cout << "" << std::endl;
 
-  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Pre-computation" << std::endl;
   /*
    * Pre-computation
    */
+  //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Pre-computation" << std::endl;
   if (usePreComputation_) 
   {
-    std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START preComputationPtr" << std::endl;
+    std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] DEBUG INF" << std::endl;
     while(1);
     problem_.preComputationPtr.reset(new MobileManipulatorPreComputation(*pinocchioInterfacePtr_, robotModelInfo_));
   }
-  std::cout << "" << std::endl;
-
-  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Rollout" << std::endl;
+  //std::cout << "" << std::endl;
 
   // Rollout
-  const auto rolloutSettings = rollout::loadSettings(taskFile_, "rollout");
+  //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Rollout" << std::endl;
+  const auto rolloutSettings = rollout::loadSettings(taskFile_, "rollout", printOutFlag_);
   rolloutPtr_.reset(new TimeTriggeredRollout(*problem_.dynamicsPtr, rolloutSettings));
 
   // Initialization
@@ -299,21 +307,24 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
   //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] DEBUG INF" << std::endl;
   //while(1);
 
-  std::cout << "[MobileManipulatorInterface::setMPCProblem] END" << std::endl;
+  //std::cout << "[MobileManipulatorInterface::setMPCProblem] END" << std::endl;
 }
 
-
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MobileManipulatorInterface::tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg)
+/*
+void MobileManipulatorInterface::modelModeCallback(const std_msgs::UInt8::ConstPtr& msg)
 {
-  std::cout << "[MobileManipulatorInterface::tfCallback] START" << std::endl;
+  std::cout << "[MobileManipulatorInterface::modelModeCallback] START" << std::endl;
 
-  tf2_msgs::TFMessage tf_msg = *msg;
+  size_t modelModeInt = msg->data;
+  std::cout << "[MobileManipulatorInterface::modelModeCallback] modelModeInt: " << modelModeInt << std::endl;
+  //updateModelMode(robotModelInfo_, modelModeInt);
 
-  std::cout << "[MobileManipulatorInterface::tfCallback] END" << std::endl << std::endl;
+  std::cout << "[MobileManipulatorInterface::modelModeCallback] END" << std::endl << std::endl;
 }
+*/
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -322,6 +333,8 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
 {
   std::string oct_msg_name = "octomap_scan";
   std::string tf_msg_name = "tf";
+  std::string model_mode_msg_name = "mobile_manipulator_model_mode";
+
   double dt = 0.1;
 
   if (emuPtr_)
@@ -337,7 +350,27 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
     pointsOnRobotPtr_->publishPointsOnRobotVisu(dt);
   }
 
-  //sub_tf_msg_ = nodeHandle.subscribe(tf_msg_name, 10, &MobileManipulatorInterface::tfCallback, this);
+  //subModelModeMsg_ = nodeHandle.subscribe(model_mode_msg_name, 10, &MobileManipulatorInterface::modelModeCallback, this);
+
+  /*
+  std::cout << "[MRT_ROS_Interface::launchNodes] modelModeCallback: " << topicPrefix_ + "_model_mode" << std::endl;
+  // Subscribe Model Mode
+  auto modelModeCallback = [this](const std_msgs::UInt8::ConstPtr& msg) 
+  {
+    std::cout << "[MRT_ROS_Interface::launchNodes] START" << std::endl;
+
+    size_t modelModeInt = msg->data;
+    std::cout << "[MRT_ROS_Interface::launchNodes] modelModeInt: " << modelModeInt << std::endl;
+    updateModelMode(robotModelInfo_, modelModeInt);
+
+    std::cout << "[MRT_ROS_Interface::launchNodes] END" << std::endl;
+    std::cout << "" << std::endl;
+
+    //shutdownNodes();
+    shutDownFlag_ = true;
+  };
+  modelModeSubscriber_ = nodeHandle.subscribe<std_msgs::UInt8>(topicPrefix_ + "_model_mode", 1, modelModeCallback);
+  */
 
   //spin();
 }
@@ -355,9 +388,9 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCos
   
   auto modelMode = getModelModeInt(robotModelInfo_);
 
-  std::cout << "[MobileManipulatorInterface::getQuadraticInputCost] modelMode: " << modelMode << std::endl;
-  std::cout << "[MobileManipulatorInterface::getQuadraticInputCost] modeStateDim: " << modeStateDim << std::endl;
-  std::cout << "[MobileManipulatorInterface::getQuadraticInputCost] modeInputDim: " << modeInputDim << std::endl;
+  //std::cout << "[MobileManipulatorInterface::getQuadraticInputCost] modelMode: " << modelMode << std::endl;
+  //std::cout << "[MobileManipulatorInterface::getQuadraticInputCost] modeStateDim: " << modeStateDim << std::endl;
+  //std::cout << "[MobileManipulatorInterface::getQuadraticInputCost] modeInputDim: " << modeInputDim << std::endl;
 
   matrix_t R = matrix_t::Zero(modeInputDim, modeInputDim);
 
@@ -366,7 +399,7 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCos
   {
     const size_t inputDimBase = getInputDimBase(robotModelInfo_);
 
-    std::cout << "[MobileManipulatorInterface::getQuadraticInputCost] inputDimBase: " << inputDimBase << std::endl;
+    //std::cout << "[MobileManipulatorInterface::getQuadraticInputCost] inputDimBase: " << inputDimBase << std::endl;
 
     matrix_t R_base = matrix_t::Zero(inputDimBase, inputDimBase);
     loadData::loadEigenMatrix(taskFile_, "inputCost.R.base", R_base);
@@ -378,17 +411,20 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getQuadraticInputCos
   {
     const size_t inputDimArm = getInputDimArm(robotModelInfo_);
 
-    std::cout << "[MobileManipulatorInterface::getQuadraticInputCost] inputDimArm: " << inputDimArm << std::endl;
+    //std::cout << "[MobileManipulatorInterface::getQuadraticInputCost] inputDimArm: " << inputDimArm << std::endl;
 
     matrix_t R_arm = matrix_t::Zero(inputDimArm, inputDimArm);
     loadData::loadEigenMatrix(taskFile_, "inputCost.R.arm", R_arm);
     R.bottomRightCorner(inputDimArm, inputDimArm) = R_arm;
   }
 
-  std::cerr << "\n #### Input Cost Settings: ";
-  std::cerr << "\n #### =============================================================================\n";
-  std::cerr << "inputCost.R:  \n" << R << '\n';
-  std::cerr << " #### =============================================================================\n";
+  if (printOutFlag_)
+  {
+    std::cerr << "\n #### Input Cost Settings: ";
+    std::cerr << "\n #### =============================================================================\n";
+    std::cerr << "inputCost.R:  \n" << R << '\n';
+    std::cerr << " #### =============================================================================\n";
+  }
 
   return std::unique_ptr<StateInputCost>(new QuadraticInputCost(std::move(R), modeStateDim));
 }
@@ -404,7 +440,7 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftCon
   boost::property_tree::read_info(taskFile_, pt);
 
   bool activateJointPositionLimit = true;
-  loadData::loadPtreeValue(pt, activateJointPositionLimit, "jointPositionLimits.activate", true);
+  loadData::loadPtreeValue(pt, activateJointPositionLimit, "jointPositionLimits.activate", printOutFlag_);
 
   //const size_t modeStateDim = getStateDimTmp(robotModelInfo_);
   const size_t modeStateDim = getModeStateDim(robotModelInfo_);
@@ -412,8 +448,8 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftCon
   //const size_t modeInputDim = getInputDim(robotModelInfo_);
   const size_t modeInputDim = getModeInputDim(robotModelInfo_);
 
-  std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] modeStateDim: " << modeStateDim << std::endl;
-  std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] modeInputDim: " << modeInputDim << std::endl;
+  //std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] modeStateDim: " << modeStateDim << std::endl;
+  //std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] modeInputDim: " << modeInputDim << std::endl;
 
   // Load position limits
   std::vector<StateInputSoftBoxConstraint::BoxConstraint> stateLimits;
@@ -426,24 +462,24 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftCon
     const vector_t lowerBound = model.lowerPositionLimit.tail(stateDimArm);
     const vector_t upperBound = model.upperPositionLimit.tail(stateDimArm);
 
-    std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] lowerBound size: " << lowerBound.size() << std::endl;
-    std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] upperBound size: " << upperBound.size() << std::endl;
+    //std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] lowerBound size: " << lowerBound.size() << std::endl;
+    //std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] upperBound size: " << upperBound.size() << std::endl;
 
     scalar_t muPositionLimits = 1e-2;
     scalar_t deltaPositionLimits = 1e-3;
 
-    std::cerr << "\n #### ArmJointPositionLimits Settings: ";
-    std::cerr << "\n #### =============================================================================\n";
-    std::cerr << " #### lowerBound: " << lowerBound.transpose() << '\n';
-    std::cerr << " #### upperBound: " << upperBound.transpose() << '\n';
-    loadData::loadPtreeValue(pt, muPositionLimits, "jointPositionLimits.mu", true);
-    loadData::loadPtreeValue(pt, deltaPositionLimits, "jointPositionLimits.delta", true);
-    std::cerr << " #### =============================================================================\n";
+    //std::cerr << "\n #### ArmJointPositionLimits Settings: ";
+    //std::cerr << "\n #### =============================================================================\n";
+    //std::cerr << " #### lowerBound: " << lowerBound.transpose() << '\n';
+    //std::cerr << " #### upperBound: " << upperBound.transpose() << '\n';
+    loadData::loadPtreeValue(pt, muPositionLimits, "jointPositionLimits.mu", printOutFlag_);
+    loadData::loadPtreeValue(pt, deltaPositionLimits, "jointPositionLimits.delta", printOutFlag_);
+    //std::cerr << " #### =============================================================================\n";
     
     stateLimits.reserve(modeStateDim);
     const size_t stateOffset = modeStateDim - stateDimArm;
 
-    std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] stateOffset: " << stateOffset << std::endl;
+    //std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] stateOffset: " << stateOffset << std::endl;
 
     for (int i = 0; i < stateDimArm; ++i) 
     {
@@ -455,12 +491,12 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftCon
       stateLimits.push_back(std::move(boxConstraint));
     }
 
-    std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] lowerBound size: " << lowerBound.size() << std::endl;
-    std::cout << lowerBound << std::endl << std::endl;
-    std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] upperBound size: " << upperBound.size() << std::endl;
-    std::cout << upperBound << std::endl << std::endl;
+    //std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] lowerBound size: " << lowerBound.size() << std::endl;
+    //std::cout << lowerBound << std::endl << std::endl;
+    //std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] upperBound size: " << upperBound.size() << std::endl;
+    //std::cout << upperBound << std::endl << std::endl;
 
-    std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] stateLimits.size(): " << stateLimits.size() << std::endl;
+    //std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] stateLimits.size(): " << stateLimits.size() << std::endl;
   }
 
   // Load velocity limits
@@ -501,13 +537,13 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftCon
 
     scalar_t muVelocityLimits = 1e-2;
     scalar_t deltaVelocityLimits = 1e-3;
-    std::cerr << "\n #### JointVelocityLimits Settings: ";
-    std::cerr << "\n #### =============================================================================\n";
-    std::cerr << " #### 'lowerBound':  " << lowerBound.transpose() << std::endl;
-    std::cerr << " #### 'upperBound':  " << upperBound.transpose() << std::endl;
-    loadData::loadPtreeValue(pt, muVelocityLimits, "jointVelocityLimits.mu", true);
-    loadData::loadPtreeValue(pt, deltaVelocityLimits, "jointVelocityLimits.delta", true);
-    std::cerr << " #### =============================================================================\n";
+    //std::cerr << "\n #### JointVelocityLimits Settings: ";
+    //std::cerr << "\n #### =============================================================================\n";
+    //std::cerr << " #### 'lowerBound':  " << lowerBound.transpose() << std::endl;
+    //std::cerr << " #### 'upperBound':  " << upperBound.transpose() << std::endl;
+    loadData::loadPtreeValue(pt, muVelocityLimits, "jointVelocityLimits.mu", printOutFlag_);
+    loadData::loadPtreeValue(pt, deltaVelocityLimits, "jointVelocityLimits.delta", printOutFlag_);
+    //std::cerr << " #### =============================================================================\n";
 
     inputLimits.reserve(modeInputDim);
     for (int i = 0; i < modeInputDim; ++i) 
@@ -520,18 +556,18 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftCon
       inputLimits.push_back(std::move(boxConstraint));
     }
 
-    std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] lowerBound size: " << lowerBound.size() << std::endl;
-    std::cout << lowerBound << std::endl << std::endl;
-    std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] upperBound size: " << upperBound.size() << std::endl;
-    std::cout << upperBound << std::endl << std::endl;
+    //std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] lowerBound size: " << lowerBound.size() << std::endl;
+    //std::cout << lowerBound << std::endl << std::endl;
+    //std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] upperBound size: " << upperBound.size() << std::endl;
+    //std::cout << upperBound << std::endl << std::endl;
   }
 
-  std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] stateLimits size: " << stateLimits.size() << std::endl;
-  std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] inputLimits size: " << inputLimits.size() << std::endl;
+  //std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] stateLimits size: " << stateLimits.size() << std::endl;
+  //std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] inputLimits size: " << inputLimits.size() << std::endl;
 
   auto boxConstraints = std::unique_ptr<StateInputSoftBoxConstraint>(new StateInputSoftBoxConstraint(stateLimits, inputLimits));
 
-  boxConstraints -> initializeOffset(0.0, vector_t::Zero(modeStateDim), vector_t::Zero(modeInputDim));
+  boxConstraints->initializeOffset(0.0, vector_t::Zero(modeStateDim), vector_t::Zero(modeInputDim));
 
   //std::cout << "[MobileManipulatorInterface::getJointLimitSoftConstraint] DEBUG INF" << std::endl;
   //while(1);
@@ -544,7 +580,7 @@ std::unique_ptr<StateInputCost> MobileManipulatorInterface::getJointLimitSoftCon
 //-------------------------------------------------------------------------------------------------------
 std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(const std::string& prefix) 
 {
-  std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] START prefix: " << prefix << std::endl;
+  //std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] START prefix: " << prefix << std::endl;
 
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile_, pt);
@@ -556,11 +592,11 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
   std::string modelName = getModelModeString(robotModelInfo_) + "_end_effector_kinematics";
   scalar_t muPosition = 1.0;
   scalar_t muOrientation = 1.0;
-  std::cerr << "\n #### " << prefix << " Settings: ";
-  std::cerr << "\n #### =============================================================================\n";
-  loadData::loadPtreeValue(pt, muPosition, prefix + ".muPosition", true);
-  loadData::loadPtreeValue(pt, muOrientation, prefix + ".muOrientation", true);
-  std::cerr << " #### =============================================================================\n";
+  //std::cerr << "\n #### " << prefix << " Settings: ";
+  //std::cerr << "\n #### =============================================================================\n";
+  loadData::loadPtreeValue(pt, muPosition, prefix + ".muPosition", printOutFlag_);
+  loadData::loadPtreeValue(pt, muOrientation, prefix + ".muOrientation", printOutFlag_);
+  //std::cerr << " #### =============================================================================\n";
 
   if (referenceManagerPtr_ == nullptr) 
   {
@@ -579,10 +615,10 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
   } 
   else 
   {
-    std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] BEFORE pinocchioMappingCppAd" << std::endl;
+    //std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] BEFORE pinocchioMappingCppAd" << std::endl;
     MobileManipulatorPinocchioMappingCppAd pinocchioMappingCppAd(robotModelInfo_);
 
-    std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] BEFORE eeKinematics" << std::endl;
+    //std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] BEFORE eeKinematics" << std::endl;
     PinocchioEndEffectorKinematicsCppAd eeKinematics(*pinocchioInterfacePtr_,
                                                      pinocchioMappingCppAd, 
                                                      robotModelInfo_,
@@ -590,7 +626,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
                                                      libraryFolder_, 
                                                      recompileLibraries_, 
                                                      false);
-    std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] AFTER eeKinematics" << std::endl;
+    //std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] AFTER eeKinematics" << std::endl;
     constraint.reset(new EndEffectorConstraint(eeKinematics, *referenceManagerPtr_, robotModelInfo_));
   }
 
@@ -601,7 +637,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
   std::generate_n(penaltyArray.begin(), 3, [&] { return std::unique_ptr<PenaltyBase>(new QuadraticPenalty(muPosition)); });
   std::generate_n(penaltyArray.begin() + 3, 3, [&] { return std::unique_ptr<PenaltyBase>(new QuadraticPenalty(muOrientation)); });
 
-  std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] END" << std::endl;
+  //std::cout << "[MobileManipulatorInterface::getEndEffectorConstraint] END" << std::endl;
 
   return std::unique_ptr<StateCost>(new StateSoftConstraint(std::move(constraint), std::move(penaltyArray)));
 }
@@ -611,7 +647,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
 //-------------------------------------------------------------------------------------------------------
 std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstraint(const std::string& prefix) 
 {
-  std::cout << "[MobileManipulatorInterface::getSelfCollisionConstraint] START" << std::endl;
+  //std::cout << "[MobileManipulatorInterface::getSelfCollisionConstraint] START" << std::endl;
 
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile_, pt);
@@ -622,18 +658,18 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
   std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
   std::vector<std::pair<std::string, std::string>> collisionLinkPairs;
 
-  std::cerr << "\n #### SelfCollision Settings: ";
-  std::cerr << "\n #### =============================================================================\n";
-  loadData::loadPtreeValue(pt, mu, prefix + ".mu", true);
-  loadData::loadPtreeValue(pt, delta, prefix + ".delta", true);
-  loadData::loadPtreeValue(pt, minimumDistance, prefix + ".minimumDistance", true);
-  loadData::loadStdVectorOfPair(taskFile_, prefix + ".collisionObjectPairs", collisionObjectPairs, true);
-  loadData::loadStdVectorOfPair(taskFile_, prefix + ".collisionLinkPairs", collisionLinkPairs, true);
-  std::cerr << " #### =============================================================================\n";
+  //std::cerr << "\n #### SelfCollision Settings: ";
+  //std::cerr << "\n #### =============================================================================\n";
+  loadData::loadPtreeValue(pt, mu, prefix + ".mu", printOutFlag_);
+  loadData::loadPtreeValue(pt, delta, prefix + ".delta", printOutFlag_);
+  loadData::loadPtreeValue(pt, minimumDistance, prefix + ".minimumDistance", printOutFlag_);
+  loadData::loadStdVectorOfPair(taskFile_, prefix + ".collisionObjectPairs", collisionObjectPairs, printOutFlag_);
+  loadData::loadStdVectorOfPair(taskFile_, prefix + ".collisionLinkPairs", collisionLinkPairs, printOutFlag_);
+  //std::cerr << " #### =============================================================================\n";
 
   PinocchioGeometryInterface geometryInterface(*pinocchioInterfacePtr_, collisionLinkPairs, collisionObjectPairs);
   const size_t numCollisionPairs = geometryInterface.getNumCollisionPairs();
-  std::cerr << "[MobileManipulatorInterface::getSelfCollisionConstraint] Testing for " << numCollisionPairs << " collision pairs\n";
+  //std::cerr << "[MobileManipulatorInterface::getSelfCollisionConstraint] Testing for " << numCollisionPairs << " collision pairs\n";
 
   std::unique_ptr<StateConstraint> constraint;
   
@@ -662,7 +698,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
 
   std::unique_ptr<PenaltyBase> penalty(new RelaxedBarrierPenalty({mu, delta}));
 
-  std::cout << "[MobileManipulatorInterface::getSelfCollisionConstraint] END" << std::endl;
+  //std::cout << "[MobileManipulatorInterface::getSelfCollisionConstraint] END" << std::endl;
 
   return std::unique_ptr<StateCost>(new StateSoftConstraint(std::move(constraint), std::move(penalty)));
 }

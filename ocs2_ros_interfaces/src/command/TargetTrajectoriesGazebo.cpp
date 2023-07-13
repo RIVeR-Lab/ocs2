@@ -758,7 +758,7 @@ visualization_msgs::InteractiveMarker TargetTrajectoriesGazebo::createInteractiv
   interactiveMarker.name = "ModelMode";
   interactiveMarker.scale = 0.2;
   interactiveMarker.description = "Right click to send command";
-  interactiveMarker.pose.position.x = 0.0;
+  interactiveMarker.pose.position.x = 1.0;
   interactiveMarker.pose.position.y = 0.0;
   interactiveMarker.pose.position.z = 1.0;
 
@@ -766,13 +766,13 @@ visualization_msgs::InteractiveMarker TargetTrajectoriesGazebo::createInteractiv
   const auto boxMarker = []() 
   {
     visualization_msgs::Marker marker;
-    marker.type = visualization_msgs::Marker::CUBE;
+    marker.type = visualization_msgs::Marker::SPHERE;
     marker.scale.x = 0.1;
     marker.scale.y = 0.1;
     marker.scale.z = 0.1;
-    marker.color.r = 0.5;
-    marker.color.g = 0.5;
-    marker.color.b = 0.5;
+    marker.color.r = 1.0;
+    marker.color.g = 0.2;
+    marker.color.b = 0.2;
     marker.color.a = 0.5;
     return marker;
   }();
@@ -795,9 +795,9 @@ visualization_msgs::InteractiveMarker TargetTrajectoriesGazebo::createInteractiv
   control.orientation.x = 1;
   control.orientation.y = 0;
   control.orientation.z = 0;
-  control.name = "rotate_x";
-  control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
-  interactiveMarker.controls.push_back(control);
+  //control.name = "rotate_x";
+  //control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
+  //interactiveMarker.controls.push_back(control);
   control.name = "move_x";
   control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
   interactiveMarker.controls.push_back(control);
@@ -806,9 +806,9 @@ visualization_msgs::InteractiveMarker TargetTrajectoriesGazebo::createInteractiv
   control.orientation.x = 0;
   control.orientation.y = 1;
   control.orientation.z = 0;
-  control.name = "rotate_z";
-  control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
-  interactiveMarker.controls.push_back(control);
+  //control.name = "rotate_z";
+  //control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
+  //interactiveMarker.controls.push_back(control);
   control.name = "move_z";
   control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
   interactiveMarker.controls.push_back(control);
@@ -817,9 +817,9 @@ visualization_msgs::InteractiveMarker TargetTrajectoriesGazebo::createInteractiv
   control.orientation.x = 0;
   control.orientation.y = 0;
   control.orientation.z = 1;
-  control.name = "rotate_y";
-  control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
-  interactiveMarker.controls.push_back(control);
+  //control.name = "rotate_y";
+  //control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
+  //interactiveMarker.controls.push_back(control);
   control.name = "move_y";
   control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
   interactiveMarker.controls.push_back(control);
@@ -863,7 +863,7 @@ void TargetTrajectoriesGazebo::createMenuModelMode()
 //-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::processFeedbackTarget(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback) 
 {
-  std::cout << "[TargetTrajectoriesGazebo::processFeedbackTarget] START" << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::processFeedbackTarget] START" << std::endl;
 
   // Desired state trajectory
   const Eigen::Vector3d position(feedback->pose.position.x, 
@@ -889,7 +889,7 @@ void TargetTrajectoriesGazebo::processFeedbackTarget(const visualization_msgs::I
   // publish TargetTrajectories
   targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
 
-  std::cout << "[TargetTrajectoriesGazebo::processFeedbackTarget] END" << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::processFeedbackTarget] END" << std::endl;
 }
 
 void TargetTrajectoriesGazebo::processFeedbackModelMode(const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback)

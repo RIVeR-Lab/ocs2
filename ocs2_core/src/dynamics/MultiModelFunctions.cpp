@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.04.10
+// LAST UPDATE: 2023.07.12
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -51,7 +51,7 @@ RobotModelInfo createRobotModelInfo(const RobotModelType& robotModelType,
   {
     case RobotModelType::MobileBase:
     {
-      std::cout << "[FactoryFunction::createRobotModelInfo] MobileBase" << std::endl;
+      //std::cout << "[MultiModelFunctions::createRobotModelInfo] MobileBase" << std::endl;
       info.mobileBase.baseFrame = baseFrame;
       info.mobileBase.stateDim = 3;
       info.mobileBase.inputDim = 2;
@@ -67,7 +67,7 @@ RobotModelInfo createRobotModelInfo(const RobotModelType& robotModelType,
 
     case RobotModelType::RobotArm: 
     {
-      std::cout << "[FactoryFunction::createRobotModelInfo] RobotArm" << std::endl;
+      //std::cout << "[MultiModelFunctions::createRobotModelInfo] RobotArm" << std::endl;
       info.mobileBase.baseFrame = "";
       info.mobileBase.stateDim = 0;
       info.mobileBase.inputDim = 0;
@@ -86,7 +86,7 @@ RobotModelInfo createRobotModelInfo(const RobotModelType& robotModelType,
       
     case RobotModelType::MobileManipulator: 
     {
-      std::cout << "[FactoryFunction::createRobotModelInfo] MobileManipulator" << std::endl;
+      //std::cout << "[MultiModelFunctions::createRobotModelInfo] MobileManipulator" << std::endl;
       info.mobileBase.baseFrame = baseFrame;
       info.mobileBase.stateDim = 3;
       info.mobileBase.inputDim = 2;
@@ -104,7 +104,7 @@ RobotModelInfo createRobotModelInfo(const RobotModelType& robotModelType,
     }
 
     default:
-      throw std::invalid_argument("[FactoryFunction::createRobotModelInfo] ERROR: Invalid robot model type!");
+      throw std::invalid_argument("[MultiModelFunctions::createRobotModelInfo] ERROR: Invalid robot model type!");
       break;
   }
 
@@ -133,7 +133,7 @@ size_t getModelModeInt(RobotModelInfo& robotModelInfo)
       break;
 
     default:
-      std::cerr << "[FactoryFunction::createRobotModelInfo] ERROR: Invalid model mode!";
+      std::cerr << "[MultiModelFunctions::getModelModeInt] ERROR: Invalid model mode!";
       break;
   }
   return modelModeInt;
@@ -235,7 +235,7 @@ bool updateModelMode(RobotModelInfo& robotModelInfo, size_t& modelMode)
         break;
 
       default:
-        std::cerr << "[FactoryFunction::updateModelMode] ERROR: Invalid model mode!";
+        std::cerr << "[MultiModelFunctions::updateModelMode] ERROR: Invalid model mode!";
         break;
     }
   }
@@ -264,7 +264,7 @@ std::string getRobotModelTypeString(RobotModelInfo& robotModelInfo)
       break;
 
     default:
-      throw std::invalid_argument("[MultiModelFunctions::getRobotModelType] Error: Invalid robot model!");
+      throw std::invalid_argument("[MultiModelFunctions::getRobotModelTypeString] Error: Invalid robot model!");
       break;
   }
 
@@ -316,7 +316,7 @@ RobotModelType loadRobotType(const std::string& configFilePath, const std::strin
 /******************************************************************************************************/
 void printRobotModelInfo(RobotModelInfo& robotModelInfo)
 {
-    std::cout << "[MultiModelFunctions::printInfo] =================================" << std::endl;
+    std::cout << "[MultiModelFunctions::printRobotModelInfo] =================================" << std::endl;
     std::cout << "robotModelType: " << getRobotModelTypeString(robotModelInfo) << std::endl;
     std::cout << "modelMode (String): " << getModelModeString(robotModelInfo) << std::endl;
     std::cout << "modelMode (int): " << getModelModeInt(robotModelInfo) << std::endl;

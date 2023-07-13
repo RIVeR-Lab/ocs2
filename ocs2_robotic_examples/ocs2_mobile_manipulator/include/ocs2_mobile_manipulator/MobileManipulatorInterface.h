@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.06.07
+// LAST UPDATE: 2023.07.12
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -15,6 +15,7 @@
 #include <XmlRpcValue.h>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
+#include <std_msgs/UInt8.h>
 
 #include <pinocchio/fwd.hpp>  // forward declarations must be included first. NUA NOTE: WHY?
 #include <pinocchio/multibody/joint/joint-composite.hpp>
@@ -56,11 +57,6 @@
 #include "ocs2_mobile_manipulator/constraint/MobileManipulatorSelfCollisionConstraint.h"
 #include "ocs2_mobile_manipulator/constraint/MobileManipulatorExtCollisionConstraint.h"
 #include "ocs2_mobile_manipulator/cost/QuadraticInputCost.h"
-
-//#include "ocs2_mobile_manipulator/dynamics/DefaultManipulatorDynamics.h"
-//#include "ocs2_mobile_manipulator/dynamics/FloatingArmManipulatorDynamics.h"
-//#include "ocs2_mobile_manipulator/dynamics/FullyActuatedFloatingArmManipulatorDynamics.h"
-//#include "ocs2_mobile_manipulator/dynamics/WheelBasedMobileManipulatorDynamics.h"
 
 #include "ocs2_mobile_manipulator/dynamics/MobileBaseDynamics.h"
 #include "ocs2_mobile_manipulator/dynamics/RobotArmDynamics.h"
@@ -221,7 +217,7 @@ class MobileManipulatorInterface final : public RobotInterface
     }
     */
 
-    void tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg);
+    void modelModeCallback(const std_msgs::UInt8::ConstPtr& msg);
 
     void launchNodes(ros::NodeHandle& nodeHandle);
 
@@ -240,6 +236,7 @@ class MobileManipulatorInterface final : public RobotInterface
     const std::string libraryFolder_;
     const std::string urdfFile_;
 
+    bool printOutFlag_ = false;
     bool usePreComputation_;
     bool recompileLibraries_;
     bool activateSelfCollision_;
@@ -265,7 +262,7 @@ class MobileManipulatorInterface final : public RobotInterface
     std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_;
     std::shared_ptr<ExtMapUtility> emuPtr_;
 
-    ros::Subscriber sub_tf_msg_;
+    //ros::Subscriber subModelModeMsg_;
 };
 
 }  // namespace mobile_manipulator

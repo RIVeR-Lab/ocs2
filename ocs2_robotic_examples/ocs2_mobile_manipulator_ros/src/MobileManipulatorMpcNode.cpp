@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.06.21
+// LAST UPDATE: 2023.07.12
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -91,83 +91,73 @@ int main(int argc, char** argv)
     std::cout << "[MobileManipulatorMpcNode::main] ERROR: collision_points is not defined!" << std::endl;
   }
 
-  // Robot interfaces
-  /*
-  std::cout << "[MobileManipulatorMpcNode::main] START INIT interface_baseMotion" << std::endl;
-  MobileManipulatorInterface interface_baseMotion(taskFile, libFolder, urdfFile, pointsAndRadii, 0);
-  interface_baseMotion.launchNodes(nodeHandle);
-  auto robotModelInfo_baseMotion = interface_baseMotion.getRobotModelInfo();
-  printRobotModelInfo(robotModelInfo_baseMotion);
-  std::cout << "[MobileManipulatorMpcNode::main] START INIT interface_baseMotion" << std::endl;
+  // Robot interface
+  std::cout << "[MobileManipulatorMpcNode::main] START INIT interface" << std::endl;
+  MobileManipulatorInterface interface(taskFile, libFolder, urdfFile, pointsAndRadii);
+  interface.launchNodes(nodeHandle);
+  std::cout << "[MobileManipulatorMpcNode::main] END INIT interface" << std::endl;
 
-  std::cout << "[MobileManipulatorMpcNode::main] START INIT interface_armMotion" << std::endl;
-  MobileManipulatorInterface interface_armMotion(taskFile, libFolder, urdfFile, pointsAndRadii, 1);
-  interface_armMotion.launchNodes(nodeHandle);
-  auto robotModelInfo_armMotion = interface_armMotion.getRobotModelInfo();
-  printRobotModelInfo(robotModelInfo_armMotion);
-  std::cout << "[MobileManipulatorMpcNode::main] START INIT interface_armMotion" << std::endl;
-  */
-  std::cout << "[MobileManipulatorMpcNode::main] START INIT interface_wholeBodyMotion" << std::endl;
-  MobileManipulatorInterface interface_wholeBodyMotion(taskFile, libFolder, urdfFile, pointsAndRadii, 2);
-  interface_wholeBodyMotion.launchNodes(nodeHandle);
-  auto robotModelInfo_wholeBodyMotion = interface_wholeBodyMotion.getRobotModelInfo();
-  printRobotModelInfo(robotModelInfo_wholeBodyMotion);
-  std::cout << "[MobileManipulatorMpcNode::main] END INIT interface_wholeBodyMotion" << std::endl;
+  size_t modelModeInt = 2;
+  int iter = 0;
+  while (ros::ok() && ros::master::check())
+  {
+    std::cout << "=====================================================" << std::endl;
+    std::cout << "=====================================================" << std::endl;
+    std::cout << "[MobileManipulatorMpcNode::main] START ITERATION: " << iter << std::endl;
+    std::cout << "[MobileManipulatorMpcNode::main] modelModeInt: " << modelModeInt << std::endl;
+    std::cout << "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv" << std::endl;
+    std::cout << "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv" << std::endl;
 
-  //std::cout << "[MobileManipulatorMpcNode::main] DEBUG INF" << std::endl;
-  //while(1);
+    interface.setMPCProblem(modelModeInt, pointsAndRadii);
 
-  // ROS ReferenceManager
-  /*
-  std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr_baseMotion(new ocs2::RosReferenceManager(robotModelName, 
-                                                                                                             interface_baseMotion.getReferenceManagerPtr(),
-                                                                                                             interface_baseMotion.getRobotModelInfo()));
-  rosReferenceManagerPtr_baseMotion->subscribe(nodeHandle);
+    auto robotModelInfo = interface.getRobotModelInfo();
+    printRobotModelInfo(robotModelInfo);
 
-  std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr_armMotion(new ocs2::RosReferenceManager(robotModelName, 
-                                                                                                            interface_armMotion.getReferenceManagerPtr(),
-                                                                                                            interface_armMotion.getRobotModelInfo()));
-  rosReferenceManagerPtr_armMotion->subscribe(nodeHandle);
-  */
-  std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr_wholeBodyMotion(new ocs2::RosReferenceManager(robotModelName, 
-                                                                                                                  interface_wholeBodyMotion.getReferenceManagerPtr(),
-                                                                                                                  interface_wholeBodyMotion.getRobotModelInfo()));
-  rosReferenceManagerPtr_wholeBodyMotion->subscribe(nodeHandle);
+    //std::cout << "[MobileManipulatorMpcNode::main] DEBUG INF" << std::endl;
+    //while(1);
 
-  // MPC
-  /*
-  ocs2::GaussNewtonDDP_MPC mpc_baseMotion(interface_baseMotion.mpcSettings(), 
-                                          interface_baseMotion.ddpSettings(), 
-                                          interface_baseMotion.getRollout(), 
-                                          interface_baseMotion.getOptimalControlProblem(), 
-                                          interface_baseMotion.getInitializer());
-  mpc_baseMotion.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr_baseMotion);
+    std::cout << "[MobileManipulatorMpcNode::main] BEFORE rosReferenceManagerPtr" << std::endl;
+    // ROS ReferenceManager
+    std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(new ocs2::RosReferenceManager(robotModelName, 
+                                                                                                    interface.getReferenceManagerPtr(),
+                                                                                                    interface.getRobotModelInfo()));
+    
+    std::cout << "[MobileManipulatorMpcNode::main] BEFORE rosReferenceManagerPtr subscribe" << std::endl;
+    rosReferenceManagerPtr->subscribe(nodeHandle);
 
-  ocs2::GaussNewtonDDP_MPC mpc_armMotion(interface_armMotion.mpcSettings(), 
-                                         interface_armMotion.ddpSettings(), 
-                                         interface_armMotion.getRollout(), 
-                                         interface_armMotion.getOptimalControlProblem(), 
-                                         interface_armMotion.getInitializer());
-  mpc_armMotion.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr_armMotion);
-  */
+    // MPC
+    std::cout << "[MobileManipulatorMpcNode::main] BEFORE mpc" << std::endl;
+    ocs2::GaussNewtonDDP_MPC mpc(interface.mpcSettings(), 
+                                 interface.ddpSettings(), 
+                                 interface.getRollout(), 
+                                 interface.getOptimalControlProblem(), 
+                                 interface.getInitializer());
 
-  ocs2::GaussNewtonDDP_MPC mpc_wholeBodyMotion(interface_wholeBodyMotion.mpcSettings(), 
-                                               interface_wholeBodyMotion.ddpSettings(), 
-                                               interface_wholeBodyMotion.getRollout(), 
-                                               interface_wholeBodyMotion.getOptimalControlProblem(), 
-                                               interface_wholeBodyMotion.getInitializer());
-  mpc_wholeBodyMotion.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr_wholeBodyMotion);
+    std::cout << "[MobileManipulatorMpcNode::main] BEFORE mpc setReferenceManager" << std::endl;
+    mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
 
-  // Launch MPC ROS node
-  /*
-  MPC_ROS_Interface mpcNode(mpc_baseMotion, 
-                            mpc_armMotion, 
-                            mpc_wholeBodyMotion, 
-                            robotModelName);
-  */
-  MPC_ROS_Interface mpcNode(mpc_wholeBodyMotion, 
-                            robotModelName);
-  mpcNode.launchNodes(nodeHandle);
+    // Launch MPC ROS node
+    std::cout << "[MobileManipulatorMpcNode::main] BEFORE mpc mpcNode" << std::endl;
+    /*
+    MPC_ROS_Interface mpcNode(mpc_baseMotion, 
+                              mpc_armMotion, 
+                              mpc_wholeBodyMotion, 
+                              robotModelName);
+    */
+    MPC_ROS_Interface mpcNode(mpc, robotModelName);
+
+    std::cout << "[MobileManipulatorMpcNode::main] BEFORE mpc mpcNode launchNodes" << std::endl;
+    mpcNode.launchNodes(nodeHandle);
+;
+    modelModeInt = mpcNode.getModelModeInt();
+
+    iter++;
+    std::cout << "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv" << std::endl;
+    std::cout << "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv" << std::endl;
+    std::cout << "[MobileManipulatorMpcNode::main] END ITERATION: " << iter << std::endl;
+    std::cout << "=====================================================" << std::endl;
+    std::cout << "=====================================================" << std::endl;
+  }
 
   std::cout << "[MobileManipulatorMpcNode::main] END" << std::endl;
 

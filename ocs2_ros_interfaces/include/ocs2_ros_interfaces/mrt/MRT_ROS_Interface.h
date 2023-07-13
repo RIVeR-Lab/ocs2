@@ -86,6 +86,10 @@ class MRT_ROS_Interface : public MRT_BASE
 
     void resetMpcNode(const TargetTrajectories& initTargetTrajectories) override;
 
+    int getModelModeInt();
+
+    bool getShutDownFlag();
+
     /**
      * Shut down the ROS nodes.
      */
@@ -138,6 +142,8 @@ class MRT_ROS_Interface : public MRT_BASE
 
   private:
     std::string topicPrefix_;
+    bool shutDownFlag_ = false;
+    int modelModeInt_ = 2;
 
     RobotModelInfo robotModelInfo_;
     

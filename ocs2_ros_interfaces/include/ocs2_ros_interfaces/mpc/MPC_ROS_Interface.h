@@ -87,15 +87,17 @@ class MPC_ROS_Interface
      * @param [in] mpc: The underlying MPC class to be used.
      * @param [in] topicPrefix: The robot's name.
      */
-    explicit MPC_ROS_Interface(MPC_BASE& mpc_mobileBase, 
-                               MPC_BASE& mpc_robotArm, 
-                               MPC_BASE& mpc_mobileManipulator, 
-                               std::string topicPrefix = "anonymousRobot");
+    //explicit MPC_ROS_Interface(MPC_BASE& mpc_mobileBase, 
+    //                           MPC_BASE& mpc_robotArm, 
+    //                           MPC_BASE& mpc_mobileManipulator, 
+    //                           std::string topicPrefix = "anonymousRobot");
 
     /**
      * Destructor.
      */
     virtual ~MPC_ROS_Interface();
+
+    int getModelModeInt();
 
     /**
      * Set the Esdf Caching Server
@@ -130,6 +132,8 @@ class MPC_ROS_Interface
      * (2) The observation subscriber which gets the current measured state to invoke the MPC run routine.
      */
     void launchNodes(ros::NodeHandle& nodeHandle);
+
+    void run();
 
   protected:
     /**
@@ -184,13 +188,13 @@ class MPC_ROS_Interface
     * Variables
     */
     MPC_BASE& mpc_;
-    //MPC_BASE& mpc_baseMotion_;
-    //MPC_BASE& mpc_armMotion_;
-    //MPC_BASE& mpc_wholeBodyMotion_;
 
+    bool shutDownFlag_ = false;
     int modelModeInt_ = 2;
 
     std::string topicPrefix_;
+
+    ocs2::SystemObservation currentObservation_;
 
     std::shared_ptr<ros::NodeHandle> nodeHandlerPtr_;
 
@@ -198,10 +202,11 @@ class MPC_ROS_Interface
     //std::shared_ptr<ExtMapUtility> emuPtr_;
 
     // Publishers and subscribers
-    ::ros::Subscriber mpcObservationSubscriber_;
-    ::ros::Subscriber mpcTargetTrajectoriesSubscriber_;
-    ::ros::Publisher mpcPolicyPublisher_;
-    ::ros::ServiceServer mpcResetServiceServer_;
+    ros::Subscriber modelModeSubscriber_;
+    ros::Subscriber mpcObservationSubscriber_;
+    ros::Subscriber mpcTargetTrajectoriesSubscriber_;
+    ros::Publisher mpcPolicyPublisher_;
+    ros::ServiceServer mpcResetServiceServer_;
 
     std::unique_ptr<CommandData> bufferCommandPtr_;
     std::unique_ptr<CommandData> publisherCommandPtr_;

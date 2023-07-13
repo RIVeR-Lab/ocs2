@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.03.09
+// LAST UPDATE: 2023.07.12
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -146,9 +146,9 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath,
   se3_base_wrt_world.translation().z() = transform_base_wrt_world.getOrigin().z();
 
 
-  std::cout << "[FactoryFunctions::createPinocchioInterface(5)] x: " << se3_base_wrt_world.translation().x() << std::endl;
-  std::cout << "[FactoryFunctions::createPinocchioInterface(5)] y: " << se3_base_wrt_world.translation().y() << std::endl;
-  std::cout << "[FactoryFunctions::createPinocchioInterface(5)] z: " << se3_base_wrt_world.translation().z() << std::endl;
+  //std::cout << "[FactoryFunctions::createPinocchioInterface(5)] x: " << se3_base_wrt_world.translation().x() << std::endl;
+  //std::cout << "[FactoryFunctions::createPinocchioInterface(5)] y: " << se3_base_wrt_world.translation().y() << std::endl;
+  //std::cout << "[FactoryFunctions::createPinocchioInterface(5)] z: " << se3_base_wrt_world.translation().z() << std::endl;
   //while(1);
 
   //tf::matrixTFToEigen(tf::Matrix3x3(transform_base_wrt_world.getRotation()), se3_base_wrt_world.rotation());
