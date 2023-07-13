@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.06.17
+// LAST UPDATE: 2022.07.13
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -46,6 +46,34 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
   };
   observationSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mpc_observation>(topicPrefix + "_mpc_observation", 1, observationCallback);
 
+  auto statusModelModeMPCCallback = [this](const std_msgs::Bool::ConstPtr& msg) 
+  {
+    //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMPCCallback] START" << std::endl;
+
+    statusModelModeMPC_ = msg->data;
+    //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMPCCallback] modelModeInt: " << statusModelModeMPC_ << std::endl;
+
+    initializeInteractiveMarkerModelMode();
+
+    //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMPCCallback] END" << std::endl;
+    //std::cout << "" << std::endl;
+  };
+  statusModelModeMPCSubscriber_ = nodeHandle.subscribe<std_msgs::Bool>(topicPrefix + "_model_mode_mpc_status", 5, statusModelModeMPCCallback);
+
+  auto statusModelModeMRTCallback = [this](const std_msgs::Bool::ConstPtr& msg) 
+  {
+    //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] START" << std::endl;
+
+    statusModelModeMRT_ = msg->data;
+    //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] modelModeInt: " << statusModelModeMRT_ << std::endl;
+    
+    initializeInteractiveMarkerModelMode();
+
+    //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] END" << std::endl;
+    //std::cout << "" << std::endl;
+  };
+  statusModelModeMRTSubscriber_ = nodeHandle.subscribe<std_msgs::Bool>(topicPrefix + "_model_mode_mrt_status", 5, statusModelModeMRTCallback);
+
   gazeboModelStatesSubscriber_ = nodeHandle.subscribe(gazeboModelMsgName, 10, &TargetTrajectoriesGazebo::gazeboModelStatesCallback, this);
 
   /// Publishers
@@ -68,7 +96,7 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(const TargetTrajectoriesGazeb
   : targetServer_("target_marker"), 
     modelModeServer_("model_mode_marker", "", false)
 {
-  initFlag_ = ttg.initFlag_;
+  initCallbackFlag_ = ttg.initCallbackFlag_;
   worldFrameName_ = ttg.worldFrameName_;
   robotFrameName_ = ttg.robotFrameName_;
 
@@ -91,7 +119,7 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(const TargetTrajectoriesGazeb
 
   tflistenerPtr_ = ttg.tflistenerPtr_;
 
-  h_first_entry_ = ttg.h_first_entry_;
+  //h_first_entry_ = ttg.h_first_entry_;
   h_mode_last_ = ttg.h_mode_last_;
 
   menuHandlerTarget_ = ttg.menuHandlerTarget_;
@@ -105,7 +133,7 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(const TargetTrajectoriesGazeb
 //-------------------------------------------------------------------------------------------------------
 TargetTrajectoriesGazebo& TargetTrajectoriesGazebo::operator=(const TargetTrajectoriesGazebo& ttg)
 {
-  initFlag_ = ttg.initFlag_;
+  initCallbackFlag_ = ttg.initCallbackFlag_;
   worldFrameName_ = ttg.worldFrameName_;
   robotFrameName_ = ttg.robotFrameName_;
 
@@ -128,7 +156,7 @@ TargetTrajectoriesGazebo& TargetTrajectoriesGazebo::operator=(const TargetTrajec
 
   tflistenerPtr_ = ttg.tflistenerPtr_;
 
-  h_first_entry_ = ttg.h_first_entry_;
+  //h_first_entry_ = ttg.h_first_entry_;
   h_mode_last_ = ttg.h_mode_last_;
 
   menuHandlerTarget_ = ttg.menuHandlerTarget_;
@@ -146,7 +174,7 @@ void TargetTrajectoriesGazebo::updateObservationAndTarget()
 {
   //std::cout << "[TargetTrajectoriesGazebo::updateObservationAndTarget] START" << std::endl;
 
-  if (initFlag_)
+  if (initCallbackFlag_)
   {
     // Get the latest observation
     SystemObservation observation;
@@ -175,13 +203,15 @@ void TargetTrajectoriesGazebo::initializeInteractiveMarkerTarget()
 {
   //std::cout << "[TargetTrajectoriesGazebo::initializeInteractiveMarkerTarget] START" << std::endl;
 
-  while (initFlag_);
+  //while (!initCallbackFlag_);
   
   // create an interactive marker for our server
   auto interactiveMarker = createInteractiveMarkerTarget();
 
+  
   // add the interactive marker to our collection &
   // tell the server to call processFeedback() when feedback arrives for it
+  targetServer_.clear();
   targetServer_.insert(interactiveMarker);
   menuHandlerTarget_.apply(targetServer_, interactiveMarker.name);
 
@@ -198,7 +228,7 @@ void TargetTrajectoriesGazebo::initializeInteractiveMarkerModelMode()
 {
   //std::cout << "[TargetTrajectoriesGazebo::initializeInteractiveMarkerModelMode] START" << std::endl;
 
-  while (initFlag_);
+  //while (!initCallbackFlag_);
   
   // create an interactive marker for our server
   auto interactiveMarker = createInteractiveMarkerModelMode();
@@ -404,7 +434,7 @@ void TargetTrajectoriesGazebo::gazeboModelStatesCallback(const gazebo_msgs::Mode
   currentTargetPositions_ = currentTargetPositions;
   currentTargetOrientations_ = currentTargetOrientations;
   
-  initFlag_ = true;
+  initCallbackFlag_ = true;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -762,20 +792,38 @@ visualization_msgs::InteractiveMarker TargetTrajectoriesGazebo::createInteractiv
   interactiveMarker.pose.position.y = 0.0;
   interactiveMarker.pose.position.z = 1.0;
 
-  // create a grey box marker
-  const auto boxMarker = []() 
+  visualization_msgs::Marker boxMarker;
+  boxMarker.type = visualization_msgs::Marker::SPHERE;
+  boxMarker.scale.x = 0.1;
+  boxMarker.scale.y = 0.1;
+  boxMarker.scale.z = 0.1;
+  boxMarker.color.a = 0.5;
+  boxMarker.color.r = 1.0;
+  boxMarker.color.g = 0.1;
+  boxMarker.color.b = 0.1;
+
+  //std::cout << "[TargetTrajectoriesGazebo::createInteractiveMarkerModelMode] RED" << std::endl;
+  if (statusModelModeMPC_ && statusModelModeMRT_)
   {
-    visualization_msgs::Marker marker;
-    marker.type = visualization_msgs::Marker::SPHERE;
-    marker.scale.x = 0.1;
-    marker.scale.y = 0.1;
-    marker.scale.z = 0.1;
-    marker.color.r = 1.0;
-    marker.color.g = 0.2;
-    marker.color.b = 0.2;
-    marker.color.a = 0.5;
-    return marker;
-  }();
+    //std::cout << "[TargetTrajectoriesGazebo::createInteractiveMarkerModelMode] GREEN" << std::endl;
+    boxMarker.color.r = 0.1;
+    boxMarker.color.g = 1.0;
+    boxMarker.color.b = 0.1;
+  }
+  else if (statusModelModeMPC_)
+  {
+    //std::cout << "[TargetTrajectoriesGazebo::createInteractiveMarkerModelMode] BLUE" << std::endl;
+    boxMarker.color.r = 0.1;
+    boxMarker.color.g = 0.1;
+    boxMarker.color.b = 1.0;
+  }
+  else if (statusModelModeMRT_)
+  {
+    //std::cout << "[TargetTrajectoriesGazebo::createInteractiveMarkerModelMode] MAGENTA" << std::endl;
+    boxMarker.color.r = 1.0;
+    boxMarker.color.g = 0.1;
+    boxMarker.color.b = 1.0;
+  }
 
   // create a non-interactive control which contains the box
   visualization_msgs::InteractiveMarkerControl boxControl;
@@ -843,17 +891,24 @@ void TargetTrajectoriesGazebo::createMenuModelMode()
 {
   //std::cout << "[TargetTrajectoriesGazebo::createMenuModelMode] START" << std::endl;
 
-  h_mode_last_ = menuHandlerModelMode_.insert("ModelMode::BaseMotion", boost::bind(&TargetTrajectoriesGazebo::processFeedbackModelMode, this, _1));
-  menuHandlerModelMode_.setCheckState( h_mode_last_, interactive_markers::MenuHandler::UNCHECKED );
+  //interactive_markers::MenuHandler menuHandlerModelMode;
 
-  h_mode_last_ = menuHandlerModelMode_.insert("ModelMode::ArmMotion", boost::bind(&TargetTrajectoriesGazebo::processFeedbackModelMode, this, _1));
-  menuHandlerModelMode_.setCheckState( h_mode_last_, interactive_markers::MenuHandler::UNCHECKED );
+  if (!initMenuModelModeFlag_)
+  {
+    h_mode_last_ = menuHandlerModelMode_.insert("ModelMode::BaseMotion", boost::bind(&TargetTrajectoriesGazebo::processFeedbackModelMode, this, _1));
+    menuHandlerModelMode_.setCheckState( h_mode_last_, interactive_markers::MenuHandler::UNCHECKED );
 
-  h_mode_last_ = menuHandlerModelMode_.insert("ModelMode::WholeBodyMotion", boost::bind(&TargetTrajectoriesGazebo::processFeedbackModelMode, this, _1));
-  menuHandlerModelMode_.setCheckState( h_mode_last_, interactive_markers::MenuHandler::UNCHECKED );
+    h_mode_last_ = menuHandlerModelMode_.insert("ModelMode::ArmMotion", boost::bind(&TargetTrajectoriesGazebo::processFeedbackModelMode, this, _1));
+    menuHandlerModelMode_.setCheckState( h_mode_last_, interactive_markers::MenuHandler::UNCHECKED );
 
-  //check the very last entry
-  menuHandlerModelMode_.setCheckState( h_mode_last_, interactive_markers::MenuHandler::CHECKED );
+    h_mode_last_ = menuHandlerModelMode_.insert("ModelMode::WholeBodyMotion", boost::bind(&TargetTrajectoriesGazebo::processFeedbackModelMode, this, _1));
+    menuHandlerModelMode_.setCheckState( h_mode_last_, interactive_markers::MenuHandler::UNCHECKED );
+
+    //check the very last entry
+    menuHandlerModelMode_.setCheckState( h_mode_last_, interactive_markers::MenuHandler::CHECKED );
+  }
+
+  initMenuModelModeFlag_ = true;
 
   //std::cout << "[TargetTrajectoriesGazebo::createMenuModelMode] END" << std::endl;
 }

@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <thread>
 
+#include <std_msgs/Bool.h>
 #include <std_msgs/UInt8.h>
 #include <ros/callback_queue.h>
 #include <ros/ros.h>
@@ -143,10 +144,18 @@ class MRT_ROS_Interface : public MRT_BASE
   private:
     std::string topicPrefix_;
     bool shutDownFlag_ = false;
-    int modelModeInt_ = 2;
 
     RobotModelInfo robotModelInfo_;
     
+    // 0: baseMotion
+    // 0: armMotion
+    // 0: wholeBodyMotion
+    int modelModeInt_ = 2;
+
+    // 0: Not Ready (In process of switching, old modelMode is in use)
+    // 1: Ready
+    std_msgs::Bool statusModelModeMRTMsg_;
+
     // Subscribers
     ros::Subscriber mpcPolicySubscriber_;
     ros::Subscriber sub_tf_;
@@ -154,6 +163,7 @@ class MRT_ROS_Interface : public MRT_BASE
 
     // Publishers
     ros::Publisher mpcObservationPublisher_;
+    ros::Publisher statusModelModeMRTPublisher_;
 
     // Services
     ros::ServiceClient mpcResetServiceClient_;

@@ -1,31 +1,13 @@
-/******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-* Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-
-* Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
-* Neither the name of the copyright holder nor the names of its
-  contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-******************************************************************************/
+// LAST UPDATE: 2023.07.13
+//
+// AUTHOR: Neset Unver Akmandor (NUA)
+//
+// E-MAIL: akmandor.n@northeastern.edu
+//
+// DESCRIPTION: TODO...
+//
+// REFERENCES:
+// [1] https://github.com/leggedrobotics/ocs2
 
 #include "ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h"
 #include "ocs2_ros_interfaces/common/RosMsgConversions.h"
@@ -138,14 +120,8 @@ void MPC_ROS_Interface::resetMpcNode(TargetTrajectories&& initTargetTrajectories
   std::lock_guard<std::mutex> resetLock(resetMutex_);
   
   mpc_.reset();
-  //mpc_baseMotion_.reset();
-  //mpc_armMotion_.reset();
-  //mpc_wholeBodyMotion_.reset();
 
   mpc_.getSolverPtr()->getReferenceManager().setTargetTrajectories(std::move(initTargetTrajectories));
-  //mpc_baseMotion_.getSolverPtr()->getReferenceManager().setTargetTrajectories(std::move(initTargetTrajectories));
-  //mpc_armMotion_.getSolverPtr()->getReferenceManager().setTargetTrajectories(std::move(initTargetTrajectories));
-  //mpc_wholeBodyMotion_.getSolverPtr()->getReferenceManager().setTargetTrajectories(std::move(initTargetTrajectories));
   
   mpcTimer_.reset();
   resetRequestedEver_ = true;
@@ -170,7 +146,6 @@ bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_ms
               << "\n#####################################################"
               << "\n#####################################################\n";
     return true;
-
   } 
   else 
   {
@@ -470,7 +445,7 @@ void MPC_ROS_Interface::shutdownNode()
 //-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::spin() 
 {
-  ROS_INFO_STREAM("[MPC_ROS_Interface::run] Start spinning now ...");
+  ROS_INFO_STREAM("[MPC_ROS_Interface::spin] Start spinning now ...");
   // Equivalent to ros::spin() + check if master is alive
   while (ros::ok() && ros::master::check() && !shutDownFlag_) 
   {
@@ -503,20 +478,29 @@ void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
     std::cout << "" << std::endl;
 
     shutDownFlag_ = true;
+
+    statusModelModeMPCMsg_.data = false;
+    statusModelModeMPCPublisher_.publish(statusModelModeMPCMsg_);
   };
   modelModeSubscriber_ = nodeHandle.subscribe<std_msgs::UInt8>(topicPrefix_ + "_model_mode", 1, modelModeCallback);
 
   // Publish MPC Policy
   mpcPolicyPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_flattened_controller>(topicPrefix_ + "_mpc_policy", 1, true);
 
+  // Publish Model Mode MPC Status
+  statusModelModeMPCPublisher_ = nodeHandle.advertise<std_msgs::Bool>(topicPrefix_ + "_model_mode_mpc_status", 1, true);
+
   // Service Server to reset MPC
   mpcResetServiceServer_ = nodeHandle.advertiseService(topicPrefix_ + "_mpc_reset", &MPC_ROS_Interface::resetMpcCallback, this);
 
 #ifdef PUBLISH_THREAD
-  ROS_INFO_STREAM("Publishing SLQ-MPC messages on a separate thread.");
+  ROS_INFO_STREAM("[MPC_ROS_Interface::launchNodes] Publishing SLQ-MPC messages on a separate thread.");
 #endif
 
-  ROS_INFO_STREAM("MPC node is ready.");
+  ROS_INFO_STREAM("[MPC_ROS_Interface::launchNodes] MPC node is ready.");
+
+  statusModelModeMPCMsg_.data = true;
+  statusModelModeMPCPublisher_.publish(statusModelModeMPCMsg_);
 
   // spin
   spin();

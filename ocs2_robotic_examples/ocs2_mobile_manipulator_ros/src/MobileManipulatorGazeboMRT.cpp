@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.04.21
+// LAST UPDATE: 2022.07.13
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -105,8 +105,6 @@ int main(int argc, char** argv)
     std::cout << "=====================================================" << std::endl;
     std::cout << "[MobileManipulatorGazeboMRT::main] START ITERATION: " << iter << std::endl;
     std::cout << "[MobileManipulatorGazeboMRT::main] modelModeInt: " << modelModeInt << std::endl;
-    std::cout << "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv" << std::endl;
-    std::cout << "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv" << std::endl;
 
     interface.setMPCProblem(modelModeInt, pointsAndRadii);
 
@@ -159,11 +157,9 @@ int main(int argc, char** argv)
     modelModeInt = mrt.getModelModeInt();
 
     iter++;
-    std::cout << "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv" << std::endl;
-    std::cout << "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv" << std::endl;
     std::cout << "[MobileManipulatorGazeboMRT::main] END ITERATION: " << iter << std::endl;
-    std::cout << "=====================================================" << std::endl;
-    std::cout << "=====================================================" << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
   }
 
   // Successful exit

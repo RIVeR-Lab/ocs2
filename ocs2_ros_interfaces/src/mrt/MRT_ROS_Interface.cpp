@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.12
+// LAST UPDATE: 2023.07.13
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -307,6 +307,9 @@ void MRT_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
   // Publish Observation
   mpcObservationPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_observation>(topicPrefix_ + "_mpc_observation", 1);
 
+  // Publish Model Mode MPC Status
+  statusModelModeMRTPublisher_ = nodeHandle.advertise<std_msgs::Bool>(topicPrefix_ + "_model_mode_mrt_status", 1, true);
+
   // Subscribe Policy
   auto ops = ros::SubscribeOptions::create<ocs2_msgs::mpc_flattened_controller>(
     topicPrefix_ + "_mpc_policy",                                                       // topic name
@@ -333,6 +336,9 @@ void MRT_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
 
     //shutdownNodes();
     shutDownFlag_ = true;
+
+    statusModelModeMRTMsg_.data = false;
+    statusModelModeMRTPublisher_.publish(statusModelModeMRTMsg_);
   };
   modelModeSubscriber_ = nodeHandle.subscribe<std_msgs::UInt8>(topicPrefix_ + "_model_mode", 1, modelModeCallback);
 
@@ -344,6 +350,9 @@ void MRT_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
 #endif
 
   ROS_INFO_STREAM("[MRT_ROS_Interface::launchNodes] MRT node is ready.");
+
+  statusModelModeMRTMsg_.data = true;
+  statusModelModeMRTPublisher_.publish(statusModelModeMRTMsg_);
 
   spinMRT();
 }

@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.12
+// LAST UPDATE: 2023.07.13
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -105,8 +105,6 @@ int main(int argc, char** argv)
     std::cout << "=====================================================" << std::endl;
     std::cout << "[MobileManipulatorMpcNode::main] START ITERATION: " << iter << std::endl;
     std::cout << "[MobileManipulatorMpcNode::main] modelModeInt: " << modelModeInt << std::endl;
-    std::cout << "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv" << std::endl;
-    std::cout << "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv" << std::endl;
 
     interface.setMPCProblem(modelModeInt, pointsAndRadii);
 
@@ -152,11 +150,10 @@ int main(int argc, char** argv)
     modelModeInt = mpcNode.getModelModeInt();
 
     iter++;
-    std::cout << "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv" << std::endl;
-    std::cout << "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv" << std::endl;
+ 
     std::cout << "[MobileManipulatorMpcNode::main] END ITERATION: " << iter << std::endl;
-    std::cout << "=====================================================" << std::endl;
-    std::cout << "=====================================================" << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+    std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
   }
 
   std::cout << "[MobileManipulatorMpcNode::main] END" << std::endl;

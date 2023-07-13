@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.06.19
+// LAST UPDATE: 2022.07.13
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -12,6 +12,7 @@
 #include <memory>
 #include <mutex>
 
+#include <std_msgs/Bool.h>
 #include <std_msgs/UInt8.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <gazebo_msgs/ModelStates.h>
@@ -132,7 +133,8 @@ class TargetTrajectoriesGazebo final
     void processFeedbackModelMode(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
 
     /// VARIABLES:
-    bool initFlag_ = false;
+    bool initCallbackFlag_ = false;
+    bool initMenuModelModeFlag_ = false;
 
     int ctr_ = 0;
 
@@ -160,13 +162,18 @@ class TargetTrajectoriesGazebo final
 
     GoalPoseToTargetTrajectories goalPoseToTargetTrajectories_;
 
+    bool statusModelModeMPC_ = false;
+    bool statusModelModeMRT_ = false;
+    ros::Subscriber statusModelModeMPCSubscriber_;
+    ros::Subscriber statusModelModeMRTSubscriber_;
+
     std::unique_ptr<TargetTrajectoriesRosPublisher> targetTrajectoriesPublisherPtr_;
     ros::Publisher modelModePublisher_;
 
     tf::TransformListener* tflistenerPtr_;
 
     interactive_markers::MenuHandler::EntryHandle h_mode_last_;
-    interactive_markers::MenuHandler::EntryHandle h_first_entry_;
+    //interactive_markers::MenuHandler::EntryHandle h_first_entry_;
 
     interactive_markers::MenuHandler menuHandlerTarget_;
     interactive_markers::MenuHandler menuHandlerModelMode_;
