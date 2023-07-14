@@ -22,7 +22,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_pinocchio_interface
   ocs2_self_collision
   ocs2_ext_collision
-  ocs2_self_collision_visualization
+  #ocs2_self_collision_visualization
   ocs2_mobile_manipulator
   tf_conversions
 )

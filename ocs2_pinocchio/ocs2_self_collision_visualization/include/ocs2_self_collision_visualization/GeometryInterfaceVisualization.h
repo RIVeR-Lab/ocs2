@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ocs2_core/dynamics/MultiModelFunctions.h"
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_self_collision/PinocchioGeometryInterface.h>
-#include "ocs2_mobile_manipulator/MobileManipulatorPinocchioMapping.h"
+//#include "ocs2_mobile_manipulator/MobileManipulatorPinocchioMapping.h"
 
 namespace ocs2 {
 
@@ -47,9 +47,11 @@ class GeometryInterfaceVisualization
                                   std::string pinocchioWorldFrame = "world");
     virtual ~GeometryInterfaceVisualization() = default;
 
+    PinocchioGeometryInterface getGeometryInterface();
+
     void publishDistances(const ocs2::vector_t&);
 
-    void publishDistances(const ocs2::vector_t& state, const ocs2::vector_t& fullState, const RobotModelInfo& modelInfo);
+    //void publishDistances(const ocs2::vector_t& state, const ocs2::vector_t& fullState, const RobotModelInfo& modelInfo);
 
   private:
     PinocchioInterface pinocchioInterface_;

@@ -16,6 +16,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_ext_collision
   ocs2_ros_interfaces
   tf_conversions
+  ocs2_self_collision_visualization
   #voxblox
   #voxblox_ros
 )

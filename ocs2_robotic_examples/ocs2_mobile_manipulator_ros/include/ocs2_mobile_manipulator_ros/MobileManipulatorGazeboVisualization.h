@@ -39,22 +39,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ocs2 {
 namespace mobile_manipulator {
 
-class OCS2_Mobile_Manipulator_Visualization final : public DummyObserver 
+class MobileManipulatorGazeboVisualization final : public DummyObserver 
 {
   public:
-    OCS2_Mobile_Manipulator_Visualization(ros::NodeHandle& nodeHandle, const MobileManipulatorInterface& interface)
+    MobileManipulatorGazeboVisualization(ros::NodeHandle& nodeHandle, const MobileManipulatorInterface& interface)
       : pinocchioInterface_(interface.getPinocchioInterface()), 
         modelInfo_(interface.getRobotModelInfo()),
         urdfFile_(interface.getUrdfFile()),
         taskFile_(interface.getTaskFile())
 
     {
-      std::cout << "[OCS2_Mobile_Manipulator_Visualization::OCS2_Mobile_Manipulator_Visualization] START" << std::endl;
+      std::cout << "[MobileManipulatorGazeboVisualization::MobileManipulatorGazeboVisualization] START" << std::endl;
       launchVisualizerNode(nodeHandle);
-      std::cout << "[OCS2_Mobile_Manipulator_Visualization::OCS2_Mobile_Manipulator_Visualization] END" << std::endl;
+      std::cout << "[MobileManipulatorGazeboVisualization::MobileManipulatorGazeboVisualization] END" << std::endl;
     }
 
-    ~OCS2_Mobile_Manipulator_Visualization() override = default;
+    ~MobileManipulatorGazeboVisualization() override = default;
 
     void update(const SystemObservation& observation, const PrimalSolution& policy, const CommandData& command) override;
 

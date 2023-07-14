@@ -94,8 +94,51 @@ int main(int argc, char** argv)
   // Robot interface
   std::cout << "[MobileManipulatorMpcNode::main] START INIT interface" << std::endl;
   MobileManipulatorInterface interface(taskFile, libFolder, urdfFile, pointsAndRadii);
+  interface.setNodeHandle(nodeHandle);
+
+  /*
   interface.launchNodes(nodeHandle);
   std::cout << "[MobileManipulatorMpcNode::main] END INIT interface" << std::endl;
+
+  size_t modelModeInt = 2;
+
+  interface.setMPCProblem(modelModeInt, pointsAndRadii);
+
+  auto robotModelInfo = interface.getRobotModelInfo();
+  printRobotModelInfo(robotModelInfo);
+
+  //std::cout << "[MobileManipulatorMpcNode::main] DEBUG INF" << std::endl;
+  //while(1);
+
+  std::cout << "[MobileManipulatorMpcNode::main] BEFORE rosReferenceManagerPtr" << std::endl;
+  // ROS ReferenceManager
+  std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(new ocs2::RosReferenceManager(robotModelName, 
+                                                                                                  interface.getReferenceManagerPtr(),
+                                                                                                  interface.getRobotModelInfo()));
+  
+  std::cout << "[MobileManipulatorMpcNode::main] BEFORE rosReferenceManagerPtr subscribe" << std::endl;
+  rosReferenceManagerPtr->subscribe(nodeHandle);
+
+  // MPC
+  std::cout << "[MobileManipulatorMpcNode::main] BEFORE mpc" << std::endl;
+  ocs2::GaussNewtonDDP_MPC mpc(interface.mpcSettings(), 
+                              interface.ddpSettings(), 
+                              interface.getRollout(), 
+                              interface.getOptimalControlProblem(), 
+                              interface.getInitializer());
+
+  std::cout << "[MobileManipulatorMpcNode::main] BEFORE mpc setReferenceManager" << std::endl;
+  mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
+
+  // Launch MPC ROS node
+  std::cout << "[MobileManipulatorMpcNode::main] BEFORE mpc mpcNode" << std::endl;
+  MPC_ROS_Interface mpcNode(mpc, robotModelName);
+
+  std::cout << "[MobileManipulatorMpcNode::main] BEFORE mpc mpcNode launchNodes" << std::endl;
+  mpcNode.launchNodes(nodeHandle);
+
+  modelModeInt = mpcNode.getModelModeInt();
+  */
 
   size_t modelModeInt = 2;
   int iter = 0;
@@ -104,51 +147,9 @@ int main(int argc, char** argv)
     std::cout << "=====================================================" << std::endl;
     std::cout << "=====================================================" << std::endl;
     std::cout << "[MobileManipulatorMpcNode::main] START ITERATION: " << iter << std::endl;
-    std::cout << "[MobileManipulatorMpcNode::main] modelModeInt: " << modelModeInt << std::endl;
+    //std::cout << "[MobileManipulatorMpcNode::main] modelModeInt: " << modelModeInt << std::endl;
 
-    interface.setMPCProblem(modelModeInt, pointsAndRadii);
-
-    auto robotModelInfo = interface.getRobotModelInfo();
-    printRobotModelInfo(robotModelInfo);
-
-    //std::cout << "[MobileManipulatorMpcNode::main] DEBUG INF" << std::endl;
-    //while(1);
-
-    std::cout << "[MobileManipulatorMpcNode::main] BEFORE rosReferenceManagerPtr" << std::endl;
-    // ROS ReferenceManager
-    std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(new ocs2::RosReferenceManager(robotModelName, 
-                                                                                                    interface.getReferenceManagerPtr(),
-                                                                                                    interface.getRobotModelInfo()));
-    
-    std::cout << "[MobileManipulatorMpcNode::main] BEFORE rosReferenceManagerPtr subscribe" << std::endl;
-    rosReferenceManagerPtr->subscribe(nodeHandle);
-
-    // MPC
-    std::cout << "[MobileManipulatorMpcNode::main] BEFORE mpc" << std::endl;
-    ocs2::GaussNewtonDDP_MPC mpc(interface.mpcSettings(), 
-                                 interface.ddpSettings(), 
-                                 interface.getRollout(), 
-                                 interface.getOptimalControlProblem(), 
-                                 interface.getInitializer());
-
-    std::cout << "[MobileManipulatorMpcNode::main] BEFORE mpc setReferenceManager" << std::endl;
-    mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr);
-
-    // Launch MPC ROS node
-    std::cout << "[MobileManipulatorMpcNode::main] BEFORE mpc mpcNode" << std::endl;
-    /*
-    MPC_ROS_Interface mpcNode(mpc_baseMotion, 
-                              mpc_armMotion, 
-                              mpc_wholeBodyMotion, 
-                              robotModelName);
-    */
-    MPC_ROS_Interface mpcNode(mpc, robotModelName);
-
-    std::cout << "[MobileManipulatorMpcNode::main] BEFORE mpc mpcNode launchNodes" << std::endl;
-    mpcNode.launchNodes(nodeHandle);
-;
-    modelModeInt = mpcNode.getModelModeInt();
-
+    interface.runMPC(modelModeInt);
     iter++;
  
     std::cout << "[MobileManipulatorMpcNode::main] END ITERATION: " << iter << std::endl;

@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.12
+// LAST UPDATE: 2023.07.13
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -38,11 +38,16 @@
 #include <ocs2_pinocchio_interface/urdf.h>
 
 #include <ocs2_ddp/DDP_Settings.h>
+#include <ocs2_ddp/GaussNewtonDDP_MPC.h>
 #include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 //#include <ocs2_ros_interfaces/EsdfCachingServer.hpp>
+#include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
+#include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
+#include <ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
+#include <ocs2_ros_interfaces/mrt/MRT_ROS_Gazebo_Loop.h>
 
 #include <ocs2_self_collision/SelfCollisionConstraint.h>
 #include <ocs2_self_collision/SelfCollisionConstraintCppAd.h>
@@ -57,10 +62,10 @@
 #include "ocs2_mobile_manipulator/constraint/MobileManipulatorSelfCollisionConstraint.h"
 #include "ocs2_mobile_manipulator/constraint/MobileManipulatorExtCollisionConstraint.h"
 #include "ocs2_mobile_manipulator/cost/QuadraticInputCost.h"
-
 #include "ocs2_mobile_manipulator/dynamics/MobileBaseDynamics.h"
 #include "ocs2_mobile_manipulator/dynamics/RobotArmDynamics.h"
 #include "ocs2_mobile_manipulator/dynamics/MobileManipulatorDynamics.h"
+#include <ocs2_mobile_manipulator/MobileManipulatorVisualization.h>
 
 namespace ocs2 {
 namespace mobile_manipulator {
@@ -191,6 +196,11 @@ class MobileManipulatorInterface final : public RobotInterface
     }
     */
 
+    void setNodeHandle(ros::NodeHandle& nodeHandle) 
+    { 
+      nodeHandle_ = nodeHandle;
+    }
+
     void setPointsOnRobotPtr(std::shared_ptr<PointsOnRobot> newPointsOnRobotPtr) 
     { 
       pointsOnRobotPtr_ = newPointsOnRobotPtr;
@@ -221,6 +231,10 @@ class MobileManipulatorInterface final : public RobotInterface
 
     void launchNodes(ros::NodeHandle& nodeHandle);
 
+    void runMPC(size_t modelModeInt);
+
+    void runMRT(size_t modelModeInt);
+
   private:
     std::unique_ptr<StateInputCost> getQuadraticInputCost();
 
@@ -231,6 +245,8 @@ class MobileManipulatorInterface final : public RobotInterface
     std::unique_ptr<StateCost> getSelfCollisionConstraint(const std::string& prefix);
 
     std::unique_ptr<StateCost> getExtCollisionConstraint(const std::string& prefix);
+
+    ros::NodeHandle nodeHandle_;
 
     const std::string taskFile_;
     const std::string libraryFolder_;
@@ -262,7 +278,11 @@ class MobileManipulatorInterface final : public RobotInterface
     std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_;
     std::shared_ptr<ExtMapUtility> emuPtr_;
 
-    //ros::Subscriber subModelModeMsg_;
+    /// NUA NOTE: ADDING THE REQUIRED MPC & MRT PROCESSES
+    PointsOnRobot::points_radii_t pointsAndRadii_;
+    std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr_;
+    //ocs2::GaussNewtonDDP_MPC mpc_;
+    //MPC_ROS_Interface mpcNode_;
 };
 
 }  // namespace mobile_manipulator

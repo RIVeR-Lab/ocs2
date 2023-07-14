@@ -28,10 +28,10 @@ int main(int argc, char** argv)
   std::cout << "[MobileManipulatorGazeboMRT::main] START" << std::endl;
 
   std::string robotName = "jackal_ur5";
-  std::string robotModel = "mobile_manipulator";
+  std::string robotModelName = "mobile_manipulator";
 
   // Initialize ros node
-  ros::init(argc, argv, robotModel + "_mrt");
+  ros::init(argc, argv, robotModelName + "_mrt");
   ros::NodeHandle nodeHandle;
 
   // Get node parameters
@@ -97,22 +97,14 @@ int main(int argc, char** argv)
   MobileManipulatorInterface interface(taskFile, libFolder, urdfFile, pointsAndRadii);
   //std::cout << "[MobileManipulatorGazeboMRT::main] AFTER MobileManipulatorInterface" << std::endl;
 
-  size_t modelModeInt = 2;
-  int iter = 0;
-  while (ros::ok() && ros::master::check())
-  {
-    std::cout << "=====================================================" << std::endl;
-    std::cout << "=====================================================" << std::endl;
-    std::cout << "[MobileManipulatorGazeboMRT::main] START ITERATION: " << iter << std::endl;
-    std::cout << "[MobileManipulatorGazeboMRT::main] modelModeInt: " << modelModeInt << std::endl;
-
-    interface.setMPCProblem(modelModeInt, pointsAndRadii);
+  /*
+  interface.setMPCProblem(modelModeInt, pointsAndRadii);
 
     auto robotModelInfo = interface.getRobotModelInfo();
     printRobotModelInfo(robotModelInfo);
 
     // MRT
-    MRT_ROS_Interface mrt(robotModelInfo, robotModel);
+    MRT_ROS_Interface mrt(robotModelInfo, robotModelName);
     //std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE initRollout" << std::endl;
     mrt.initRollout(&interface.getRollout());
     //std::cout << "[MobileManipulatorGazeboMRT::main] AFTER initRollout" << std::endl;
@@ -123,7 +115,7 @@ int main(int argc, char** argv)
 
     // Visualization
     //std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE ocs2_mm_visu" << std::endl;
-    std::shared_ptr<OCS2_Mobile_Manipulator_Visualization> ocs2_mm_visu(new OCS2_Mobile_Manipulator_Visualization(nodeHandle, interface));
+    //std::shared_ptr<MobileManipulatorVisualization> ocs2_mm_visu(new MobileManipulatorVisualization(nodeHandle, interface));
     //std::cout << "[MobileManipulatorGazeboMRT::main] AFTER ocs2_mm_visu" << std::endl;
 
     // MRT loop
@@ -141,7 +133,7 @@ int main(int argc, char** argv)
     //std::cout << "[MobileManipulatorGazeboMRT::main] AFTER mrt_loop" << std::endl;
 
     //std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE subscribeObservers" << std::endl;
-    mrt_loop.subscribeObservers({ocs2_mm_visu});
+    //mrt_loop.subscribeObservers({ocs2_mm_visu});
     //std::cout << "[MobileManipulatorGazeboMRT::main] AFTER subscribeObservers" << std::endl;
 
     // initial command
@@ -155,6 +147,18 @@ int main(int argc, char** argv)
     mrt_loop.run(initTarget);
 
     modelModeInt = mrt.getModelModeInt();
+    */
+
+  size_t modelModeInt = 2;
+  int iter = 0;
+  while (ros::ok() && ros::master::check())
+  {
+    std::cout << "=====================================================" << std::endl;
+    std::cout << "=====================================================" << std::endl;
+    std::cout << "[MobileManipulatorGazeboMRT::main] START ITERATION: " << iter << std::endl;
+    std::cout << "[MobileManipulatorGazeboMRT::main] modelModeInt: " << modelModeInt << std::endl;
+
+    interface.runMRT(modelModeInt);
 
     iter++;
     std::cout << "[MobileManipulatorGazeboMRT::main] END ITERATION: " << iter << std::endl;

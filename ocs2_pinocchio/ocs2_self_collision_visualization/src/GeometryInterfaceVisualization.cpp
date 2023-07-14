@@ -55,9 +55,20 @@ GeometryInterfaceVisualization::GeometryInterfaceVisualization(PinocchioInterfac
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+PinocchioGeometryInterface GeometryInterfaceVisualization::getGeometryInterface()
+{
+  return geometryInterface_;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void GeometryInterfaceVisualization::publishDistances(const ocs2::vector_t& q) 
 {
-  //std::cout << "[GeometryInterfaceVisualization::publishDistances(1)] START" << std::endl;
+  std::cout << "[GeometryInterfaceVisualization::publishDistances(1)] START" << std::endl;
+
+  std::cout << "[GeometryInterfaceVisualization::publishDistances(1)] DEBUG INF" << std::endl;
+  while(1);
 
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
@@ -133,12 +144,13 @@ void GeometryInterfaceVisualization::publishDistances(const ocs2::vector_t& q)
 
   markerPublisher_.publish(markerArray);
 
-  //std::cout << "[GeometryInterfaceVisualization::publishDistances(1)] END" << std::endl;
+  std::cout << "[GeometryInterfaceVisualization::publishDistances(1)] END" << std::endl;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+/*
 void GeometryInterfaceVisualization::publishDistances(const ocs2::vector_t& state, const ocs2::vector_t& fullState, const RobotModelInfo& modelInfo) 
 {
   //std::cout << "[GeometryInterfaceVisualization::publishDistances] START" << std::endl;
@@ -223,5 +235,6 @@ void GeometryInterfaceVisualization::publishDistances(const ocs2::vector_t& stat
 
   //std::cout << "[GeometryInterfaceVisualization::publishDistances] END" << std::endl;
 }
+*/
 
 }  // namespace ocs2

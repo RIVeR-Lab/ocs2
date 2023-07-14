@@ -1,33 +1,14 @@
-/******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+// LAST UPDATE: 2023.07.13
+//
+// AUTHOR: Neset Unver Akmandor (NUA)
+//
+// E-MAIL: akmandor.n@northeastern.edu
+//
+// DESCRIPTION: TODO...
+//
+// REFERENCES:
+// [1] https://github.com/leggedrobotics/ocs2
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
- * Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-
- * Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
- * Neither the name of the copyright holder nor the names of its
-  contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
-
-// External libraries:
 #include <pinocchio/fwd.hpp>
 
 #include <pinocchio/algorithm/frames.hpp>
@@ -48,11 +29,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_mobile_manipulator/AccessHelperFunctions.h>
 #include <ocs2_mobile_manipulator/FactoryFunctions.h>
+#include <ocs2_mobile_manipulator/MobileManipulatorVisualization.h>
 //#include <ocs2_mobile_manipulator/ManipulatorModelInfo.h>
 //#include <ocs2_mobile_manipulator/MobileManipulatorInterface.h>
-
-// Custom libraries:
-#include <ocs2_mobile_manipulator_ros/MobileManipulatorGazeboVisualization.h>
 
 namespace ocs2 {
 namespace mobile_manipulator {
@@ -84,20 +63,20 @@ void assignIncreasingId(It firstIt, It lastIt, int startId = 0)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MobileManipulatorGazeboVisualization::launchVisualizerNode(ros::NodeHandle& nodeHandle) 
+void MobileManipulatorVisualization::launchVisualizerNode(ros::NodeHandle& nodeHandle) 
 {
   // load a kdl-tree from the urdf robot description and initialize the robot state publisher
   const std::string urdfName = "robot_description";
   urdf::Model model;
   if (!model.initParam(urdfName)) 
   {
-    ROS_ERROR("[MobileManipulatorGazeboVisualization::launchVisualizerNode] URDF model load was NOT successful");
+    ROS_ERROR("[MobileManipulatorVisualization::launchVisualizerNode] URDF model load was NOT successful");
   }
 
   KDL::Tree tree;
   if (!kdl_parser::treeFromUrdfModel(model, tree)) 
   {
-    ROS_ERROR("[MobileManipulatorGazeboVisualization::launchVisualizerNode] Failed to extract kdl tree from xml robot description");
+    ROS_ERROR("[MobileManipulatorVisualization::launchVisualizerNode] Failed to extract kdl tree from xml robot description");
   }
 
   robotStatePublisherPtr_.reset(new robot_state_publisher::RobotStatePublisher(tree));
@@ -118,7 +97,7 @@ void MobileManipulatorGazeboVisualization::launchVisualizerNode(ros::NodeHandle&
   loadData::loadStdVector<std::string>(taskFile_, "model_information.removeJoints", removeJointNames_, false);
 
   // create pinocchio interface
-  PinocchioInterface pinocchioInterface(mobile_manipulator::createPinocchioInterface(urdfFile_, modelInfo_.robotModelType, removeJointNames_));
+  PinocchioInterface pinocchioInterface(mobile_manipulator::createPinocchioInterface(urdfFile_, robotModelInfo_.robotModelType, removeJointNames_));
 
   // read if self-collision checking active
   boost::property_tree::ptree pt;
@@ -157,52 +136,143 @@ void MobileManipulatorGazeboVisualization::launchVisualizerNode(ros::NodeHandle&
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MobileManipulatorGazeboVisualization::update(const SystemObservation& observation, 
+void MobileManipulatorVisualization::update(const SystemObservation& observation, 
                                                    const PrimalSolution& policy,
                                                    const CommandData& command) 
 {
-  std::cout << "[MobileManipulatorGazeboVisualization::update] START" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::update] START" << std::endl;
 
-  std::cout << "[MobileManipulatorGazeboVisualization::update] DEBUG INF" << std::endl;
-  while(1);
-
-  /*
   const ros::Time timeStamp = ros::Time::now();
   publishOptimizedTrajectory(timeStamp, policy, observation.full_state);
   
   if (geometryVisualization_ != nullptr) 
   {
-    geometryVisualization_->publishDistances(observation.state, observation.full_state, modelInfo_);
+    publishDistances(observation.state, observation.full_state, robotModelInfo_);
   }
-  */
 
-  std::cout << "[MobileManipulatorGazeboVisualization::update] END" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::update] END" << std::endl;
+}
+
+void MobileManipulatorVisualization::publishDistances(const ocs2::vector_t& state, const ocs2::vector_t& fullState, const RobotModelInfo& modelInfo) 
+{
+  //std::cout << "[GeometryInterfaceVisualization::publishDistances] START" << std::endl;
+
+  std::string prefix = "selfCollision";
+  std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
+  std::vector<std::pair<std::string, std::string>> collisionLinkPairs;
+
+  loadData::loadStdVectorOfPair(taskFile_, prefix + ".collisionObjectPairs", collisionObjectPairs, true);
+  loadData::loadStdVectorOfPair(taskFile_, prefix + ".collisionLinkPairs", collisionLinkPairs, true);
+
+  PinocchioInterface pinocchioInterface(mobile_manipulator::createPinocchioInterface(urdfFile_, robotModelInfo_.robotModelType, removeJointNames_));
+  PinocchioGeometryInterface geometryInterface(pinocchioInterface, collisionLinkPairs, collisionObjectPairs);
+
+  std::string pinocchioWorldFrame_ = "world";
+  const auto& model = pinocchioInterface_.getModel();
+  auto& data = pinocchioInterface_.getData();
+
+  ocs2::mobile_manipulator::MobileManipulatorPinocchioMapping pinocchioMapping(modelInfo);
+  const vector_t q = pinocchioMapping.getPinocchioJointPosition(state, fullState);
+
+  pinocchio::forwardKinematics(model, data, q);
+  const auto results = geometryVisualization_->getGeometryInterface().computeDistances(pinocchioInterface_);
+
+  visualization_msgs::MarkerArray markerArray;
+
+  constexpr size_t numMarkersPerResult = 5;
+
+  visualization_msgs::Marker markerTemplate;
+  markerTemplate.color = ros_msg_helpers::getColor({0, 1, 0}, 1);
+  markerTemplate.header.frame_id = pinocchioWorldFrame_;
+  markerTemplate.header.stamp = ros::Time::now();
+  markerTemplate.pose.orientation = ros_msg_helpers::getOrientationMsg({1, 0, 0, 0});
+  markerArray.markers.resize(results.size() * numMarkersPerResult, markerTemplate);
+
+  //std::cout << "[GeometryInterfaceVisualization::publishDistances] results.size(): " << results.size() << std::endl;
+
+  for (size_t i = 0; i < results.size(); ++i) 
+  {
+    // I apologize for the magic numbers, it's mostly just visualization numbers(so 0.02 scale corresponds rougly to 0.02 cm)
+
+    for (size_t j = 0; j < numMarkersPerResult; ++j) 
+    {
+      markerArray.markers[numMarkersPerResult * i + j].ns = std::to_string(geometryInterface.getGeometryModel().collisionPairs[i].first) +
+                                                            " - " +
+                                                            std::to_string(geometryInterface.getGeometryModel().collisionPairs[i].second);
+    }
+
+    // The actual distance line, also denoting direction of the distance
+    markerArray.markers[numMarkersPerResult * i].type = visualization_msgs::Marker::ARROW;
+    markerArray.markers[numMarkersPerResult * i].points.push_back(ros_msg_helpers::getPointMsg(results[i].nearest_points[0]));
+    markerArray.markers[numMarkersPerResult * i].points.push_back(ros_msg_helpers::getPointMsg(results[i].nearest_points[1]));
+    markerArray.markers[numMarkersPerResult * i].id = numMarkersPerResult * i;
+    markerArray.markers[numMarkersPerResult * i].scale.x = 0.01;
+    markerArray.markers[numMarkersPerResult * i].scale.y = 0.02;
+    markerArray.markers[numMarkersPerResult * i].scale.z = 0.04;
+
+    // Dots at the end of the arrow, denoting the close locations on the body
+    markerArray.markers[numMarkersPerResult * i + 1].type = visualization_msgs::Marker::SPHERE_LIST;
+    markerArray.markers[numMarkersPerResult * i + 1].points.push_back(ros_msg_helpers::getPointMsg(results[i].nearest_points[0]));
+    markerArray.markers[numMarkersPerResult * i + 1].points.push_back(ros_msg_helpers::getPointMsg(results[i].nearest_points[1]));
+    markerArray.markers[numMarkersPerResult * i + 1].scale.x = 0.02;
+    markerArray.markers[numMarkersPerResult * i + 1].scale.y = 0.02;
+    markerArray.markers[numMarkersPerResult * i + 1].scale.z = 0.02;
+    markerArray.markers[numMarkersPerResult * i + 1].id = numMarkersPerResult * i + 1;
+
+    // Text denoting the object number in the geometry model, raised above the spheres
+    markerArray.markers[numMarkersPerResult * i + 2].id = numMarkersPerResult * i + 2;
+    markerArray.markers[numMarkersPerResult * i + 2].type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    markerArray.markers[numMarkersPerResult * i + 2].scale.z = 0.02;
+    markerArray.markers[numMarkersPerResult * i + 2].pose.position = ros_msg_helpers::getPointMsg(results[i].nearest_points[0]);
+    markerArray.markers[numMarkersPerResult * i + 2].pose.position.z += 0.015;
+    markerArray.markers[numMarkersPerResult * i + 2].text = "obj " + std::to_string(geometryVisualization_->getGeometryInterface().getGeometryModel().collisionPairs[i].first);
+    markerArray.markers[numMarkersPerResult * i + 3].id = numMarkersPerResult * i + 3;
+    markerArray.markers[numMarkersPerResult * i + 3].type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    markerArray.markers[numMarkersPerResult * i + 3].pose.position = ros_msg_helpers::getPointMsg(results[i].nearest_points[1]);
+    markerArray.markers[numMarkersPerResult * i + 3].pose.position.z += 0.015;
+    markerArray.markers[numMarkersPerResult * i + 3].text = "obj " + std::to_string(geometryVisualization_->getGeometryInterface().getGeometryModel().collisionPairs[i].second);
+    markerArray.markers[numMarkersPerResult * i + 3].scale.z = 0.02;
+
+    // Text above the arrow, denoting the distance
+    markerArray.markers[numMarkersPerResult * i + 4].id = numMarkersPerResult * i + 4;
+    markerArray.markers[numMarkersPerResult * i + 4].type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    markerArray.markers[numMarkersPerResult * i + 4].pose.position = ros_msg_helpers::getPointMsg((results[i].nearest_points[0] + results[i].nearest_points[1]) / 2.0);
+    markerArray.markers[numMarkersPerResult * i + 4].pose.position.z += 0.015;
+    markerArray.markers[numMarkersPerResult * i + 4].text = "dist " + std::to_string(geometryVisualization_->getGeometryInterface().getGeometryModel().collisionPairs[i].first) + " - " +
+                                                                                     std::to_string(geometryVisualization_->getGeometryInterface().getGeometryModel().collisionPairs[i].second) + 
+                                                                                     ": " + std::to_string(results[i].min_distance);
+    markerArray.markers[numMarkersPerResult * i + 4].scale.z = 0.02;
+  }
+
+  markerPublisher_.publish(markerArray);
+
+  //std::cout << "[GeometryInterfaceVisualization::publishDistances] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MobileManipulatorGazeboVisualization::publishObservation(const ros::Time& timeStamp, const SystemObservation& observation) 
+void MobileManipulatorVisualization::publishObservation(const ros::Time& timeStamp, const SystemObservation& observation) 
 {
   // publish world -> base transform
-  const auto r_world_base = getBasePosition(observation.state, modelInfo_);
-  const Eigen::Quaternion<scalar_t> q_world_base = getBaseOrientation(observation.state, modelInfo_);
+  const auto r_world_base = getBasePosition(observation.state, robotModelInfo_);
+  const Eigen::Quaternion<scalar_t> q_world_base = getBaseOrientation(observation.state, robotModelInfo_);
 
   geometry_msgs::TransformStamped base_tf;
   base_tf.header.stamp = timeStamp;
   base_tf.header.frame_id = "world";
-  base_tf.child_frame_id = modelInfo_.mobileBase.baseFrame;
+  base_tf.child_frame_id = robotModelInfo_.mobileBase.baseFrame;
   base_tf.transform.translation = ros_msg_helpers::getVectorMsg(r_world_base);
   base_tf.transform.rotation = ros_msg_helpers::getOrientationMsg(q_world_base);
   tfBroadcaster_.sendTransform(base_tf);      
 
   // publish joints transforms
-  const auto j_arm = getArmJointAngles(observation.state, modelInfo_);
+  const auto j_arm = getArmJointAngles(observation.state, robotModelInfo_);
   std::map<std::string, scalar_t> jointPositions;
 
-  for (size_t i = 0; i < modelInfo_.robotArm.jointFrameNames.size(); i++) 
+  for (size_t i = 0; i < robotModelInfo_.robotArm.jointFrameNames.size(); i++) 
   {
-    jointPositions[modelInfo_.robotArm.jointFrameNames[i]] = j_arm(i);
+    jointPositions[robotModelInfo_.robotArm.jointFrameNames[i]] = j_arm(i);
   }
 
   for (const auto& name : removeJointNames_) 
@@ -215,7 +285,7 @@ void MobileManipulatorGazeboVisualization::publishObservation(const ros::Time& t
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MobileManipulatorGazeboVisualization::publishTargetTrajectories(const ros::Time& timeStamp,
+void MobileManipulatorVisualization::publishTargetTrajectories(const ros::Time& timeStamp,
                                                                       const TargetTrajectories& targetTrajectories) 
 {
   // publish command transform
@@ -236,11 +306,11 @@ void MobileManipulatorGazeboVisualization::publishTargetTrajectories(const ros::
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MobileManipulatorGazeboVisualization::publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy) 
+void MobileManipulatorVisualization::publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy) 
 {
-  std::cout << "[MobileManipulatorGazeboVisualization::publishOptimizedTrajectory(2)] START" << std::endl;
+  std::cout << "[MobileManipulatorVisualization::publishOptimizedTrajectory(2)] START" << std::endl;
 
-  std::cout << "[MobileManipulatorGazeboVisualization::publishOptimizedTrajectory(2)] DEBUG INF" << std::endl;
+  std::cout << "[MobileManipulatorVisualization::publishOptimizedTrajectory(2)] DEBUG INF" << std::endl;
   while(1);
 
   const scalar_t TRAJECTORYLINEWIDTH = 0.005;
@@ -249,14 +319,14 @@ void MobileManipulatorGazeboVisualization::publishOptimizedTrajectory(const ros:
   const auto& mpcStateTrajectory = policy.stateTrajectory_;
   visualization_msgs::MarkerArray markerArray;
 
-  //std::cout << "[MobileManipulatorGazeboVisualization::publishOptimizedTrajectory] START Base" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::publishOptimizedTrajectory] START Base" << std::endl;
   // Base trajectory
   std::vector<geometry_msgs::Point> baseTrajectory;
   baseTrajectory.reserve(mpcStateTrajectory.size());
   geometry_msgs::PoseArray poseArray;
   poseArray.poses.reserve(mpcStateTrajectory.size());
 
-  //std::cout << "[MobileManipulatorGazeboVisualization::publishOptimizedTrajectory] START EE" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::publishOptimizedTrajectory] START EE" << std::endl;
   // End effector trajectory
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
@@ -267,7 +337,7 @@ void MobileManipulatorGazeboVisualization::publishOptimizedTrajectory(const ros:
   {
     pinocchio::forwardKinematics(model, data, state);
     pinocchio::updateFramePlacements(model, data);
-    const auto eeIndex = model.getBodyId(modelInfo_.robotArm.eeFrame);
+    const auto eeIndex = model.getBodyId(robotModelInfo_.robotArm.eeFrame);
     const vector_t eePosition = data.oMf[eeIndex].translation();
     endEffectorTrajectory.push_back(ros_msg_helpers::getPointMsg(eePosition));
   });
@@ -275,13 +345,13 @@ void MobileManipulatorGazeboVisualization::publishOptimizedTrajectory(const ros:
   markerArray.markers.emplace_back(ros_msg_helpers::getLineMsg(std::move(endEffectorTrajectory), blue, TRAJECTORYLINEWIDTH));
   markerArray.markers.back().ns = "EE Trajectory";
 
-  //std::cout << "[MobileManipulatorGazeboVisualization::publishOptimizedTrajectory] START Extract" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::publishOptimizedTrajectory] START Extract" << std::endl;
   // Extract base pose from state
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const vector_t& state) 
   {
     // extract from observation
-    const auto r_world_base = getBasePosition(state, modelInfo_);
-    const Eigen::Quaternion<scalar_t> q_world_base = getBaseOrientation(state, modelInfo_);
+    const auto r_world_base = getBasePosition(state, robotModelInfo_);
+    const Eigen::Quaternion<scalar_t> q_world_base = getBaseOrientation(state, robotModelInfo_);
 
     // convert to ros message
     geometry_msgs::Pose pose;
@@ -302,15 +372,15 @@ void MobileManipulatorGazeboVisualization::publishOptimizedTrajectory(const ros:
   stateOptimizedPublisher_.publish(markerArray);
   stateOptimizedPosePublisher_.publish(poseArray);
 
-  std::cout << "[MobileManipulatorGazeboVisualization::publishOptimizedTrajectory(2)] END" << std::endl;
+  std::cout << "[MobileManipulatorVisualization::publishOptimizedTrajectory(2)] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MobileManipulatorGazeboVisualization::publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy, vector_t fullState) 
+void MobileManipulatorVisualization::publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy, vector_t fullState) 
 {
-  //std::cout << "[MobileManipulatorGazeboVisualization::publishOptimizedTrajectory(3)] START" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::publishOptimizedTrajectory(3)] START" << std::endl;
 
   const scalar_t TRAJECTORYLINEWIDTH = 0.005;
   const std::array<scalar_t, 3> red{0.6350, 0.0780, 0.1840};
@@ -332,11 +402,11 @@ void MobileManipulatorGazeboVisualization::publishOptimizedTrajectory(const ros:
   endEffectorTrajectory.reserve(mpcStateTrajectory.size());
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const Eigen::VectorXd& state) 
   {
-    MobileManipulatorPinocchioMapping pinocchioMapping(modelInfo_);
+    MobileManipulatorPinocchioMapping pinocchioMapping(robotModelInfo_);
     const vector_t q = pinocchioMapping.getPinocchioJointPosition(state, fullState);
     pinocchio::forwardKinematics(model, data, q);
     pinocchio::updateFramePlacements(model, data);
-    const auto eeIndex = model.getBodyId(modelInfo_.robotArm.eeFrame);
+    const auto eeIndex = model.getBodyId(robotModelInfo_.robotArm.eeFrame);
     const vector_t eePosition = data.oMf[eeIndex].translation();
     endEffectorTrajectory.push_back(ros_msg_helpers::getPointMsg(eePosition));
   });
@@ -347,8 +417,8 @@ void MobileManipulatorGazeboVisualization::publishOptimizedTrajectory(const ros:
   std::for_each(mpcStateTrajectory.begin(), mpcStateTrajectory.end(), [&](const vector_t& state) 
   {
     // extract from observation
-    const auto r_world_base = getBasePosition(state, modelInfo_);
-    const Eigen::Quaternion<scalar_t> q_world_base = getBaseOrientation(state, modelInfo_);
+    const auto r_world_base = getBasePosition(state, robotModelInfo_);
+    const Eigen::Quaternion<scalar_t> q_world_base = getBaseOrientation(state, robotModelInfo_);
 
     // convert to ros message
     geometry_msgs::Pose pose;
@@ -369,7 +439,7 @@ void MobileManipulatorGazeboVisualization::publishOptimizedTrajectory(const ros:
   stateOptimizedPublisher_.publish(markerArray);
   stateOptimizedPosePublisher_.publish(poseArray);
 
-  //std::cout << "[MobileManipulatorGazeboVisualization::publishOptimizedTrajectory(3)] END" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::publishOptimizedTrajectory(3)] END" << std::endl;
 }
 
 }  // namespace mobile_manipulator

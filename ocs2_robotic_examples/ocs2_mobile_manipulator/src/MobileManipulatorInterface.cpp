@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.06.19
+// LAST UPDATE: 2023.07.13
 //
 // AUTHOR: Neset Unver Akmandor  (NUA)
 //
@@ -23,7 +23,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
                                                        const std::string& urdfFile,
                                                        PointsOnRobot::points_radii_t pointsAndRadii,
                                                        int modelModeInt)
-  : taskFile_(taskFile), libraryFolder_(libraryFolder), urdfFile_(urdfFile)
+  : taskFile_(taskFile), libraryFolder_(libraryFolder), urdfFile_(urdfFile), pointsAndRadii_(pointsAndRadii)
 {
   //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START" << std::endl;
 
@@ -146,6 +146,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   //modelModeInt = 2;
   //setMPCProblem(modelModeInt, pointsAndRadii);
   
+  //runMPC(2);
+
   //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END" << std::endl;
 }
 
@@ -373,6 +375,120 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
   */
 
   //spin();
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorInterface::runMPC(size_t modelModeInt)
+{
+  std::cout << "[MobileManipulatorInterface::runMPC] START" << std::endl;
+
+  std::string robotModelName = "mobile_manipulator";
+
+  // Robot interface
+  std::cout << "[MobileManipulatorInterface::runMPC] START launchNodes" << std::endl;
+  launchNodes(nodeHandle_);
+  std::cout << "[MobileManipulatorInterface::runMPC] END launchNodes" << std::endl;
+
+  setMPCProblem(modelModeInt, pointsAndRadii_);
+  printRobotModelInfo(robotModelInfo_);
+
+  //std::cout << "[MobileManipulatorInterface::runMPC] DEBUG INF" << std::endl;
+  //while(1);
+
+  std::cout << "[MobileManipulatorInterface::runMPC] BEFORE rosReferenceManagerPtr" << std::endl;
+  // ROS ReferenceManager
+  rosReferenceManagerPtr_ = std::shared_ptr<ocs2::RosReferenceManager>(new ocs2::RosReferenceManager(robotModelName, referenceManagerPtr_, robotModelInfo_));
+  
+  std::cout << "[MobileManipulatorInterface::runMPC] BEFORE rosReferenceManagerPtr subscribe" << std::endl;
+  rosReferenceManagerPtr_->subscribe(nodeHandle_);
+
+  // MPC
+  std::cout << "[MobileManipulatorInterface::runMPC] BEFORE mpc" << std::endl;
+  ocs2::GaussNewtonDDP_MPC mpc(mpcSettings_, 
+                               ddpSettings_, 
+                               *rolloutPtr_, 
+                               problem_, 
+                               *initializerPtr_);
+
+  std::cout << "[MobileManipulatorInterface::runMPC] BEFORE mpc setReferenceManager" << std::endl;
+  mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr_);
+
+  // Launch MPC ROS node
+  std::cout << "[MobileManipulatorInterface::runMPC] BEFORE mpc mpcNode" << std::endl;
+  MPC_ROS_Interface mpcNode(mpc, robotModelName);
+
+  std::cout << "[MobileManipulatorInterface::runMPC] BEFORE mpc mpcNode launchNodes" << std::endl;
+  mpcNode.launchNodes(nodeHandle_);
+
+  std::cout << "[MobileManipulatorInterface::runMPC] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorInterface::runMRT(size_t initModelModeInt)
+{
+  std::cout << "[MobileManipulatorInterface::runMRT] START" << std::endl;
+
+  std::string robotModelName = "mobile_manipulator";
+  size_t modelModeInt = initModelModeInt;
+
+  //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE setMPCProblem" << std::endl;
+  setMPCProblem(modelModeInt, pointsAndRadii_);
+  printRobotModelInfo(robotModelInfo_);
+  //std::cout << "[MobileManipulatorInterface::runMRT] AFTER setMPCProblem" << std::endl;
+
+  // MRT
+  MRT_ROS_Interface mrt(robotModelInfo_, robotModelName);
+  //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE initRollout" << std::endl;
+  mrt.initRollout(&*rolloutPtr_);
+  //std::cout << "[MobileManipulatorInterface::runMRT] AFTER initRollout" << std::endl;
+
+  //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE launchNodes" << std::endl;
+  mrt.launchNodes(nodeHandle_);
+  //std::cout << "[MobileManipulatorInterface::runMRT] AFTER launchNodes" << std::endl;
+
+  // Visualization
+  //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE ocs2_mm_visu" << std::endl;
+  //std::shared_ptr<ocs2::mobile_manipulator::OCS2_Mobile_Manipulator_Visualization> ocs2_mm_visu(new ocs2::mobile_manipulator::OCS2_Mobile_Manipulator_Visualization(nodeHandle_,
+  //                                                                                                                                                                  *pinocchioInterfacePtr_,
+  //                                                                                                                                                                 urdfFile_,
+  //                                                                                                                                                                  taskFile_));
+  //std::cout << "[MobileManipulatorInterface::runMRT] AFTER ocs2_mm_visu" << std::endl;
+
+  // MRT loop
+  std::string worldFrameName = "world";
+  std::cout << "[MobileManipulatorInterface::runMRT] BEFORE mrt_loop" << std::endl;
+  MRT_ROS_Gazebo_Loop mrt_loop(nodeHandle_, 
+                               mrt, 
+                               worldFrameName,
+                               baseStateMsg_,
+                               armStateMsg_,
+                               baseControlMsg_,
+                               armControlMsg_,
+                               mpcSettings_.mrtDesiredFrequency_, 
+                               mpcSettings_.mpcDesiredFrequency_);
+  //std::cout << "[MobileManipulatorInterface::runMRT] AFTER mrt_loop" << std::endl;
+
+  //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE subscribeObservers" << std::endl;
+  //mrt_loop.subscribeObservers({ocs2_mm_visu});
+  //std::cout << "[MobileManipulatorInterface::runMRT] AFTER subscribeObservers" << std::endl;
+
+  // initial command
+  vector_t initTarget(7);
+  //initTarget.head(3) << -0.2, 0, 1.0;
+  //initTarget.tail(4) << Eigen::Quaternion<scalar_t>(1, 0, 0, 0).coeffs();
+  mrt_loop.getInitTarget(initTarget);   
+
+  // Run mrt_loop
+  //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE run" << std::endl;
+  mrt_loop.run(initTarget);
+
+  modelModeInt = mrt.getModelModeInt();
+
+  std::cout << "[MobileManipulatorInterface::runMRT] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
