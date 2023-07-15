@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.12
+// LAST UPDATE: 2023.07.14
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -21,7 +21,8 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                                          std::string baseControlMsg,
                                          std::string armControlMsg,
                                          scalar_t mrtDesiredFrequency,
-                                         scalar_t mpcDesiredFrequency)
+                                         scalar_t mpcDesiredFrequency,
+                                         bool updateIndexMapFlag)
   : mrt_(mrt), 
     worldFrameName_(worldFrameName),
     mrtDesiredFrequency_(mrtDesiredFrequency), 
@@ -29,6 +30,8 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
     robotModelInfo_(mrt.getRobotModelInfo())
 {
   //std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] START" << std::endl;
+
+  timer1_.startTimer();
 
   dt_ = 1.0 / mrtDesiredFrequency_;
 
@@ -52,7 +55,9 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
       break;
   }
 
-  setStateIndexMap(armStateMsg);
+  timer2_.startTimer();
+  updateStateIndexMap(armStateMsg, updateIndexMapFlag);
+  timer2_.endTimer();
   
   // SUBSCRIBE TO STATE INFO
   //// NUA TODO: Consider localization error
@@ -96,6 +101,18 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   {
     ROS_WARN_STREAM("[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] Warning: MPC loop is not realtime! For realtime setting, set mpcDesiredFrequency to any negative number.");
   }
+
+  timer1_.endTimer();
+
+  std::cout << '\n';
+  std::cout << "\n### MRT_ROS Benchmarking timer1_";
+  std::cout << "\n###   Maximum : " << timer1_.getMaxIntervalInMilliseconds() << "[ms].";
+  std::cout << "\n###   Average : " << timer1_.getAverageInMilliseconds() << "[ms].";
+  std::cout << "\n###   Latest  : " << timer1_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+  std::cout << "\n### MRT_ROS Benchmarking timer2_";
+  std::cout << "\n###   Maximum : " << timer2_.getMaxIntervalInMilliseconds() << "[ms].";
+  std::cout << "\n###   Average : " << timer2_.getAverageInMilliseconds() << "[ms].";
+  std::cout << "\n###   Latest  : " << timer2_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
 
   std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] END" << std::endl;
 }
@@ -395,49 +412,65 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MRT_ROS_Gazebo_Loop::setStateIndexMap(std::string& armStateMsg)
+void MRT_ROS_Gazebo_Loop::setStateIndexMap(std::vector<int>& stateIndexMap)
 {
-  //std::cout << "[MRT_ROS_Gazebo_Loop::setStateIndexMap] START" << std::endl;
+  stateIndexMap_ = stateIndexMap;
+}
 
-  boost::shared_ptr<control_msgs::JointTrajectoryControllerState const> jointTrajectoryControllerStatePtrMsg = ros::topic::waitForMessage<control_msgs::JointTrajectoryControllerState>(armStateMsg);
-  
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::updateStateIndexMap(std::string& armStateMsg, bool updateStateIndexMapFlag)
+{
+  //std::cout << "[MRT_ROS_Gazebo_Loop::updateStateIndexMap] START" << std::endl;  
   auto jointNames = mrt_.getRobotModelInfo().robotArm.jointNames;
   int n_joints = jointNames.size();
   stateIndexMap_.clear();
   int c;
 
-  if (n_joints != jointTrajectoryControllerStatePtrMsg->joint_names.size())
+  if (updateStateIndexMapFlag)
   {
-    throw std::runtime_error("[MRT_ROS_Gazebo_Loop::setStateIndexMap] Error: State dimension mismatch!");
-  }
-  
-  for (int i = 0; i < n_joints; ++i)
-  {
-    //std::cout << "[MRT_ROS_Gazebo_Loop::setStateIndexMap] jointTrajectoryControllerStatePtrMsg " << i << ": " << jointTrajectoryControllerStatePtrMsg -> joint_names[i] << std::endl;
-    //std::cout << "[MRT_ROS_Gazebo_Loop::setStateIndexMap] jointNames " << i << ": " << jointNames[i] << std::endl;
-    //std::cout << "" << std::endl;
-
-    c = 0;
-    while (jointTrajectoryControllerStatePtrMsg -> joint_names[c] != jointNames[i] && c < n_joints)
+    boost::shared_ptr<control_msgs::JointTrajectoryControllerState const> jointTrajectoryControllerStatePtrMsg = ros::topic::waitForMessage<control_msgs::JointTrajectoryControllerState>(armStateMsg);
+    if (n_joints != jointTrajectoryControllerStatePtrMsg->joint_names.size())
     {
-      c++;
+      throw std::runtime_error("[MRT_ROS_Gazebo_Loop::updateStateIndexMap] Error: State dimension mismatch!");
     }
-
-    if (jointTrajectoryControllerStatePtrMsg -> joint_names[c] == jointNames[i])
+    
+    for (int i = 0; i < n_joints; ++i)
     {
-      stateIndexMap_.push_back(c);
+      //std::cout << "[MRT_ROS_Gazebo_Loop::updateStateIndexMap] jointTrajectoryControllerStatePtrMsg " << i << ": " << jointTrajectoryControllerStatePtrMsg -> joint_names[i] << std::endl;
+      //std::cout << "[MRT_ROS_Gazebo_Loop::updateStateIndexMap] jointNames " << i << ": " << jointNames[i] << std::endl;
+      //std::cout << "" << std::endl;
+
+      c = 0;
+      while (jointTrajectoryControllerStatePtrMsg->joint_names[c] != jointNames[i] && c < n_joints)
+      {
+        c++;
+      }
+
+      if (jointTrajectoryControllerStatePtrMsg->joint_names[c] == jointNames[i])
+      {
+        stateIndexMap_.push_back(c);
+      }
+    }
+  }
+  else
+  {
+    for (int i = 0; i < n_joints; ++i)
+    {
+      stateIndexMap_.push_back(i);
     }
   }
 
   /*
-  std::cout << "[MRT_ROS_Gazebo_Loop::setStateIndexMap] stateIndexMap_:" << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::updateStateIndexMap] stateIndexMap_:" << std::endl;
   for (int i = 0; i < stateIndexMap_.size(); ++i)
   {
     std::cout << i << " -> " << stateIndexMap_[i] << std::endl;
   }
   */
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::setStateIndexMap] END" << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::updateStateIndexMap] END" << std::endl;
 }
 
 void MRT_ROS_Gazebo_Loop::tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg)

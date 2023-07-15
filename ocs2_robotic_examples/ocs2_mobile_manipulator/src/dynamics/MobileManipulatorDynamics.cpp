@@ -23,7 +23,7 @@ MobileManipulatorDynamics::MobileManipulatorDynamics(RobotModelInfo info,
                                                      bool recompileLibraries /*= true*/, bool verbose /*= true*/)
   : info_(std::move(info)) 
 {
-  std::cout << "[MobileManipulatorDynamics::MobileManipulatorDynamics] START" << std::endl;
+  //std::cout << "[MobileManipulatorDynamics::MobileManipulatorDynamics] START" << std::endl;
 
   auto stateDim = getStateDim(info);
   auto inputDim = getInputDim(info);
@@ -36,7 +36,7 @@ MobileManipulatorDynamics::MobileManipulatorDynamics(RobotModelInfo info,
 
   this->initialize(stateDim, inputDim, modelName, modelFolder, recompileLibraries, verbose);
 
-  std::cout << "[MobileManipulatorDynamics::MobileManipulatorDynamics] END" << std::endl;
+  //std::cout << "[MobileManipulatorDynamics::MobileManipulatorDynamics] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -47,7 +47,7 @@ ad_vector_t MobileManipulatorDynamics::systemFlowMap(ad_scalar_t time,
                                                      const ad_vector_t& input,
                                                      const ad_vector_t&) const 
 {
-  std::cout << "[MobileManipulatorDynamics::systemFlowMap] START" << std::endl;
+  //std::cout << "[MobileManipulatorDynamics::systemFlowMap] START" << std::endl;
 
   if(state.size() != 9 || input.size() != 8)
   {
@@ -65,7 +65,7 @@ ad_vector_t MobileManipulatorDynamics::systemFlowMap(ad_scalar_t time,
   
   dxdt << cos(theta) * v, sin(theta) * v, input(1), input.tail(info_.robotArm.stateDim);
 
-  std::cout << "[MobileManipulatorDynamics::systemFlowMap] END" << std::endl;
+  //std::cout << "[MobileManipulatorDynamics::systemFlowMap] END" << std::endl;
 
   return dxdt;
 }

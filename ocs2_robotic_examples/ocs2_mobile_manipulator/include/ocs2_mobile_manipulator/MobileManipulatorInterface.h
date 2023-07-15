@@ -129,7 +129,7 @@ class MobileManipulatorInterface final : public RobotInterface
 
     const OptimalControlProblem& getOptimalControlProblem() const override 
     { 
-      return problem_; 
+      return ocp_; 
     }
 
     std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override 
@@ -211,7 +211,7 @@ class MobileManipulatorInterface final : public RobotInterface
       pointsOnRobotPtr_.reset(new PointsOnRobot(pointsAndRadii));
     }
 
-    void setMPCProblem(size_t modelMode, PointsOnRobot::points_radii_t& pointsAndRadii);
+    void setMPCProblem(size_t modelMode, PointsOnRobot::points_radii_t& pointsAndRadii, bool nextFlag=false);
 
     /*
     void setEsdfCachingServerPtr(std::shared_ptr<voxblox::EsdfCachingServer> newEsdfCachingServerPtr) 
@@ -231,9 +231,9 @@ class MobileManipulatorInterface final : public RobotInterface
 
     void launchNodes(ros::NodeHandle& nodeHandle);
 
-    void runMPC(size_t modelModeInt);
+    void runMPC();
 
-    void runMRT(size_t modelModeInt);
+    void runMRT();
 
   private:
     std::unique_ptr<StateInputCost> getQuadraticInputCost();
@@ -251,8 +251,12 @@ class MobileManipulatorInterface final : public RobotInterface
     const std::string taskFile_;
     const std::string libraryFolder_;
     const std::string urdfFile_;
+    std::string robotModelName_ = "mobile_manipulator";
+
+    size_t initModelModeInt_ = 2;
 
     bool printOutFlag_ = false;
+    bool mpcProblemNextFlag_ = false;
     bool usePreComputation_;
     bool recompileLibraries_;
     bool activateSelfCollision_;
@@ -260,10 +264,12 @@ class MobileManipulatorInterface final : public RobotInterface
 
     ddp::Settings ddpSettings_;
     mpc::Settings mpcSettings_;
-
-    OptimalControlProblem problem_;
+    OptimalControlProblem ocp_;
     std::shared_ptr<ReferenceManager> referenceManagerPtr_;
+    
+    ocs2::rollout::Settings rolloutSettings_;
     std::unique_ptr<RolloutBase> rolloutPtr_;
+    
     std::unique_ptr<Initializer> initializerPtr_;
 
     std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
@@ -282,7 +288,28 @@ class MobileManipulatorInterface final : public RobotInterface
     PointsOnRobot::points_radii_t pointsAndRadii_;
     std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr_;
     //ocs2::GaussNewtonDDP_MPC mpc_;
+    //ocs2::GaussNewtonDDP_MPC mpcNext_;
     //MPC_ROS_Interface mpcNode_;
+    //MPC_ROS_Interface mpcNodeNext_;
+
+    benchmark::RepeatedTimer mpcTimer1_;
+    benchmark::RepeatedTimer mpcTimer2_;
+    benchmark::RepeatedTimer mpcTimer3_;
+    benchmark::RepeatedTimer mpcTimer4_;
+    benchmark::RepeatedTimer mpcTimer5_;
+    benchmark::RepeatedTimer mpcTimer6_;
+    benchmark::RepeatedTimer mpcTimer7_;
+    benchmark::RepeatedTimer mpcTimer8_;
+
+    benchmark::RepeatedTimer mrtTimer1_;
+    benchmark::RepeatedTimer mrtTimer2_;
+    benchmark::RepeatedTimer mrtTimer3_;
+    benchmark::RepeatedTimer mrtTimer4_;
+    benchmark::RepeatedTimer mrtTimer5_;
+    benchmark::RepeatedTimer mrtTimer6_;
+    benchmark::RepeatedTimer mrtTimer7_;
+
+    ros::Subscriber modelModeSubscriber_;
 };
 
 }  // namespace mobile_manipulator

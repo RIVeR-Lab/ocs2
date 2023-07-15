@@ -91,64 +91,66 @@ int main(int argc, char** argv)
     std::cout << "[MobileManipulatorGazeboMRT::main] ERROR: collision_points is not defined!" << std::endl;
   }
 
-
   // Robot Interface
   //std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE MobileManipulatorInterface" << std::endl;
   MobileManipulatorInterface interface(taskFile, libFolder, urdfFile, pointsAndRadii);
   //std::cout << "[MobileManipulatorGazeboMRT::main] AFTER MobileManipulatorInterface" << std::endl;
 
+  interface.runMRT();
+
   /*
   interface.setMPCProblem(modelModeInt, pointsAndRadii);
 
-    auto robotModelInfo = interface.getRobotModelInfo();
-    printRobotModelInfo(robotModelInfo);
+  auto robotModelInfo = interface.getRobotModelInfo();
+  printRobotModelInfo(robotModelInfo);
 
-    // MRT
-    MRT_ROS_Interface mrt(robotModelInfo, robotModelName);
-    //std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE initRollout" << std::endl;
-    mrt.initRollout(&interface.getRollout());
-    //std::cout << "[MobileManipulatorGazeboMRT::main] AFTER initRollout" << std::endl;
+  // MRT
+  MRT_ROS_Interface mrt(robotModelInfo, robotModelName);
+  //std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE initRollout" << std::endl;
+  mrt.initRollout(&interface.getRollout());
+  //std::cout << "[MobileManipulatorGazeboMRT::main] AFTER initRollout" << std::endl;
 
-    //std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE launchNodes" << std::endl;
-    mrt.launchNodes(nodeHandle);
-    //std::cout << "[MobileManipulatorGazeboMRT::main] AFTER launchNodes" << std::endl;
+  //std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE launchNodes" << std::endl;
+  mrt.launchNodes(nodeHandle);
+  //std::cout << "[MobileManipulatorGazeboMRT::main] AFTER launchNodes" << std::endl;
 
-    // Visualization
-    //std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE ocs2_mm_visu" << std::endl;
-    //std::shared_ptr<MobileManipulatorVisualization> ocs2_mm_visu(new MobileManipulatorVisualization(nodeHandle, interface));
-    //std::cout << "[MobileManipulatorGazeboMRT::main] AFTER ocs2_mm_visu" << std::endl;
+  // Visualization
+  //std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE ocs2_mm_visu" << std::endl;
+  //std::shared_ptr<MobileManipulatorVisualization> ocs2_mm_visu(new MobileManipulatorVisualization(nodeHandle, interface));
+  //std::cout << "[MobileManipulatorGazeboMRT::main] AFTER ocs2_mm_visu" << std::endl;
 
-    // MRT loop
-    std::string worldFrameName = "world";
-    //std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE mrt_loop" << std::endl;
-    MRT_ROS_Gazebo_Loop mrt_loop(nodeHandle, 
-                                 mrt, 
-                                 worldFrameName,
-                                 interface.getBaseStateMsg(),
-                                 interface.getArmStateMsg(),
-                                 interface.getBaseControlMsg(),
-                                 interface.getArmControlMsg(),
-                                 interface.mpcSettings().mrtDesiredFrequency_, 
-                                 interface.mpcSettings().mpcDesiredFrequency_);
-    //std::cout << "[MobileManipulatorGazeboMRT::main] AFTER mrt_loop" << std::endl;
+  // MRT loop
+  std::string worldFrameName = "world";
+  //std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE mrt_loop" << std::endl;
+  MRT_ROS_Gazebo_Loop mrt_loop(nodeHandle, 
+                              mrt, 
+                              worldFrameName,
+                              interface.getBaseStateMsg(),
+                              interface.getArmStateMsg(),
+                              interface.getBaseControlMsg(),
+                              interface.getArmControlMsg(),
+                              interface.mpcSettings().mrtDesiredFrequency_, 
+                              interface.mpcSettings().mpcDesiredFrequency_);
+  //std::cout << "[MobileManipulatorGazeboMRT::main] AFTER mrt_loop" << std::endl;
 
-    //std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE subscribeObservers" << std::endl;
-    //mrt_loop.subscribeObservers({ocs2_mm_visu});
-    //std::cout << "[MobileManipulatorGazeboMRT::main] AFTER subscribeObservers" << std::endl;
+  //std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE subscribeObservers" << std::endl;
+  //mrt_loop.subscribeObservers({ocs2_mm_visu});
+  //std::cout << "[MobileManipulatorGazeboMRT::main] AFTER subscribeObservers" << std::endl;
 
-    // initial command
-    vector_t initTarget(7);
-    //initTarget.head(3) << -0.2, 0, 1.0;
-    //initTarget.tail(4) << Eigen::Quaternion<scalar_t>(1, 0, 0, 0).coeffs();
-    mrt_loop.getInitTarget(initTarget);   
+  // initial command
+  vector_t initTarget(7);
+  //initTarget.head(3) << -0.2, 0, 1.0;
+  //initTarget.tail(4) << Eigen::Quaternion<scalar_t>(1, 0, 0, 0).coeffs();
+  mrt_loop.getInitTarget(initTarget);   
 
-    // Run mrt_loop
-    //std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE run" << std::endl;
-    mrt_loop.run(initTarget);
+  // Run mrt_loop
+  //std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE run" << std::endl;
+  mrt_loop.run(initTarget);
 
-    modelModeInt = mrt.getModelModeInt();
-    */
+  modelModeInt = mrt.getModelModeInt();
+  */
 
+  /*
   size_t modelModeInt = 2;
   int iter = 0;
   while (ros::ok() && ros::master::check())
@@ -165,6 +167,7 @@ int main(int argc, char** argv)
     std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
     std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
   }
+  */
 
   // Successful exit
   return 0;

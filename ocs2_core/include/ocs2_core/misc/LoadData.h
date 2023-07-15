@@ -129,7 +129,7 @@ inline void loadCppDataType(const std::string& filename, const std::string& data
  * @param [out] matrix: The loaded matrix, must have desired size.
  */
 template <typename Derived>
-inline void loadEigenMatrix(const std::string& filename, const std::string& matrixName, Eigen::MatrixBase<Derived>& matrix) {
+inline void loadEigenMatrix(const std::string& filename, const std::string& matrixName, Eigen::MatrixBase<Derived>& matrix, bool verbose = true) {
   using scalar_t = typename Eigen::MatrixBase<Derived>::Scalar;
 
   size_t rows = matrix.rows();
@@ -161,8 +161,12 @@ inline void loadEigenMatrix(const std::string& filename, const std::string& matr
 
   if (numFailed == matrix.size()) {
     throw std::runtime_error("[loadEigenMatrix] Could not load matrix \"" + matrixName + "\" from file \"" + filename + "\".");
-  } else if (numFailed > 0) {
-    std::cerr << "WARNING: Loaded at least one default value in matrix: \"" + matrixName + "\"\n";
+  } else if (numFailed > 0) 
+  {
+    if (verbose)
+    {
+      std::cerr << "WARNING: Loaded at least one default value in matrix: \"" + matrixName + "\"\n";
+    }
   }
 }
 

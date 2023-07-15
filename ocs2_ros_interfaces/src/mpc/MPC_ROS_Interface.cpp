@@ -458,7 +458,7 @@ void MPC_ROS_Interface::spin()
 //-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) 
 {
-  ROS_INFO_STREAM("MPC node is setting up ...");
+  ROS_INFO_STREAM("[MPC_ROS_Interface::launchNodes] MPC node is setting up...");
 
   // Subscribe Observation 
   mpcObservationSubscriber_ = nodeHandle.subscribe(topicPrefix_ + "_mpc_observation", 

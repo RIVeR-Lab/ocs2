@@ -1,31 +1,13 @@
-/******************************************************************************
-Copyright (c) 2017, Farbod Farshidian. All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-* Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-
-* Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
-* Neither the name of the copyright holder nor the names of its
-  contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-******************************************************************************/
+// LAST UPDATE: 2023.07.14
+//
+// AUTHOR: Neset Unver Akmandor (NUA)
+//
+// E-MAIL: akmandor.n@northeastern.edu
+//
+// DESCRIPTION: TODO...
+//
+// REFERENCES:
+// [1] https://github.com/leggedrobotics/ocs2
 
 #pragma once
 
@@ -40,6 +22,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <trajectory_msgs/JointTrajectory.h>
 #include <std_msgs/Float64.h>
 
+#include <ocs2_core/misc/Benchmark.h>
 #include "ocs2_ros_interfaces/mrt/DummyObserver.h"
 #include "ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h"
 //#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
@@ -69,12 +52,15 @@ class MRT_ROS_Gazebo_Loop
                         std::string baseControlMsg,
                         std::string armControlMsg,
                         scalar_t mrtDesiredFrequency,
-                        scalar_t mpcDesiredFrequency = -1);
+                        scalar_t mpcDesiredFrequency = -1,
+                        bool updateIndexMapFlag=false);
 
     /**
      * Destructor.
      */
     virtual ~MRT_ROS_Gazebo_Loop() = default;
+
+    void setStateIndexMap(std::vector<int>& stateIndexMap);
 
     /** NUA TODO: Add description */
     bool isArmStateInitialized();
@@ -112,7 +98,7 @@ class MRT_ROS_Gazebo_Loop
     void mrtLoop();
 
     /** NUA TODO: Add description */
-    void setStateIndexMap(std::string& armStateMsg);
+    void updateStateIndexMap(std::string& armStateMsg, bool updateStateIndexMapFlag);
 
     /** NUA TODO: Add description */
     void tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg);
@@ -181,37 +167,18 @@ class MRT_ROS_Gazebo_Loop
     geometry_msgs::Twist robotBaseTwistMsg_;
     sensor_msgs::JointState jointStateMsg_;
     control_msgs::JointTrajectoryControllerState jointTrajectoryControllerStateMsg_;
-    control_msgs::JointControllerState joint1ControllerStateMsg_;
-    control_msgs::JointControllerState joint2ControllerStateMsg_;
-    control_msgs::JointControllerState joint3ControllerStateMsg_;
-    control_msgs::JointControllerState joint4ControllerStateMsg_;
-    control_msgs::JointControllerState joint5ControllerStateMsg_;
-    control_msgs::JointControllerState joint6ControllerStateMsg_;
+
+    benchmark::RepeatedTimer timer1_;
+    benchmark::RepeatedTimer timer2_;
 
     ros::Subscriber tfSub_;
     ros::Subscriber odometrySub_;
     ros::Subscriber linkStateSub_;
     ros::Subscriber jointStateSub_;
     ros::Subscriber jointTrajectoryPControllerStateSub_;
-    /*
-    ros::Subscriber joint1PControllerStateSub_;
-    ros::Subscriber joint2PControllerStateSub_;
-    ros::Subscriber joint3PControllerStateSub_;
-    ros::Subscriber joint4PControllerStateSub_;
-    ros::Subscriber joint5PControllerStateSub_;
-    ros::Subscriber joint6PControllerStateSub_;
-    */
 
     ros::Publisher baseTwistPub_;
     ros::Publisher armJointTrajectoryPub_;
-    /*
-    ros::Publisher armJoint1TrajectoryPub_;
-    ros::Publisher armJoint2TrajectoryPub_;
-    ros::Publisher armJoint3TrajectoryPub_;
-    ros::Publisher armJoint4TrajectoryPub_;
-    ros::Publisher armJoint5TrajectoryPub_;
-    ros::Publisher armJoint6TrajectoryPub_;
-    */
 };
 
 }  // namespace ocs2

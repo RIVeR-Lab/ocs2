@@ -96,6 +96,8 @@ int main(int argc, char** argv)
   MobileManipulatorInterface interface(taskFile, libFolder, urdfFile, pointsAndRadii);
   interface.setNodeHandle(nodeHandle);
 
+  interface.runMPC();
+
   /*
   interface.launchNodes(nodeHandle);
   std::cout << "[MobileManipulatorMpcNode::main] END INIT interface" << std::endl;
@@ -140,6 +142,7 @@ int main(int argc, char** argv)
   modelModeInt = mpcNode.getModelModeInt();
   */
 
+  /*
   size_t modelModeInt = 2;
   int iter = 0;
   while (ros::ok() && ros::master::check())
@@ -156,6 +159,7 @@ int main(int argc, char** argv)
     std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
     std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
   }
+  */
 
   std::cout << "[MobileManipulatorMpcNode::main] END" << std::endl;
 
