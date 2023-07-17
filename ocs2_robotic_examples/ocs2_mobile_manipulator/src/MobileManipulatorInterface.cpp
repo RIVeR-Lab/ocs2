@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.14
+// LAST UPDATE: 2023.07.16
 //
 // AUTHOR: Neset Unver Akmandor  (NUA)
 //
@@ -40,6 +40,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   mrtTimer4_.reset();
   mrtTimer5_.reset();
   mrtTimer6_.reset();
+
+  currentTarget_.resize(7);
 
   /// Check that task file exists
   boost::filesystem::path taskFilePath(taskFile_);
@@ -373,6 +375,7 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
   std::string oct_msg_name = "octomap_scan";
   std::string tf_msg_name = "tf";
   std::string model_mode_msg_name = "mobile_manipulator_model_mode";
+  std::string target_msg_name = "mobile_manipulator_mpc_target";
 
   double dt = 0.1;
 
@@ -392,6 +395,7 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
   //subModelModeMsg_ = nodeHandle.subscribe(model_mode_msg_name, 10, &MobileManipulatorInterface::modelModeCallback, this);
 
   // Subscribe Model Mode
+  /*
   auto modelModeCallback = [this](const std_msgs::UInt8::ConstPtr& msg) 
   {
     std::cout << "[MobileManipulatorInterface::launchNodes] START" << std::endl;
@@ -410,8 +414,102 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
     //shutDownFlag_ = true;
   };
   modelModeSubscriber_ = nodeHandle.subscribe<std_msgs::UInt8>(model_mode_msg_name, 1, modelModeCallback);
+  */
+
+  // TargetTrajectories
+  auto targetTrajectoriesCallback = [this](const ocs2_msgs::mpc_target_trajectories::ConstPtr& msg) 
+  {
+    //std::cout << "[MobileManipulatorInterface::targetTrajectoriesCallback] START" << std::endl;
+
+    auto targetTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(*msg);
+
+    if (currentTarget_.size() == targetTrajectories.stateTrajectory[0].size())
+    {
+      currentTarget_ = targetTrajectories.stateTrajectory[0]; 
+    }
+    else
+    {
+      std::cout << "[MobileManipulatorInterface::targetTrajectoriesCallback] ERROR: Size mismatch!" << std::endl;
+    }
+
+    /*
+    std::cout << "[MobileManipulatorInterface::targetTrajectoriesCallback] timeTrajectory size: " << targetTrajectories.timeTrajectory.size() << std::endl;
+    for (size_t i = 0; i < targetTrajectories.timeTrajectory.size(); i++)
+    {
+      std::cout << i << " -> " << targetTrajectories.timeTrajectory[i] << std::endl;
+    }
+    std::cout << "------------" << std::endl;
+
+    std::cout << "[MobileManipulatorInterface::targetTrajectoriesCallback] stateTrajectory size: " << targetTrajectories.stateTrajectory[0].size() << std::endl;
+    for (size_t i = 0; i < targetTrajectories.stateTrajectory[0].size(); i++)
+    {
+      std::cout << i << " -> " << targetTrajectories.stateTrajectory[0][i] << std::endl;
+    }
+    std::cout << "------------" << std::endl;
+
+    std::cout << "[MobileManipulatorInterface::targetTrajectoriesCallback] currentTarget_ size: " << currentTarget_.size() << std::endl;
+    for (size_t i = 0; i < currentTarget_.size(); i++)
+    {
+      std::cout << i << " -> " << currentTarget_[i] << std::endl;
+    }
+    std::cout << "------------" << std::endl;
+
+    std::cout << "[MobileManipulatorInterface::targetTrajectoriesCallback] inputTrajectory size: " << targetTrajectories.inputTrajectory[0].size() << std::endl;
+    for (size_t i = 0; i < targetTrajectories.inputTrajectory[0].size(); i++)
+    {
+      std::cout << i << " -> " << targetTrajectories.inputTrajectory[0][i] << std::endl;
+    }
+    */
+
+    //std::cout << "[MobileManipulatorInterface::targetTrajectoriesCallback] END" << std::endl;
+  };
+  targetTrajectoriesSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mpc_target_trajectories>(target_msg_name, 1, targetTrajectoriesCallback);
 
   //spin();
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorInterface::getEEPose(vector_t& eePose)
+{
+  std::cout << "[MobileManipulatorInterface::getEEPose] START" << std::endl;
+
+  std::string eeFrame = robotModelInfo_.robotArm.eeFrame;
+  if (robotModelInfo_.robotModelType == RobotModelType::MobileBase)
+  {
+    eeFrame = robotModelInfo_.mobileBase.baseFrame;
+  }
+
+  tf::StampedTransform tf_ee_wrt_world;
+  try
+  {
+    tfListener_.waitForTransform(worldFrameName_, eeFrame, ros::Time::now(), ros::Duration(1.0));
+    tfListener_.lookupTransform(worldFrameName_, eeFrame, ros::Time(0), tf_ee_wrt_world);
+  }
+  catch (tf::TransformException ex)
+  {
+    ROS_INFO("[MRT_ROS_Gazebo_Loop::tfCallback] ERROR: Couldn't get transform!");
+    ROS_ERROR("%s", ex.what());
+  }
+
+  eePose.resize(7);
+  eePose.head(3) << tf_ee_wrt_world.getOrigin().x(), 
+                        tf_ee_wrt_world.getOrigin().y(), 
+                        tf_ee_wrt_world.getOrigin().z();
+  eePose.tail(4) << Eigen::Quaternion<scalar_t>(tf_ee_wrt_world.getRotation().w(), 
+                                                    tf_ee_wrt_world.getRotation().x(), 
+                                                    tf_ee_wrt_world.getRotation().y(), 
+                                                    tf_ee_wrt_world.getRotation().z()).coeffs();
+  
+  std::cout << "[MobileManipulatorInterface::main] eeFrame: " << eeFrame << std::endl;
+  std::cout << "[MobileManipulatorInterface::main] eePose.x: " << eePose(0) << std::endl;
+  std::cout << "[MobileManipulatorInterface::main] eePose.y: " << eePose(1) << std::endl;
+  std::cout << "[MobileManipulatorInterface::main] eePose.z: " << eePose(2) << std::endl;
+  std::cout << "[MobileManipulatorInterface::main] eePose.qx: " << eePose(3) << std::endl;
+  std::cout << "[MobileManipulatorInterface::main] eePose.qy: " << eePose(4) << std::endl;
+  std::cout << "[MobileManipulatorInterface::main] eePose.qz: " << eePose(5) << std::endl;
+  std::cout << "[MobileManipulatorInterface::main] eePose.qw: " << eePose(6) << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -562,6 +660,7 @@ void MobileManipulatorInterface::runMRT()
   OptimalControlProblem ocp = ocp_;
   std::shared_ptr<ReferenceManager> referenceManagerPtr = referenceManagerPtr_;
 
+  getEEPose(currentTarget_);
   size_t modelModeInt = initModelModeInt_;
   int iter = 0;
   while (ros::ok() && ros::master::check())
@@ -639,10 +738,10 @@ void MobileManipulatorInterface::runMRT()
 
     // initial command
     mrtTimer7_.startTimer();
-    vector_t initTarget(7);
-    //initTarget.head(3) << -0.2, 0, 1.0;
-    //initTarget.tail(4) << Eigen::Quaternion<scalar_t>(1, 0, 0, 0).coeffs();
-    mrt_loop.getInitTarget(initTarget);   
+    //vector_t initTarget(7);
+    currentTarget_.head(3) << -0.2, 0, 1.0;
+    currentTarget_.tail(4) << Eigen::Quaternion<scalar_t>(1, 0, 0, 0).coeffs();
+    //getEEPose(currentTarget_);   
     mrtTimer7_.endTimer();
 
     // Run mrt_loop
@@ -679,7 +778,8 @@ void MobileManipulatorInterface::runMRT()
     std::cout << "\n###   Average : " << mrtTimer7_.getAverageInMilliseconds() << "[ms].";
     std::cout << "\n###   Latest  : " << mrtTimer7_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
 
-    mrt_loop.run(initTarget);
+    vector_t currentTarget = currentTarget_;
+    mrt_loop.run(currentTarget);
     
     modelModeInt = mrt.getModelModeInt();
 

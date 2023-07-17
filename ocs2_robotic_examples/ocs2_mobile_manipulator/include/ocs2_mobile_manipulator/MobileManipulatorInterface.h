@@ -231,6 +231,8 @@ class MobileManipulatorInterface final : public RobotInterface
 
     void launchNodes(ros::NodeHandle& nodeHandle);
 
+    void getEEPose(vector_t& eePose);
+
     void runMPC();
 
     void runMRT();
@@ -247,11 +249,13 @@ class MobileManipulatorInterface final : public RobotInterface
     std::unique_ptr<StateCost> getExtCollisionConstraint(const std::string& prefix);
 
     ros::NodeHandle nodeHandle_;
+    tf::TransformListener tfListener_;
 
     const std::string taskFile_;
     const std::string libraryFolder_;
     const std::string urdfFile_;
     std::string robotModelName_ = "mobile_manipulator";
+    std::string worldFrameName_ = "world";
 
     size_t initModelModeInt_ = 2;
 
@@ -292,6 +296,8 @@ class MobileManipulatorInterface final : public RobotInterface
     //MPC_ROS_Interface mpcNode_;
     //MPC_ROS_Interface mpcNodeNext_;
 
+    vector_t currentTarget_;
+
     benchmark::RepeatedTimer mpcTimer1_;
     benchmark::RepeatedTimer mpcTimer2_;
     benchmark::RepeatedTimer mpcTimer3_;
@@ -309,7 +315,8 @@ class MobileManipulatorInterface final : public RobotInterface
     benchmark::RepeatedTimer mrtTimer6_;
     benchmark::RepeatedTimer mrtTimer7_;
 
-    ros::Subscriber modelModeSubscriber_;
+    //ros::Subscriber modelModeSubscriber_;
+    ros::Subscriber targetTrajectoriesSubscriber_;
 };
 
 }  // namespace mobile_manipulator
