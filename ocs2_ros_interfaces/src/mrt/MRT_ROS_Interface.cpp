@@ -103,6 +103,14 @@ bool MRT_ROS_Interface::getShutDownFlag()
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+void MRT_ROS_Interface::setShutDownFlag(bool shutDownFlag)
+{
+  shutDownFlag_ = shutDownFlag;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 void MRT_ROS_Interface::setCurrentObservation(const SystemObservation& currentObservation) 
 {
   //std::cout << "[MRT_ROS_Interface::setCurrentObservation] START" << std::endl;
@@ -321,8 +329,9 @@ void MRT_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
   ops.transport_hints = mrtTransportHints_;
   mpcPolicySubscriber_ = nodeHandle.subscribe(ops);
 
-  std::cout << "[MRT_ROS_Interface::launchNodes] modelModeCallback: " << topicPrefix_ + "_model_mode" << std::endl;
+  //std::cout << "[MRT_ROS_Interface::launchNodes] modelModeCallback: " << topicPrefix_ + "_model_mode" << std::endl;
   // Subscribe Model Mode
+  /*
   auto modelModeCallback = [this](const std_msgs::UInt8::ConstPtr& msg) 
   {
     std::cout << "[MRT_ROS_Interface::launchNodes] START" << std::endl;
@@ -341,6 +350,7 @@ void MRT_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
     statusModelModeMRTPublisher_.publish(statusModelModeMRTMsg_);
   };
   modelModeSubscriber_ = nodeHandle.subscribe<std_msgs::UInt8>(topicPrefix_ + "_model_mode", 1, modelModeCallback);
+  */
 
   // Service client to reset MPC 
   mpcResetServiceClient_ = nodeHandle.serviceClient<ocs2_msgs::reset>(topicPrefix_ + "_mpc_reset");

@@ -82,6 +82,10 @@ class MPC_ROS_Interface
 
     int getModelModeInt();
 
+    bool getMPCLaunchReadyFlag();
+
+    void setMPCLaunchReadyFlag(bool mpcLaunchReadyFlag);
+
     /**
      * Set the Esdf Caching Server
      */
@@ -173,6 +177,7 @@ class MPC_ROS_Interface
     MPC_BASE& mpc_;
 
     bool shutDownFlag_ = false;
+    bool mpcLaunchReadyFlag_ = false;
 
     // 0: baseMotion
     // 0: armMotion
@@ -182,6 +187,8 @@ class MPC_ROS_Interface
     // 0: Not Ready (In process of switching, old modelMode is in use)
     // 1: Ready
     std_msgs::Bool statusModelModeMPCMsg_;
+
+    bool mpcProblemReadyFlag_ = false;
 
     std::string topicPrefix_;
 

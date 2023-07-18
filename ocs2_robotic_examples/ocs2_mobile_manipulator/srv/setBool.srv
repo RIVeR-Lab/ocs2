@@ -1,0 +1,5 @@
+# Request setting value
+bool val
+---
+# Result boolean
+bool success

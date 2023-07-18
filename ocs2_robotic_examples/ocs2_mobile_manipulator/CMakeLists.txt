@@ -6,6 +6,9 @@ project(ocs2_mobile_manipulator)
 add_compile_options(-std=c++14)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
+  message_generation
+  std_msgs
+  geometry_msgs
   ocs2_core
   ocs2_ddp
   ocs2_mpc
@@ -37,6 +40,19 @@ pkg_check_modules(pinocchio REQUIRED pinocchio)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
+## Generate services in the 'srv' folder
+add_service_files(
+  FILES
+  setBool.srv
+)
+
+## Generate added messages and services with any dependencies listed here
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  geometry_msgs
+)
+
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -49,6 +65,7 @@ catkin_package(
     ${PROJECT_NAME}
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
+    message_runtime
   DEPENDS
     Boost
     pinocchio

@@ -168,6 +168,10 @@ class MRT_ROS_Gazebo_Loop
     sensor_msgs::JointState jointStateMsg_;
     control_msgs::JointTrajectoryControllerState jointTrajectoryControllerStateMsg_;
 
+    bool shutDownFlag_ = false;
+    bool mpcProblemReadyFlag_ = false;
+    bool mrtExitFlag_ = true;
+
     benchmark::RepeatedTimer timer1_;
     benchmark::RepeatedTimer timer2_;
 

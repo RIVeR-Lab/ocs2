@@ -91,6 +91,8 @@ class MRT_ROS_Interface : public MRT_BASE
 
     bool getShutDownFlag();
 
+    void setShutDownFlag(bool shutDownFlag);
+
     /**
      * Shut down the ROS nodes.
      */

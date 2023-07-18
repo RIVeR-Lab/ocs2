@@ -356,8 +356,13 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
 
   ros::Rate simRate(mrtDesiredFrequency_);
 
-  while (ros::ok() && ros::master::check() && !mrt_.getShutDownFlag()) 
+  while (ros::ok() && ros::master::check() && !shutDownFlag_) 
   {
+    mrtExitFlag_ = false;
+    //publishMRTExitFlag();
+    
+    //setenv("mrtExitFlag", "false", 1);
+    //std::cout << "[GLOBAL ENVIRONMENT] MRT_FLAG: " << getenv("mpcProblemReadyFlag") << std::endl;
     //std::cout << "[OCS2_MRT_Loop::mrtLoop] shutDownFlag: " << mrt_.getShutDownFlag() << std::endl;
 
     //robotModelInfo_ = mrt_.getRobotModelInfo();
@@ -402,10 +407,24 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
 
     ros::spinOnce();
     simRate.sleep();
+
+
+    //std::string a = getenv("mpcProblemReadyFlag");
+    //// NUA NOTE: mpcProblemReadyFlag_ should be updated by callback!
+    if (mpcProblemReadyFlag_)
+    {
+      shutDownFlag_ = true;
+      //mrt_.setShutDownFlag(true);
+    }
   }
   mrt_.shutdownNodes();
-  linkStateSub_.shutdown();
-  tfSub_.shutdown();
+  
+  mrtExitFlag_ = true;
+  //publishMRTExitFlag();
+
+  //setenv("mrtExitFlag", "true", 1);
+  //linkStateSub_.shutdown();
+  //tfSub_.shutdown();
   std::cout << "[OCS2_MRT_Loop::mrtLoop] END" << std::endl;
 }
 

@@ -105,6 +105,22 @@ int MPC_ROS_Interface::getModelModeInt()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+bool MPC_ROS_Interface::getMPCLaunchReadyFlag()
+{
+  return mpcLaunchReadyFlag_;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MPC_ROS_Interface::setMPCLaunchReadyFlag(bool mpcLaunchReadyFlag)
+{
+  mpcLaunchReadyFlag_ = mpcLaunchReadyFlag;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 /*
 void MPC_ROS_Interface::setEsdfCachingServer(std::shared_ptr<voxblox::EsdfCachingServer> new_esdfCachingServerPtr)
 {
@@ -336,11 +352,20 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
     return;
   }
 
-  if (shutDownFlag_)
+  //std::string a = getenv("mpcProblemReadyFlag");
+  //// NUA NOTE: mpcProblemReadyFlag_ should be updated by callback!
+  if (mpcProblemReadyFlag_)
   {
-    mpcObservationSubscriber_.shutdown();
     shutdownNode();
+    //std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] AFTER shutdownNode: " << std::endl;
   }
+  /*
+  else
+  {
+    std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] NO shutdownNode: " << std::endl;
+    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] mpcProblemReadyFlag: " << getenv("mpcProblemReadyFlag") << std::endl;
+  }
+  */
 
   // current time, state, input, and subsystem
   const auto currentObservation = ros_msg_conversions::readObservationMsg(*msg);
@@ -418,6 +443,8 @@ void MPC_ROS_Interface::shutdownNode()
 {
   std::cout << "[MPC_ROS_Interface::shutdownNode] START" << std::endl;
 
+  shutDownFlag_ =  true;
+
 #ifdef PUBLISH_THREAD
   ROS_INFO_STREAM("Shutting down workers ...");
 
@@ -445,7 +472,7 @@ void MPC_ROS_Interface::shutdownNode()
 //-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::spin() 
 {
-  ROS_INFO_STREAM("[MPC_ROS_Interface::spin] Start spinning now ...");
+  ROS_INFO_STREAM("[MPC_ROS_Interface::spin] Start spinning now...");
   // Equivalent to ros::spin() + check if master is alive
   while (ros::ok() && ros::master::check() && !shutDownFlag_) 
   {
@@ -468,6 +495,7 @@ void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
                                                    ros::TransportHints().tcpNoDelay());
 
   // Subscribe Model Mode
+  /*
   auto modelModeCallback = [this](const std_msgs::UInt8::ConstPtr& msg) 
   {
     std::cout << "[MPC_ROS_Interface::launchNodes] START" << std::endl;
@@ -478,11 +506,13 @@ void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
     std::cout << "" << std::endl;
 
     shutDownFlag_ = true;
+    mpcLaunchReadyFlag_ = false;
 
     statusModelModeMPCMsg_.data = false;
     statusModelModeMPCPublisher_.publish(statusModelModeMPCMsg_);
   };
   modelModeSubscriber_ = nodeHandle.subscribe<std_msgs::UInt8>(topicPrefix_ + "_model_mode", 1, modelModeCallback);
+  */
 
   // Publish MPC Policy
   mpcPolicyPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_flattened_controller>(topicPrefix_ + "_mpc_policy", 1, true);
@@ -502,6 +532,8 @@ void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
   statusModelModeMPCMsg_.data = true;
   statusModelModeMPCPublisher_.publish(statusModelModeMPCMsg_);
 
+  mpcLaunchReadyFlag_ = true;
+
   // spin
   spin();
 }
@@ -512,8 +544,11 @@ void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
 void MPC_ROS_Interface::run() 
 {
   std::cout << "[MPC_ROS_Interface::run] START" << std::endl;
+
+  std::cout << "[MPC_ROS_Interface::run] DEBUG INF LOOP!" << std::endl;
+  while(1);
   
-  while (ros::ok() && ros::master::check() && !shutDownFlag_)
+  while (ros::ok() && ros::master::check())
   {
     std::lock_guard<std::mutex> resetLock(resetMutex_);
 

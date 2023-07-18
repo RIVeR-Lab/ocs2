@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.13
+// LAST UPDATE: 2023.07.18
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -20,7 +20,7 @@
 #include <pinocchio/fwd.hpp>  // forward declarations must be included first. NUA NOTE: WHY?
 #include <pinocchio/multibody/joint/joint-composite.hpp>
 #include <pinocchio/multibody/model.hpp>
-
+#include <cstdlib>
 //#include <voxblox/interpolator/interpolator.h>
 
 // OCS2
@@ -30,7 +30,7 @@
 #include <ocs2_core/penalties/Penalties.h>
 #include <ocs2_core/soft_constraint/StateInputSoftBoxConstraint.h>
 #include <ocs2_core/soft_constraint/StateSoftConstraint.h>
-#include "ocs2_core/dynamics/MultiModelFunctions.h"
+#include <ocs2_core/dynamics/MultiModelFunctions.h>
 
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
@@ -66,6 +66,8 @@
 #include "ocs2_mobile_manipulator/dynamics/RobotArmDynamics.h"
 #include "ocs2_mobile_manipulator/dynamics/MobileManipulatorDynamics.h"
 #include <ocs2_mobile_manipulator/MobileManipulatorVisualization.h>
+
+#include "ocs2_mobile_manipulator/setBool.h"
 
 namespace ocs2 {
 namespace mobile_manipulator {
@@ -227,11 +229,22 @@ class MobileManipulatorInterface final : public RobotInterface
     }
     */
 
-    void modelModeCallback(const std_msgs::UInt8::ConstPtr& msg);
+    //void modelModeCallback(const std_msgs::UInt8::ConstPtr& msg);
+
+    //void mpcModeSwitchCountCallback(const std_msgs::UInt8::ConstPtr& msg);
 
     void launchNodes(ros::NodeHandle& nodeHandle);
 
     void getEEPose(vector_t& eePose);
+
+    //void setMPCModeSwitchCountPublisher();
+
+    //void setMPCModeSwitchCountSubscriber();
+
+    //void publishMPCModeSwitchCount();
+
+    bool setMPCProblemReadyFlagSrv(ocs2_mobile_manipulator::setBool::Request &req, 
+                                   ocs2_mobile_manipulator::setBool::Response &res);
 
     void runMPC();
 
@@ -259,8 +272,23 @@ class MobileManipulatorInterface final : public RobotInterface
 
     size_t initModelModeInt_ = 2;
 
+    //int modeSwitchCount_ = 0;
+    //int mpcModeSwitchCount_ = 0;
+    //int mrtModeSwitchCount_ = 0;
+
+    bool mpcProblemReadyFlag_ = false;
+    bool mrtExitFlag_ = true;
+    bool mpcLaunchReadyFlag_ = false;
+
+    //int mpcProblemReadyFlag_ = setenv("mpcProblemReadyFlag", "false", 1);
+    //int mrtExitFlag_ = setenv("mrtExitFlag", "true", 1);
+    //int mpcLaunchReadyFlag_ = setenv("mpcLaunchReadyFlag", "false", 1);
+
+    //bool mpcReadyNextFlag_ = false;
+    //bool mpcLaunchReadyFlag_ = false;
+    //bool mrtReadyNextFlag_ = false;
+
     bool printOutFlag_ = false;
-    bool mpcProblemNextFlag_ = false;
     bool usePreComputation_;
     bool recompileLibraries_;
     bool activateSelfCollision_;
@@ -315,8 +343,11 @@ class MobileManipulatorInterface final : public RobotInterface
     benchmark::RepeatedTimer mrtTimer6_;
     benchmark::RepeatedTimer mrtTimer7_;
 
-    //ros::Subscriber modelModeSubscriber_;
+    ros::Subscriber modelModeSubscriber_;
     ros::Subscriber targetTrajectoriesSubscriber_;
+    //ros::Subscriber mpcModeSwitchCountSubscriber_;
+
+    //ros::Publisher mpcModeSwitchCountPublisher_;
 };
 
 }  // namespace mobile_manipulator
