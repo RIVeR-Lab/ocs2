@@ -82,9 +82,11 @@ class MPC_ROS_Interface
 
     int getModelModeInt();
 
-    bool getMPCLaunchReadyFlag();
+    void setModelModeInt(int modelModeInt);
 
-    void setMPCLaunchReadyFlag(bool mpcLaunchReadyFlag);
+    //bool getMPCLaunchReadyFlag();
+
+    //void setMPCLaunchReadyFlag(bool mpcLaunchReadyFlag);
 
     /**
      * Set the Esdf Caching Server
@@ -177,24 +179,24 @@ class MPC_ROS_Interface
     MPC_BASE& mpc_;
 
     bool shutDownFlag_ = false;
-    bool mpcLaunchReadyFlag_ = false;
+    //bool mpcLaunchReadyFlag_ = false;
 
     // 0: baseMotion
-    // 0: armMotion
-    // 0: wholeBodyMotion
+    // 1: armMotion
+    // 2: wholeBodyMotion
     int modelModeInt_ = 2;
 
     // 0: Not Ready (In process of switching, old modelMode is in use)
     // 1: Ready
     std_msgs::Bool statusModelModeMPCMsg_;
 
-    bool mpcProblemReadyFlag_ = false;
+    std::string mpcShutDownFlag_;
 
     std::string topicPrefix_;
 
     ocs2::SystemObservation currentObservation_;
 
-    std::shared_ptr<ros::NodeHandle> nodeHandlerPtr_;
+    //std::shared_ptr<ros::NodeHandle> nodeHandlerPtr_;
 
     //std::shared_ptr<voxblox::EsdfCachingServer> esdfCachingServerPtr_;
     //std::shared_ptr<ExtMapUtility> emuPtr_;

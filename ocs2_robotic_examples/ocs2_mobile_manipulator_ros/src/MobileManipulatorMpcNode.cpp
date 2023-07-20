@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.13
+// LAST UPDATE: 2023.07.20
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -93,8 +93,8 @@ int main(int argc, char** argv)
 
   // Robot interface
   std::cout << "[MobileManipulatorMpcNode::main] START INIT interface" << std::endl;
-  MobileManipulatorInterface interface(taskFile, libFolder, urdfFile, pointsAndRadii);
-  interface.setNodeHandle(nodeHandle);
+  MobileManipulatorInterface interface(nodeHandle, taskFile, libFolder, urdfFile, pointsAndRadii);
+  //interface.setNodeHandle(nodeHandle);
 
   interface.runMPC();
 

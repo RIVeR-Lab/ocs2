@@ -93,7 +93,7 @@ int main(int argc, char** argv)
 
   // Robot Interface
   //std::cout << "[MobileManipulatorGazeboMRT::main] BEFORE MobileManipulatorInterface" << std::endl;
-  MobileManipulatorInterface interface(taskFile, libFolder, urdfFile, pointsAndRadii);
+  MobileManipulatorInterface interface(nodeHandle, taskFile, libFolder, urdfFile, pointsAndRadii);
   //std::cout << "[MobileManipulatorGazeboMRT::main] AFTER MobileManipulatorInterface" << std::endl;
 
   interface.runMRT();

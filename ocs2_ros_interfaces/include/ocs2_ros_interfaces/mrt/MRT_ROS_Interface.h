@@ -112,7 +112,7 @@ class MRT_ROS_Interface : public MRT_BASE
      * Launches the ROS publishers and subscribers to communicate with the MPC node.
      * @param nodeHandle
      */
-    void launchNodes(::ros::NodeHandle& nodeHandle);
+    void launchNodes(ros::NodeHandle& nodeHandle);
 
     void setCurrentObservation(const SystemObservation& currentObservation) override;
 

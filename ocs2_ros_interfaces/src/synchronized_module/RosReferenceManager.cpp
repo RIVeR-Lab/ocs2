@@ -71,10 +71,11 @@ void RosReferenceManager::subscribe(ros::NodeHandle& nodeHandle)
   // TargetTrajectories
   auto targetTrajectoriesCallback = [this](const ocs2_msgs::mpc_target_trajectories::ConstPtr& msg) 
   {
-    std::cout << "[RosReferenceManager::subscribe::targetTrajectoriesCallback] START" << std::endl;
+    //std::cout << "[RosReferenceManager::subscribe::targetTrajectoriesCallback] START" << std::endl;
 
     auto targetTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(*msg);
 
+    /*
     std::cout << "[RosReferenceManager::subscribe::targetTrajectoriesCallback] timeTrajectory size: " << targetTrajectories.timeTrajectory.size() << std::endl;
     for (size_t i = 0; i < targetTrajectories.timeTrajectory.size(); i++)
     {
@@ -94,13 +95,13 @@ void RosReferenceManager::subscribe(ros::NodeHandle& nodeHandle)
     {
       std::cout << i << " -> " << targetTrajectories.inputTrajectory[0][i] << std::endl;
     }
-
     std::cout << "[RosReferenceManager::subscribe::targetTrajectoriesCallback] targetTrajectories size: " << std::endl;
+    */
 
     referenceManagerPtr_->setTargetTrajectories(std::move(targetTrajectories));
 
-    std::cout << "[RosReferenceManager::subscribe::targetTrajectoriesCallback] END" << std::endl;
-    std::cout << "" << std::endl;
+    //std::cout << "[RosReferenceManager::subscribe::targetTrajectoriesCallback] END" << std::endl;
+    //std::cout << "" << std::endl;
   };
   targetTrajectoriesSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mpc_target_trajectories>(topicPrefix_ + "_mpc_target", 1, targetTrajectoriesCallback);
 

@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.18
+// LAST UPDATE: 2023.07.19
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -95,7 +95,14 @@ class MobileManipulatorInterface final : public RobotInterface
                                const std::string& libraryFolder, 
                                const std::string& urdfFile,
                                PointsOnRobot::points_radii_t pointsAndRadii = std::vector<std::vector<std::pair<double, double>>>(),
-                               int modelModeInt=2);
+                               int initModelModeInt=2);
+
+    MobileManipulatorInterface(ros::NodeHandle& nodeHandle,
+                               const std::string& taskFile, 
+                               const std::string& libraryFolder, 
+                               const std::string& urdfFile,
+                               PointsOnRobot::points_radii_t pointsAndRadii = std::vector<std::vector<std::pair<double, double>>>(),
+                               int initModelModeInt=2);
 
     /*
     const vector_t& getInitialState()
@@ -237,19 +244,49 @@ class MobileManipulatorInterface final : public RobotInterface
 
     void getEEPose(vector_t& eePose);
 
+    void getTargetPose(vector_t& targetPose);
+
     //void setMPCModeSwitchCountPublisher();
 
     //void setMPCModeSwitchCountSubscriber();
 
     //void publishMPCModeSwitchCount();
 
+    /*
+    bool setMPCInitReadyFlag(bool val);
+
+    bool setMRTInitReadyFlag(bool val);
+
+    bool setMPCProblemReadyFlag(bool val);
+
+    bool setMRTExitFlag(bool val);
+    
+    bool setMPCLaunchReadyFlag(bool val);
+
+    bool setMPCInitReadyFlagSrv(ocs2_mobile_manipulator::setBool::Request &req, 
+                                ocs2_mobile_manipulator::setBool::Response &res);
+
+    bool setMRTInitReadyFlagSrv(ocs2_mobile_manipulator::setBool::Request &req, 
+                                ocs2_mobile_manipulator::setBool::Response &res);
+
     bool setMPCProblemReadyFlagSrv(ocs2_mobile_manipulator::setBool::Request &req, 
                                    ocs2_mobile_manipulator::setBool::Response &res);
+
+    bool setMRTExitFlagSrv(ocs2_mobile_manipulator::setBool::Request &req, 
+                           ocs2_mobile_manipulator::setBool::Response &res);
+
+    bool setMPCLaunchReadyFlagSrv(ocs2_mobile_manipulator::setBool::Request &req, 
+                                  ocs2_mobile_manipulator::setBool::Response &res);
+    */
 
     void runMPC();
 
     void runMRT();
 
+    void mpcCallback(const ros::TimerEvent& event);
+
+    void mrtCallback(const ros::TimerEvent& event);
+  
   private:
     std::unique_ptr<StateInputCost> getQuadraticInputCost();
 
@@ -264,23 +301,33 @@ class MobileManipulatorInterface final : public RobotInterface
     ros::NodeHandle nodeHandle_;
     tf::TransformListener tfListener_;
 
+    ros::Timer mpcTimer_;
+    ros::Timer mrtTimer_;
+
     const std::string taskFile_;
     const std::string libraryFolder_;
     const std::string urdfFile_;
     std::string robotModelName_ = "mobile_manipulator";
     std::string worldFrameName_ = "world";
+    std::string targetFrameName_ = "grasp";
 
     size_t initModelModeInt_ = 2;
+
+    int mpcIter_ = 0; 
+    int mrtIter_ = 0; 
 
     //int modeSwitchCount_ = 0;
     //int mpcModeSwitchCount_ = 0;
     //int mrtModeSwitchCount_ = 0;
 
-    bool mpcProblemReadyFlag_ = false;
+    //bool mpcInitReadyFlag_ = false;
+    //bool mrtInitReadyFlag_ = false;
+    //bool mpcProblemReadyFlag_ = false;
     bool mrtExitFlag_ = true;
     bool mpcLaunchReadyFlag_ = false;
 
-    //int mpcProblemReadyFlag_ = setenv("mpcProblemReadyFlag", "false", 1);
+    int mpcShutDownEnvStatus_ = setenv("mpcShutDownFlag", "false", 1);
+    int mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "false", 1);
     //int mrtExitFlag_ = setenv("mrtExitFlag", "true", 1);
     //int mpcLaunchReadyFlag_ = setenv("mpcLaunchReadyFlag", "false", 1);
 
@@ -348,6 +395,18 @@ class MobileManipulatorInterface final : public RobotInterface
     //ros::Subscriber mpcModeSwitchCountSubscriber_;
 
     //ros::Publisher mpcModeSwitchCountPublisher_;
+
+    //ros::ServiceServer setMPCInitReadyFlagService_;
+    //ros::ServiceServer setMRTInitReadyFlagService_;
+    //ros::ServiceServer setMPCProblemReadyFlagService_;
+    //ros::ServiceServer setMRTExitFlagService_;
+    //ros::ServiceServer setMPCLaunchReadyFlagService_;
+
+    //ros::ServiceClient setMPCInitReadyFlagClient_;
+    //ros::ServiceClient setMRTInitReadyFlagClient_;
+    //ros::ServiceClient setMPCProblemReadyFlagClient_;
+    //ros::ServiceClient setMRTExitFlagClient_;
+    //ros::ServiceClient setMPCLaunchReadyFlagClient_;
 };
 
 }  // namespace mobile_manipulator

@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.14
+// LAST UPDATE: 2023.07.19
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -26,6 +26,8 @@
 #include "ocs2_ros_interfaces/mrt/DummyObserver.h"
 #include "ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h"
 //#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
+
+//#include "ocs2_mobile_manipulator/setBool.h"
 
 namespace ocs2 {
 
@@ -169,8 +171,9 @@ class MRT_ROS_Gazebo_Loop
     control_msgs::JointTrajectoryControllerState jointTrajectoryControllerStateMsg_;
 
     bool shutDownFlag_ = false;
-    bool mpcProblemReadyFlag_ = false;
-    bool mrtExitFlag_ = true;
+    std::string mrtShutDownFlag_;
+    //bool mpcProblemReadyFlag_ = false;
+    //bool mrtExitFlag_ = true;
 
     benchmark::RepeatedTimer timer1_;
     benchmark::RepeatedTimer timer2_;
@@ -183,6 +186,8 @@ class MRT_ROS_Gazebo_Loop
 
     ros::Publisher baseTwistPub_;
     ros::Publisher armJointTrajectoryPub_;
+
+    //ros::ServiceClient setMPCProblemReadyFlagClient_;
 };
 
 }  // namespace ocs2

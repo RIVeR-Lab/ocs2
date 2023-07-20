@@ -92,6 +92,8 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   //armJoint5TrajectoryPub_ = nh.advertise<std_msgs::Float64>("/joint_5_position_controller/command", 1);
   //armJoint6TrajectoryPub_ = nh.advertise<std_msgs::Float64>("/joint_6_position_controller/command", 1);
 
+  //setMPCProblemReadyFlagClient_ = nh.serviceClient<ocs2_mobile_manipulator::setBool>("setMPCProblemReadyFlagSrv");
+
   if (mrtDesiredFrequency_ < 0) 
   {
     throw std::runtime_error("[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] Error: MRT loop frequency should be a positive number!");
@@ -104,12 +106,12 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
 
   timer1_.endTimer();
 
-  std::cout << '\n';
-  std::cout << "\n### MRT_ROS Benchmarking timer1_";
+  std::cout << "\n### [MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] MRT_ROS Benchmarking";
+  std::cout << "\n### timer1_";
   std::cout << "\n###   Maximum : " << timer1_.getMaxIntervalInMilliseconds() << "[ms].";
   std::cout << "\n###   Average : " << timer1_.getAverageInMilliseconds() << "[ms].";
   std::cout << "\n###   Latest  : " << timer1_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
-  std::cout << "\n### MRT_ROS Benchmarking timer2_";
+  std::cout << "\n### timer2_";
   std::cout << "\n###   Maximum : " << timer2_.getMaxIntervalInMilliseconds() << "[ms].";
   std::cout << "\n###   Average : " << timer2_.getAverageInMilliseconds() << "[ms].";
   std::cout << "\n###   Latest  : " << timer2_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
@@ -170,9 +172,17 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
     ros::spinOnce();
   }
 
-  ROS_INFO_STREAM("[MRT_ROS_Gazebo_Loop::run] BEFORE getCurrentObservation");
+  //ROS_INFO_STREAM("[MRT_ROS_Gazebo_Loop::run] BEFORE getCurrentObservation");
 
   SystemObservation initObservation = getCurrentObservation(true);
+
+  std::cout << "[MRT_ROS_Gazebo_Loop::run] BEFORE currentTarget size: " << initTarget.size() << std::endl;
+  for (size_t i = 0; i < initTarget.size(); i++)
+  {
+    std::cout << i << " -> " << initTarget[i] << std::endl;
+  }
+  std::cout << "------------" << std::endl;
+
   const TargetTrajectories initTargetTrajectories({0}, {initTarget}, {initObservation.input});
 
   // Reset MPC node
@@ -197,7 +207,7 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
 
   mrtLoop();
 
-  std::cout << "[MRT_ROS_Gazebo_Loop::run] END" << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::run] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -344,26 +354,28 @@ SystemObservation MRT_ROS_Gazebo_Loop::forwardSimulation(const SystemObservation
 //-------------------------------------------------------------------------------------------------------
 void MRT_ROS_Gazebo_Loop::mrtLoop() 
 {
-  std::cout << "[OCS2_MRT_Loop::mrtLoop] START" << std::endl;
+  //std::cout << "[OCS2_MRT_Loop::mrtLoop] START" << std::endl;
 
   // Loop variables
   SystemObservation currentObservation;
   SystemObservation targetObservation;
   PrimalSolution currentPolicy;
 
+  shutDownFlag_ = false;
+
   // Update the policy
   mrt_.updatePolicy();
 
   ros::Rate simRate(mrtDesiredFrequency_);
 
-  while (ros::ok() && ros::master::check() && !shutDownFlag_) 
+  while (!shutDownFlag_ && ros::ok() && ros::master::check()) 
   {
-    mrtExitFlag_ = false;
+    //mrtExitFlag_ = false;
     //publishMRTExitFlag();
     
     //setenv("mrtExitFlag", "false", 1);
     //std::cout << "[GLOBAL ENVIRONMENT] MRT_FLAG: " << getenv("mpcProblemReadyFlag") << std::endl;
-    //std::cout << "[OCS2_MRT_Loop::mrtLoop] shutDownFlag: " << mrt_.getShutDownFlag() << std::endl;
+    //std::cout << "[OCS2_MRT_Loop::mrtLoop] shutDownFlag: " << shutDownFlag_ << std::endl;
 
     //robotModelInfo_ = mrt_.getRobotModelInfo();
     //std::cout << "---------------" << std::endl;
@@ -371,7 +383,7 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
 
     mrt_.reset();
 
-    while (!mrt_.initialPolicyReceived() && ros::ok() && ros::master::check()) 
+    while (!shutDownFlag_ && !mrt_.initialPolicyReceived() && ros::ok() && ros::master::check()) 
     {
       //std::cout << "[OCS2_MRT_Loop::mrtLoop] START spinMRT" << std::endl;
       mrt_.spinMRT();
@@ -381,46 +393,78 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
 
       // Set current observation
       mrt_.setCurrentObservation(currentObservation);
+
+      mrtShutDownFlag_ = getenv("mrtShutDownFlag");
+      //std::cout << "[MPC_ROS_Interface::spin] mrtShutDownFlag_: " << mrtShutDownFlag_ << std::endl;
+
+      if (mrtShutDownFlag_ == "true")
+      {
+        //std::cout << "[OCS2_MRT_Loop::spin] CMOOOOOOOOOOOOOOOOOON: " << std::endl;
+        shutDownFlag_ = true;
+      }
+
+      //shutDownFlag_ = mrt_.getShutDownFlag();
+
+      //std::cout << "[OCS2_MRT_Loop::mrtLoop] END spinMRT" << std::endl;
     }
 
-    //std::cout << "[OCS2_MRT_Loop::mrtLoop] START updatePolicy" << std::endl;
-    // Update the policy if a new one was received
-    mrt_.updatePolicy();
-    currentPolicy = mrt_.getPolicy();
-    currentInput_ = currentPolicy.getDesiredInput(time_);
-
-    //std::cout << "[OCS2_MRT_Loop::mrtLoop] START observer" << std::endl;
-    // Update observers for visualization
-    for (auto& observer : observers_) 
+    if (!shutDownFlag_)
     {
-      observer->update(currentObservation, currentPolicy, mrt_.getCommand());
+      //std::cout << "[OCS2_MRT_Loop::mrtLoop] START updatePolicy" << std::endl;
+      // Update the policy if a new one was received
+      mrt_.updatePolicy();
+      currentPolicy = mrt_.getPolicy();
+      currentInput_ = currentPolicy.getDesiredInput(time_);
+
+      //std::cout << "[OCS2_MRT_Loop::mrtLoop] START observer" << std::endl;
+      // Update observers for visualization
+      //for (auto& observer : observers_) 
+      //{
+      //  observer->update(currentObservation, currentPolicy, mrt_.getCommand());
+      //}
+
+      //std::cout << "[OCS2_MRT_Loop::mrtLoop] START publishCommand" << std::endl;
+      // Publish the control command 
+      publishCommand(currentPolicy);
+
+      time_ += dt_;
+
+      //shutDownFlag_ = mrt_.getShutDownFlag();
+
+      ros::spinOnce();
+      simRate.sleep();
     }
+    
+    mrtShutDownFlag_ = getenv("mrtShutDownFlag");
+    //std::cout << "[OCS2_MRT_Loop::mrtLoop] mrtShutDownFlag_: " << mrtShutDownFlag_ << std::endl;
 
-    //std::cout << "[OCS2_MRT_Loop::mrtLoop] START publishCommand" << std::endl;
-    // Publish the control command 
-    publishCommand(currentPolicy);
-
-    time_ += dt_;
-
-    //std::cout << "[OCS2_MRT_Loop::mrtLoop] END while" << std::endl;
-    //std::cout << "---------------" << std::endl << std::endl;
-
-    ros::spinOnce();
-    simRate.sleep();
-
-
-    //std::string a = getenv("mpcProblemReadyFlag");
-    //// NUA NOTE: mpcProblemReadyFlag_ should be updated by callback!
+    if (mrtShutDownFlag_ == "true")
+    {
+      //std::cout << "[OCS2_MRT_Loop::mrtLoop] CMOOOOOOOOOOOOOOOOOON: " << std::endl;
+      shutDownFlag_ = true;
+    }
+    
+    /*
     if (mpcProblemReadyFlag_)
     {
       shutDownFlag_ = true;
       //mrt_.setShutDownFlag(true);
     }
+    */
+    //std::cout << "[OCS2_MRT_Loop::mrtLoop] END while" << std::endl;
+    //std::cout << "---------------" << std::endl << std::endl;
   }
-  mrt_.shutdownNodes();
+
+  //std::cout << "[OCS2_MRT_Loop::mrtLoop] DEBUG INF" << std::endl;
+  //while(1);
+
+  //mrt_.shutdownNodes();
   
-  mrtExitFlag_ = true;
+  //mrtExitFlag_ = true;
   //publishMRTExitFlag();
+
+  //std::cout << "[OCS2_MRT_Loop::mrtLoop] DEBUG INF" << std::endl;
+  //while(1);
 
   //setenv("mrtExitFlag", "true", 1);
   //linkStateSub_.shutdown();

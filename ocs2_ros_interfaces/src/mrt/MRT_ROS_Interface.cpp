@@ -53,6 +53,7 @@ MRT_ROS_Interface::MRT_ROS_Interface(RobotModelInfo& robotModelInfo, std::string
 /******************************************************************************************************/
 MRT_ROS_Interface::~MRT_ROS_Interface() 
 {
+  std::cout << "[MRT_ROS_Interface::~MRT_ROS_Interface] SHUTTING DOWN..." << std::endl;
   shutdownNodes();
 }
 
@@ -262,8 +263,9 @@ void MRT_ROS_Interface::mpcPolicyCallback(const ocs2_msgs::mpc_flattened_control
 /******************************************************************************************************/
 void MRT_ROS_Interface::shutdownNodes() 
 {
+  std::cout << "[MRT_ROS_Interface::shutdownNodes] START" << std::endl;
 #ifdef PUBLISH_THREAD
-  ROS_INFO_STREAM("[MRT_ROS_Interface::shutdownNodes] Shutting down workers ...");
+  ROS_INFO_STREAM("[MRT_ROS_Interface::shutdownNodes] Shutting down workers...");
   shutdownPublisher();
   ROS_INFO_STREAM("[MRT_ROS_Interface::shutdownNodes] All workers are shut down.");
 #endif
@@ -274,6 +276,7 @@ void MRT_ROS_Interface::shutdownNodes()
 
   // shutdown publishers
   mpcObservationPublisher_.shutdown();
+  std::cout << "[MRT_ROS_Interface::shutdownNodes] END" << std::endl;
 }
 
 /******************************************************************************************************/
