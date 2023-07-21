@@ -57,10 +57,6 @@ class RosReferenceManager final : public ReferenceManagerDecorator
     explicit RosReferenceManager(std::string topicPrefix, 
                                  std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr);
 
-    explicit RosReferenceManager(std::string topicPrefix, 
-                                 std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr,
-                                 RobotModelInfo robotModelInfo);
-
     ~RosReferenceManager() override = default;
 
     /**
@@ -83,9 +79,9 @@ class RosReferenceManager final : public ReferenceManagerDecorator
 
   private:
     const std::string topicPrefix_;
-    RobotModelInfo robotModelInfo_;
-
-    int modelModeInt_;
+    
+    //RobotModelInfo robotModelInfo_;
+    //int modelModeInt_;
 
     ros::Subscriber modeScheduleSubscriber_;
     ros::Subscriber targetTrajectoriesSubscriber_;

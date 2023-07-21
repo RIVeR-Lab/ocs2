@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.19
+// LAST UPDATE: 2023.07.21
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -25,7 +25,6 @@
 
 using namespace ocs2;
 using namespace mobile_manipulator;
-using namespace std;
 
 int main(int argc, char** argv) 
 {
@@ -67,7 +66,7 @@ int main(int argc, char** argv)
       ROS_WARN("[MobileManipulatorNode::main] collision_points parameter is not of type array.");
     }
     
-    // NUA TODO: Get the point and radii info from task file! Also seperate base and arm!
+    //// NUA TODO: Get the point and radii info from task file! Also seperate base and arm!
     std::cout << "[MobileManipulatorNode::main] pointsAndRadii:" << std::endl;
     for (int i = 0; i < collisionPoints.size(); i++) 
     {
@@ -101,8 +100,9 @@ int main(int argc, char** argv)
   }
 
   // Robot interface
+  int initModelModeInt = 2;
   std::cout << "[MobileManipulatorNode::main] START interface" << std::endl;
-  MobileManipulatorInterface m4_interface(nh_interface, taskFile, libFolder, urdfFile, pointsAndRadii, 2);
+  MobileManipulatorInterface m4_interface(nh_interface, taskFile, libFolder, urdfFile, pointsAndRadii, initModelModeInt);
 
   double mpc_dt = 0.01;
   double mrt_dt = 0.01;

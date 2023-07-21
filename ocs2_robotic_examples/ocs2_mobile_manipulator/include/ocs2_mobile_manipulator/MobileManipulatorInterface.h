@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.19
+// LAST UPDATE: 2023.07.21
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -138,7 +138,15 @@ class MobileManipulatorInterface final : public RobotInterface
 
     const OptimalControlProblem& getOptimalControlProblem() const override 
     { 
-      return ocp_; 
+      if (mpcIter_ % 2 == 0)
+      {
+        return ocp1_;
+      }
+      else
+      {
+        return ocp2_; 
+      }
+      //return ocp_;
     }
 
     std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override 
@@ -312,28 +320,17 @@ class MobileManipulatorInterface final : public RobotInterface
     std::string targetFrameName_ = "grasp";
 
     size_t initModelModeInt_ = 2;
+    size_t modelModeIntQuery_ = 2;
 
     int mpcIter_ = 0; 
     int mrtIter_ = 0; 
 
-    //int modeSwitchCount_ = 0;
-    //int mpcModeSwitchCount_ = 0;
-    //int mrtModeSwitchCount_ = 0;
-
-    //bool mpcInitReadyFlag_ = false;
-    //bool mrtInitReadyFlag_ = false;
-    //bool mpcProblemReadyFlag_ = false;
+    bool mpcProblemReadyFlag_ = false;
     bool mrtExitFlag_ = true;
     bool mpcLaunchReadyFlag_ = false;
 
     int mpcShutDownEnvStatus_ = setenv("mpcShutDownFlag", "false", 1);
     int mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "false", 1);
-    //int mrtExitFlag_ = setenv("mrtExitFlag", "true", 1);
-    //int mpcLaunchReadyFlag_ = setenv("mpcLaunchReadyFlag", "false", 1);
-
-    //bool mpcReadyNextFlag_ = false;
-    //bool mpcLaunchReadyFlag_ = false;
-    //bool mrtReadyNextFlag_ = false;
 
     bool printOutFlag_ = false;
     bool usePreComputation_;
@@ -343,7 +340,11 @@ class MobileManipulatorInterface final : public RobotInterface
 
     ddp::Settings ddpSettings_;
     mpc::Settings mpcSettings_;
-    OptimalControlProblem ocp_;
+    
+    //OptimalControlProblem ocp_;
+    OptimalControlProblem ocp1_;
+    OptimalControlProblem ocp2_;
+    
     std::shared_ptr<ReferenceManager> referenceManagerPtr_;
     
     ocs2::rollout::Settings rolloutSettings_;
@@ -366,10 +367,6 @@ class MobileManipulatorInterface final : public RobotInterface
     /// NUA NOTE: ADDING THE REQUIRED MPC & MRT PROCESSES
     PointsOnRobot::points_radii_t pointsAndRadii_;
     std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr_;
-    //ocs2::GaussNewtonDDP_MPC mpc_;
-    //ocs2::GaussNewtonDDP_MPC mpcNext_;
-    //MPC_ROS_Interface mpcNode_;
-    //MPC_ROS_Interface mpcNodeNext_;
 
     vector_t currentTarget_;
 

@@ -48,16 +48,6 @@ RosReferenceManager::RosReferenceManager(std::string topicPrefix, std::shared_pt
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-RosReferenceManager::RosReferenceManager(std::string topicPrefix, 
-                                         std::shared_ptr<ReferenceManagerInterface> referenceManagerPtr,
-                                         RobotModelInfo robotModelInfo)
-  : ReferenceManagerDecorator(std::move(referenceManagerPtr)), 
-    topicPrefix_(std::move(topicPrefix)),
-    robotModelInfo_(robotModelInfo) {}
-
-/******************************************************************************************************/
-/******************************************************************************************************/
-/******************************************************************************************************/
 void RosReferenceManager::subscribe(ros::NodeHandle& nodeHandle) 
 {
   // ModeSchedule

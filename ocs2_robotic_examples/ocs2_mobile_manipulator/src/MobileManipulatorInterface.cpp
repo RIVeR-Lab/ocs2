@@ -23,7 +23,12 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
                                                        const std::string& urdfFile,
                                                        PointsOnRobot::points_radii_t pointsAndRadii,
                                                        int initModelModeInt)
-  : taskFile_(taskFile), libraryFolder_(libraryFolder), urdfFile_(urdfFile), pointsAndRadii_(pointsAndRadii), initModelModeInt_(initModelModeInt)
+  : taskFile_(taskFile), 
+    libraryFolder_(libraryFolder), 
+    urdfFile_(urdfFile), 
+    pointsAndRadii_(pointsAndRadii), 
+    initModelModeInt_(initModelModeInt), 
+    modelModeIntQuery_(initModelModeInt)
 {
   //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START" << std::endl;
 
@@ -160,26 +165,9 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   // Set Reference Manager
   referenceManagerPtr_.reset(new ReferenceManager);
 
-  // Set MPC Problem
-  //modelModeInt = 2;
-  //setMPCProblem(modelModeInt, pointsAndRadii);
-
-  mpcTimer2_.startTimer();
-  launchNodes(nodeHandle_);
-  mpcTimer2_.endTimer();
-
-  mpcTimer3_.startTimer();
-  setMPCProblem(initModelModeInt_, pointsAndRadii_);
-  mpcTimer3_.endTimer();
-
-  std::cout << "\n### MPC_ROS Benchmarking mpcTimer2_";
-  std::cout << "\n###   Maximum : " << mpcTimer2_.getMaxIntervalInMilliseconds() << "[ms].";
-  std::cout << "\n###   Average : " << mpcTimer2_.getAverageInMilliseconds() << "[ms].";
-  std::cout << "\n###   Latest  : " << mpcTimer2_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
-  std::cout << "\n### MPC_ROS Benchmarking mpcTimer3_";
-  std::cout << "\n###   Maximum : " << mpcTimer3_.getMaxIntervalInMilliseconds() << "[ms].";
-  std::cout << "\n###   Average : " << mpcTimer3_.getAverageInMilliseconds() << "[ms].";
-  std::cout << "\n###   Latest  : " << mpcTimer3_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+  //// NUA NOTE: Depricated...some initialization that requires node handle is omitted!
+  std::cerr << "[MobileManipulatorInterface::MobileManipulatorInterface] DEBUG INF" << std::endl;
+  while(1);
 
   //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] END" << std::endl;
 }
@@ -198,7 +186,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     libraryFolder_(libraryFolder), 
     urdfFile_(urdfFile), 
     pointsAndRadii_(pointsAndRadii), 
-    initModelModeInt_(initModelModeInt)
+    initModelModeInt_(initModelModeInt),
+    modelModeIntQuery_(initModelModeInt)
 {
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface(6)] START" << std::endl;
 
@@ -335,6 +324,13 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   // Set Reference Manager
   referenceManagerPtr_.reset(new ReferenceManager);
 
+  // Set ROS Reference Manager
+  rosReferenceManagerPtr_ = std::shared_ptr<ocs2::RosReferenceManager>(new ocs2::RosReferenceManager(robotModelName_, referenceManagerPtr_));
+  rosReferenceManagerPtr_->subscribe(nodeHandle_);
+
+  // Set Rollout Settings
+  rolloutSettings_ = rollout::loadSettings(taskFile_, "rollout", printOutFlag_);
+
   // Set MPC Problem
   //modelModeInt = 2;
   //setMPCProblem(modelModeInt, pointsAndRadii);
@@ -369,33 +365,102 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
 {
   //std::cout << "[MobileManipulatorInterface::setMPCProblem] START" << std::endl;
 
-  ocp_.costPtr->clear();
-  ocp_.softConstraintPtr->clear();
-  ocp_.stateSoftConstraintPtr->clear();
-  ocp_.finalSoftConstraintPtr->clear();
+  ocp1_.costPtr->clear();
+  ocp1_.stateCostPtr->clear();
+  ocp1_.preJumpCostPtr->clear();
+  ocp1_.finalCostPtr->clear();
+
+  ocp1_.softConstraintPtr->clear();
+  ocp1_.stateSoftConstraintPtr->clear();
+  ocp1_.preJumpSoftConstraintPtr->clear();
+  ocp1_.finalSoftConstraintPtr->clear();
+
+  ocp1_.equalityConstraintPtr->clear();
+  ocp1_.stateEqualityConstraintPtr->clear();
+  ocp1_.preJumpEqualityConstraintPtr->clear();
+  ocp1_.finalEqualityConstraintPtr->clear();
+
+  ocp1_.equalityLagrangianPtr->clear();
+  ocp1_.stateEqualityLagrangianPtr->clear();
+  ocp1_.inequalityLagrangianPtr->clear();
+  ocp1_.stateInequalityLagrangianPtr->clear();
+  ocp1_.preJumpEqualityLagrangianPtr->clear();
+  ocp1_.preJumpInequalityLagrangianPtr->clear();
+  ocp1_.finalEqualityLagrangianPtr->clear();
+  ocp1_.finalInequalityLagrangianPtr->clear();
+
+  // ---------------------------------------
+
+  ocp2_.costPtr->clear();
+  ocp2_.stateCostPtr->clear();
+  ocp2_.preJumpCostPtr->clear();
+  ocp2_.finalCostPtr->clear();
+
+  ocp2_.softConstraintPtr->clear();
+  ocp2_.stateSoftConstraintPtr->clear();
+  ocp2_.preJumpSoftConstraintPtr->clear();
+  ocp2_.finalSoftConstraintPtr->clear();
+
+  ocp2_.equalityConstraintPtr->clear();
+  ocp2_.stateEqualityConstraintPtr->clear();
+  ocp2_.preJumpEqualityConstraintPtr->clear();
+  ocp2_.finalEqualityConstraintPtr->clear();
+
+  ocp2_.equalityLagrangianPtr->clear();
+  ocp2_.stateEqualityLagrangianPtr->clear();
+  ocp2_.inequalityLagrangianPtr->clear();
+  ocp2_.stateInequalityLagrangianPtr->clear();
+  ocp2_.preJumpEqualityLagrangianPtr->clear();
+  ocp2_.preJumpInequalityLagrangianPtr->clear();
+  ocp2_.finalEqualityLagrangianPtr->clear();
+  ocp2_.finalInequalityLagrangianPtr->clear();
+
+  int iter = mpcIter_;
+  if (nextFlag)
+  {
+    iter++;
+  }
 
   //std::cout << "[MobileManipulatorInterface::setMPCProblem] modelModeInt: " << modelModeInt << std::endl;
   bool isModeUpdated = updateModelMode(robotModelInfo_, modelModeInt);
+  std::cout << "[MobileManipulatorInterface::setMPCProblem] isModeUpdated: " << isModeUpdated << std::endl;
   //printRobotModelInfo(robotModelInfo_);
 
   //std::cout << "[MobileManipulatorInterface::setMPCProblem] DEBUG INF" << std::endl;
   //while(1);
 
   //// Optimal control problem
+  if (iter % 2 == 0)
+  {
+    std::cout << "[MobileManipulatorInterface::setMPCProblem] ocp1_" << std::endl;
+    ocp1_.costPtr->add("inputCost", getQuadraticInputCost());
+    ocp1_.softConstraintPtr->add("jointLimits", getJointLimitSoftConstraint());
+    ocp1_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint("endEffector"));
+    ocp1_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint("finalEndEffector"));
+  }
+  else
+  {
+    std::cout << "[MobileManipulatorInterface::setMPCProblem] ocp2_" << std::endl;
+    ocp2_.costPtr->add("inputCost", getQuadraticInputCost());
+    ocp2_.softConstraintPtr->add("jointLimits", getJointLimitSoftConstraint());
+    ocp2_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint("endEffector"));
+    ocp2_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint("finalEndEffector"));
+  }
+
   /// Cost
-  ocp_.costPtr->add("inputCost", getQuadraticInputCost());
+  ////ocp_.costPtr->add("inputCost", getQuadraticInputCost());
   //std::cout << "" << std::endl;
 
   /// Constraints
   // Joint limits constraint
-  ocp_.softConstraintPtr->add("jointLimits", getJointLimitSoftConstraint());
+  ////ocp_.softConstraintPtr->add("jointLimits", getJointLimitSoftConstraint());
   //std::cout << "" << std::endl;
 
   // Mobile base or End-effector state constraint
   //std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getEndEffectorConstraint" << std::endl;
-  ocp_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint("endEffector"));
+  ////ocp_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint("endEffector"));
   //std::cout << "[MobileManipulatorInterface::setMPCProblem] AFTER getEndEffectorConstraint" << std::endl;
-  ocp_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint("finalEndEffector"));
+  ////ocp_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint("finalEndEffector"));
   //std::cout << "" << std::endl;
 
   //std::cout << "[MobileManipulatorInterface::setMPCProblem] DEBUG INF" << std::endl;
@@ -407,7 +472,16 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
   {
     if (robotModelInfo_.modelMode == ModelMode::ArmMotion || robotModelInfo_.modelMode == ModelMode::WholeBodyMotion)
     {
-      ocp_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint("selfCollision"));
+      if (iter % 2 == 0)
+      {
+        std::cout << "[MobileManipulatorInterface::setMPCProblem] activateSelfCollision_ ocp1_" << std::endl;
+        ocp1_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint("selfCollision"));
+      }
+      else
+      {
+        std::cout << "[MobileManipulatorInterface::setMPCProblem] activateSelfCollision_ ocp2_" << std::endl;
+        ocp2_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint("selfCollision"));
+      }
     }
   }
   //std::cout << "" << std::endl;
@@ -450,44 +524,92 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
     emuPtr_->setPubOccDistVisu(pub_name_oct_dist_visu);
     emuPtr_->setPubOccDistArrayVisu(pub_name_oct_dist_array_visu);
     
-    ocp_.stateSoftConstraintPtr->add("extCollision", getExtCollisionConstraint("extCollision"));
+    if (iter % 2 == 0)
+    {
+      std::cout << "[MobileManipulatorInterface::setMPCProblem] activateExtCollision_ ocp1_" << std::endl;
+      ocp1_.stateSoftConstraintPtr->add("extCollision", getExtCollisionConstraint("extCollision"));
+    }
+    else
+    {
+      std::cout << "[MobileManipulatorInterface::setMPCProblem] activateExtCollision_ ocp2_" << std::endl;
+      ocp2_.stateSoftConstraintPtr->add("extCollision", getExtCollisionConstraint("extCollision"));
+    }
   }
   //std::cout << "" << std::endl;
 
   // Dynamics
-  //std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE Dynamics" << std::endl;
+  std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE Dynamics" << std::endl;
   switch (robotModelInfo_.modelMode) 
   {
     case ModelMode::BaseMotion:
     {
-      //std::cout << "[MobileManipulatorInterface::setMPCProblem] Mobile Base" << std::endl;
-      ocp_.dynamicsPtr.reset(new MobileBaseDynamics(robotModelInfo_, 
+      std::cout << "[MobileManipulatorInterface::setMPCProblem] Mobile Base" << std::endl;
+      if (iter % 2 == 0)
+      {
+        std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr ocp1_" << std::endl;
+        ocp1_.dynamicsPtr.reset(new MobileBaseDynamics(robotModelInfo_, 
                                                         "MobileBaseDynamics", 
                                                         libraryFolder_, 
                                                         recompileLibraries_, 
                                                         printOutFlag_));
+      }
+      else
+      {
+        std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr ocp2_" << std::endl;
+        ocp2_.dynamicsPtr.reset(new MobileBaseDynamics(robotModelInfo_, 
+                                                        "MobileBaseDynamics", 
+                                                        libraryFolder_, 
+                                                        recompileLibraries_, 
+                                                        printOutFlag_));
+      }
       break;
     }
     
     case ModelMode::ArmMotion:
     {
-      //std::cout << "[MobileManipulatorInterface::setMPCProblem] Robotics Arm" << std::endl;
-      ocp_.dynamicsPtr.reset(new RobotArmDynamics(robotModelInfo_, 
+      std::cout << "[MobileManipulatorInterface::setMPCProblem] Robotics Arm" << std::endl;
+      if (iter % 2 == 0)
+      {
+        std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr ocp1_" << std::endl;
+        ocp1_.dynamicsPtr.reset(new RobotArmDynamics(robotModelInfo_, 
                                                       "RobotArmDynamics", 
                                                       libraryFolder_, 
                                                       recompileLibraries_, 
                                                       printOutFlag_));
+      }
+      else
+      {
+        std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr ocp2_" << std::endl;
+        ocp2_.dynamicsPtr.reset(new RobotArmDynamics(robotModelInfo_, 
+                                                      "RobotArmDynamics", 
+                                                      libraryFolder_, 
+                                                      recompileLibraries_, 
+                                                      printOutFlag_));
+      }
       break;
     }
     
     case ModelMode::WholeBodyMotion: 
     {
-      //std::cout << "[MobileManipulatorInterface::setMPCProblem] Mobile Manipulator" << std::endl;
-      ocp_.dynamicsPtr.reset(new MobileManipulatorDynamics(robotModelInfo_, 
+      std::cout << "[MobileManipulatorInterface::setMPCProblem] Mobile Manipulator" << std::endl;
+      if (iter % 2 == 0)
+      {
+        std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr ocp1_" << std::endl;
+        ocp1_.dynamicsPtr.reset(new MobileManipulatorDynamics(robotModelInfo_, 
                                                                "MobileManipulatorDynamics", 
                                                                libraryFolder_, 
                                                                recompileLibraries_, 
                                                                printOutFlag_));
+      }
+      else
+      {
+        std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr ocp2_" << std::endl;
+        ocp2_.dynamicsPtr.reset(new MobileManipulatorDynamics(robotModelInfo_, 
+                                                               "MobileManipulatorDynamics", 
+                                                               libraryFolder_, 
+                                                               recompileLibraries_, 
+                                                               printOutFlag_));
+      }
       break;
     }
 
@@ -504,16 +626,24 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
   {
     std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] DEBUG INF" << std::endl;
     while(1);
-    ocp_.preComputationPtr.reset(new MobileManipulatorPreComputation(*pinocchioInterfacePtr_, robotModelInfo_));
+    //ocp_.preComputationPtr.reset(new MobileManipulatorPreComputation(*pinocchioInterfacePtr_, robotModelInfo_));
   }
   //std::cout << "" << std::endl;
 
   // Rollout
   //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Rollout" << std::endl;
-  rolloutSettings_ = rollout::loadSettings(taskFile_, "rollout", printOutFlag_);
   if (!nextFlag)
   {
-    rolloutPtr_.reset(new TimeTriggeredRollout(*ocp_.dynamicsPtr, rolloutSettings_));
+    if (iter % 2 == 0)
+    {
+      std::cout << "[MobileManipulatorInterface::setMPCProblem] rolloutSettings_ ocp1_" << std::endl;
+      rolloutPtr_.reset(new TimeTriggeredRollout(*ocp1_.dynamicsPtr, rolloutSettings_));
+    }
+    else
+    {
+      std::cout << "[MobileManipulatorInterface::setMPCProblem] rolloutSettings_ ocp2_" << std::endl;
+      rolloutPtr_.reset(new TimeTriggeredRollout(*ocp2_.dynamicsPtr, rolloutSettings_));
+    }
   }
 
   // Initialization
@@ -523,39 +653,11 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, PointsOnRobo
     initializerPtr_.reset(new DefaultInitializer(modeInputDim));
   }
 
-  //mpcProblemNextFlag_ = true;
-
   //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] DEBUG INF" << std::endl;
   //while(1);
 
   //std::cout << "[MobileManipulatorInterface::setMPCProblem] END" << std::endl;
 }
-
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-/*
-void MobileManipulatorInterface::modelModeCallback(const std_msgs::UInt8::ConstPtr& msg)
-{
-  std::cout << "[MobileManipulatorInterface::modelModeCallback] START" << std::endl;
-
-  size_t modelModeInt = msg->data;
-  std::cout << "[MobileManipulatorInterface::modelModeCallback] modelModeInt: " << modelModeInt << std::endl;
-  //updateModelMode(robotModelInfo_, modelModeInt);
-
-  std::cout << "[MobileManipulatorInterface::modelModeCallback] DEBUG INF" << std::endl;
-  while(1);
-
-  std::cout << "[MobileManipulatorInterface::modelModeCallback] END" << std::endl << std::endl;
-}
-*/
-
-/*
-void MobileManipulatorInterface::mpcModeSwitchCountCallback(const std_msgs::UInt8::ConstPtr& msg)
-{
-  mpcModeSwitchCount_ = msg->data;
-}
-*/
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -582,20 +684,6 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
     pointsOnRobotPtr_->publishPointsOnRobotVisu(dt);
   }
 
-  // Services
-  //setMPCInitReadyFlagService_ = nodeHandle.advertiseService("setMPCInitReadyFlagSrv", &MobileManipulatorInterface::setMPCInitReadyFlagSrv, this);
-  //setMRTInitReadyFlagService_ = nodeHandle.advertiseService("setMRTInitReadyFlagSrv", &MobileManipulatorInterface::setMRTInitReadyFlagSrv, this);
-  //setMPCProblemReadyFlagService_ = nodeHandle.advertiseService("setMPCProblemReadyFlagSrv", &MobileManipulatorInterface::setMPCProblemReadyFlagSrv, this);
-  //setMRTExitFlagService_ = nodeHandle.advertiseService("setMRTExitFlagSrv", &MobileManipulatorInterface::setMRTExitFlagSrv, this);
-  //setMPCLaunchReadyFlagService_ = nodeHandle.advertiseService("setMPCLaunchReadyFlagSrv", &MobileManipulatorInterface::setMPCLaunchReadyFlagSrv, this);
-
-  // Clients
-  //setMPCInitReadyFlagClient_ = nodeHandle.serviceClient<ocs2_mobile_manipulator::setBool>("setMPCInitReadyFlagSrv");
-  //setMRTInitReadyFlagClient_ = nodeHandle.serviceClient<ocs2_mobile_manipulator::setBool>("setMRTInitReadyFlagSrv");
-  //setMPCProblemReadyFlagClient_ = nodeHandle.serviceClient<ocs2_mobile_manipulator::setBool>("setMPCProblemReadyFlagSrv");
-  //setMRTExitFlagClient_ = nodeHandle.serviceClient<ocs2_mobile_manipulator::setBool>("setMRTExitFlagSrv");
-  //setMPCLaunchReadyFlagClient_ = nodeHandle.serviceClient<ocs2_mobile_manipulator::setBool>("setMPCLaunchReadyFlagSrv");
-
   //subModelModeMsg_ = nodeHandle.subscribe(model_mode_msg_name, 10, &MobileManipulatorInterface::modelModeCallback, this);
 
   // Subscribe Model Mode
@@ -603,22 +691,12 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
   {
     std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] START" << std::endl;
 
-    //mpcLaunchReadyFlag_ = false;
-
-    //mpcProblemReadyFlag_ = false;
-    //setenv("mpcProblemReadyFlagEnv", "false", 1);
-
-    //setMPCProblemReadyFlag(mpcProblemReadyFlag_);
-
-    size_t modelModeInt = msg->data;
-    std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] modelModeInt: " << modelModeInt << std::endl;
-    //updateModelMode(robotModelInfo_, modelModeInt);
+    modelModeIntQuery_ = msg->data;
+    std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] modelModeIntQuery_: " << modelModeIntQuery_ << std::endl;
 
     mpcTimer3_.startTimer();
-    setMPCProblem(modelModeInt, pointsAndRadii_, true);
+    setMPCProblem(modelModeIntQuery_, pointsAndRadii_, true);
     mpcTimer3_.endTimer();
-    //std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] DEBUG INF" << std::endl;
-    //while(1);
 
     //mpcProblemReadyFlag_ = true;
     std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] mrtShutDownFlag true"  << std::endl;
@@ -630,18 +708,6 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
     std::cout << "\n###   Maximum : " << mpcTimer3_.getMaxIntervalInMilliseconds() << "[ms].";
     std::cout << "\n###   Average : " << mpcTimer3_.getAverageInMilliseconds() << "[ms].";
     std::cout << "\n###   Latest  : " << mpcTimer3_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
-    
-    
-    //setMPCProblemReadyFlag(mpcProblemReadyFlag_);
-    //publishMPCProblemReadyFlag
-
-    //std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] AFTER mpcProblemReadyFlag_: " << mpcProblemReadyFlag_ << std::endl;
-
-
-    //mpcReadyNextFlag_ = true;
-    //mrtReadyNextFlag_ = true;
-    //shutdownNodes();
-    //shutDownFlag_ = true;
 
     std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] END" << std::endl;
     std::cout << "" << std::endl;
@@ -740,25 +806,7 @@ void MobileManipulatorInterface::getEEPose(vector_t& eePose)
   eePose(5) = tf_ee_wrt_world.getRotation().z();
   eePose(6) = tf_ee_wrt_world.getRotation().w();
 
-  /*
-  eePose.head(3) << tf_ee_wrt_world.getOrigin().x(), 
-                        tf_ee_wrt_world.getOrigin().y(), 
-                        tf_ee_wrt_world.getOrigin().z();
-  eePose.tail(4) << Eigen::Quaternion<scalar_t>(tf_ee_wrt_world.getRotation().w(), 
-                                                    tf_ee_wrt_world.getRotation().x(), 
-                                                    tf_ee_wrt_world.getRotation().y(), 
-                                                    tf_ee_wrt_world.getRotation().z()).coeffs();
-  */
-  /*
-  std::cout << "[MobileManipulatorInterface::main] eeFrame: " << eeFrame << std::endl;
-  std::cout << "[MobileManipulatorInterface::main] eePose.x: " << eePose(0) << std::endl;
-  std::cout << "[MobileManipulatorInterface::main] eePose.y: " << eePose(1) << std::endl;
-  std::cout << "[MobileManipulatorInterface::main] eePose.z: " << eePose(2) << std::endl;
-  std::cout << "[MobileManipulatorInterface::main] eePose.qx: " << eePose(3) << std::endl;
-  std::cout << "[MobileManipulatorInterface::main] eePose.qy: " << eePose(4) << std::endl;
-  std::cout << "[MobileManipulatorInterface::main] eePose.qz: " << eePose(5) << std::endl;
-  std::cout << "[MobileManipulatorInterface::main] eePose.qw: " << eePose(6) << std::endl;
-  */
+  //std::cout << "[MobileManipulatorInterface::getEEPose] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -788,268 +836,7 @@ void MobileManipulatorInterface::getTargetPose(vector_t& targetPose)
   targetPose(4) = tf_target_wrt_world.getRotation().y();
   targetPose(5) = tf_target_wrt_world.getRotation().z();
   targetPose(6) = tf_target_wrt_world.getRotation().w();
-  /*
-  targetPose.tail(4) << Eigen::Quaternion<scalar_t>(tf_target_wrt_world.getRotation().w(), 
-                                                    tf_target_wrt_world.getRotation().x(), 
-                                                    tf_target_wrt_world.getRotation().y(), 
-                                                    tf_target_wrt_world.getRotation().z()).coeffs();
-  */
-  /*
-  std::cout << "[MobileManipulatorInterface::main] targetFrameName_: " << eeFrame << std::endl;
-  std::cout << "[MobileManipulatorInterface::main] targetPose.x: " << targetPose(0) << std::endl;
-  std::cout << "[MobileManipulatorInterface::main] targetPose.y: " << targetPose(1) << std::endl;
-  std::cout << "[MobileManipulatorInterface::main] targetPose.z: " << targetPose(2) << std::endl;
-  std::cout << "[MobileManipulatorInterface::main] targetPose.qx: " << targetPose(3) << std::endl;
-  std::cout << "[MobileManipulatorInterface::main] targetPose.qy: " << targetPose(4) << std::endl;
-  std::cout << "[MobileManipulatorInterface::main] targetPose.qz: " << targetPose(5) << std::endl;
-  std::cout << "[MobileManipulatorInterface::main] targetPose.qw: " << targetPose(6) << std::endl;
-  */
 }
-
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-/*
-void MobileManipulatorInterface::setMPCModeSwitchCountPublisher()
-{
-  std::string msg_name = "mpc_model_mode_switch_count";
-  mpcModeSwitchCountPublisher_ = nodeHandle_.advertise<std_msgs::UInt8>(msg_name, 1, true);
-}
-*/
-
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-/*
-void MobileManipulatorInterface::setMPCModeSwitchCountSubscriber()
-{
-  std::cout << "[MobileManipulatorInterface::setMPCModeSwitchCountSubscriber] START" << std::endl;
-
-  std::string msg_name = "mpc_model_mode_switch_count";
-
-  // Subscribe Model Mode
-  auto mpcModeSwitchCountCallback = [this](const std_msgs::UInt8::ConstPtr& msg) 
-  {
-    std::cout << "[MobileManipulatorInterface::setMPCModeSwitchCountSubscriber::mpcModeSwitchCountCallback] START" << std::endl;
-
-    std::cout << "[MobileManipulatorInterface::setMPCModeSwitchCountSubscriber::mpcModeSwitchCountCallback] mpcModeSwitchCount_: " << mpcModeSwitchCount_ << std::endl;
-
-    mpcModeSwitchCount_ = msg->data;
-
-    std::cout << "[MobileManipulatorInterface::setMPCModeSwitchCountSubscriber::mpcModeSwitchCountCallback] END" << std::endl;
-    std::cout << "" << std::endl;
-  };
-  mpcModeSwitchCountSubscriber_ = nodeHandle_.subscribe<std_msgs::UInt8>(msg_name, 5, mpcModeSwitchCountCallback);
-
-  //std::string msg_name = "mpc_model_mode_switch_count";
-  //mpcModeSwitchCountSubscriber_ = nodeHandle_.subscribe<std_msgs::UInt8>(msg_name, 5, &mpcModeSwitchCountCallback, this);
-
-  std::cout << "[MobileManipulatorInterface::setMPCModeSwitchCountSubscriber] END" << std::endl;
-}
-*/
-
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-/*
-void MobileManipulatorInterface::publishMPCModeSwitchCount()
-{
-  std::cout << "[MobileManipulatorInterface::publishMPCModeSwitchCount] START" << std::endl;
-
-  std::cout << "[MobileManipulatorInterface::publishMPCModeSwitchCount] mpcModeSwitchCount_: " << mpcModeSwitchCount_ << std::endl;
-
-  std_msgs::UInt8 mpcModeSwitchCountMsg;
-  mpcModeSwitchCountMsg.data = mpcModeSwitchCount_;
-  mpcModeSwitchCountPublisher_.publish(mpcModeSwitchCountMsg);
-
-  spin();
-
-  std::cout << "[MobileManipulatorInterface::publishMPCModeSwitchCount] END" << std::endl;
-}
-*/
-
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-/*
-bool MobileManipulatorInterface::setMPCInitReadyFlag(bool val)
-{
-  std::cout << "[MobileManipulatorInterface::setMPCInitReadyFlag] START" << std::endl;
-
-  bool success = false;
-  ocs2_mobile_manipulator::setBool srv;
-  srv.request.val = val;
-  if (setMPCInitReadyFlagClient_.call(srv))
-  {
-    success = srv.response.success;
-  }
-  else
-  {
-    ROS_ERROR("[MobileManipulatorInterface::setMPCInitReadyFlag] ERROR: Failed to call service!");
-    success = false;
-  }
-
-  std::cout << "[MobileManipulatorInterface::setMPCInitReadyFlag] END" << std::endl;
-  
-  return success;
-}
-
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-bool MobileManipulatorInterface::setMRTInitReadyFlag(bool val)
-{
-  std::cout << "[MobileManipulatorInterface::setMRTInitReadyFlag] START" << std::endl;
-
-  bool success = false;
-  ocs2_mobile_manipulator::setBool srv;
-  srv.request.val = val;
-  if (setMRTInitReadyFlagClient_.call(srv))
-  {
-    success = srv.response.success;
-  }
-  else
-  {
-    ROS_ERROR("[MobileManipulatorInterface::setMPCInitReadyFlag] ERROR: Failed to call service!");
-    success = false;
-  }
-
-  std::cout << "[MobileManipulatorInterface::setMRTInitReadyFlag] END" << std::endl;
-  
-  return success;
-}
-
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-bool MobileManipulatorInterface::setMPCProblemReadyFlag(bool val)
-{
-  bool success = false;
-  ocs2_mobile_manipulator::setBool srv;
-  srv.request.val = val;
-  if (setMPCProblemReadyFlagClient_.call(srv))
-  {
-    success = srv.response.success;
-  }
-  else
-  {
-    ROS_ERROR("Failed to call service add_two_ints");
-    success = false;
-  }
-  return success;
-}
-
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-bool MobileManipulatorInterface::setMRTExitFlag(bool val)
-{
-  bool success = false;
-  ocs2_mobile_manipulator::setBool srv;
-  srv.request.val = val;
-  if (setMRTExitFlagClient_.call(srv))
-  {
-    success = srv.response.success;
-  }
-  else
-  {
-    ROS_ERROR("Failed to call service add_two_ints");
-    success = false;
-  }
-  return success;
-}
-
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-bool MobileManipulatorInterface::setMPCLaunchReadyFlag(bool val)
-{
-  std::cout << "[MobileManipulatorInterface::setMPCLaunchReadyFlag] START" << std::endl;
-  bool success = false;
-  ocs2_mobile_manipulator::setBool srv;
-  srv.request.val = val;
-
-  //ros::spin();
-
-  if (setMPCLaunchReadyFlagClient_.call(srv))
-  {
-    success = srv.response.success;
-  }
-  else
-  {
-    ROS_ERROR("[MobileManipulatorInterface::setMPCLaunchReadyFlag] Failed to call service add_two_ints");
-    success = false;
-  }
-
-  std::cout << "[MobileManipulatorInterface::setMPCLaunchReadyFlag] END" << std::endl;
-  return success;
-}
-
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-bool MobileManipulatorInterface::setMPCInitReadyFlagSrv(ocs2_mobile_manipulator::setBool::Request &req, 
-                                                        ocs2_mobile_manipulator::setBool::Response &res)
-{
-  std::cout << "[MobileManipulatorInterface::setMPCInitReadyFlagSrv] START" << std::endl;
-  mpcInitReadyFlag_ = req.val;
-  res.success = true;
-  std::cout << "[MobileManipulatorInterface::setMPCInitReadyFlagSrv] END" << std::endl;
-  return res.success;
-}
-
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-bool MobileManipulatorInterface::setMRTInitReadyFlagSrv(ocs2_mobile_manipulator::setBool::Request &req, 
-                                                        ocs2_mobile_manipulator::setBool::Response &res)
-{
-  std::cout << "[MobileManipulatorInterface::setMRTInitReadyFlagSrv] START" << std::endl;
-  mrtInitReadyFlag_ = req.val;
-  res.success = true;
-  std::cout << "[MobileManipulatorInterface::setMRTInitReadyFlagSrv] END" << std::endl;
-  return res.success;
-}
-
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-bool MobileManipulatorInterface::setMPCProblemReadyFlagSrv(ocs2_mobile_manipulator::setBool::Request &req, 
-                                                           ocs2_mobile_manipulator::setBool::Response &res)
-{
-  std::cout << "[MobileManipulatorInterface::setMPCProblemReadyFlagSrv] START" << std::endl;
-  mpcProblemReadyFlag_ = req.val;
-  res.success = true;
-  std::cout << "[MobileManipulatorInterface::setMPCProblemReadyFlagSrv] END" << std::endl;
-  return res.success;
-}
-
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-bool MobileManipulatorInterface::setMRTExitFlagSrv(ocs2_mobile_manipulator::setBool::Request &req, 
-                                                   ocs2_mobile_manipulator::setBool::Response &res)
-{
-  std::cout << "[MobileManipulatorInterface::setMRTExitFlagSrv] START" << std::endl;
-  mrtExitFlag_ = req.val;
-  res.success = true;
-  std::cout << "[MobileManipulatorInterface::setMRTExitFlagSrv] END" << std::endl;
-  return res.success;
-}
-
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-bool MobileManipulatorInterface::setMPCLaunchReadyFlagSrv(ocs2_mobile_manipulator::setBool::Request &req, 
-                                                          ocs2_mobile_manipulator::setBool::Response &res)
-{
-  std::cout << "[MobileManipulatorInterface::setMPCLaunchReadyFlagSrv] START" << std::endl;
-  mpcLaunchReadyFlag_ = req.val;
-  res.success = true;
-  std::cout << "[MobileManipulatorInterface::setMPCLaunchReadyFlagSrv] END" << std::endl;
-  return res.success;
-}
-*/
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -1058,36 +845,10 @@ void MobileManipulatorInterface::runMPC()
 {
   std::cout << "[MobileManipulatorInterface::runMPC] START" << std::endl;
 
-  //mpcInitReadyFlag_ = true;
-  //setMPCInitReadyFlag(mpcInitReadyFlag_);
-
   bool mpcPrintOutFlag = false;
 
-  RobotModelInfo robotModelInfo = robotModelInfo_;
-  ddp::Settings ddpSettings = ddpSettings_;
-  mpc::Settings mpcSettings = mpcSettings_;
-  ocs2::rollout::Settings rolloutSettings = rolloutSettings_;
-  OptimalControlProblem ocp = ocp_;
-  std::shared_ptr<ReferenceManager> referenceManagerPtr = referenceManagerPtr_;
+  RobotModelInfo robotModelInfo;
 
-  /*
-  std::cout << "[MobileManipulatorInterface::runMPC] BEFORE while" << std::endl;
-  while(!mpcInitReadyFlag_ && !mrtInitReadyFlag_)
-  {
-    if (mpcInitReadyFlag_)
-    {
-      std::cout << "[MobileManipulatorInterface::runMPC] WAITING mrtInitReadyFlag_..." << std::endl;
-    }
-    else
-    {
-      std::cout << "[MobileManipulatorInterface::runMPC] WAITING mpcInitReadyFlag_..." << std::endl;
-    }
-  }
-  std::cout << "[MobileManipulatorInterface::runMPC] AFTER while" << std::endl;
-  */
-
-  //size_t modelModeInt = initModelModeInt_;
-  //int iter = 0;
   mpcIter_ = 0;
   while (ros::ok() && ros::master::check())
   {
@@ -1105,8 +866,6 @@ void MobileManipulatorInterface::runMPC()
     }
 
     mpcTimer1_.startTimer();
-  
-    
 
     // Robot interface
     //std::cout << "[MobileManipulatorInterface::runMPC] START launchNodes" << std::endl;
@@ -1115,53 +874,52 @@ void MobileManipulatorInterface::runMPC()
     //mpcTimer2_.endTimer();
     //std::cout << "[MobileManipulatorInterface::runMPC] END launchNodes" << std::endl;
 
-    //mpcTimer3_.startTimer();
-    //setMPCProblem(modelModeInt, pointsAndRadii_);
-    //mpcTimer3_.endTimer();
+    //ros::Duration(3.0).sleep();
+
+    while(!mrtExitFlag_){spinOnce();}
+    setenv("mpcShutDownFlag", "false", 1);
+
+    mpcTimer3_.startTimer();
+    //setMPCProblem(modelModeIntQuery_, pointsAndRadii_, true);
+    mpcTimer3_.endTimer();
     //printRobotModelInfo(robotModelInfo_);
 
-    //std::cout << "[MobileManipulatorInterface::runMPC] BEFORE Setting MPC Parameters " << std::endl;
+    std::cout << "[MobileManipulatorInterface::runMPC] BEFORE Setting MPC Parameters " << std::endl;
     mpcTimer4_.startTimer();
-    /*
-    string a = getenv("mrtExitFlag");
-    while(a == "false")
-    {
-      a = getenv("mrtExitFlag");
-    }
-    */
-    bool mrtExitFlag = mrtExitFlag_;
-    while(!mrtExitFlag){mrtExitFlag = mrtExitFlag_;}
-    setenv("mpcShutDownFlag", "false", 1);
     robotModelInfo = robotModelInfo_;
-    ddpSettings = ddpSettings_;
-    mpcSettings = mpcSettings_;
-    rolloutSettings = rolloutSettings_;
-    ocp = ocp_;
-    referenceManagerPtr = referenceManagerPtr_;
-    rolloutPtr_.reset(new TimeTriggeredRollout(*ocp.dynamicsPtr, rolloutSettings));
+    OptimalControlProblem ocp;
+    if (mpcIter_ % 2 == 0)
+    {
+      std::cout << "[MobileManipulatorInterface::runMPC] ocp1_" << std::endl;
+      ocp.swap(ocp1_);
+    }
+    else
+    {
+      std::cout << "[MobileManipulatorInterface::runMPC] ocp2_" << std::endl;
+      ocp.swap(ocp2_);
+    }
+    rolloutPtr_.reset(new TimeTriggeredRollout(*ocp.dynamicsPtr, rolloutSettings_));
     initializerPtr_.reset(new DefaultInitializer(robotModelInfo.modeInputDim));
+    mpcProblemReadyFlag_ = true;
     mpcTimer4_.endTimer();
-    //std::cout << "[MobileManipulatorInterface::runMPC] AFTER Setting MPC Parameters " << std::endl;
-
-    //std::cout << "[MobileManipulatorInterface::runMPC] DEBUG INF" << std::endl;
-    //while(1);
+    std::cout << "[MobileManipulatorInterface::runMPC] AFTER Setting MPC Parameters " << std::endl;
 
     //std::cout << "[MobileManipulatorInterface::runMPC] BEFORE rosReferenceManagerPtr" << std::endl;
     // ROS ReferenceManager
     mpcTimer5_.startTimer();
-    rosReferenceManagerPtr_ = std::shared_ptr<ocs2::RosReferenceManager>(new ocs2::RosReferenceManager(robotModelName_, referenceManagerPtr, robotModelInfo));
+    //rosReferenceManagerPtr_ = std::shared_ptr<ocs2::RosReferenceManager>(new ocs2::RosReferenceManager(robotModelName_, referenceManagerPtr_));
     mpcTimer5_.endTimer();
 
     //std::cout << "[MobileManipulatorInterface::runMPC] BEFORE rosReferenceManagerPtr subscribe" << std::endl;
     mpcTimer6_.startTimer();
-    rosReferenceManagerPtr_->subscribe(nodeHandle_);
+    //rosReferenceManagerPtr_->subscribe(nodeHandle_);
     mpcTimer6_.endTimer();
 
     // MPC
     //std::cout << "[MobileManipulatorInterface::runMPC] BEFORE mpc" << std::endl;
     mpcTimer7_.startTimer();
-    ocs2::GaussNewtonDDP_MPC mpc(mpcSettings, 
-                                 ddpSettings, 
+    ocs2::GaussNewtonDDP_MPC mpc(mpcSettings_, 
+                                 ddpSettings_, 
                                  *rolloutPtr_, 
                                  ocp, 
                                  *initializerPtr_);
@@ -1218,43 +976,14 @@ void MobileManipulatorInterface::runMPC()
       std::cout << "\n###   Average : " << mpcTimer8_.getAverageInMilliseconds() << "[ms].";
       std::cout << "\n###   Latest  : " << mpcTimer8_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
     }
-    //if (mpcReadyNextFlag_)
-    //{
-    //  mpcReadyNextFlag_ = false;
-    //  mpcModeSwitchCount_++;
 
-    //  std::cout << "[MobileManipulatorInterface::runMPC] mpcModeSwitchCount_: " << mpcModeSwitchCount_ << std::endl;
-
-      //std::cout << "[MobileManipulatorInterface::runMPC] DEBUG INF" << std::endl;
-      //while(1);
-    //}
-
-    //publishMPCModeSwitchCount();
     std::cout << "[MobileManipulatorInterface::runMPC] BEFORE mpcLaunchReadyFlag_: " << mpcLaunchReadyFlag_ << std::endl;
     mpcLaunchReadyFlag_ = true;
     std::cout << "[MobileManipulatorInterface::runMPC] AFTER mpcLaunchReadyFlag_: " << mpcLaunchReadyFlag_ << std::endl;
-    //if (iter > 0)
-    //{
-      //bool setMPCLaunchReadyFlagStatus1 = setMPCLaunchReadyFlag(mpcLaunchReadyFlag_);
-      //std::cout << "[MobileManipulatorInterface::runMPC] setMPCLaunchReadyFlagStatus1: " << setMPCLaunchReadyFlagStatus1 << std::endl;
-    //}
-    
-    //publishMPCLaunchReadyFlag();
-
-    //setenv("mpcLaunchReadyFlag", "true", 1);
-    //string b = getenv("mpcLaunchReadyFlag");
 
     std::cout << "[MobileManipulatorInterface::runMPC] BEFORE mpc mpcNode launchNodes" << std::endl;
     mpcNode.launchNodes(nodeHandle_);
     //std::cout << "[MobileManipulatorInterface::runMPC] AFTER mpc mpcNode launchNodes" << std::endl;
-    
-    //mpcProblemReadyFlag_ = false;
-
-    //bool setMPCLaunchReadyFlagStatus2 = setMPCLaunchReadyFlag(mpcLaunchReadyFlag_);
-    //std::cout << "[MobileManipulatorInterface::runMPC] setMPCLaunchReadyFlagStatus2: " << setMPCLaunchReadyFlagStatus2 << std::endl;
-    //publishMPCLaunchReadyFlag();
-
-    //modelModeInt = mpcNode.getModelModeInt();
  
     if (true)
     {
@@ -1263,7 +992,7 @@ void MobileManipulatorInterface::runMPC()
       std::cout << "=====================================================" << std::endl;
     }
 
-    //std::cout << "[MobileManipulatorInterface::runMPC] DEBUG INFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF" << std::endl;
+    //std::cout << "[MobileManipulatorInterface::runMPC] DEBUG INF" << std::endl;
     //while(1);
 
     mpcIter_++;
@@ -1280,38 +1009,12 @@ void MobileManipulatorInterface::runMRT()
   std::cout << "[MobileManipulatorInterface::runMRT] START" << std::endl;
 
   bool mrtPrintOutFlag = false;
-  //mrtInitReadyFlag_ = true;
-  //setMRTInitReadyFlag(mrtInitReadyFlag_);
 
-  //mpcLaunchReadyFlag_ = true;
-
-  RobotModelInfo robotModelInfo = robotModelInfo_;
-  ddp::Settings ddpSettings = ddpSettings_;
-  mpc::Settings mpcSettings = mpcSettings_;
-  ocs2::rollout::Settings rolloutSettings = rolloutSettings_;
-  OptimalControlProblem ocp = ocp_;
-  std::shared_ptr<ReferenceManager> referenceManagerPtr = referenceManagerPtr_;
-
-  /*
-  std::cout << "[MobileManipulatorInterface::runMRT] BEFORE while" << std::endl;
-  while(!mpcInitReadyFlag_ && !mrtInitReadyFlag_)
-  {
-    if (mpcInitReadyFlag_)
-    {
-      std::cout << "[MobileManipulatorInterface::runMRT] WAITING mrtInitReadyFlag_..." << std::endl;
-    }
-    else
-    {
-      std::cout << "[MobileManipulatorInterface::runMRT] WAITING mpcInitReadyFlag_..." << std::endl;
-    }
-  }
-  std::cout << "[MobileManipulatorInterface::runMRT] AFTER while" << std::endl;
-  */
+  RobotModelInfo robotModelInfo;
+  //OptimalControlProblem ocp;
 
   getEEPose(currentTarget_);
 
-  //size_t modelModeInt = initModelModeInt_;
-  //int iter = 0;
   mrtIter_ = 0;
   while (ros::ok() && ros::master::check())
   {
@@ -1319,18 +1022,10 @@ void MobileManipulatorInterface::runMRT()
     std::cout << "[MobileManipulatorInterface::runMRT] mrtIter_: " << mrtIter_ << std::endl;
 
     // Wait for sync mpc and mrt
-    while(mpcIter_ != mrtIter_)
-    {
-      std::cout << "WTF!" << std::endl;
-    }
+    while(mpcIter_ != mrtIter_){spinOnce();}
     
     std::cout << "[MobileManipulatorInterface::runMRT] BEFORE mpcLaunchReadyFlag_: " << mpcLaunchReadyFlag_ << std::endl;
-    bool mpcLaunchReadyFlag = mpcLaunchReadyFlag_;
-    while(!mpcLaunchReadyFlag)
-    {
-      mpcLaunchReadyFlag = mpcLaunchReadyFlag_;
-      std::cout << "[MobileManipulatorInterface::runMRT] WAITING mpcLaunchReadyFlag_: " << mpcLaunchReadyFlag_ << std::endl;
-    }
+    while(!mpcLaunchReadyFlag_){spinOnce();}
     std::cout << "[MobileManipulatorInterface::runMRT] AFTER mpcLaunchReadyFlag_: " << mpcLaunchReadyFlag_ << std::endl;
     mpcLaunchReadyFlag_ = false;
 
@@ -1339,35 +1034,32 @@ void MobileManipulatorInterface::runMRT()
       std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
       std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
       std::cout << "[MobileManipulatorInterface::runMRT] START ITERATION: " << mrtIter_ << std::endl;
-      //std::cout << "[MobileManipulatorInterface::runMRT] modelModeInt: " << modelModeInt << std::endl;
     }
 
     mrtTimer1_.startTimer();
 
-    //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE setMPCProblem" << std::endl;
-    //mrtTimer2_.startTimer();
-    //setMPCProblem(modelModeInt, pointsAndRadii_);
-    //mrtTimer2_.endTimer();
-    //printRobotModelInfo(robotModelInfo_);
     std::cout << "[MobileManipulatorInterface::runMRT] BEFORE setMPCProblem" << std::endl;
     mrtTimer2_.startTimer();
+    while(!mpcProblemReadyFlag_){spinOnce();}
+    mpcProblemReadyFlag_ = false;
 
+    robotModelInfo = robotModelInfo_;
     /*
-    if (iter > 0)
+    OptimalControlProblem ocp;
+    if (mpcIter_ % 2 == 0)
     {
-      std::cout << "[MobileManipulatorInterface::runMRT] DEBUG INF" << std::endl;
-      while(1);
+      std::cout << "[MobileManipulatorInterface::runMRT] ocp1_" << std::endl;
+      ocp.swap(ocp1_);
+    }
+    else
+    {
+      std::cout << "[MobileManipulatorInterface::runMRT] ocp2_" << std::endl;
+      ocp.swap(ocp2_);
     }
     */
 
-    robotModelInfo = robotModelInfo_;
-    //ddpSettings = ddpSettings_;
-    mpcSettings = mpcSettings_;
-    rolloutSettings = rolloutSettings_;
-    ocp = ocp_;
-    //referenceManagerPtr = referenceManagerPtr_;
-    rolloutPtr_.reset(new TimeTriggeredRollout(*ocp.dynamicsPtr, rolloutSettings));
-    //initializerPtr_.reset(new DefaultInitializer(robotModelInfo.modeInputDim));
+    //rolloutPtr_.reset(new TimeTriggeredRollout(*ocp.dynamicsPtr, rolloutSettings_));
+    //initializerPtr_.reset(new DefaultInitializer(robotModelInfo_.modeInputDim));
     mrtTimer2_.endTimer();
     std::cout << "[MobileManipulatorInterface::runMRT] AFTER setMPCProblem" << std::endl;
 
@@ -1378,14 +1070,6 @@ void MobileManipulatorInterface::runMRT()
     mrtTimer3_.startTimer();
     MRT_ROS_Interface mrt(robotModelInfo, robotModelName_);
     mrtTimer3_.endTimer();
-
-    /*
-    if (iter > 0)
-    {
-      std::cout << "[MobileManipulatorInterface::runMRT] DEBUG INF" << std::endl;
-      while(1);
-    }
-    */
 
     //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE initRollout" << std::endl;
     mrtTimer4_.startTimer();
@@ -1417,8 +1101,8 @@ void MobileManipulatorInterface::runMRT()
                                  armStateMsg_,
                                  baseControlMsg_,
                                  armControlMsg_,
-                                 mpcSettings.mrtDesiredFrequency_, 
-                                 mpcSettings.mpcDesiredFrequency_);
+                                 mpcSettings_.mrtDesiredFrequency_, 
+                                 mpcSettings_.mpcDesiredFrequency_);
     mrtTimer6_.endTimer();
     std::cout << "[MobileManipulatorInterface::runMRT] AFTER mrt_loop" << std::endl;
 
@@ -1429,16 +1113,15 @@ void MobileManipulatorInterface::runMRT()
     // initial command
     mrtTimer7_.startTimer();
     vector_t currentTarget;
-    //vector_t initTarget(7);
-    //currentTarget_.head(3) << -0.2, 0, 1.0;
-    //currentTarget_.tail(4) << Eigen::Quaternion<scalar_t>(1, 0, 0, 0).coeffs();
     
     if (mrtIter_ < 0)
     {
-      getTargetPose(currentTarget);   
+      spinOnce();
+      getTargetPose(currentTarget);
     }
     else
     {
+      spinOnce();
       currentTarget = currentTarget_;
     }
     mrtTimer7_.endTimer();
@@ -1480,48 +1163,6 @@ void MobileManipulatorInterface::runMRT()
       std::cout << "\n###   Latest  : " << mrtTimer7_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
     }
 
-    //vector_t currentTarget = currentTarget_;
-    //if (mrtReadyNextFlag_)
-    //{
-    //  mrtReadyNextFlag_ = false;
-    //  mrtModeSwitchCount_++;
-    //}
-
-    //std::cout << "[MobileManipulatorInterface::runMRT] mpcModeSwitchCount_: " << mpcModeSwitchCount_ << std::endl;
-    //std::cout << "[MobileManipulatorInterface::runMRT] mrtModeSwitchCount_: " << mrtModeSwitchCount_ << std::endl;
-
-    //while (mpcModeSwitchCount_ != mrtModeSwitchCount_)
-    //{
-    //  spin();
-      //std::cout << "[MobileManipulatorInterface::runMRT] mpcModeSwitchCount_: " << mpcModeSwitchCount_ << std::endl;
-      //std::cout << "[MobileManipulatorInterface::runMRT] mrtModeSwitchCount_: " << mrtModeSwitchCount_ << std::endl;
-    //}
-
-    //ros::Duration(1.5).sleep();
-
-    /*
-    string a = getenv("mpcLaunchReadyFlag");
-    std::cout << "[MobileManipulatorInterface::runMRT] a: " << a << std::endl;
-    while(a == "false")
-    {
-      std::cout << "[MobileManipulatorInterface::runMRT] WHILE a: " << a << std::endl;
-      a = getenv("mpcLaunchReadyFlag");
-    }
-    */
-
-    //// NUA NOTE: mpcLaunchReadyFlag_ should be updated by callback!
-    
-    //{
-    //  std::cout << "[MobileManipulatorInterface::runMRT] WAITING mpcLaunchReadyFlag_: " << mpcLaunchReadyFlag_ << std::endl;
-    //}
-
-    //if (iter > 0)
-    //{
-    //  mrtExitFlag_ = false;
-      //bool setMRTExitFlagStatus1 = setMRTExitFlag(mrtExitFlag_);
-      //std::cout << "[MobileManipulatorInterface::runMRT] setMRTExitFlagStatus1: " << setMRTExitFlagStatus1 << std::endl;
-    //}
-
     if (true)
     {
       std::cout << "[MobileManipulatorInterface::runMRT] BEFORE currentTarget size: " << currentTarget.size() << std::endl;
@@ -1534,20 +1175,10 @@ void MobileManipulatorInterface::runMRT()
     
     mrtExitFlag_ = false;
 
-    /*
-    if (iter > 0)
-    {
-      std::cout << "[MobileManipulatorInterface::runMRT] DEBUG INF iter" << iter << std::endl;
-      while(1);
-    }
-    */
-
     mrt_loop.run(currentTarget);
     
     mrtExitFlag_ = true;
     setenv("mpcShutDownFlag", "true", 1);
-    //mpcProblemReadyFlag_ = false;
-    //setenv("mpcProblemReadyFlagEnv", "false", 1);
 
     if (mrtPrintOutFlag)
     {
@@ -1558,14 +1189,6 @@ void MobileManipulatorInterface::runMRT()
       }
       std::cout << "------------" << std::endl;
     }
-
-    //std::cout << "[MobileManipulatorInterface::runMRT] DEBUG INF: " << std::endl;
-    //while(1);
-
-    //bool setMRTExitFlagStatus2 = setMRTExitFlag(mrtExitFlag_);
-    //std::cout << "[MobileManipulatorInterface::runMRT] setMRTExitFlagStatus2: " << setMRTExitFlagStatus2 << std::endl;
-
-    //modelModeInt = mrt.getModelModeInt();
 
     if (true)
     {
@@ -1825,8 +1448,8 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getEndEffectorConstraint(
   //const int modeInputDim = getModeInputDim(robotModelInfo_);
 
   std::string modelName = getModelModeString(robotModelInfo_) + "_end_effector_kinematics";
-  scalar_t muPosition = 1.0;
-  scalar_t muOrientation = 1.0;
+  scalar_t muPosition;
+  scalar_t muOrientation;
   //std::cerr << "\n #### " << prefix << " Settings: ";
   //std::cerr << "\n #### =============================================================================\n";
   loadData::loadPtreeValue(pt, muPosition, prefix + ".muPosition", printOutFlag_);
