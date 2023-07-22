@@ -65,7 +65,13 @@ class TargetTrajectoriesGazebo final
     void updateObservationAndTarget();
 
     // DESCRIPTION: TODO...
+    void updateTarget();
+
+    // DESCRIPTION: TODO...
     void initializeInteractiveMarkerTarget();
+
+    // DESCRIPTION: TODO...
+    void initializeInteractiveMarkerAutoTarget();
 
     // DESCRIPTION: TODO...
     void initializeInteractiveMarkerModelMode();
@@ -100,7 +106,7 @@ class TargetTrajectoriesGazebo final
     void gazeboModelStatesCallback(const gazebo_msgs::ModelStatesPtr& feedback);
 
     // DESCRIPTION: TODO...
-    void updateTarget();
+    void updateTargetInfo();
 
     // DESCRIPTION: TODO...
     void updateTarget(const Eigen::Vector3d& targetPos, const Eigen::Quaterniond& targetOri);
@@ -121,6 +127,9 @@ class TargetTrajectoriesGazebo final
     visualization_msgs::InteractiveMarker createInteractiveMarkerTarget() const;
 
     // DESCRIPTION: TODO...
+    visualization_msgs::InteractiveMarker createInteractiveMarkerAutoTarget() const;
+
+    // DESCRIPTION: TODO...
     visualization_msgs::InteractiveMarker createInteractiveMarkerModelMode() const;
 
     // DESCRIPTION: TODO...
@@ -128,6 +137,9 @@ class TargetTrajectoriesGazebo final
 
     // DESCRIPTION: TODO...
     void processFeedbackTarget(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
+
+    // DESCRIPTION: TODO...
+    void processFeedbackAutoTarget(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
 
     // DESCRIPTION: TODO...
     void processFeedbackModelMode(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
@@ -139,7 +151,10 @@ class TargetTrajectoriesGazebo final
     int ctr_ = 0;
 
     std::string worldFrameName_ = "world";
-    std::string robotFrameName_ = "base_link";
+    std::string robotFrameName_ = "base_link"; 
+    std::string graspFrameName_ = "grasp"; 
+
+    gazebo_msgs::ModelStates modelStatesMsg_;
 
     std::vector<std::string> targetNames_;
     std::string robotName_;
@@ -149,7 +164,8 @@ class TargetTrajectoriesGazebo final
     Eigen::Vector3d currentTargetPosition_;
     Eigen::Quaterniond currentTargetOrientation_;
     
-    Eigen::Vector3d graspPosOffset_;
+    Eigen::Vector3d graspPositionOffset_;
+    Eigen::Matrix3d graspOrientationOffsetMatrix_;
     Eigen::Vector3d currentGraspPosition_;
     Eigen::Quaterniond currentGraspOrientation_;
     
@@ -176,8 +192,10 @@ class TargetTrajectoriesGazebo final
     //interactive_markers::MenuHandler::EntryHandle h_first_entry_;
 
     interactive_markers::MenuHandler menuHandlerTarget_;
+    interactive_markers::MenuHandler menuHandlerAutoTarget_;
     interactive_markers::MenuHandler menuHandlerModelMode_;
     interactive_markers::InteractiveMarkerServer targetServer_;
+    interactive_markers::InteractiveMarkerServer autoTargetServer_;
     interactive_markers::InteractiveMarkerServer modelModeServer_;
 
     ros::Subscriber observationSubscriber_;

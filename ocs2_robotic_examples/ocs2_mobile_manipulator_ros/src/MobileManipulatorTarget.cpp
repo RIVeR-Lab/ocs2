@@ -56,7 +56,8 @@ int main(int argc, char* argv[])
   pnh.param<std::string>("/world_frame_name", world_frame_name, "");
   pnh.param<std::string>("/gz_model_msg_name", gz_model_msg_name, "");
   robot_name = "mobiman";
-  target_names = {"normal_pkg","long_pkg","longwide_pkg","red_cube","green_cube","blue_cube"};
+  target_names = {"red_cube"};
+  //target_names = {"normal_pkg","long_pkg","longwide_pkg","red_cube","green_cube","blue_cube"};
 
   //cout << "[MobileManipulatorTarget::main] DEBUG INF" << endl;
   //while(1);
@@ -64,13 +65,14 @@ int main(int argc, char* argv[])
   // Gazebo
   TargetTrajectoriesGazebo gu(nh, robotMode, gz_model_msg_name, robot_name, target_names, &goalPoseToTargetTrajectories);
   gu.initializeInteractiveMarkerTarget();
+  gu.initializeInteractiveMarkerAutoTarget();
   gu.initializeInteractiveMarkerModelMode();
 
   ros::Rate r(100);
   while(ros::ok)
   {
     //gu.updateObservationAndTarget();
-    gu.publishTargetVisu();
+    gu.updateTarget();
 
     ros::spinOnce();
     r.sleep();
