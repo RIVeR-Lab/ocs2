@@ -812,30 +812,30 @@ void MobileManipulatorInterface::getEEPose(vector_t& eePose)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MobileManipulatorInterface::getTargetPose(vector_t& targetPose)
+void MobileManipulatorInterface::getGraspPose(vector_t& targetPose)
 {
-  //std::cout << "[MobileManipulatorInterface::getTargetPose] START" << std::endl;
+  //std::cout << "[MobileManipulatorInterface::getGraspPose] START" << std::endl;
 
-  tf::StampedTransform tf_target_wrt_world;
+  tf::StampedTransform tf_grasp_wrt_world;
   try
   {
-    tfListener_.waitForTransform(worldFrameName_, targetFrameName_, ros::Time::now(), ros::Duration(1.0));
-    tfListener_.lookupTransform(worldFrameName_, targetFrameName_, ros::Time(0), tf_target_wrt_world);
+    tfListener_.waitForTransform(worldFrameName_, graspFrameName_, ros::Time::now(), ros::Duration(1.0));
+    tfListener_.lookupTransform(worldFrameName_, graspFrameName_, ros::Time(0), tf_grasp_wrt_world);
   }
   catch (tf::TransformException ex)
   {
-    ROS_INFO("[MobileManipulatorInterface::getTargetPose] ERROR: Couldn't get transform!");
+    ROS_INFO("[MobileManipulatorInterface::getGraspPose] ERROR: Couldn't get transform!");
     ROS_ERROR("%s", ex.what());
   }
 
   targetPose.resize(7);
-  targetPose(0) = tf_target_wrt_world.getOrigin().x();
-  targetPose(1) = tf_target_wrt_world.getOrigin().y();
-  targetPose(2) = tf_target_wrt_world.getOrigin().z();
-  targetPose(3) = tf_target_wrt_world.getRotation().x();
-  targetPose(4) = tf_target_wrt_world.getRotation().y();
-  targetPose(5) = tf_target_wrt_world.getRotation().z();
-  targetPose(6) = tf_target_wrt_world.getRotation().w();
+  targetPose(0) = tf_grasp_wrt_world.getOrigin().x();
+  targetPose(1) = tf_grasp_wrt_world.getOrigin().y();
+  targetPose(2) = tf_grasp_wrt_world.getOrigin().z();
+  targetPose(3) = tf_grasp_wrt_world.getRotation().x();
+  targetPose(4) = tf_grasp_wrt_world.getRotation().y();
+  targetPose(5) = tf_grasp_wrt_world.getRotation().z();
+  targetPose(6) = tf_grasp_wrt_world.getRotation().w();
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1097,10 +1097,13 @@ void MobileManipulatorInterface::runMRT()
     MRT_ROS_Gazebo_Loop mrt_loop(nodeHandle_, 
                                  mrt, 
                                  worldFrameName_,
+                                 graspFrameName_,
                                  baseStateMsg_,
                                  armStateMsg_,
                                  baseControlMsg_,
                                  armControlMsg_,
+                                 err_threshold_pos_,
+                                 err_threshold_ori_,
                                  mpcSettings_.mrtDesiredFrequency_, 
                                  mpcSettings_.mpcDesiredFrequency_);
     mrtTimer6_.endTimer();
@@ -1117,7 +1120,7 @@ void MobileManipulatorInterface::runMRT()
     if (mrtIter_ < 0)
     {
       spinOnce();
-      getTargetPose(currentTarget);
+      getGraspPose(currentTarget);
     }
     else
     {

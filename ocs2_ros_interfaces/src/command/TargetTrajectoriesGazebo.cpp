@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.07.22
+// LAST UPDATE: 2022.07.24
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -96,7 +96,6 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
   /// Publishers
   targetTrajectoriesPublisherPtr_.reset(new TargetTrajectoriesRosPublisher(nodeHandle, topicPrefix));
   modelModePublisher_ = nodeHandle.advertise<std_msgs::UInt8>(topicPrefix + "_model_mode", 1, false);
-
   targetMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(topicPrefix + "_goal", 10);
 }
 

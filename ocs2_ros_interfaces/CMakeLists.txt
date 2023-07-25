@@ -10,10 +10,12 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_ddp
   ocs2_mpc
+  ocs2_robotic_tools
   std_msgs
   visualization_msgs
   geometry_msgs
   interactive_markers
+  gazebo_ros_link_attacher
   #voxblox
   #voxblox_ros
   #ocs2_ext_collision

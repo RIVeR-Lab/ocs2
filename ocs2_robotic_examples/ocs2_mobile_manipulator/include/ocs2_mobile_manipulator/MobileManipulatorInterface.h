@@ -252,7 +252,7 @@ class MobileManipulatorInterface final : public RobotInterface
 
     void getEEPose(vector_t& eePose);
 
-    void getTargetPose(vector_t& targetPose);
+    void getGraspPose(vector_t& targetPose);
 
     //void setMPCModeSwitchCountPublisher();
 
@@ -317,10 +317,13 @@ class MobileManipulatorInterface final : public RobotInterface
     const std::string urdfFile_;
     std::string robotModelName_ = "mobile_manipulator";
     std::string worldFrameName_ = "world";
-    std::string targetFrameName_ = "grasp";
+    std::string graspFrameName_ = "grasp";
 
     size_t initModelModeInt_ = 2;
     size_t modelModeIntQuery_ = 2;
+
+    double err_threshold_pos_ = 0.05;
+    double err_threshold_ori_ = 0.1;
 
     int mpcIter_ = 0; 
     int mrtIter_ = 0; 

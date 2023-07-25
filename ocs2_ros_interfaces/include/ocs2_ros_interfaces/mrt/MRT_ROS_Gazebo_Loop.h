@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.19
+// LAST UPDATE: 2023.07.24
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -23,11 +23,11 @@
 #include <std_msgs/Float64.h>
 
 #include <ocs2_core/misc/Benchmark.h>
+#include <ocs2_robotic_tools/common/RotationTransforms.h>
 #include "ocs2_ros_interfaces/mrt/DummyObserver.h"
 #include "ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h"
-//#include "ocs2_mobile_manipulator/ManipulatorModelInfo.h"
 
-//#include "ocs2_mobile_manipulator/setBool.h"
+#include "gazebo_ros_link_attacher/Attach.h"
 
 namespace ocs2 {
 
@@ -49,10 +49,13 @@ class MRT_ROS_Gazebo_Loop
     MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                         MRT_ROS_Interface& mrt,
                         std::string worldFrameName,
+                        std::string graspFrameName,
                         std::string baseStateMsg,
                         std::string armStateMsg,
                         std::string baseControlMsg,
                         std::string armControlMsg,
+                        double err_threshold_pos_,
+                        double err_threshold_ori_,
                         scalar_t mrtDesiredFrequency,
                         scalar_t mpcDesiredFrequency = -1,
                         bool updateIndexMapFlag=false);
@@ -124,23 +127,24 @@ class MRT_ROS_Gazebo_Loop
     SystemObservation getCurrentObservation(bool initFlag=false);
 
     /** NUA TODO: Add description */
+    bool isGraspPoseReached();
+
+    /** NUA TODO: Add description */
     //void publishCommand(const PrimalSolution& primalSolution);
     void publishCommand(const PrimalSolution& currentPolicy);
 
     std::string worldFrameName_;
     std::string baseFrameName_;
+    std::string graspFrameName_;
+
+    double err_threshold_pos_;
+    double err_threshold_ori_;
 
     RobotModelInfo robotModelInfo_;
 
     bool tfFlag_ = false;
     bool initFlagBaseState_ = false;
     bool initFlagArmState_ = false;
-    bool initFlagArm1State_ = false;
-    bool initFlagArm2State_ = false;
-    bool initFlagArm3State_ = false;
-    bool initFlagArm4State_ = false;
-    bool initFlagArm5State_ = false;
-    bool initFlagArm6State_ = false;
 
     std::vector<int> stateIndexMap_;
 
@@ -164,6 +168,8 @@ class MRT_ROS_Gazebo_Loop
     std::vector<std::shared_ptr<DummyObserver>> observers_;
 
     tf::StampedTransform tf_robot_wrt_world_;
+    tf::StampedTransform tf_ee_wrt_world_;
+    tf::StampedTransform tf_grasp_wrt_world_;
     nav_msgs::Odometry odometryMsg_;
     geometry_msgs::Pose robotBasePoseMsg_;
     geometry_msgs::Twist robotBaseTwistMsg_;
@@ -172,8 +178,10 @@ class MRT_ROS_Gazebo_Loop
 
     bool shutDownFlag_ = false;
     std::string mrtShutDownFlag_;
-    //bool mpcProblemReadyFlag_ = false;
-    //bool mrtExitFlag_ = true;
+
+    // 0: No object attached
+    // 1: Object picked
+    int taskMode_ = 0;
 
     benchmark::RepeatedTimer timer1_;
     benchmark::RepeatedTimer timer2_;
@@ -187,7 +195,8 @@ class MRT_ROS_Gazebo_Loop
     ros::Publisher baseTwistPub_;
     ros::Publisher armJointTrajectoryPub_;
 
-    //ros::ServiceClient setMPCProblemReadyFlagClient_;
+    ros::ServiceClient attachClient_;
+    ros::ServiceClient detachClient_;
 };
 
 }  // namespace ocs2
