@@ -765,9 +765,11 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
     }
     */
 
+    targetReadyFlag_ = true;
+
     //std::cout << "[MobileManipulatorInterface::targetTrajectoriesCallback] END" << std::endl;
   };
-  targetTrajectoriesSubscriber_ = nodeHandle_.subscribe<ocs2_msgs::mpc_target_trajectories>(target_msg_name, 1, targetTrajectoriesCallback);
+  targetTrajectoriesSubscriber_ = nodeHandle_.subscribe<ocs2_msgs::mpc_target_trajectories>(target_msg_name, 5, targetTrajectoriesCallback);
 
   //spin();
 }
@@ -812,6 +814,7 @@ void MobileManipulatorInterface::getEEPose(vector_t& eePose)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+/*
 void MobileManipulatorInterface::getGraspPose(vector_t& targetPose)
 {
   //std::cout << "[MobileManipulatorInterface::getGraspPose] START" << std::endl;
@@ -837,6 +840,7 @@ void MobileManipulatorInterface::getGraspPose(vector_t& targetPose)
   targetPose(5) = tf_grasp_wrt_world.getRotation().z();
   targetPose(6) = tf_grasp_wrt_world.getRotation().w();
 }
+*/
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -1097,7 +1101,7 @@ void MobileManipulatorInterface::runMRT()
     MRT_ROS_Gazebo_Loop mrt_loop(nodeHandle_, 
                                  mrt, 
                                  worldFrameName_,
-                                 graspFrameName_,
+                                 "mobile_manipulator_mpc_target",
                                  baseStateMsg_,
                                  armStateMsg_,
                                  baseControlMsg_,
@@ -1116,17 +1120,8 @@ void MobileManipulatorInterface::runMRT()
     // initial command
     mrtTimer7_.startTimer();
     vector_t currentTarget;
-    
-    if (mrtIter_ < 0)
-    {
-      spinOnce();
-      getGraspPose(currentTarget);
-    }
-    else
-    {
-      spinOnce();
-      currentTarget = currentTarget_;
-    }
+    spinOnce();
+    currentTarget = currentTarget_;
     mrtTimer7_.endTimer();
 
     // Run mrt_loop

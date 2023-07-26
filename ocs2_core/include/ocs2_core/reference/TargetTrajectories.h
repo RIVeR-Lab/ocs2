@@ -44,7 +44,8 @@ struct TargetTrajectories
   
   TargetTrajectories(scalar_array_t desiredTimeTrajectory, 
                      vector_array_t desiredStateTrajectory,
-                     vector_array_t desiredInputTrajectory = vector_array_t());
+                     vector_array_t desiredInputTrajectory = vector_array_t(),
+                     int desiredTaskMode=0);
   
   void clear();
   
@@ -72,6 +73,11 @@ struct TargetTrajectories
   scalar_array_t timeTrajectory;
   vector_array_t stateTrajectory;
   vector_array_t inputTrajectory;
+  
+  // 0: Go
+  // 1: Go & Pick
+  // 2: Go & Drop
+  int taskMode = 0;
 };
 
 void swap(TargetTrajectories& lh, TargetTrajectories& rh);

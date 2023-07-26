@@ -14,6 +14,11 @@
   <build_depend>cmake_modules</build_depend>
   <build_depend>cmake_clang_tools</build_depend>
 
+  <depend>message_generation</depend>
+  <depend>message_runtime</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+
   <depend>tf_conversions</depend>
   <depend>ocs2_thirdparty</depend>
 

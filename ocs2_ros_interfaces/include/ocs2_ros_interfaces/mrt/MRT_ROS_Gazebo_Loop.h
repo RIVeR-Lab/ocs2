@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.24
+// LAST UPDATE: 2023.07.26
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -22,6 +22,8 @@
 #include <trajectory_msgs/JointTrajectory.h>
 #include <std_msgs/Float64.h>
 
+#include "ocs2_core/setBool.h"
+#include "ocs2_core/setInt.h"
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 #include "ocs2_ros_interfaces/mrt/DummyObserver.h"
@@ -49,7 +51,7 @@ class MRT_ROS_Gazebo_Loop
     MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                         MRT_ROS_Interface& mrt,
                         std::string worldFrameName,
-                        std::string graspFrameName,
+                        std::string targetMsg,
                         std::string baseStateMsg,
                         std::string armStateMsg,
                         std::string baseControlMsg,
@@ -127,7 +129,16 @@ class MRT_ROS_Gazebo_Loop
     SystemObservation getCurrentObservation(bool initFlag=false);
 
     /** NUA TODO: Add description */
-    bool isGraspPoseReached();
+    bool isPickDropPoseReached(int taskMode);
+
+    /** NUA TODO: Add description */
+    //bool setTaskMode(int val);
+
+    bool setPickedFlag(bool val);
+
+    // DESCRIPTION: TODO...
+    bool setTaskModeSrv(ocs2_core::setInt::Request &req, 
+                        ocs2_core::setInt::Response &res);
 
     /** NUA TODO: Add description */
     //void publishCommand(const PrimalSolution& primalSolution);
@@ -155,6 +166,7 @@ class MRT_ROS_Gazebo_Loop
     scalar_t dt_;
     scalar_t time_;
 
+    vector_t currentTarget_;
     vector_t currentInput_;
 
     std::vector<double> stateBase_;
@@ -169,7 +181,8 @@ class MRT_ROS_Gazebo_Loop
 
     tf::StampedTransform tf_robot_wrt_world_;
     tf::StampedTransform tf_ee_wrt_world_;
-    tf::StampedTransform tf_grasp_wrt_world_;
+    //tf::StampedTransform tf_grasp_wrt_world_;
+
     nav_msgs::Odometry odometryMsg_;
     geometry_msgs::Pose robotBasePoseMsg_;
     geometry_msgs::Twist robotBaseTwistMsg_;
@@ -179,9 +192,12 @@ class MRT_ROS_Gazebo_Loop
     bool shutDownFlag_ = false;
     std::string mrtShutDownFlag_;
 
-    // 0: No object attached
-    // 1: Object picked
+    // 0: Go
+    // 1: Go & Pick
+    // 2: Go & Drop
     int taskMode_ = 0;
+
+    bool pickedFlag_ = false;
 
     benchmark::RepeatedTimer timer1_;
     benchmark::RepeatedTimer timer2_;
@@ -191,12 +207,17 @@ class MRT_ROS_Gazebo_Loop
     ros::Subscriber linkStateSub_;
     ros::Subscriber jointStateSub_;
     ros::Subscriber jointTrajectoryPControllerStateSub_;
+    ros::Subscriber targetTrajectoriesSubscriber_;
 
     ros::Publisher baseTwistPub_;
     ros::Publisher armJointTrajectoryPub_;
 
     ros::ServiceClient attachClient_;
     ros::ServiceClient detachClient_;
+    //ros::ServiceClient setTaskModeClient_;
+    ros::ServiceClient setPickedFlagClient_;
+
+    ros::ServiceServer setTaskModeService_;
 };
 
 }  // namespace ocs2

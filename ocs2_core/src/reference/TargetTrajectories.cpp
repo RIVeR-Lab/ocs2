@@ -44,10 +44,12 @@ TargetTrajectories::TargetTrajectories(size_t size) : timeTrajectory(size), stat
 /***************************************************************************************************** */
 TargetTrajectories::TargetTrajectories(scalar_array_t desiredTimeTrajectory, 
                                        vector_array_t desiredStateTrajectory,
-                                       vector_array_t desiredInputTrajectory)
+                                       vector_array_t desiredInputTrajectory,
+                                       int desiredTaskMode)
   : timeTrajectory(std::move(desiredTimeTrajectory)),
     stateTrajectory(std::move(desiredStateTrajectory)),
-    inputTrajectory(std::move(desiredInputTrajectory)) 
+    inputTrajectory(std::move(desiredInputTrajectory)),
+    taskMode(std::move(desiredTaskMode))
 {
   assert(stateTrajectory.size() == timeTrajectory.size());
   

@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.24
+// LAST UPDATE: 2023.07.26
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -16,7 +16,7 @@ namespace ocs2 {
 MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                                          MRT_ROS_Interface& mrt,
                                          std::string worldFrameName,
-                                         std::string graspFrameName,
+                                         std::string targetMsg,
                                          std::string baseStateMsg,
                                          std::string armStateMsg,
                                          std::string baseControlMsg,
@@ -28,7 +28,6 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                                          bool updateIndexMapFlag)
   : mrt_(mrt), 
     worldFrameName_(worldFrameName),
-    graspFrameName_(graspFrameName),
     err_threshold_pos_(err_threshold_pos),
     err_threshold_ori_(err_threshold_ori),
     mrtDesiredFrequency_(mrtDesiredFrequency), 
@@ -82,6 +81,51 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   //jointTrajectoryPControllerStateSub_ = nh.subscribe("/arm_controller/state", 10, &MRT_ROS_Gazebo_Loop::jointTrajectoryControllerStateCallback, this);
   jointTrajectoryPControllerStateSub_ = nh.subscribe(armStateMsg, 5, &MRT_ROS_Gazebo_Loop::jointTrajectoryControllerStateCallback, this);
 
+  // TargetTrajectories
+  currentTarget_.resize(7);
+  auto targetTrajectoriesCallback = [this](const ocs2_msgs::mpc_target_trajectories::ConstPtr& msg) 
+  {
+    //std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop::targetTrajectoriesCallback] START" << std::endl;
+
+    auto targetTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(*msg);
+
+    if (currentTarget_.size() == targetTrajectories.stateTrajectory[0].size())
+    {
+      currentTarget_ = targetTrajectories.stateTrajectory[0]; 
+    }
+    else
+    {
+      std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop::targetTrajectoriesCallback] ERROR: Size mismatch!" << std::endl;
+    }
+
+    /*
+    std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop::targetTrajectoriesCallback] timeTrajectory size: " << targetTrajectories.timeTrajectory.size() << std::endl;
+    for (size_t i = 0; i < targetTrajectories.timeTrajectory.size(); i++)
+    {
+      std::cout << i << " -> " << targetTrajectories.timeTrajectory[i] << std::endl;
+    }
+    std::cout << "------------" << std::endl;
+
+    std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop::targetTrajectoriesCallback] stateTrajectory size: " << targetTrajectories.stateTrajectory[0].size() << std::endl;
+    for (size_t i = 0; i < targetTrajectories.stateTrajectory[0].size(); i++)
+    {
+      std::cout << i << " -> " << targetTrajectories.stateTrajectory[0][i] << std::endl;
+    }
+    std::cout << "------------" << std::endl;
+
+    std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop::targetTrajectoriesCallback] inputTrajectory size: " << targetTrajectories.inputTrajectory[0].size() << std::endl;
+    for (size_t i = 0; i < targetTrajectories.inputTrajectory[0].size(); i++)
+    {
+      std::cout << i << " -> " << targetTrajectories.inputTrajectory[0][i] << std::endl;
+    }
+    std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop::targetTrajectoriesCallback] targetTrajectories size: " << std::endl;
+    */
+
+    //std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop::targetTrajectoriesCallback] END" << std::endl;
+    //std::cout << "" << std::endl;
+  };
+  targetTrajectoriesSubscriber_ = nh.subscribe<ocs2_msgs::mpc_target_trajectories>(targetMsg, 5, targetTrajectoriesCallback);
+
   // Publishers
   baseTwistPub_ = nh.advertise<geometry_msgs::Twist>(baseControlMsg, 1);
   armJointTrajectoryPub_ = nh.advertise<trajectory_msgs::JointTrajectory>(armControlMsg, 1);
@@ -89,6 +133,11 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   /// Clients
   attachClient_ = nh.serviceClient<gazebo_ros_link_attacher::Attach>("/link_attacher_node/attach");
   detachClient_ = nh.serviceClient<gazebo_ros_link_attacher::Attach>("/link_attacher_node/detach");
+  //setTaskModeClient_ = nh.serviceClient<ocs2_core::setInt>("/set_task_mode");
+  setPickedFlagClient_ = nh.serviceClient<ocs2_core::setInt>("/set_picked_flag");
+
+  /// Services
+  setTaskModeService_ = nh.advertiseService("set_task_mode", &MRT_ROS_Gazebo_Loop::setTaskModeSrv, this);
 
   if (mrtDesiredFrequency_ < 0) 
   {
@@ -161,6 +210,8 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
 {
   ROS_INFO_STREAM("[MRT_ROS_Gazebo_Loop::run] Waiting for the initial policy...");
   
+  currentTarget_ = initTarget;
+
   while(!isStateInitialized())
   {
     //std::cout << "[MRT_ROS_Gazebo_Loop::updateFullModelState] WARNING: State not initialized!" << std::endl;
@@ -224,7 +275,7 @@ void MRT_ROS_Gazebo_Loop::getInitTarget(vector_t& initTarget)
   }
   catch (tf::TransformException ex)
   {
-    ROS_INFO("[MRT_ROS_Gazebo_Loop::tfCallback] ERROR: Couldn't get transform!");
+    ROS_INFO("[MRT_ROS_Gazebo_Loop::getInitTarget] ERROR: Couldn't get transform!");
     ROS_ERROR("%s", ex.what());
   }
 
@@ -237,14 +288,14 @@ void MRT_ROS_Gazebo_Loop::getInitTarget(vector_t& initTarget)
                                                     tf_ee_wrt_world.getRotation().y(), 
                                                     tf_ee_wrt_world.getRotation().z()).coeffs();
   
-  std::cout << "[MobileManipulatorGazeboMRT::main] eeFrame: " << eeFrame << std::endl;
-  std::cout << "[MobileManipulatorGazeboMRT::main] initTarget.x: " << initTarget(0) << std::endl;
-  std::cout << "[MobileManipulatorGazeboMRT::main] initTarget.y: " << initTarget(1) << std::endl;
-  std::cout << "[MobileManipulatorGazeboMRT::main] initTarget.z: " << initTarget(2) << std::endl;
-  std::cout << "[MobileManipulatorGazeboMRT::main] initTarget.qx: " << initTarget(3) << std::endl;
-  std::cout << "[MobileManipulatorGazeboMRT::main] initTarget.qy: " << initTarget(4) << std::endl;
-  std::cout << "[MobileManipulatorGazeboMRT::main] initTarget.qz: " << initTarget(5) << std::endl;
-  std::cout << "[MobileManipulatorGazeboMRT::main] initTarget.qw: " << initTarget(6) << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::getInitTarget] eeFrame: " << eeFrame << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::getInitTarget] initTarget.x: " << initTarget(0) << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::getInitTarget] initTarget.y: " << initTarget(1) << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::getInitTarget] initTarget.z: " << initTarget(2) << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::getInitTarget] initTarget.qx: " << initTarget(3) << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::getInitTarget] initTarget.qy: " << initTarget(4) << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::getInitTarget] initTarget.qz: " << initTarget(5) << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::getInitTarget] initTarget.qw: " << initTarget(6) << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -403,9 +454,10 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
       //std::cout << "[OCS2_MRT_Loop::mrtLoop] END spinMRT" << std::endl;
     }
 
-    if (taskMode_ == 0 && isGraspPoseReached())
+    int taskMode = taskMode_;
+    if (isPickDropPoseReached(taskMode))
     {
-      std::cout << "[OCS2_MRT_Loop::isGraspPoseReached] START" << std::endl;
+      std::cout << "[OCS2_MRT_Loop::mrtLoop] START PICK/DROP" << std::endl;
       
       gazebo_ros_link_attacher::Attach srv;
       srv.request.model_name_1 = "mobiman";
@@ -413,68 +465,74 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
       srv.request.model_name_2 = "red_cube";
       srv.request.link_name_2 = "red_cube_base_link";
 
-      std::cout << "[OCS2_MRT_Loop::isGraspPoseReached] srv.request.link_name_1: " << srv.request.link_name_1 << std::endl;
+      std::cout << "[OCS2_MRT_Loop::mrtLoop] srv.request.link_name_1: " << srv.request.link_name_1 << std::endl;
 
-      std::cout << "[OCS2_MRT_Loop::isGraspPoseReached] taskMode_: " << taskMode_ << std::endl;
-      if (taskMode_ == 0)
+      std::cout << "[OCS2_MRT_Loop::mrtLoop] taskMode: " << taskMode << std::endl;
+      if (taskMode == 1)
       {
-        std::cout << "[OCS2_MRT_Loop::isGraspPoseReached] PICK" << std::endl;
+        std::cout << "[OCS2_MRT_Loop::mrtLoop] PICK" << std::endl;
         if (attachClient_.call(srv))
         {
-          //std::cout << "[OCS2_MRT_Loop::isGraspPoseReached] response: " << srv.response.ok << std::endl;
-          taskMode_ = 1;
+          std::cout << "[OCS2_MRT_Loop::mrtLoop] response: " << srv.response.ok << std::endl;
+          taskMode = 2;
+          pickedFlag_ = true;
+          bool taskModeSuccess = setPickedFlag(pickedFlag_);
+          std::cout << "[OCS2_MRT_Loop::mrtLoop] taskModeSuccess: " << taskModeSuccess << std::endl;
+          ros::spinOnce();
         }
         else
         {
-          ROS_ERROR("[OCS2_MRT_Loop::isGraspPoseReached] ERROR: Failed to call service!");
+          ROS_ERROR("[OCS2_MRT_Loop::mrtLoop] ERROR: Failed to call service!");
         }
       }
-      else if (taskMode_ == 1)
+      else if (taskMode == 2)
       {
-        /*
-        std::cout << "[OCS2_MRT_Loop::isGraspPoseReached] PLACE" << std::endl;
+        std::cout << "[OCS2_MRT_Loop::mrtLoop] DROP" << std::endl;
         if (detachClient_.call(srv))
         {
-          std::cout << "[OCS2_MRT_Loop::isGraspPoseReached] response: " << srv.response.ok << std::endl;
+          std::cout << "[OCS2_MRT_Loop::mrtLoop] response: " << srv.response.ok << std::endl;
+          taskMode = 1;
+          pickedFlag_ = false;
+          bool taskModeSuccess = setPickedFlag(pickedFlag_);
+          std::cout << "[OCS2_MRT_Loop::mrtLoop] taskModeSuccess: " << taskModeSuccess << std::endl;
+          ros::spinOnce();
         }
         else
         {
-          ROS_ERROR("[OCS2_MRT_Loop::isGraspPoseReached] ERROR: Failed to call service!");
+          ROS_ERROR("[OCS2_MRT_Loop::mrtLoop] ERROR: Failed to call service!");
         }
-
-        taskMode_ = 0;
-        */
       }
 
-      std::cout << "[OCS2_MRT_Loop::isGraspPoseReached] END" << std::endl;
+      std::cout << "[OCS2_MRT_Loop::mrtLoop] END PICK/DROP" << std::endl;
     }
-    
-
-    if (!shutDownFlag_)
+    else
     {
-      //std::cout << "[OCS2_MRT_Loop::mrtLoop] START updatePolicy" << std::endl;
-      // Update the policy if a new one was received
-      mrt_.updatePolicy();
-      currentPolicy = mrt_.getPolicy();
-      currentInput_ = currentPolicy.getDesiredInput(time_);
+      if (!shutDownFlag_)
+      {
+        //std::cout << "[OCS2_MRT_Loop::mrtLoop] START updatePolicy" << std::endl;
+        // Update the policy if a new one was received
+        mrt_.updatePolicy();
+        currentPolicy = mrt_.getPolicy();
+        currentInput_ = currentPolicy.getDesiredInput(time_);
 
-      //std::cout << "[OCS2_MRT_Loop::mrtLoop] START observer" << std::endl;
-      // Update observers for visualization
-      //for (auto& observer : observers_) 
-      //{
-      //  observer->update(currentObservation, currentPolicy, mrt_.getCommand());
-      //}
+        //std::cout << "[OCS2_MRT_Loop::mrtLoop] START observer" << std::endl;
+        // Update observers for visualization
+        //for (auto& observer : observers_) 
+        //{
+        //  observer->update(currentObservation, currentPolicy, mrt_.getCommand());
+        //}
 
-      //std::cout << "[OCS2_MRT_Loop::mrtLoop] START publishCommand" << std::endl;
-      // Publish the control command 
-      publishCommand(currentPolicy);
+        //std::cout << "[OCS2_MRT_Loop::mrtLoop] START publishCommand" << std::endl;
+        // Publish the control command 
+        publishCommand(currentPolicy);
 
-      time_ += dt_;
+        time_ += dt_;
 
-      //shutDownFlag_ = mrt_.getShutDownFlag();
+        //shutDownFlag_ = mrt_.getShutDownFlag();
 
-      ros::spinOnce();
-      simRate.sleep();
+        ros::spinOnce();
+        simRate.sleep();
+      }
     }
     
     mrtShutDownFlag_ = getenv("mrtShutDownFlag");
@@ -585,14 +643,14 @@ void MRT_ROS_Gazebo_Loop::tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg)
 
   try
   {
-    tfListener_.waitForTransform(worldFrameName_, baseFrameName_, ros::Time::now(), ros::Duration(1.0));
+    tfListener_.waitForTransform(worldFrameName_, baseFrameName_, ros::Time::now(), ros::Duration(0.5));
     tfListener_.lookupTransform(worldFrameName_, baseFrameName_, ros::Time(0), tf_robot_wrt_world_);
 
-    tfListener_.waitForTransform(worldFrameName_, robotModelInfo_.robotArm.eeFrame, ros::Time::now(), ros::Duration(1.0));
+    tfListener_.waitForTransform(worldFrameName_, robotModelInfo_.robotArm.eeFrame, ros::Time::now(), ros::Duration(0.5));
     tfListener_.lookupTransform(worldFrameName_, robotModelInfo_.robotArm.eeFrame, ros::Time(0), tf_ee_wrt_world_);
 
-    tfListener_.waitForTransform(worldFrameName_, graspFrameName_, ros::Time::now(), ros::Duration(1.0));
-    tfListener_.lookupTransform(worldFrameName_, graspFrameName_, ros::Time(0), tf_grasp_wrt_world_);
+    //tfListener_.waitForTransform(worldFrameName_, graspFrameName_, ros::Time::now(), ros::Duration(1.0));
+    //tfListener_.lookupTransform(worldFrameName_, graspFrameName_, ros::Time(0), tf_grasp_wrt_world_);
   }
   catch (tf::TransformException ex)
   {
@@ -913,41 +971,119 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-bool MRT_ROS_Gazebo_Loop::isGraspPoseReached()
+bool MRT_ROS_Gazebo_Loop::isPickDropPoseReached(int taskMode)
 {
-  //std::cout << "[MobileManipulatorInterface::isGraspPoseReached] START" << std::endl;
-  //std::cout << "[MobileManipulatorInterface::isGraspPoseReached] err_threshold_pos_: " << err_threshold_pos_ << std::endl;
-  //std::cout << "[MobileManipulatorInterface::isGraspPoseReached] err_threshold_ori_: " << err_threshold_ori_ << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] START" << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] taskMode: " << taskMode << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] err_threshold_pos_: " << err_threshold_pos_ << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] err_threshold_ori_: " << err_threshold_ori_ << std::endl;
 
-  tf::StampedTransform tf_ee_wrt_world = tf_ee_wrt_world_;
-  tf::StampedTransform tf_grasp_wrt_world = tf_grasp_wrt_world_;
+  if (taskMode != 0)
+  {
+    vector_t currentTarget = currentTarget_;
 
-  vector_t dist_pos(3);
-  dist_pos << abs(tf_ee_wrt_world.getOrigin().x() - tf_grasp_wrt_world.getOrigin().x()), 
-              abs(tf_ee_wrt_world.getOrigin().y() - tf_grasp_wrt_world.getOrigin().y()), 
-              abs(tf_ee_wrt_world.getOrigin().z() - tf_grasp_wrt_world.getOrigin().z());
+    tf::StampedTransform tf_ee_wrt_world = tf_ee_wrt_world_;
 
-  double err_pos = dist_pos.norm();
+    std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] currentTarget(0): " << currentTarget(0) << std::endl;
+    std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] currentTarget(1): " << currentTarget(1) << std::endl;
+    std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] currentTarget(2): " << currentTarget(2) << std::endl;
 
-  //std::cout << "[MobileManipulatorInterface::isGraspPoseReached] dist_pos x: " << dist_pos[0] << std::endl;
-  //std::cout << "[MobileManipulatorInterface::isGraspPoseReached] dist_pos y: " << dist_pos[1] << std::endl;
-  //std::cout << "[MobileManipulatorInterface::isGraspPoseReached] dist_pos z: " << dist_pos[2] << std::endl;
-  //std::cout << "[MobileManipulatorInterface::isGraspPoseReached] err_pos: " << err_pos << std::endl;
+    vector_t dist_pos(3);
+    dist_pos << abs(tf_ee_wrt_world.getOrigin().x() - currentTarget(0)), 
+                abs(tf_ee_wrt_world.getOrigin().y() - currentTarget(1)), 
+                abs(tf_ee_wrt_world.getOrigin().z() - currentTarget(2));
 
-  Eigen::Quaterniond quat_ee(tf_ee_wrt_world.getRotation().w(), tf_ee_wrt_world.getRotation().z(), tf_ee_wrt_world.getRotation().y(), tf_ee_wrt_world.getRotation().z());
-  Eigen::Quaterniond quat_grasp(tf_grasp_wrt_world.getRotation().w(), tf_grasp_wrt_world.getRotation().z(), tf_grasp_wrt_world.getRotation().y(), tf_grasp_wrt_world.getRotation().z());
+    double err_pos = dist_pos.norm();
 
-  vector_t dist_quat = quaternionDistance(quat_ee, quat_grasp);
-  double err_ori = dist_quat.norm();
+    //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] dist_pos x: " << dist_pos[0] << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] dist_pos y: " << dist_pos[1] << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] dist_pos z: " << dist_pos[2] << std::endl;
+    std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] err_pos: " << err_pos << std::endl;
 
-  //std::cout << "[MobileManipulatorInterface::isGraspPoseReached] dist_quat r: " << dist_quat[0] << std::endl;
-  //std::cout << "[MobileManipulatorInterface::isGraspPoseReached] dist_quat p: " << dist_quat[1] << std::endl;
-  //std::cout << "[MobileManipulatorInterface::isGraspPoseReached] dist_quat y: " << dist_quat[2] << std::endl;
-  //std::cout << "[MobileManipulatorInterface::isGraspPoseReached] err_ori: " << err_ori << std::endl;
+    Eigen::Quaterniond quat_ee(tf_ee_wrt_world.getRotation().w(), tf_ee_wrt_world.getRotation().x(), tf_ee_wrt_world.getRotation().y(), tf_ee_wrt_world.getRotation().z());
+    Eigen::Quaterniond quat_target(currentTarget(6), currentTarget(3), currentTarget(4), currentTarget(5));
 
-  //std::cout << "[MobileManipulatorInterface::isGraspPoseReached] END" << std::endl << std::endl;
+    vector_t dist_quat = quaternionDistance(quat_ee, quat_target);
+    double err_ori = dist_quat.norm();
 
-  return (err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_);
+    //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] dist_quat r: " << dist_quat[0] << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] dist_quat p: " << dist_quat[1] << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] dist_quat y: " << dist_quat[2] << std::endl;
+    std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] err_ori: " << err_ori << std::endl;
+
+    std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] END" << std::endl << std::endl;
+
+    return (err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_);
+  }
+
+  return false;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+/*
+bool MRT_ROS_Gazebo_Loop::setTaskMode(int val)
+{
+  std::cout << "[MRT_ROS_Gazebo_Loop::setTaskMode] START" << std::endl;
+
+  bool success = false;
+  ocs2_core::setInt srv;
+  srv.request.val = val;
+  if (setTaskModeClient_.call(srv))
+  {
+    success = srv.response.success;
+  }
+  else
+  {
+    ROS_ERROR("[MRT_ROS_Gazebo_Loop::setTaskMode] ERROR: Failed to call service!");
+    success = false;
+  }
+
+  std::cout << "[MRT_ROS_Gazebo_Loop::setTaskMode] END" << std::endl;
+  
+  return success;
+}
+*/
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+bool MRT_ROS_Gazebo_Loop::setPickedFlag(bool val)
+{
+  std::cout << "[MRT_ROS_Gazebo_Loop::setPickedFlag] START" << std::endl;
+
+  bool success = false;
+  ocs2_core::setInt srv;
+  srv.request.val = val;
+  if (setPickedFlagClient_.call(srv))
+  {
+    success = srv.response.success;
+  }
+  else
+  {
+    ROS_ERROR("[MRT_ROS_Gazebo_Loop::setPickedFlag] ERROR: Failed to call service!");
+    success = false;
+  }
+
+  std::cout << "[MRT_ROS_Gazebo_Loop::setPickedFlag] END" << std::endl;
+  
+  return success;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+bool MRT_ROS_Gazebo_Loop::setTaskModeSrv(ocs2_core::setInt::Request &req, 
+                                         ocs2_core::setInt::Response &res)
+{
+  std::cout << "[MRT_ROS_Gazebo_Loop::setTaskModeSrv] START" << std::endl;
+  taskMode_ = req.val;
+  res.success = true;
+
+  std::cout << "[MRT_ROS_Gazebo_Loop::setTaskModeSrv] taskMode_: " << taskMode_ << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::setTaskModeSrv] END" << std::endl;
+  return res.success;
 }
 
 //-------------------------------------------------------------------------------------------------------

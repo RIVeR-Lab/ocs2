@@ -1,0 +1,5 @@
+# Request setting value
+int8 val
+---
+# Result boolean
+bool success

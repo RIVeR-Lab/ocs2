@@ -31,6 +31,7 @@
 #include <ocs2_core/soft_constraint/StateInputSoftBoxConstraint.h>
 #include <ocs2_core/soft_constraint/StateSoftConstraint.h>
 #include <ocs2_core/dynamics/MultiModelFunctions.h>
+//#include "ocs2_core/setBool.h"
 
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
@@ -66,8 +67,6 @@
 #include "ocs2_mobile_manipulator/dynamics/RobotArmDynamics.h"
 #include "ocs2_mobile_manipulator/dynamics/MobileManipulatorDynamics.h"
 #include <ocs2_mobile_manipulator/MobileManipulatorVisualization.h>
-
-#include "ocs2_mobile_manipulator/setBool.h"
 
 namespace ocs2 {
 namespace mobile_manipulator {
@@ -317,17 +316,18 @@ class MobileManipulatorInterface final : public RobotInterface
     const std::string urdfFile_;
     std::string robotModelName_ = "mobile_manipulator";
     std::string worldFrameName_ = "world";
-    std::string graspFrameName_ = "grasp";
+    //std::string graspFrameName_ = "grasp";
 
     size_t initModelModeInt_ = 2;
     size_t modelModeIntQuery_ = 2;
 
-    double err_threshold_pos_ = 0.05;
-    double err_threshold_ori_ = 0.1;
+    double err_threshold_pos_ = 0.02;
+    double err_threshold_ori_ = 0.05;
 
     int mpcIter_ = 0; 
     int mrtIter_ = 0; 
 
+    bool targetReadyFlag_ = false;
     bool mpcProblemReadyFlag_ = false;
     bool mrtExitFlag_ = true;
     bool mpcLaunchReadyFlag_ = false;

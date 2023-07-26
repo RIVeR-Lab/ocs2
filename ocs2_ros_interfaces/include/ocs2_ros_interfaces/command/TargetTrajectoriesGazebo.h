@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.07.24
+// LAST UPDATE: 2022.07.26
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -22,6 +22,8 @@
 #include <interactive_markers/interactive_marker_server.h>
 #include <interactive_markers/menu_handler.h>
 
+#include "ocs2_core/setBool.h"
+#include "ocs2_core/setInt.h"
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_ros_interfaces/command/TargetTrajectoriesRosPublisher.h>
 
@@ -50,6 +52,7 @@ class TargetTrajectoriesGazebo final
                              const std::string& gazeboModelMsgName,
                              std::string robotName,
                              std::vector<std::string>& targetNames,
+                             std::string dropTargetName,
                              GoalPoseToTargetTrajectories goalPoseToTargetTrajectories);
 
     // DESCRIPTION: TODO...
@@ -65,7 +68,7 @@ class TargetTrajectoriesGazebo final
     void updateObservationAndTarget();
 
     // DESCRIPTION: TODO...
-    void updateTarget();
+    void updateTarget(bool autoFlag=false);
 
     // DESCRIPTION: TODO...
     void initializeInteractiveMarkerTarget();
@@ -74,10 +77,19 @@ class TargetTrajectoriesGazebo final
     void initializeInteractiveMarkerAutoTarget();
 
     // DESCRIPTION: TODO...
+    //void initializeInteractiveMarkerDropTarget();
+
+    // DESCRIPTION: TODO...
     void initializeInteractiveMarkerModelMode();
 
     // DESCRIPTION: TODO...
     void publishTargetVisu();
+
+    // DESCRIPTION: TODO...
+    void publishGraspFrame();
+
+    // DESCRIPTION: TODO...
+    void publishDropFrame();
 
   private:
     /// FUNCTIONS:
@@ -115,19 +127,25 @@ class TargetTrajectoriesGazebo final
     void updateGraspPose();
 
     // DESCRIPTION: TODO...
-    void updateGraspPose(Eigen::Vector3d& graspPos, Eigen::Quaterniond& graspOri);
+    void updateGraspPose(const Eigen::Vector3d& graspPos, const Eigen::Quaterniond& graspOri);
 
     // DESCRIPTION: TODO...
-    void fillTargetVisu(bool graspFlag);
+    void updateDropPose();
 
     // DESCRIPTION: TODO...
-    void publishGraspFrame();
+    void updateDropPose(const Eigen::Vector3d& targetPos, const Eigen::Quaterniond& targetOri);
+
+    // DESCRIPTION: TODO...
+    void fillTargetVisu();
 
     // DESCRIPTION: TODO...
     visualization_msgs::InteractiveMarker createInteractiveMarkerTarget() const;
 
     // DESCRIPTION: TODO...
     visualization_msgs::InteractiveMarker createInteractiveMarkerAutoTarget() const;
+
+    // DESCRIPTION: TODO...
+    //visualization_msgs::InteractiveMarker createInteractiveMarkerDropTarget() const;
 
     // DESCRIPTION: TODO...
     visualization_msgs::InteractiveMarker createInteractiveMarkerModelMode() const;
@@ -142,17 +160,40 @@ class TargetTrajectoriesGazebo final
     void processFeedbackAutoTarget(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
 
     // DESCRIPTION: TODO...
+    //void processFeedbackDropTarget(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
+
+    // DESCRIPTION: TODO...
     void processFeedbackModelMode(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
+
+    // DESCRIPTION: TODO...
+    bool setTaskMode(int val);
+
+    // DESCRIPTION: TODO...
+    //bool setTaskModeSrv(ocs2_core::setInt::Request &req, 
+    //                    ocs2_core::setInt::Response &res);
+
+    // DESCRIPTION: TODO...
+    bool setPickedFlagSrv(ocs2_core::setBool::Request &req, 
+                          ocs2_core::setBool::Response &res);
 
     /// VARIABLES:
     bool initCallbackFlag_ = false;
     bool initMenuModelModeFlag_ = false;
 
-    int ctr_ = 0;
+    //bool graspFrameReadyFlag_ = false;
+    //bool dropFrameReadyFlag_ = false;
+
+    // 0: Go
+    // 1: Go & Pick
+    // 2: Go & Drop
+    int taskMode_ = 0;
+
+    bool pickedFlag_ = false;
 
     std::string worldFrameName_ = "world";
     std::string robotFrameName_ = "base_link"; 
     std::string graspFrameName_ = "grasp"; 
+    std::string dropFrameName_ = "drop"; 
 
     gazebo_msgs::ModelStates modelStatesMsg_;
 
@@ -168,6 +209,11 @@ class TargetTrajectoriesGazebo final
     Eigen::Matrix3d graspOrientationOffsetMatrix_;
     Eigen::Vector3d currentGraspPosition_;
     Eigen::Quaterniond currentGraspOrientation_;
+
+    Eigen::Vector3d dropPositionOffset_;
+    Eigen::Matrix3d dropOrientationOffsetMatrix_;
+    Eigen::Vector3d currentDropPosition_;
+    Eigen::Quaterniond currentDropOrientation_;
     
     std::vector<std::string> currentTargetNames_;
     std::vector<Eigen::Vector3d> currentTargetPositions_;
@@ -193,13 +239,19 @@ class TargetTrajectoriesGazebo final
 
     interactive_markers::MenuHandler menuHandlerTarget_;
     interactive_markers::MenuHandler menuHandlerAutoTarget_;
+    interactive_markers::MenuHandler menuHandlerDropTarget_;
     interactive_markers::MenuHandler menuHandlerModelMode_;
     interactive_markers::InteractiveMarkerServer targetServer_;
     interactive_markers::InteractiveMarkerServer autoTargetServer_;
+    interactive_markers::InteractiveMarkerServer dropTargetServer_;
     interactive_markers::InteractiveMarkerServer modelModeServer_;
 
     ros::Subscriber observationSubscriber_;
     ros::Subscriber gazeboModelStatesSubscriber_;
+
+    ros::ServiceClient setTaskModeClient_;
+    //ros::ServiceServer setTaskModeService_;
+    ros::ServiceServer setPickedFlagService_;
 
     mutable std::mutex latestObservationMutex_;
     
