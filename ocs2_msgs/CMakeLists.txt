@@ -4,6 +4,7 @@ project(ocs2_msgs)
 find_package(catkin REQUIRED
   COMPONENTS
     std_msgs
+    geometry_msgs
     message_generation
 )
 
@@ -24,15 +25,20 @@ add_message_files(
 add_service_files(
   FILES
     reset.srv
+    setBool.srv
+    setInt.srv
+    setTask.srv
 )
 
 generate_messages(
   DEPENDENCIES
     std_msgs
+    geometry_msgs
 )
 
 catkin_package(
   CATKIN_DEPENDS
     std_msgs
+    geometry_msgs
     message_runtime
 )

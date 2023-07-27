@@ -12,11 +12,6 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>cmake_clang_tools</build_depend>
-  
-  <depend>message_generation</depend>
-  <depend>message_runtime</depend>
-  <depend>std_msgs</depend>
-  <depend>geometry_msgs</depend>
 
   <depend>pinocchio</depend>
   <depend>ocs2_core</depend>

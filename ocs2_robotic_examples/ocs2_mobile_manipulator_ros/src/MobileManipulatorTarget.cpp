@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
   ros::NodeHandle pnh("~");
 
   // INITIALIZE AND SET PARAMETERS
-  std::string world_frame_name, gz_model_msg_name, robot_name, drop_frame_name;
+  std::string world_frame_name, gz_model_msg_name, robot_name, drop_target_name;
   std::vector<std::string> name_pkgs_ign, name_pkgs_man, scan_data_path_pkgs_ign, scan_data_path_pkgs_man, target_names;
   double map_resolution;
   
@@ -57,14 +57,14 @@ int main(int argc, char* argv[])
   pnh.param<std::string>("/gz_model_msg_name", gz_model_msg_name, "");
   robot_name = "mobiman";
   target_names = {"red_cube"};
-  drop_frame_name = "bin_4_dropping_task";
+  drop_target_name = "bin_4_dropping_task";
   //target_names = {"normal_pkg","long_pkg","longwide_pkg","red_cube","green_cube","blue_cube"};
 
   //cout << "[MobileManipulatorTarget::main] DEBUG INF" << endl;
   //while(1);
 
   // Gazebo
-  TargetTrajectoriesGazebo gu(nh, robotMode, gz_model_msg_name, robot_name, target_names, drop_frame_name, &goalPoseToTargetTrajectories);
+  TargetTrajectoriesGazebo gu(nh, robotMode, gz_model_msg_name, robot_name, target_names, drop_target_name, &goalPoseToTargetTrajectories);
   gu.initializeInteractiveMarkerTarget();
   gu.initializeInteractiveMarkerAutoTarget();
   //gu.initializeInteractiveMarkerDropTarget();

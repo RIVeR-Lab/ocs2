@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.0.2)
 project(ocs2_core)
 
 find_package(catkin REQUIRED COMPONENTS
-  message_generation
-  std_msgs
-  geometry_msgs
   tf_conversions
   cmake_modules
   ocs2_thirdparty
@@ -35,20 +32,6 @@ find_package(OpenMP REQUIRED)
 include(cmake/ocs2_cxx_flags.cmake)
 message(STATUS "OCS2_CXX_FLAGS: " ${OCS2_CXX_FLAGS})
 
-## Generate services in the 'srv' folder
-add_service_files(
-  FILES
-  setBool.srv
-  setInt.srv
-)
-
-## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  geometry_msgs
-)
-
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -62,7 +45,6 @@ catkin_package(
     ${PROJECT_NAME}
   CATKIN_DEPENDS
     ocs2_thirdparty
-    #message_runtime
   DEPENDS
     Boost
     OpenMP_CXX

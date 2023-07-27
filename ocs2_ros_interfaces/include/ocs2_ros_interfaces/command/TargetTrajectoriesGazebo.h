@@ -22,8 +22,9 @@
 #include <interactive_markers/interactive_marker_server.h>
 #include <interactive_markers/menu_handler.h>
 
-#include "ocs2_core/setBool.h"
-#include "ocs2_core/setInt.h"
+#include "ocs2_msgs/setBool.h"
+#include "ocs2_msgs/setInt.h"
+#include "ocs2_msgs/setTask.h"
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_ros_interfaces/command/TargetTrajectoriesRosPublisher.h>
 
@@ -166,15 +167,18 @@ class TargetTrajectoriesGazebo final
     void processFeedbackModelMode(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
 
     // DESCRIPTION: TODO...
-    bool setTaskMode(int val);
+    //bool setTaskMode(int val);
 
     // DESCRIPTION: TODO...
-    //bool setTaskModeSrv(ocs2_core::setInt::Request &req, 
-    //                    ocs2_core::setInt::Response &res);
+    bool setTask(int taskMode, geometry_msgs::Pose target);
 
     // DESCRIPTION: TODO...
-    bool setPickedFlagSrv(ocs2_core::setBool::Request &req, 
-                          ocs2_core::setBool::Response &res);
+    //bool setTaskModeSrv(ocs2_msgs::setInt::Request &req, 
+    //                    ocs2_msgs::setInt::Response &res);
+
+    // DESCRIPTION: TODO...
+    bool setPickedFlagSrv(ocs2_msgs::setBool::Request& req, 
+                          ocs2_msgs::setBool::Response& res);
 
     /// VARIABLES:
     bool initCallbackFlag_ = false;
@@ -198,6 +202,7 @@ class TargetTrajectoriesGazebo final
     gazebo_msgs::ModelStates modelStatesMsg_;
 
     std::vector<std::string> targetNames_;
+    std::string dropTargetName_;
     std::string robotName_;
     geometry_msgs::Pose robotPose_;
 
@@ -249,7 +254,8 @@ class TargetTrajectoriesGazebo final
     ros::Subscriber observationSubscriber_;
     ros::Subscriber gazeboModelStatesSubscriber_;
 
-    ros::ServiceClient setTaskModeClient_;
+    //ros::ServiceClient setTaskModeClient_;
+    ros::ServiceClient setTaskClient_;
     //ros::ServiceServer setTaskModeService_;
     ros::ServiceServer setPickedFlagService_;
 

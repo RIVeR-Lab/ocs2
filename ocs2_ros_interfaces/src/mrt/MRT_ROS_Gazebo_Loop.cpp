@@ -81,50 +81,7 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   //jointTrajectoryPControllerStateSub_ = nh.subscribe("/arm_controller/state", 10, &MRT_ROS_Gazebo_Loop::jointTrajectoryControllerStateCallback, this);
   jointTrajectoryPControllerStateSub_ = nh.subscribe(armStateMsg, 5, &MRT_ROS_Gazebo_Loop::jointTrajectoryControllerStateCallback, this);
 
-  // TargetTrajectories
   currentTarget_.resize(7);
-  auto targetTrajectoriesCallback = [this](const ocs2_msgs::mpc_target_trajectories::ConstPtr& msg) 
-  {
-    //std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop::targetTrajectoriesCallback] START" << std::endl;
-
-    auto targetTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(*msg);
-
-    if (currentTarget_.size() == targetTrajectories.stateTrajectory[0].size())
-    {
-      currentTarget_ = targetTrajectories.stateTrajectory[0]; 
-    }
-    else
-    {
-      std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop::targetTrajectoriesCallback] ERROR: Size mismatch!" << std::endl;
-    }
-
-    /*
-    std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop::targetTrajectoriesCallback] timeTrajectory size: " << targetTrajectories.timeTrajectory.size() << std::endl;
-    for (size_t i = 0; i < targetTrajectories.timeTrajectory.size(); i++)
-    {
-      std::cout << i << " -> " << targetTrajectories.timeTrajectory[i] << std::endl;
-    }
-    std::cout << "------------" << std::endl;
-
-    std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop::targetTrajectoriesCallback] stateTrajectory size: " << targetTrajectories.stateTrajectory[0].size() << std::endl;
-    for (size_t i = 0; i < targetTrajectories.stateTrajectory[0].size(); i++)
-    {
-      std::cout << i << " -> " << targetTrajectories.stateTrajectory[0][i] << std::endl;
-    }
-    std::cout << "------------" << std::endl;
-
-    std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop::targetTrajectoriesCallback] inputTrajectory size: " << targetTrajectories.inputTrajectory[0].size() << std::endl;
-    for (size_t i = 0; i < targetTrajectories.inputTrajectory[0].size(); i++)
-    {
-      std::cout << i << " -> " << targetTrajectories.inputTrajectory[0][i] << std::endl;
-    }
-    std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop::targetTrajectoriesCallback] targetTrajectories size: " << std::endl;
-    */
-
-    //std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop::targetTrajectoriesCallback] END" << std::endl;
-    //std::cout << "" << std::endl;
-  };
-  targetTrajectoriesSubscriber_ = nh.subscribe<ocs2_msgs::mpc_target_trajectories>(targetMsg, 5, targetTrajectoriesCallback);
 
   // Publishers
   baseTwistPub_ = nh.advertise<geometry_msgs::Twist>(baseControlMsg, 1);
@@ -133,11 +90,12 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   /// Clients
   attachClient_ = nh.serviceClient<gazebo_ros_link_attacher::Attach>("/link_attacher_node/attach");
   detachClient_ = nh.serviceClient<gazebo_ros_link_attacher::Attach>("/link_attacher_node/detach");
-  //setTaskModeClient_ = nh.serviceClient<ocs2_core::setInt>("/set_task_mode");
-  setPickedFlagClient_ = nh.serviceClient<ocs2_core::setInt>("/set_picked_flag");
+  //setTaskModeClient_ = nh.serviceClient<ocs2_msgs::setInt>("/set_task_mode");
+  setPickedFlagClient_ = nh.serviceClient<ocs2_msgs::setBool>("/set_picked_flag");
 
   /// Services
-  setTaskModeService_ = nh.advertiseService("set_task_mode", &MRT_ROS_Gazebo_Loop::setTaskModeSrv, this);
+  //setTaskModeService_ = nh.advertiseService("set_task_mode", &MRT_ROS_Gazebo_Loop::setTaskModeSrv, this);
+  setTaskService_ = nh.advertiseService("set_task", &MRT_ROS_Gazebo_Loop::setTaskSrv, this);
 
   if (mrtDesiredFrequency_ < 0) 
   {
@@ -211,6 +169,7 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
   ROS_INFO_STREAM("[MRT_ROS_Gazebo_Loop::run] Waiting for the initial policy...");
   
   currentTarget_ = initTarget;
+  taskEndFlag_ = true;
 
   while(!isStateInitialized())
   {
@@ -455,6 +414,8 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
     }
 
     int taskMode = taskMode_;
+    //std::cout << "[OCS2_MRT_Loop::mrtLoop] taskMode: " << taskMode << std::endl;
+
     if (isPickDropPoseReached(taskMode))
     {
       std::cout << "[OCS2_MRT_Loop::mrtLoop] START PICK/DROP" << std::endl;
@@ -465,17 +426,17 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
       srv.request.model_name_2 = "red_cube";
       srv.request.link_name_2 = "red_cube_base_link";
 
-      std::cout << "[OCS2_MRT_Loop::mrtLoop] srv.request.link_name_1: " << srv.request.link_name_1 << std::endl;
+      //std::cout << "[OCS2_MRT_Loop::mrtLoop] srv.request.link_name_1: " << srv.request.link_name_1 << std::endl;
 
-      std::cout << "[OCS2_MRT_Loop::mrtLoop] taskMode: " << taskMode << std::endl;
+      //std::cout << "[OCS2_MRT_Loop::mrtLoop] taskMode: " << taskMode << std::endl;
       if (taskMode == 1)
       {
-        std::cout << "[OCS2_MRT_Loop::mrtLoop] PICK" << std::endl;
         if (attachClient_.call(srv))
         {
           std::cout << "[OCS2_MRT_Loop::mrtLoop] response: " << srv.response.ok << std::endl;
           taskMode = 2;
           pickedFlag_ = true;
+          taskEndFlag_ = true;
           bool taskModeSuccess = setPickedFlag(pickedFlag_);
           std::cout << "[OCS2_MRT_Loop::mrtLoop] taskModeSuccess: " << taskModeSuccess << std::endl;
           ros::spinOnce();
@@ -493,6 +454,7 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
           std::cout << "[OCS2_MRT_Loop::mrtLoop] response: " << srv.response.ok << std::endl;
           taskMode = 1;
           pickedFlag_ = false;
+          taskEndFlag_ = true;
           bool taskModeSuccess = setPickedFlag(pickedFlag_);
           std::cout << "[OCS2_MRT_Loop::mrtLoop] taskModeSuccess: " << taskModeSuccess << std::endl;
           ros::spinOnce();
@@ -503,7 +465,7 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
         }
       }
 
-      std::cout << "[OCS2_MRT_Loop::mrtLoop] END PICK/DROP" << std::endl;
+      //std::cout << "[OCS2_MRT_Loop::mrtLoop] END PICK/DROP" << std::endl;
     }
     else
     {
@@ -973,20 +935,20 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
 //-------------------------------------------------------------------------------------------------------
 bool MRT_ROS_Gazebo_Loop::isPickDropPoseReached(int taskMode)
 {
-  std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] START" << std::endl;
-  std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] taskMode: " << taskMode << std::endl;
-  std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] err_threshold_pos_: " << err_threshold_pos_ << std::endl;
-  std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] err_threshold_ori_: " << err_threshold_ori_ << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] START" << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] taskMode: " << taskMode << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] err_threshold_pos_: " << err_threshold_pos_ << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] err_threshold_ori_: " << err_threshold_ori_ << std::endl;
 
-  if (taskMode != 0)
+  if (!taskEndFlag_ && taskMode != 0)
   {
     vector_t currentTarget = currentTarget_;
 
     tf::StampedTransform tf_ee_wrt_world = tf_ee_wrt_world_;
 
-    std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] currentTarget(0): " << currentTarget(0) << std::endl;
-    std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] currentTarget(1): " << currentTarget(1) << std::endl;
-    std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] currentTarget(2): " << currentTarget(2) << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] currentTarget(0): " << currentTarget(0) << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] currentTarget(1): " << currentTarget(1) << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] currentTarget(2): " << currentTarget(2) << std::endl;
 
     vector_t dist_pos(3);
     dist_pos << abs(tf_ee_wrt_world.getOrigin().x() - currentTarget(0)), 
@@ -998,7 +960,7 @@ bool MRT_ROS_Gazebo_Loop::isPickDropPoseReached(int taskMode)
     //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] dist_pos x: " << dist_pos[0] << std::endl;
     //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] dist_pos y: " << dist_pos[1] << std::endl;
     //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] dist_pos z: " << dist_pos[2] << std::endl;
-    std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] err_pos: " << err_pos << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] err_pos: " << err_pos << std::endl;
 
     Eigen::Quaterniond quat_ee(tf_ee_wrt_world.getRotation().w(), tf_ee_wrt_world.getRotation().x(), tf_ee_wrt_world.getRotation().y(), tf_ee_wrt_world.getRotation().z());
     Eigen::Quaterniond quat_target(currentTarget(6), currentTarget(3), currentTarget(4), currentTarget(5));
@@ -1009,9 +971,9 @@ bool MRT_ROS_Gazebo_Loop::isPickDropPoseReached(int taskMode)
     //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] dist_quat r: " << dist_quat[0] << std::endl;
     //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] dist_quat p: " << dist_quat[1] << std::endl;
     //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] dist_quat y: " << dist_quat[2] << std::endl;
-    std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] err_ori: " << err_ori << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] err_ori: " << err_ori << std::endl;
 
-    std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] END" << std::endl << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] END" << std::endl << std::endl;
 
     return (err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_);
   }
@@ -1028,7 +990,7 @@ bool MRT_ROS_Gazebo_Loop::setTaskMode(int val)
   std::cout << "[MRT_ROS_Gazebo_Loop::setTaskMode] START" << std::endl;
 
   bool success = false;
-  ocs2_core::setInt srv;
+  ocs2_msgs::setInt srv;
   srv.request.val = val;
   if (setTaskModeClient_.call(srv))
   {
@@ -1054,7 +1016,7 @@ bool MRT_ROS_Gazebo_Loop::setPickedFlag(bool val)
   std::cout << "[MRT_ROS_Gazebo_Loop::setPickedFlag] START" << std::endl;
 
   bool success = false;
-  ocs2_core::setInt srv;
+  ocs2_msgs::setBool srv;
   srv.request.val = val;
   if (setPickedFlagClient_.call(srv))
   {
@@ -1074,12 +1036,38 @@ bool MRT_ROS_Gazebo_Loop::setPickedFlag(bool val)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-bool MRT_ROS_Gazebo_Loop::setTaskModeSrv(ocs2_core::setInt::Request &req, 
-                                         ocs2_core::setInt::Response &res)
+/*
+bool MRT_ROS_Gazebo_Loop::setTaskModeSrv(ocs2_msgs::setInt::Request &req, 
+                                         ocs2_msgs::setInt::Response &res)
 {
   std::cout << "[MRT_ROS_Gazebo_Loop::setTaskModeSrv] START" << std::endl;
   taskMode_ = req.val;
   res.success = true;
+
+  std::cout << "[MRT_ROS_Gazebo_Loop::setTaskModeSrv] taskMode_: " << taskMode_ << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::setTaskModeSrv] END" << std::endl;
+  return res.success;
+}
+*/
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+bool MRT_ROS_Gazebo_Loop::setTaskSrv(ocs2_msgs::setTask::Request &req, 
+                                         ocs2_msgs::setTask::Response &res)
+{
+  std::cout << "[MRT_ROS_Gazebo_Loop::setTaskModeSrv] START" << std::endl;
+  taskMode_ = req.taskMode;
+  currentTarget_(0) = req.target.position.x;
+  currentTarget_(1) = req.target.position.y;
+  currentTarget_(2) = req.target.position.z;
+  currentTarget_(3) = req.target.orientation.x;
+  currentTarget_(4) = req.target.orientation.y;
+  currentTarget_(5) = req.target.orientation.z;
+  currentTarget_(6) = req.target.orientation.w;
+  res.success = true;
+
+  taskEndFlag_ = false;
 
   std::cout << "[MRT_ROS_Gazebo_Loop::setTaskModeSrv] taskMode_: " << taskMode_ << std::endl;
   std::cout << "[MRT_ROS_Gazebo_Loop::setTaskModeSrv] END" << std::endl;

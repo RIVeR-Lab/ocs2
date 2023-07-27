@@ -22,8 +22,9 @@
 #include <trajectory_msgs/JointTrajectory.h>
 #include <std_msgs/Float64.h>
 
-#include "ocs2_core/setBool.h"
-#include "ocs2_core/setInt.h"
+#include "ocs2_msgs/setBool.h"
+#include "ocs2_msgs/setInt.h"
+#include "ocs2_msgs/setTask.h"
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 #include "ocs2_ros_interfaces/mrt/DummyObserver.h"
@@ -137,8 +138,12 @@ class MRT_ROS_Gazebo_Loop
     bool setPickedFlag(bool val);
 
     // DESCRIPTION: TODO...
-    bool setTaskModeSrv(ocs2_core::setInt::Request &req, 
-                        ocs2_core::setInt::Response &res);
+    //bool setTaskModeSrv(ocs2_msgs::setInt::Request &req, 
+    //                    ocs2_msgs::setInt::Response &res);
+
+    // DESCRIPTION: TODO...
+    bool setTaskSrv(ocs2_msgs::setTask::Request &req, 
+                    ocs2_msgs::setTask::Response &res);
 
     /** NUA TODO: Add description */
     //void publishCommand(const PrimalSolution& primalSolution);
@@ -198,6 +203,7 @@ class MRT_ROS_Gazebo_Loop
     int taskMode_ = 0;
 
     bool pickedFlag_ = false;
+    bool taskEndFlag_ = true;
 
     benchmark::RepeatedTimer timer1_;
     benchmark::RepeatedTimer timer2_;
@@ -217,7 +223,8 @@ class MRT_ROS_Gazebo_Loop
     //ros::ServiceClient setTaskModeClient_;
     ros::ServiceClient setPickedFlagClient_;
 
-    ros::ServiceServer setTaskModeService_;
+    //ros::ServiceServer setTaskModeService_;
+    ros::ServiceServer setTaskService_;
 };
 
 }  // namespace ocs2
