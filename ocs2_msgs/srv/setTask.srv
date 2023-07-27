@@ -1,10 +1,11 @@
 ## Request
-
 # 0: Go
 # 1: Go & Pick
 # 2: Go & Drop
 int8 taskMode
-geometry_msgs/Pose target
+string targetName
+string targetAttachLinkName
+geometry_msgs/Pose targetPose
 ---
 # Result
 bool success

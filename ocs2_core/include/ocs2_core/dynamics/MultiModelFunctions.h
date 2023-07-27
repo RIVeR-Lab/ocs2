@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.04.10
+// LAST UPDATE: 2023.07.27
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -29,7 +29,8 @@ namespace ocs2 {
  * @param [in] eeFrame: Name of the end-effector frame.
  * @return RobotModelInfo
  */
-RobotModelInfo createRobotModelInfo(const RobotModelType& robotModelType,
+RobotModelInfo createRobotModelInfo(const std::string& robotName,
+                                    const RobotModelType& robotModelType,
                                     const std::string& baseFrame, 
                                     const std::string& armBaseFrame,
                                     const std::string& eeFrame,
@@ -40,6 +41,11 @@ RobotModelInfo createRobotModelInfo(const RobotModelType& robotModelType,
  * NUA TODO: UPDATE!
  */
 bool updateModelMode(RobotModelInfo& robotModelInfo, size_t& modelMode);
+
+/**
+ * NUA TODO: UPDATE!
+ */
+std::string getRobotName(RobotModelInfo& robotModelInfo);
 
 /**
  * NUA TODO: UPDATE!

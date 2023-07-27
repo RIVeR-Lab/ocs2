@@ -68,6 +68,8 @@ class MRT_ROS_Gazebo_Loop
      */
     virtual ~MRT_ROS_Gazebo_Loop() = default;
 
+    bool checkShutDownFlag();
+
     void setStateIndexMap(std::vector<int>& stateIndexMap);
 
     /** NUA TODO: Add description */
@@ -95,7 +97,7 @@ class MRT_ROS_Gazebo_Loop
 
     void getInitTarget(vector_t& initTarget);
 
-    void getCurrentState(vector_t& currentState);
+    //void getCurrentState(vector_t& currentState);
 
   private:
 
@@ -104,6 +106,9 @@ class MRT_ROS_Gazebo_Loop
 
     /** NUA TODO: Add decription. */
     void mrtLoop();
+
+    /** NUA TODO: Add decription. */
+    void mrtLoop2();
 
     /** NUA TODO: Add description */
     void updateStateIndexMap(std::string& armStateMsg, bool updateStateIndexMapFlag);
@@ -130,7 +135,7 @@ class MRT_ROS_Gazebo_Loop
     SystemObservation getCurrentObservation(bool initFlag=false);
 
     /** NUA TODO: Add description */
-    bool isPickDropPoseReached(int taskMode);
+    bool isTargetReached(int taskMode);
 
     /** NUA TODO: Add description */
     //bool setTaskMode(int val);
@@ -171,6 +176,8 @@ class MRT_ROS_Gazebo_Loop
     scalar_t dt_;
     scalar_t time_;
 
+    std::string currentTargetName_;
+    std::string currentTargetAttachLinkName_;
     vector_t currentTarget_;
     vector_t currentInput_;
 
@@ -178,7 +185,7 @@ class MRT_ROS_Gazebo_Loop
     std::vector<double> stateArm_;
 
     std::vector<double> inputBase_;
-    std::vector<double> inputArm_;
+    //std::vector<double> inputArm_;
 
     tf::TransformListener tfListener_;
 
