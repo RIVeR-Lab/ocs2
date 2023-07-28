@@ -1548,14 +1548,16 @@ bool TargetTrajectoriesGazebo::setTaskMode(int val)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-bool TargetTrajectoriesGazebo::setTask(int taskMode, geometry_msgs::Pose target)
+bool TargetTrajectoriesGazebo::setTask(int taskMode, geometry_msgs::Pose targetPose)
 {
   std::cout << "[TargetTrajectoriesGazebo::setTaskMode] START" << std::endl;
 
   bool success = false;
   ocs2_msgs::setTask srv;
   srv.request.taskMode = taskMode;
-  srv.request.target = target;
+  srv.request.targetName = currentTargetName_;
+  srv.request.targetAttachLinkName = currentTargetName_ + "_base_link";
+  srv.request.targetPose = targetPose;
   if (setTaskClient_.call(srv))
   {
     success = srv.response.success;

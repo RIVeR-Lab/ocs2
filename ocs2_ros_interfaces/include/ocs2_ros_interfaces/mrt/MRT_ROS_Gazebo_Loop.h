@@ -171,6 +171,8 @@ class MRT_ROS_Gazebo_Loop
     scalar_t dt_;
     scalar_t time_;
 
+    std::string currentTargetName_;
+    std::string currentTargetAttachLinkName_;
     vector_t currentTarget_;
     vector_t currentInput_;
 

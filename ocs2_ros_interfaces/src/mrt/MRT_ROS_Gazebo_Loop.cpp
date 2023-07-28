@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.26
+// LAST UPDATE: 2023.07.27
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -421,12 +421,10 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
       std::cout << "[OCS2_MRT_Loop::mrtLoop] START PICK/DROP" << std::endl;
       
       gazebo_ros_link_attacher::Attach srv;
-      srv.request.model_name_1 = "mobiman";
+      srv.request.model_name_1 = robotModelInfo_.robotName;
       srv.request.link_name_1 = robotModelInfo_.robotArm.jointFrameNames.back();
-      srv.request.model_name_2 = "red_cube";
-      srv.request.link_name_2 = "red_cube_base_link";
-
-      //std::cout << "[OCS2_MRT_Loop::mrtLoop] srv.request.link_name_1: " << srv.request.link_name_1 << std::endl;
+      srv.request.model_name_2 = currentTargetName_;
+      srv.request.link_name_2 = currentTargetAttachLinkName_;
 
       //std::cout << "[OCS2_MRT_Loop::mrtLoop] taskMode: " << taskMode << std::endl;
       if (taskMode == 1)
@@ -1058,13 +1056,15 @@ bool MRT_ROS_Gazebo_Loop::setTaskSrv(ocs2_msgs::setTask::Request &req,
 {
   std::cout << "[MRT_ROS_Gazebo_Loop::setTaskModeSrv] START" << std::endl;
   taskMode_ = req.taskMode;
-  currentTarget_(0) = req.target.position.x;
-  currentTarget_(1) = req.target.position.y;
-  currentTarget_(2) = req.target.position.z;
-  currentTarget_(3) = req.target.orientation.x;
-  currentTarget_(4) = req.target.orientation.y;
-  currentTarget_(5) = req.target.orientation.z;
-  currentTarget_(6) = req.target.orientation.w;
+  currentTargetName_ = req.targetName;
+  currentTargetAttachLinkName_ = req.targetAttachLinkName;
+  currentTarget_(0) = req.targetPose.position.x;
+  currentTarget_(1) = req.targetPose.position.y;
+  currentTarget_(2) = req.targetPose.position.z;
+  currentTarget_(3) = req.targetPose.orientation.x;
+  currentTarget_(4) = req.targetPose.orientation.y;
+  currentTarget_(5) = req.targetPose.orientation.z;
+  currentTarget_(6) = req.targetPose.orientation.w;
   res.success = true;
 
   taskEndFlag_ = false;
@@ -1079,7 +1079,7 @@ bool MRT_ROS_Gazebo_Loop::setTaskSrv(ocs2_msgs::setTask::Request &req,
 //-------------------------------------------------------------------------------------------------------
 void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy)
 {
-  //std::cout << "[OCS2_MRT_Loop::publishCommand] START" << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] START" << std::endl;
 
   geometry_msgs::Twist baseTwistMsg;
   trajectory_msgs::JointTrajectory armJointTrajectoryMsg;

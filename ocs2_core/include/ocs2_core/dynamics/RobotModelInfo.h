@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.03.09
+// LAST UPDATE: 2023.07.27
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -55,6 +55,7 @@ struct  RobotArm
 
 struct RobotModelInfo
 {
+  std::string robotName;
   RobotModelType robotModelType;
   MobileBase mobileBase;
   RobotArm robotArm;

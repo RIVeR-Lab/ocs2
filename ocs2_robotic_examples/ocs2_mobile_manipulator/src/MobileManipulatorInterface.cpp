@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.19
+// LAST UPDATE: 2023.07.27
 //
 // AUTHOR: Neset Unver Akmandor  (NUA)
 //
@@ -98,7 +98,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   loadData::loadStdVector<std::string>(taskFile_, "model_information.armJointNames", armJointNames, printOutFlag_);
 
   // Read the frame names
-  std::string baseFrame, armBaseFrame, eeFrame;
+  std::string robotName, baseFrame, armBaseFrame, eeFrame;
+  loadData::loadPtreeValue<std::string>(pt, robotName, "model_information.robotName", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, baseFrame, "model_information.baseFrame", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, armBaseFrame, "model_information.armBaseFrame", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, eeFrame, "model_information.eeFrame", printOutFlag_);
@@ -142,7 +143,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   //std::cerr << *pinocchioInterfacePtr_;
 
   // Set Robot Model Info
-  robotModelInfo_ = createRobotModelInfo(robotModelType,
+  robotModelInfo_ = createRobotModelInfo(robotName,
+                                         robotModelType,
                                          baseFrame, 
                                          armBaseFrame, 
                                          eeFrame,
@@ -257,7 +259,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   loadData::loadStdVector<std::string>(taskFile_, "model_information.armJointNames", armJointNames, printOutFlag_);
 
   // Read the frame names
-  std::string baseFrame, armBaseFrame, eeFrame;
+  std::string robotName, baseFrame, armBaseFrame, eeFrame;
+  loadData::loadPtreeValue<std::string>(pt, robotName, "model_information.robotName", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, baseFrame, "model_information.baseFrame", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, armBaseFrame, "model_information.armBaseFrame", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, eeFrame, "model_information.eeFrame", printOutFlag_);
@@ -286,6 +289,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     {
       std::cerr << "\"" << name << "\" ";
     }
+    std::cerr << "\n #### model_information.robotName: \"" << robotName << "\"";
     std::cerr << "\n #### model_information.baseFrame: \"" << baseFrame << "\"";
     std::cerr << "\n #### model_information.armBaseFrame: \"" << armBaseFrame << "\"";
     std::cerr << "\n #### model_information.eeFrame: \"" << eeFrame << "\"";
@@ -301,7 +305,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   //std::cerr << *pinocchioInterfacePtr_;
 
   // Set Robot Model Info
-  robotModelInfo_ = createRobotModelInfo(robotModelType,
+  robotModelInfo_ = createRobotModelInfo(robotName,
+                                         robotModelType,
                                          baseFrame, 
                                          armBaseFrame, 
                                          eeFrame,
