@@ -431,11 +431,11 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
       {
         if (attachClient_.call(srv))
         {
-          std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] response: " << srv.response.ok << std::endl;
+          std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] response: " << srv.response.ok << std::endl;
           taskMode = 2;
           pickedFlag_ = true;
           bool taskModeSuccess = setPickedFlag(pickedFlag_);
-          std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] taskModeSuccess: " << taskModeSuccess << std::endl;
+          std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] taskModeSuccess: " << taskModeSuccess << std::endl;
           ros::spinOnce();
         }
         else
@@ -448,11 +448,11 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
         std::cout << "[OCS2_MRT_Loop::mrtLoop] DROP" << std::endl;
         if (detachClient_.call(srv))
         {
-          std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] response: " << srv.response.ok << std::endl;
+          std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] response: " << srv.response.ok << std::endl;
           taskMode = 1;
           pickedFlag_ = false;
           bool taskModeSuccess = setPickedFlag(pickedFlag_);
-          std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] taskModeSuccess: " << taskModeSuccess << std::endl;
+          std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] taskModeSuccess: " << taskModeSuccess << std::endl;
           ros::spinOnce();
         }
         else

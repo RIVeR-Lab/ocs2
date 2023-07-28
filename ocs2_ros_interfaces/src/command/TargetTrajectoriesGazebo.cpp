@@ -102,12 +102,12 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
   };
   statusModelModeMRTSubscriber_ = nodeHandle.subscribe<std_msgs::Bool>(topicPrefix + "_model_mode_mrt_status", 5, statusModelModeMRTCallback);
 
-  gazeboModelStatesSubscriber_ = nodeHandle.subscribe(gazeboModelMsgName, 10, &TargetTrajectoriesGazebo::gazeboModelStatesCallback, this);
+  gazeboModelStatesSubscriber_ = nodeHandle.subscribe(gazeboModelMsgName, 5, &TargetTrajectoriesGazebo::gazeboModelStatesCallback, this);
 
   /// Publishers
   targetTrajectoriesPublisherPtr_.reset(new TargetTrajectoriesRosPublisher(nodeHandle, topicPrefix));
   modelModePublisher_ = nodeHandle.advertise<std_msgs::UInt8>(topicPrefix + "_model_mode", 1, false);
-  targetMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(topicPrefix + "_goal", 10);
+  targetMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(topicPrefix + "_goal", 5);
 
   /// Clients
   //setTaskModeClient_ = nodeHandle.serviceClient<ocs2_msgs::setInt>("/set_task_mode");
