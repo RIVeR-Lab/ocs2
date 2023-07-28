@@ -67,16 +67,18 @@ int main(int argc, char* argv[])
   TargetTrajectoriesGazebo gu(nh, robotMode, gz_model_msg_name, robot_name, target_names, drop_target_name, &goalPoseToTargetTrajectories);
   gu.initializeInteractiveMarkerTarget();
   gu.initializeInteractiveMarkerAutoTarget();
-  //gu.initializeInteractiveMarkerDropTarget();
   gu.initializeInteractiveMarkerModelMode();
+
+  gu.setTaskMode(1);
 
   ros::Rate r(100);
   while(ros::ok)
   {
     //gu.updateObservationAndTarget();
-    //gu.updateTarget();
+    gu.updateTarget(true);
     gu.publishTargetVisu();
     gu.publishGraspFrame();
+    gu.publishDropFrame();
 
     ros::spinOnce();
     r.sleep();

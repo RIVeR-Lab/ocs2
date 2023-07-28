@@ -31,7 +31,8 @@
 #include <ocs2_core/soft_constraint/StateInputSoftBoxConstraint.h>
 #include <ocs2_core/soft_constraint/StateSoftConstraint.h>
 #include <ocs2_core/dynamics/MultiModelFunctions.h>
-//#include "ocs2_core/setBool.h"
+
+#include "ocs2_msgs/setActionDRL.h"
 
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
@@ -227,7 +228,7 @@ class MobileManipulatorInterface final : public RobotInterface
       pointsOnRobotPtr_.reset(new PointsOnRobot(pointsAndRadii));
     }
 
-    void setMPCProblem(size_t modelMode, PointsOnRobot::points_radii_t& pointsAndRadii, bool nextFlag=false);
+    void setMPCProblem(bool iterFlag=false);
 
     /*
     void setEsdfCachingServerPtr(std::shared_ptr<voxblox::EsdfCachingServer> newEsdfCachingServerPtr) 
@@ -251,7 +252,10 @@ class MobileManipulatorInterface final : public RobotInterface
 
     void getEEPose(vector_t& eePose);
 
-    void getGraspPose(vector_t& targetPose);
+    //void getGraspPose(vector_t& targetPose);
+
+    bool setActionDRLSrv(ocs2_msgs::setActionDRL::Request &req, 
+                         ocs2_msgs::setActionDRL::Response &res);
 
     //void setMPCModeSwitchCountPublisher();
 
@@ -305,6 +309,17 @@ class MobileManipulatorInterface final : public RobotInterface
 
     std::unique_ptr<StateCost> getExtCollisionConstraint(const std::string& prefix);
 
+    void mapDRLAction(int action);
+
+    struct mpcProblemSettings
+    {
+      int modelMode;
+      std::vector<std::string> binarySettingNames = {"internalTargetCost",
+                                                     "selfCollisionConstraint",
+                                                     "externalCollisionConstraint"};
+      std::vector<bool> binarySettingValues;
+    };
+
     ros::NodeHandle nodeHandle_;
     tf::TransformListener tfListener_;
 
@@ -340,6 +355,11 @@ class MobileManipulatorInterface final : public RobotInterface
     bool recompileLibraries_;
     bool activateSelfCollision_;
     bool activateExtCollision_;
+    
+    bool drlFlag_ = false;
+    int drlAction_;
+    double drlActionTimeHorizon_;
+    mpcProblemSettings mpcProblemSettings_;
 
     ddp::Settings ddpSettings_;
     mpc::Settings mpcSettings_;
@@ -392,21 +412,10 @@ class MobileManipulatorInterface final : public RobotInterface
 
     ros::Subscriber modelModeSubscriber_;
     ros::Subscriber targetTrajectoriesSubscriber_;
-    //ros::Subscriber mpcModeSwitchCountSubscriber_;
 
-    //ros::Publisher mpcModeSwitchCountPublisher_;
-
-    //ros::ServiceServer setMPCInitReadyFlagService_;
-    //ros::ServiceServer setMRTInitReadyFlagService_;
-    //ros::ServiceServer setMPCProblemReadyFlagService_;
-    //ros::ServiceServer setMRTExitFlagService_;
-    //ros::ServiceServer setMPCLaunchReadyFlagService_;
+    ros::ServiceServer setActionDRLService_;
 
     //ros::ServiceClient setMPCInitReadyFlagClient_;
-    //ros::ServiceClient setMRTInitReadyFlagClient_;
-    //ros::ServiceClient setMPCProblemReadyFlagClient_;
-    //ros::ServiceClient setMRTExitFlagClient_;
-    //ros::ServiceClient setMPCLaunchReadyFlagClient_;
 };
 
 }  // namespace mobile_manipulator

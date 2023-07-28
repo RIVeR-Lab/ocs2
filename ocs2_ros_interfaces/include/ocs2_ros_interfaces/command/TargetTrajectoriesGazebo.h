@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.07.26
+// LAST UPDATE: 2022.07.28
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -64,6 +64,9 @@ class TargetTrajectoriesGazebo final
 
     // DESCRIPTION: TODO...
   	TargetTrajectoriesGazebo& operator=(const TargetTrajectoriesGazebo& ttg);
+
+    // DESCRIPTION: TODO...
+    void setTaskMode(int taskMode);
 
     // DESCRIPTION: TODO...
     void updateObservationAndTarget();
@@ -210,11 +213,13 @@ class TargetTrajectoriesGazebo final
     Eigen::Vector3d currentTargetPosition_;
     Eigen::Quaterniond currentTargetOrientation_;
     
+    bool graspReadyFlag_ = false;
     Eigen::Vector3d graspPositionOffset_;
     Eigen::Matrix3d graspOrientationOffsetMatrix_;
     Eigen::Vector3d currentGraspPosition_;
     Eigen::Quaterniond currentGraspOrientation_;
 
+    bool dropReadyFlag_ = false;
     Eigen::Vector3d dropPositionOffset_;
     Eigen::Matrix3d dropOrientationOffsetMatrix_;
     Eigen::Vector3d currentDropPosition_;

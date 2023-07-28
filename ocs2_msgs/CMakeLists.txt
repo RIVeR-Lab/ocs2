@@ -28,6 +28,7 @@ add_service_files(
     setBool.srv
     setInt.srv
     setTask.srv
+    setActionDRL.srv
 )
 
 generate_messages(

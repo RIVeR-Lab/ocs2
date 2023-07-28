@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.07.26
+// LAST UPDATE: 2022.07.28
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -208,6 +208,14 @@ TargetTrajectoriesGazebo& TargetTrajectoriesGazebo::operator=(const TargetTrajec
   latestObservation_ = ttg.latestObservation_;
 
   return *this;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::setTaskMode(int taskMode)
+{
+  taskMode_ = taskMode;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -552,10 +560,11 @@ void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
   Eigen::Vector3d targetPos;
   Eigen::Quaterniond targetOri;
 
-  std::cout << "[TargetTrajectoriesGazebo::updateTarget] taskMode_: " << taskMode_ << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::updateTarget] taskMode_: " << taskMode_ << std::endl;
 
   if (taskMode_ == 1)
   {
+    //std::cout << "[TargetTrajectoriesGazebo::updateTarget] taskMode_: 1" << std::endl;
     updateTargetInfo();
 
     geometry_msgs::Pose robotPose = robotPose_;
@@ -581,13 +590,15 @@ void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
       {
         //std::cout << "[TargetTrajectoriesGazebo::updateTarget] SWITCH" << std::endl;
 
-        //std::cout << "[TargetTrajectoriesGazebo::updateTarget] idx: " << idx << std::endl;
-        //std::cout << "[TargetTrajectoriesGazebo::updateTarget] currentTargetName_: " << currentTargetName_ << std::endl;
-        //std::cout << "[TargetTrajectoriesGazebo::updateTarget] currentTargetNames: " << std::endl;
+        /*
+        std::cout << "[TargetTrajectoriesGazebo::updateTarget] idx: " << idx << std::endl;
+        std::cout << "[TargetTrajectoriesGazebo::updateTarget] currentTargetName_: " << currentTargetName_ << std::endl;
+        std::cout << "[TargetTrajectoriesGazebo::updateTarget] currentTargetNames: " << std::endl;
         for (size_t i = 0; i < currentTargetNames.size(); i++)
         {
           std::cout << currentTargetNames[i] << std::endl;
         }
+        */
 
         std::pair<double, int> closest_p;
         closest_p = findClosestDistance(targetPositions, robotPose);
@@ -612,6 +623,8 @@ void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
         updateGraspPose(currentTargetPosition_, currentTargetOrientation_);
       }
 
+      graspReadyFlag_ = true;
+
       fillTargetVisu();
       //publishTargetVisu();
       //publishGraspFrame();
@@ -634,9 +647,9 @@ void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
         targetOri.z() = ms.pose[i].orientation.z;
         targetOri.w() = ms.pose[i].orientation.w;
 
-        std::cout << "[TargetTrajectoriesGazebo::updateDropTarget] targetPos.x(): " << targetPos.x() << std::endl;
-        std::cout << "[TargetTrajectoriesGazebo::updateDropTarget] targetPos.y(): " << targetPos.y() << std::endl;
-        std::cout << "[TargetTrajectoriesGazebo::updateDropTarget] targetPos.z(): " << targetPos.z() << std::endl;
+        //std::cout << "[TargetTrajectoriesGazebo::updateDropTarget] targetPos.x(): " << targetPos.x() << std::endl;
+        //std::cout << "[TargetTrajectoriesGazebo::updateDropTarget] targetPos.y(): " << targetPos.y() << std::endl;
+        //std::cout << "[TargetTrajectoriesGazebo::updateDropTarget] targetPos.z(): " << targetPos.z() << std::endl;
 
         break;
       }
@@ -654,6 +667,8 @@ void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
       updateDropPose(currentTargetPosition_, currentTargetOrientation_);
     }
 
+    dropReadyFlag_ = true;
+
     fillTargetVisu();
     //publishTargetVisu();
     //publishDropFrame();
@@ -662,7 +677,7 @@ void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
   //std::cout << "[TargetTrajectoriesGazebo::updateTarget] DEBUG INF" << std::endl;
   //while(1);
 
-  //std::cout << "[TargetTrajectoriesGazebo::updateTarget] END" << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::updateTarget] END" << std::endl << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -683,7 +698,7 @@ void TargetTrajectoriesGazebo::updateTarget(const Eigen::Vector3d& targetPos, co
 
 void TargetTrajectoriesGazebo::updateGraspPose()
 {
-  //std::cout << "[TargetTrajectoriesGazebo::getGraspPose] START" << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::updateGraspPose] START" << std::endl;
 
   Eigen::Vector3d graspPos;
 
@@ -697,7 +712,7 @@ void TargetTrajectoriesGazebo::updateGraspPose()
   graspPos_wrt_target.orientation.z = 0;
   graspPos_wrt_target.orientation.w = 1;
 
-  //std::cout << "[TargetTrajectoriesGazebo::getGraspPose] currentTargetName_: " << currentTargetName_ << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::updateGraspPose] currentTargetName_: " << currentTargetName_ << std::endl;
 
   transformPose(currentTargetName_, worldFrameName_, graspPos_wrt_target, graspPos_wrt_world);
 
@@ -718,7 +733,7 @@ void TargetTrajectoriesGazebo::updateGraspPose()
   currentGraspOrientation_ = graspOri;
   //graspFrameReadyFlag_ = true;
 
-  //std::cout << "[TargetTrajectoriesGazebo::getGraspPose] END" << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::updateGraspPose] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -726,11 +741,11 @@ void TargetTrajectoriesGazebo::updateGraspPose()
 //-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::updateGraspPose(const Eigen::Vector3d& graspPos, const Eigen::Quaterniond& graspOri)
 {
-  //std::cout << "[TargetTrajectoriesGazebo::getGraspPose(2)] START" << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::updateGraspPose(2)] START" << std::endl;
   currentGraspPosition_ = graspPos;
   currentGraspOrientation_ = graspOri;
   //graspFrameReadyFlag_ = true;
-  //std::cout << "[TargetTrajectoriesGazebo::getGraspPose(2)] END" << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::updateGraspPose(2)] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -756,7 +771,7 @@ void TargetTrajectoriesGazebo::updateDropPose()
   //std::cout << "[TargetTrajectoriesGazebo::updateDropPose] dropPositionOffset_.y(): " << dropPositionOffset_.y() << std::endl;
   //std::cout << "[TargetTrajectoriesGazebo::updateDropPose] dropPositionOffset_.z(): " << dropPositionOffset_.z() << std::endl;
 
-  //std::cout << "[TargetTrajectoriesGazebo::getGraspPose] currentTargetName_: " << currentTargetName_ << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::updateDropPose] currentTargetName_: " << currentTargetName_ << std::endl;
 
   transformPose(dropTargetName_, worldFrameName_, dropPos_wrt_target, dropPos_wrt_world);
 
@@ -838,10 +853,10 @@ void TargetTrajectoriesGazebo::fillTargetVisu()
       target_point.z = grasp_or_drop_point.z;
     }
 
-    //std::cout << "[TargetTrajectoriesGazebo::getGraspPose] grasp_point: " << std::endl;
-    //print(grasp_point);
+    //std::cout << "[TargetTrajectoriesGazebo::fillTargetVisu] grasp_or_drop_point: " << std::endl;
+    //print(grasp_or_drop_point);
 
-    //std::cout << "[TargetTrajectoriesGazebo::getGraspPose] target_point: " << std::endl;
+    //std::cout << "[TargetTrajectoriesGazebo::fillTargetVisu] target_point: " << std::endl;
     //print(target_point);
 
     visualization_msgs::Marker target_visu;
@@ -901,7 +916,7 @@ void TargetTrajectoriesGazebo::publishGraspFrame()
 {
   //std::cout << "[TargetTrajectoriesGazebo::publishGraspFrame] START" << std::endl;
 
-  if (taskMode_ == 1 && !pickedFlag_)
+  if (graspReadyFlag_ && taskMode_ == 1 && !pickedFlag_)
   {
     Eigen::Vector3d currentGraspPosition = currentGraspPosition_;
     Eigen::Quaterniond currentGraspOrientation = currentGraspOrientation_;
@@ -924,7 +939,7 @@ void TargetTrajectoriesGazebo::publishDropFrame()
 {
   //std::cout << "[TargetTrajectoriesGazebo::publishDropFrame] START" << std::endl;
 
-  if (taskMode_ == 2 && pickedFlag_)
+  if (dropReadyFlag_ && taskMode_ == 2 && pickedFlag_)
   {
     Eigen::Vector3d currentDropPosition = currentDropPosition_;
     Eigen::Quaterniond currentDropOrientation = currentDropOrientation_;

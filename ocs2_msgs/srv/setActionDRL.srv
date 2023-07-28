@@ -1,0 +1,6 @@
+# Request
+int8 action
+float32 time_horizon
+---
+# Response
+bool success
