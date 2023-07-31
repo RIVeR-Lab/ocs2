@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.21
+// LAST UPDATE: 2023.07.28
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -150,7 +150,7 @@ class MobileManipulatorInterface final : public RobotInterface
     }
 
     std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override 
-    { 
+    {
       return referenceManagerPtr_; 
     }
 
@@ -174,10 +174,12 @@ class MobileManipulatorInterface final : public RobotInterface
       return robotModelInfo_; 
     }
 
+    /*
     std::shared_ptr<PointsOnRobot> getPointsOnRobotPtr() 
     { 
       return pointsOnRobotPtr_;
     }
+    */
 
     std::string getBaseStateMsg() 
     { 
@@ -218,15 +220,14 @@ class MobileManipulatorInterface final : public RobotInterface
       nodeHandle_ = nodeHandle;
     }
 
+    /*
     void setPointsOnRobotPtr(std::shared_ptr<PointsOnRobot> newPointsOnRobotPtr) 
     { 
       pointsOnRobotPtr_ = newPointsOnRobotPtr;
     }
+    */
 
-    void createPointsOnRobotPtr(PointsOnRobot::points_radii_t& pointsAndRadii) 
-    { 
-      pointsOnRobotPtr_.reset(new PointsOnRobot(pointsAndRadii));
-    }
+    void initializePointsOnRobotPtr(PointsOnRobot::points_radii_t& pointsAndRadii);
 
     void setMPCProblem(bool iterFlag=false);
 
@@ -246,49 +247,12 @@ class MobileManipulatorInterface final : public RobotInterface
 
     //void modelModeCallback(const std_msgs::UInt8::ConstPtr& msg);
 
-    //void mpcModeSwitchCountCallback(const std_msgs::UInt8::ConstPtr& msg);
-
     void launchNodes(ros::NodeHandle& nodeHandle);
 
     void getEEPose(vector_t& eePose);
 
-    //void getGraspPose(vector_t& targetPose);
-
     bool setActionDRLSrv(ocs2_msgs::setActionDRL::Request &req, 
                          ocs2_msgs::setActionDRL::Response &res);
-
-    //void setMPCModeSwitchCountPublisher();
-
-    //void setMPCModeSwitchCountSubscriber();
-
-    //void publishMPCModeSwitchCount();
-
-    /*
-    bool setMPCInitReadyFlag(bool val);
-
-    bool setMRTInitReadyFlag(bool val);
-
-    bool setMPCProblemReadyFlag(bool val);
-
-    bool setMRTExitFlag(bool val);
-    
-    bool setMPCLaunchReadyFlag(bool val);
-
-    bool setMPCInitReadyFlagSrv(ocs2_mobile_manipulator::setBool::Request &req, 
-                                ocs2_mobile_manipulator::setBool::Response &res);
-
-    bool setMRTInitReadyFlagSrv(ocs2_mobile_manipulator::setBool::Request &req, 
-                                ocs2_mobile_manipulator::setBool::Response &res);
-
-    bool setMPCProblemReadyFlagSrv(ocs2_mobile_manipulator::setBool::Request &req, 
-                                   ocs2_mobile_manipulator::setBool::Response &res);
-
-    bool setMRTExitFlagSrv(ocs2_mobile_manipulator::setBool::Request &req, 
-                           ocs2_mobile_manipulator::setBool::Response &res);
-
-    bool setMPCLaunchReadyFlagSrv(ocs2_mobile_manipulator::setBool::Request &req, 
-                                  ocs2_mobile_manipulator::setBool::Response &res);
-    */
 
     void runMPC();
 
@@ -299,15 +263,15 @@ class MobileManipulatorInterface final : public RobotInterface
     void mrtCallback(const ros::TimerEvent& event);
   
   private:
-    std::unique_ptr<StateInputCost> getQuadraticInputCost();
+    std::shared_ptr<StateInputCost> getQuadraticInputCost();
 
-    std::unique_ptr<StateInputCost> getJointLimitSoftConstraint();
+    std::shared_ptr<StateInputCost> getJointLimitSoftConstraint();
     
-    std::unique_ptr<StateCost> getEndEffectorConstraint(const std::string& prefix);
+    std::shared_ptr<StateCost> getEndEffectorConstraint(const std::string& prefix);
     
-    std::unique_ptr<StateCost> getSelfCollisionConstraint(const std::string& prefix);
+    std::shared_ptr<StateCost> getSelfCollisionConstraint(const std::string& prefix);
 
-    std::unique_ptr<StateCost> getExtCollisionConstraint(const std::string& prefix);
+    std::shared_ptr<StateCost> getExtCollisionConstraint(const std::string& prefix);
 
     void mapDRLAction(int action);
 
@@ -367,8 +331,9 @@ class MobileManipulatorInterface final : public RobotInterface
     //OptimalControlProblem ocp_;
     OptimalControlProblem ocp1_;
     OptimalControlProblem ocp2_;
-    
+
     std::shared_ptr<ReferenceManager> referenceManagerPtr_;
+    std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr_;
     
     ocs2::rollout::Settings rolloutSettings_;
     std::unique_ptr<RolloutBase> rolloutPtr_;
@@ -376,23 +341,60 @@ class MobileManipulatorInterface final : public RobotInterface
     std::unique_ptr<Initializer> initializerPtr_;
 
     std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
+
+    /// NUA NOTE: Should it depend on model mode?
+    std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_;
+
+    std::shared_ptr<ExtMapUtility> emuPtr_;
+    PointsOnRobot::points_radii_t pointsAndRadii_;
+
     RobotModelInfo robotModelInfo_;
+
+    // NUA TODO: Added to speed up the mpc problem initialization, but GET RID OF THESE ASAP!
+    // -----------------
+    std::shared_ptr<StateInputCost> quadraticInputCostPtr_mode0_;
+    std::shared_ptr<StateInputCost> quadraticInputCostPtr_mode1_;
+    std::shared_ptr<StateInputCost> quadraticInputCostPtr_mode2_;
+    
+    std::shared_ptr<StateInputCost> jointLimitSoftConstraintPtr_mode0_;
+    std::shared_ptr<StateInputCost> jointLimitSoftConstraintPtr_mode1_;
+    std::shared_ptr<StateInputCost> jointLimitSoftConstraintPtr_mode2_;
+
+    std::shared_ptr<StateCost> endEffectorIntermediateConstraintPtr_mode0_;
+    std::shared_ptr<StateCost> endEffectorIntermediateConstraintPtr_mode1_;
+    std::shared_ptr<StateCost> endEffectorIntermediateConstraintPtr_mode2_;
+
+    std::shared_ptr<StateCost> endEffectorFinalConstraintPtr_mode0_;
+    std::shared_ptr<StateCost> endEffectorFinalConstraintPtr_mode1_;
+    std::shared_ptr<StateCost> endEffectorFinalConstraintPtr_mode2_;
+
+    std::shared_ptr<StateCost> selfCollisionConstraintPtr_mode0_;
+    std::shared_ptr<StateCost> selfCollisionConstraintPtr_mode1_;
+    std::shared_ptr<StateCost> selfCollisionConstraintPtr_mode2_;
+
+    /// NUA NOTE: Should it depend on model mode?
+    std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_mode0_;
+    std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_mode1_;
+    std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_mode2_;
+
+    std::shared_ptr<StateCost> extCollisionConstraintPtr_mode0_;
+    std::shared_ptr<StateCost> extCollisionConstraintPtr_mode1_;
+    std::shared_ptr<StateCost> extCollisionConstraintPtr_mode2_;
+
+    std::shared_ptr<SystemDynamicsBase> dynamicsPtr_mode0_;
+    std::shared_ptr<SystemDynamicsBase> dynamicsPtr_mode1_;
+    std::shared_ptr<SystemDynamicsBase> dynamicsPtr_mode2_;
+    // -----------------
 
     std::string baseStateMsg_;
     std::string armStateMsg_;
 
     std::string baseControlMsg_;
     std::string armControlMsg_;
-
-    std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_;
-    std::shared_ptr<ExtMapUtility> emuPtr_;
-
-    /// NUA NOTE: ADDING THE REQUIRED MPC & MRT PROCESSES
-    PointsOnRobot::points_radii_t pointsAndRadii_;
-    std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr_;
-
+    
     vector_t currentTarget_;
 
+    benchmark::RepeatedTimer mpcTimer0_;
     benchmark::RepeatedTimer mpcTimer1_;
     benchmark::RepeatedTimer mpcTimer2_;
     benchmark::RepeatedTimer mpcTimer3_;
@@ -401,6 +403,9 @@ class MobileManipulatorInterface final : public RobotInterface
     benchmark::RepeatedTimer mpcTimer6_;
     benchmark::RepeatedTimer mpcTimer7_;
     benchmark::RepeatedTimer mpcTimer8_;
+    benchmark::RepeatedTimer mpcTimer9_;
+    benchmark::RepeatedTimer mpcTimer10_;
+    benchmark::RepeatedTimer mpcTimer11_;
 
     benchmark::RepeatedTimer mrtTimer1_;
     benchmark::RepeatedTimer mrtTimer2_;
@@ -414,8 +419,6 @@ class MobileManipulatorInterface final : public RobotInterface
     ros::Subscriber targetTrajectoriesSubscriber_;
 
     ros::ServiceServer setActionDRLService_;
-
-    //ros::ServiceClient setMPCInitReadyFlagClient_;
 };
 
 }  // namespace mobile_manipulator

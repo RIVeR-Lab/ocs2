@@ -114,7 +114,7 @@ ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximat
   std::cout << "[StateCostCollection::getQuadraticApproximation(4)] DEBUG INF" << std::endl;
   while(1);
 
-  const auto firstActive = std::find_if(terms_.begin(), terms_.end(), [time](const std::unique_ptr<StateCost>& costTerm) { return costTerm->isActive(time); });
+  const auto firstActive = std::find_if(terms_.begin(), terms_.end(), [time](const std::shared_ptr<StateCost>& costTerm) { return costTerm->isActive(time); });
 
   // No active terms (or terms is empty).
   if (firstActive == terms_.end()) 
@@ -124,7 +124,7 @@ ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximat
 
   // Initialize with first active term, accumulate potentially other active terms.
   auto cost = (*firstActive)->getQuadraticApproximation(time, state, targetTrajectories, preComp);
-  std::for_each(std::next(firstActive), terms_.end(), [&](const std::unique_ptr<StateCost>& costTerm) 
+  std::for_each(std::next(firstActive), terms_.end(), [&](const std::shared_ptr<StateCost>& costTerm) 
   {
     if (costTerm->isActive(time)) 
     {
@@ -156,7 +156,7 @@ ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximat
 {
   //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] START" << std::endl;
 
-  const auto firstActive = std::find_if(terms_.begin(), terms_.end(), [time](const std::unique_ptr<StateCost>& costTerm) 
+  const auto firstActive = std::find_if(terms_.begin(), terms_.end(), [time](const std::shared_ptr<StateCost>& costTerm) 
   { 
     return costTerm->isActive(time); 
   });
@@ -175,7 +175,7 @@ ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximat
 
   //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] cost.f: " << cost.f << std::endl;
 
-  std::for_each(std::next(firstActive), terms_.end(), [&](const std::unique_ptr<StateCost>& costTerm) 
+  std::for_each(std::next(firstActive), terms_.end(), [&](const std::shared_ptr<StateCost>& costTerm) 
   {
     if (costTerm->isActive(time)) 
     {

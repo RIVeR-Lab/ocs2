@@ -49,59 +49,59 @@ struct OptimalControlProblem
 {
   /* Cost */
   /** Intermediate cost */
-  std::unique_ptr<StateInputCostCollection> costPtr;
+  std::shared_ptr<StateInputCostCollection> costPtr;
   /** Intermediate state-only cost */
-  std::unique_ptr<StateCostCollection> stateCostPtr;
+  std::shared_ptr<StateCostCollection> stateCostPtr;
   /** Pre-jump cost */
-  std::unique_ptr<StateCostCollection> preJumpCostPtr;
+  std::shared_ptr<StateCostCollection> preJumpCostPtr;
   /** Final cost */
-  std::unique_ptr<StateCostCollection> finalCostPtr;
+  std::shared_ptr<StateCostCollection> finalCostPtr;
 
   /* Soft constraints */
   /** Intermediate soft constraint penalty */
-  std::unique_ptr<StateInputCostCollection> softConstraintPtr;
+  std::shared_ptr<StateInputCostCollection> softConstraintPtr;
   /** Intermediate state-only soft constraint penalty */
-  std::unique_ptr<StateCostCollection> stateSoftConstraintPtr;
+  std::shared_ptr<StateCostCollection> stateSoftConstraintPtr;
   /** Pre-jump soft constraint penalty */
-  std::unique_ptr<StateCostCollection> preJumpSoftConstraintPtr;
+  std::shared_ptr<StateCostCollection> preJumpSoftConstraintPtr;
   /** Final soft constraint penalty */
-  std::unique_ptr<StateCostCollection> finalSoftConstraintPtr;
+  std::shared_ptr<StateCostCollection> finalSoftConstraintPtr;
 
   /* Constraints */
   /** Intermediate equality constraints, full row rank w.r.t. inputs */
-  std::unique_ptr<StateInputConstraintCollection> equalityConstraintPtr;
+  std::shared_ptr<StateInputConstraintCollection> equalityConstraintPtr;
   /** Intermediate state-only equality constraints */
-  std::unique_ptr<StateConstraintCollection> stateEqualityConstraintPtr;
+  std::shared_ptr<StateConstraintCollection> stateEqualityConstraintPtr;
   /** Pre-jump equality constraints */
-  std::unique_ptr<StateConstraintCollection> preJumpEqualityConstraintPtr;
+  std::shared_ptr<StateConstraintCollection> preJumpEqualityConstraintPtr;
   /** Final equality constraints */
-  std::unique_ptr<StateConstraintCollection> finalEqualityConstraintPtr;
+  std::shared_ptr<StateConstraintCollection> finalEqualityConstraintPtr;
 
   /* Lagrangians */
   /** Lagrangian for intermediate equality constraints */
-  std::unique_ptr<StateInputAugmentedLagrangianCollection> equalityLagrangianPtr;
+  std::shared_ptr<StateInputAugmentedLagrangianCollection> equalityLagrangianPtr;
   /** Lagrangian for intermediate state-only equality constraints */
-  std::unique_ptr<StateAugmentedLagrangianCollection> stateEqualityLagrangianPtr;
+  std::shared_ptr<StateAugmentedLagrangianCollection> stateEqualityLagrangianPtr;
   /** Lagrangian for intermediate inequality constraints */
-  std::unique_ptr<StateInputAugmentedLagrangianCollection> inequalityLagrangianPtr;
+  std::shared_ptr<StateInputAugmentedLagrangianCollection> inequalityLagrangianPtr;
   /** Lagrangian for intermediate state-only inequality constraints */
-  std::unique_ptr<StateAugmentedLagrangianCollection> stateInequalityLagrangianPtr;
+  std::shared_ptr<StateAugmentedLagrangianCollection> stateInequalityLagrangianPtr;
   /** Lagrangian for pre-jump equality constraints */
-  std::unique_ptr<StateAugmentedLagrangianCollection> preJumpEqualityLagrangianPtr;
+  std::shared_ptr<StateAugmentedLagrangianCollection> preJumpEqualityLagrangianPtr;
   /** Lagrangian for pre-jump inequality constraints */
-  std::unique_ptr<StateAugmentedLagrangianCollection> preJumpInequalityLagrangianPtr;
+  std::shared_ptr<StateAugmentedLagrangianCollection> preJumpInequalityLagrangianPtr;
   /** Lagrangian for final equality constraints */
-  std::unique_ptr<StateAugmentedLagrangianCollection> finalEqualityLagrangianPtr;
+  std::shared_ptr<StateAugmentedLagrangianCollection> finalEqualityLagrangianPtr;
   /** Lagrangian for final inequality constraints */
-  std::unique_ptr<StateAugmentedLagrangianCollection> finalInequalityLagrangianPtr;
+  std::shared_ptr<StateAugmentedLagrangianCollection> finalInequalityLagrangianPtr;
 
   /* Dynamics */
   /** System dynamics pointer */
-  std::unique_ptr<SystemDynamicsBase> dynamicsPtr;
+  std::shared_ptr<SystemDynamicsBase> dynamicsPtr;
 
   /* Misc. */
   /** The pre-computation module */
-  std::unique_ptr<PreComputation> preComputationPtr;
+  std::shared_ptr<PreComputation> preComputationPtr;
 
   /** The cost desired trajectories (will be substitute by ReferenceManager) */
   const TargetTrajectories* targetTrajectoriesPtr;
