@@ -491,7 +491,7 @@ void MPC_ROS_Interface::spin()
 
     if (mpcShutDownFlag_ == "true")
     {
-      //std::cout << "[MPC_ROS_Interface::spin] SHUTTING DOWN GUYS!!!" << std::endl;
+      std::cout << "[MPC_ROS_Interface::spin] SHUTTING DOWN GUYS!!!" << std::endl;
       shutDownFlag_ = true;
     }
     /*

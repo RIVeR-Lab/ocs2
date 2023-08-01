@@ -17,11 +17,11 @@
 #include <boost/filesystem/path.hpp>
 #include <std_msgs/UInt8.h>
 
-#include <pinocchio/fwd.hpp>  // forward declarations must be included first. NUA NOTE: WHY?
+#include <pinocchio/fwd.hpp> // forward declarations must be included first. NUA NOTE: WHY?
 #include <pinocchio/multibody/joint/joint-composite.hpp>
 #include <pinocchio/multibody/model.hpp>
 #include <cstdlib>
-//#include <voxblox/interpolator/interpolator.h>
+// #include <voxblox/interpolator/interpolator.h>
 
 // OCS2
 #include <ocs2_core/Types.h>
@@ -45,7 +45,7 @@
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_oc/synchronized_module/ReferenceManager.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
-//#include <ocs2_ros_interfaces/EsdfCachingServer.hpp>
+// #include <ocs2_ros_interfaces/EsdfCachingServer.hpp>
 #include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 #include <ocs2_ros_interfaces/mpc/MPC_ROS_Interface.h>
 #include <ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h>
@@ -69,354 +69,361 @@
 #include "ocs2_mobile_manipulator/dynamics/MobileManipulatorDynamics.h"
 #include <ocs2_mobile_manipulator/MobileManipulatorVisualization.h>
 
-namespace ocs2 {
-namespace mobile_manipulator {
-
-//using typename voxblox::EsdfCachingVoxel;
-//using voxblox::Interpolator;
-
-/**
- * Mobile Manipulator Robot Interface class
- */
-class MobileManipulatorInterface final : public RobotInterface 
+namespace ocs2
 {
-  public:
+  namespace mobile_manipulator
+  {
+
+    // using typename voxblox::EsdfCachingVoxel;
+    // using voxblox::Interpolator;
+
     /**
-     * Constructor
-     *
-     * @note Creates directory for generated library into if it does not exist.
-     * @throw Invalid argument error if input task file or urdf file does not exist.
-     *
-     * @param [in] taskFile: The absolute path to the configuration file for the MPC.
-     * @param [in] libraryFolder: The absolute path to the directory to generate CppAD library into.
-     * @param [in] urdfFile: The absolute path to the URDF file for the robot.
+     * Mobile Manipulator Robot Interface class
      */
-    MobileManipulatorInterface(const std::string& taskFile, 
-                               const std::string& libraryFolder, 
-                               const std::string& urdfFile,
-                               PointsOnRobot::points_radii_t pointsAndRadii = std::vector<std::vector<std::pair<double, double>>>(),
-                               int initModelModeInt=2);
-
-    MobileManipulatorInterface(ros::NodeHandle& nodeHandle,
-                               const std::string& taskFile, 
-                               const std::string& libraryFolder, 
-                               const std::string& urdfFile,
-                               PointsOnRobot::points_radii_t pointsAndRadii = std::vector<std::vector<std::pair<double, double>>>(),
-                               int initModelModeInt=2);
-
-    /*
-    const vector_t& getInitialState()
-    { 
-      return initialState_;
-    }
-    */
-
-    const std::string& getTaskFile() const
-    { 
-      return taskFile_;
-    }
-
-    const std::string& getLibraryFolder() const 
-    { 
-      return libraryFolder_;
-    }
-
-    const std::string& getUrdfFile() const
-    { 
-      return urdfFile_;
-    }
-
-    ddp::Settings& ddpSettings() 
-    { 
-      return ddpSettings_; 
-    }
-
-    mpc::Settings& mpcSettings() 
+    class MobileManipulatorInterface final : public RobotInterface
     {
-      return mpcSettings_; 
-    }
+    public:
+      /**
+       * Constructor
+       *
+       * @note Creates directory for generated library into if it does not exist.
+       * @throw Invalid argument error if input task file or urdf file does not exist.
+       *
+       * @param [in] taskFile: The absolute path to the configuration file for the MPC.
+       * @param [in] libraryFolder: The absolute path to the directory to generate CppAD library into.
+       * @param [in] urdfFile: The absolute path to the URDF file for the robot.
+       */
+      MobileManipulatorInterface(const std::string &taskFile,
+                                 const std::string &libraryFolder,
+                                 const std::string &urdfFile,
+                                 PointsOnRobot::points_radii_t pointsAndRadii = std::vector<std::vector<std::pair<double, double>>>(),
+                                 int initModelModeInt = 2);
 
-    const OptimalControlProblem& getOptimalControlProblem() const override 
-    { 
-      if (mpcIter_ % 2 == 0)
+      MobileManipulatorInterface(ros::NodeHandle &nodeHandle,
+                                 const std::string &taskFile,
+                                 const std::string &libraryFolder,
+                                 const std::string &urdfFile,
+                                 PointsOnRobot::points_radii_t pointsAndRadii = std::vector<std::vector<std::pair<double, double>>>(),
+                                 int initModelModeInt = 2);
+
+      /*
+      const vector_t& getInitialState()
       {
-        return ocp1_;
+        return initialState_;
       }
-      else
+      */
+
+      const std::string &getTaskFile() const
       {
-        return ocp2_; 
+        return taskFile_;
       }
-      //return ocp_;
-    }
 
-    std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override 
-    { 
-      return referenceManagerPtr_; 
-    }
+      const std::string &getLibraryFolder() const
+      {
+        return libraryFolder_;
+      }
 
-    const Initializer& getInitializer() const override 
-    { 
-      return *initializerPtr_; 
-    }
+      const std::string &getUrdfFile() const
+      {
+        return urdfFile_;
+      }
 
-    const RolloutBase& getRollout() const 
-    { 
-      return *rolloutPtr_; 
-    }
+      ddp::Settings &ddpSettings()
+      {
+        return ddpSettings_;
+      }
 
-    const PinocchioInterface& getPinocchioInterface() const 
-    { 
-      return *pinocchioInterfacePtr_; 
-    }
+      mpc::Settings &mpcSettings()
+      {
+        return mpcSettings_;
+      }
 
-    const RobotModelInfo& getRobotModelInfo() const 
-    { 
-      return robotModelInfo_; 
-    }
+      const OptimalControlProblem &getOptimalControlProblem() const override
+      {
+        /*
+        if (mpcIter_ % 2 == 0)
+        {
+          return ocp1_;
+        }
+        else
+        {
+          return ocp2_;
+        }
+        */
+        return ocp_;
+      }
 
-    std::shared_ptr<PointsOnRobot> getPointsOnRobotPtr() 
-    { 
-      return pointsOnRobotPtr_;
-    }
+      std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override
+      {
+        return referenceManagerPtr_;
+      }
 
-    std::string getBaseStateMsg() 
-    { 
-      return baseStateMsg_;
-    }
+      const Initializer &getInitializer() const override
+      {
+        return *initializerPtr_;
+      }
 
-    std::string getArmStateMsg() 
-    { 
-      return armStateMsg_;
-    }
+      const RolloutBase &getRollout() const
+      {
+        return *rolloutPtr_;
+      }
 
-    std::string getBaseControlMsg() 
-    { 
-      return baseControlMsg_;
-    }
+      const PinocchioInterface &getPinocchioInterface() const
+      {
+        return *pinocchioInterfacePtr_;
+      }
 
-    std::string getArmControlMsg() 
-    { 
-      return armControlMsg_;
-    }
+      const RobotModelInfo &getRobotModelInfo() const
+      {
+        return robotModelInfo_;
+      }
 
-    /*
-    std::shared_ptr<voxblox::EsdfCachingServer> getEsdfCachingServerPtr() 
-    { 
-      return esdfCachingServerPtr_;
-    }
-    */
+      /*
+      std::shared_ptr<PointsOnRobot> getPointsOnRobotPtr()
+      {
+        return pointsOnRobotPtr_;
+      }
+      */
 
-    /*
-    std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> getVoxbloxInterpolatorPtr()
-    {
-      return voxbloxInterpolatorPtr_;
-    }
-    */
+      std::string getBaseStateMsg()
+      {
+        return baseStateMsg_;
+      }
 
-    void setNodeHandle(ros::NodeHandle& nodeHandle) 
-    { 
-      nodeHandle_ = nodeHandle;
-    }
+      std::string getArmStateMsg()
+      {
+        return armStateMsg_;
+      }
 
-    void setPointsOnRobotPtr(std::shared_ptr<PointsOnRobot> newPointsOnRobotPtr) 
-    { 
-      pointsOnRobotPtr_ = newPointsOnRobotPtr;
-    }
+      std::string getBaseControlMsg()
+      {
+        return baseControlMsg_;
+      }
 
-    void createPointsOnRobotPtr(PointsOnRobot::points_radii_t& pointsAndRadii) 
-    { 
-      pointsOnRobotPtr_.reset(new PointsOnRobot(pointsAndRadii));
-    }
+      std::string getArmControlMsg()
+      {
+        return armControlMsg_;
+      }
 
-    void setMPCProblem(bool iterFlag=false);
+      /*
+      std::shared_ptr<voxblox::EsdfCachingServer> getEsdfCachingServerPtr()
+      {
+        return esdfCachingServerPtr_;
+      }
+      */
 
-    /*
-    void setEsdfCachingServerPtr(std::shared_ptr<voxblox::EsdfCachingServer> newEsdfCachingServerPtr) 
-    { 
-      esdfCachingServerPtr_ = newEsdfCachingServerPtr;
-    }
-    */
+      /*
+      std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> getVoxbloxInterpolatorPtr()
+      {
+        return voxbloxInterpolatorPtr_;
+      }
+      */
 
-    /*
-    void setVoxbloxInterpolatorPtr(std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> newVoxbloxInterpolatorPtr)
-    {
-      voxbloxInterpolatorPtr_ = newVoxbloxInterpolatorPtr;
-    }
-    */
+      void setNodeHandle(ros::NodeHandle &nodeHandle)
+      {
+        nodeHandle_ = nodeHandle;
+      }
 
-    //void modelModeCallback(const std_msgs::UInt8::ConstPtr& msg);
+      /*
+      void setPointsOnRobotPtr(std::shared_ptr<PointsOnRobot> newPointsOnRobotPtr)
+      {
+        pointsOnRobotPtr_ = newPointsOnRobotPtr;
+      }
+      */
 
-    //void mpcModeSwitchCountCallback(const std_msgs::UInt8::ConstPtr& msg);
+      void createPointsOnRobotPtr(PointsOnRobot::points_radii_t &pointsAndRadii)
+      {
+        pointsOnRobotPtr_.reset(new PointsOnRobot(pointsAndRadii));
+      }
 
-    void launchNodes(ros::NodeHandle& nodeHandle);
+      void initializePointsOnRobotPtr(PointsOnRobot::points_radii_t &pointsAndRadii);
 
-    void getEEPose(vector_t& eePose);
+      void setMPCProblem(bool iterFlag = false);
 
-    //void getGraspPose(vector_t& targetPose);
+      /*
+      void setEsdfCachingServerPtr(std::shared_ptr<voxblox::EsdfCachingServer> newEsdfCachingServerPtr)
+      {
+        esdfCachingServerPtr_ = newEsdfCachingServerPtr;
+      }
+      */
 
-    bool setActionDRLSrv(ocs2_msgs::setActionDRL::Request &req, 
-                         ocs2_msgs::setActionDRL::Response &res);
+      /*
+      void setVoxbloxInterpolatorPtr(std::shared_ptr<voxblox::Interpolator<voxblox::EsdfCachingVoxel>> newVoxbloxInterpolatorPtr)
+      {
+        voxbloxInterpolatorPtr_ = newVoxbloxInterpolatorPtr;
+      }
+      */
 
-    //void setMPCModeSwitchCountPublisher();
+      // void modelModeCallback(const std_msgs::UInt8::ConstPtr& msg);
 
-    //void setMPCModeSwitchCountSubscriber();
+      void launchNodes(ros::NodeHandle &nodeHandle);
 
-    //void publishMPCModeSwitchCount();
+      void getEEPose(vector_t &eePose);
 
-    /*
-    bool setMPCInitReadyFlag(bool val);
+      bool setActionDRLSrv(ocs2_msgs::setActionDRL::Request &req,
+                           ocs2_msgs::setActionDRL::Response &res);
 
-    bool setMRTInitReadyFlag(bool val);
+      void runMPC();
 
-    bool setMPCProblemReadyFlag(bool val);
+      void runMRT();
 
-    bool setMRTExitFlag(bool val);
-    
-    bool setMPCLaunchReadyFlag(bool val);
+      void mpcCallback(const ros::TimerEvent &event);
 
-    bool setMPCInitReadyFlagSrv(ocs2_mobile_manipulator::setBool::Request &req, 
-                                ocs2_mobile_manipulator::setBool::Response &res);
+      void mrtCallback(const ros::TimerEvent &event);
 
-    bool setMRTInitReadyFlagSrv(ocs2_mobile_manipulator::setBool::Request &req, 
-                                ocs2_mobile_manipulator::setBool::Response &res);
+    private:
+      std::unique_ptr<StateInputCost> getQuadraticInputCost();
 
-    bool setMPCProblemReadyFlagSrv(ocs2_mobile_manipulator::setBool::Request &req, 
-                                   ocs2_mobile_manipulator::setBool::Response &res);
+      std::unique_ptr<StateInputCost> getJointLimitSoftConstraint();
 
-    bool setMRTExitFlagSrv(ocs2_mobile_manipulator::setBool::Request &req, 
-                           ocs2_mobile_manipulator::setBool::Response &res);
+      std::unique_ptr<StateCost> getEndEffectorConstraint(const std::string &prefix);
 
-    bool setMPCLaunchReadyFlagSrv(ocs2_mobile_manipulator::setBool::Request &req, 
-                                  ocs2_mobile_manipulator::setBool::Response &res);
-    */
+      std::unique_ptr<StateCost> getSelfCollisionConstraint(const std::string &prefix);
 
-    void runMPC();
+      std::unique_ptr<StateCost> getExtCollisionConstraint(const std::string &prefix);
 
-    void runMRT();
+      void mapDRLAction(int action);
 
-    void mpcCallback(const ros::TimerEvent& event);
+      struct mpcProblemSettings
+      {
+        int modelMode;
+        std::vector<std::string> binarySettingNames = {"internalTargetCost",
+                                                       "selfCollisionConstraint",
+                                                       "externalCollisionConstraint"};
+        std::vector<bool> binarySettingValues;
+      };
 
-    void mrtCallback(const ros::TimerEvent& event);
-  
-  private:
-    std::unique_ptr<StateInputCost> getQuadraticInputCost();
+      ros::NodeHandle nodeHandle_;
+      tf::TransformListener tfListener_;
 
-    std::unique_ptr<StateInputCost> getJointLimitSoftConstraint();
-    
-    std::unique_ptr<StateCost> getEndEffectorConstraint(const std::string& prefix);
-    
-    std::unique_ptr<StateCost> getSelfCollisionConstraint(const std::string& prefix);
+      ros::Timer mpcTimer_;
+      ros::Timer mrtTimer_;
 
-    std::unique_ptr<StateCost> getExtCollisionConstraint(const std::string& prefix);
+      const std::string taskFile_;
+      const std::string libraryFolder_;
+      const std::string urdfFile_;
+      std::string robotModelName_ = "mobile_manipulator";
+      std::string worldFrameName_ = "world";
+      // std::string graspFrameName_ = "grasp";
 
-    void mapDRLAction(int action);
+      size_t initModelModeInt_ = 2;
+      size_t modelModeIntQuery_ = 2;
 
-    struct mpcProblemSettings
-    {
-      int modelMode;
-      std::vector<std::string> binarySettingNames = {"internalTargetCost",
-                                                     "selfCollisionConstraint",
-                                                     "externalCollisionConstraint"};
-      std::vector<bool> binarySettingValues;
+      double err_threshold_pos_ = 0.02;
+      double err_threshold_ori_ = 0.05;
+
+      int mpcIter_ = 0;
+      int mrtIter_ = 0;
+
+      bool targetReadyFlag_ = false;
+      bool mpcProblemReadyFlag_ = false;
+      bool mrtExitFlag_ = true;
+      bool mpcLaunchReadyFlag_ = false;
+
+      int mpcShutDownEnvStatus_ = setenv("mpcShutDownFlag", "false", 1);
+      int mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "false", 1);
+      int mrtExitEnvStatus_ = setenv("mrtExitFlag", "true", 1);
+      
+      bool printOutFlag_ = true;
+      bool usePreComputation_;
+      bool recompileLibraries_;
+      bool activateSelfCollision_;
+      bool activateExtCollision_;
+
+      bool drlFlag_ = false;
+      int drlAction_;
+      double drlActionTimeHorizon_;
+      mpcProblemSettings mpcProblemSettings_;
+
+      ddp::Settings ddpSettings_;
+      mpc::Settings mpcSettings_;
+
+      OptimalControlProblem ocp_;
+      // OptimalControlProblem ocp1_;
+      // OptimalControlProblem ocp2_;
+
+      std::shared_ptr<ReferenceManager> referenceManagerPtr_;
+      std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr_;
+
+      ocs2::rollout::Settings rolloutSettings_;
+      std::unique_ptr<RolloutBase> rolloutPtr_;
+
+      std::unique_ptr<Initializer> initializerPtr_;
+
+      std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
+
+      PointsOnRobot::points_radii_t pointsAndRadii_;
+
+      RobotModelInfo robotModelInfo_;
+
+      // NUA TODO: Added to speed up the mpc problem initialization, but GET RID OF THESE ASAP!
+      // -----------------
+      std::unique_ptr<StateInputCost> quadraticInputCostPtr_mode0_;
+      std::unique_ptr<StateInputCost> quadraticInputCostPtr_mode1_;
+      std::unique_ptr<StateInputCost> quadraticInputCostPtr_mode2_;
+
+      std::unique_ptr<StateInputCost> jointLimitSoftConstraintPtr_mode0_;
+      std::unique_ptr<StateInputCost> jointLimitSoftConstraintPtr_mode1_;
+      std::unique_ptr<StateInputCost> jointLimitSoftConstraintPtr_mode2_;
+
+      std::unique_ptr<StateCost> endEffectorIntermediateConstraintPtr_mode0_;
+      std::unique_ptr<StateCost> endEffectorIntermediateConstraintPtr_mode1_;
+      std::unique_ptr<StateCost> endEffectorIntermediateConstraintPtr_mode2_;
+
+      std::unique_ptr<StateCost> endEffectorFinalConstraintPtr_mode0_;
+      std::unique_ptr<StateCost> endEffectorFinalConstraintPtr_mode1_;
+      std::unique_ptr<StateCost> endEffectorFinalConstraintPtr_mode2_;
+
+      std::unique_ptr<StateCost> selfCollisionConstraintPtr_mode0_;
+      std::unique_ptr<StateCost> selfCollisionConstraintPtr_mode1_;
+      std::unique_ptr<StateCost> selfCollisionConstraintPtr_mode2_;
+
+      std::unique_ptr<StateCost> extCollisionConstraintPtr_mode0_;
+      std::unique_ptr<StateCost> extCollisionConstraintPtr_mode1_;
+      std::unique_ptr<StateCost> extCollisionConstraintPtr_mode2_;
+
+      std::unique_ptr<SystemDynamicsBase> dynamicsPtr_mode0_;
+      std::unique_ptr<SystemDynamicsBase> dynamicsPtr_mode1_;
+      std::unique_ptr<SystemDynamicsBase> dynamicsPtr_mode2_;
+      // -----------------
+
+      std::string baseStateMsg_;
+      std::string armStateMsg_;
+
+      std::string baseControlMsg_;
+      std::string armControlMsg_;
+
+      std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_;
+      std::shared_ptr<ExtMapUtility> emuPtr_;
+
+      vector_t currentTarget_;
+
+      benchmark::RepeatedTimer mpcTimer0_;
+      benchmark::RepeatedTimer mpcTimer1_;
+      benchmark::RepeatedTimer mpcTimer2_;
+      benchmark::RepeatedTimer mpcTimer3_;
+      benchmark::RepeatedTimer mpcTimer4_;
+      benchmark::RepeatedTimer mpcTimer5_;
+      benchmark::RepeatedTimer mpcTimer6_;
+      benchmark::RepeatedTimer mpcTimer7_;
+      benchmark::RepeatedTimer mpcTimer8_;
+      benchmark::RepeatedTimer mpcTimer9_;
+      benchmark::RepeatedTimer mpcTimer10_;
+      benchmark::RepeatedTimer mpcTimer11_;
+
+      benchmark::RepeatedTimer mrtTimer1_;
+      benchmark::RepeatedTimer mrtTimer2_;
+      benchmark::RepeatedTimer mrtTimer3_;
+      benchmark::RepeatedTimer mrtTimer4_;
+      benchmark::RepeatedTimer mrtTimer5_;
+      benchmark::RepeatedTimer mrtTimer6_;
+      benchmark::RepeatedTimer mrtTimer7_;
+
+      ros::Subscriber modelModeSubscriber_;
+      ros::Subscriber targetTrajectoriesSubscriber_;
+
+      ros::ServiceServer setActionDRLService_;
     };
 
-    ros::NodeHandle nodeHandle_;
-    tf::TransformListener tfListener_;
-
-    ros::Timer mpcTimer_;
-    ros::Timer mrtTimer_;
-
-    const std::string taskFile_;
-    const std::string libraryFolder_;
-    const std::string urdfFile_;
-    std::string robotModelName_ = "mobile_manipulator";
-    std::string worldFrameName_ = "world";
-    //std::string graspFrameName_ = "grasp";
-
-    size_t initModelModeInt_ = 2;
-    size_t modelModeIntQuery_ = 2;
-
-    double err_threshold_pos_ = 0.02;
-    double err_threshold_ori_ = 0.05;
-
-    int mpcIter_ = 0; 
-    int mrtIter_ = 0; 
-
-    bool targetReadyFlag_ = false;
-    bool mpcProblemReadyFlag_ = false;
-    bool mrtExitFlag_ = true;
-    bool mpcLaunchReadyFlag_ = false;
-
-    int mpcShutDownEnvStatus_ = setenv("mpcShutDownFlag", "false", 1);
-    int mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "false", 1);
-
-    bool printOutFlag_ = false;
-    bool usePreComputation_;
-    bool recompileLibraries_;
-    bool activateSelfCollision_;
-    bool activateExtCollision_;
-    
-    bool drlFlag_ = false;
-    int drlAction_;
-    double drlActionTimeHorizon_;
-    mpcProblemSettings mpcProblemSettings_;
-
-    ddp::Settings ddpSettings_;
-    mpc::Settings mpcSettings_;
-    
-    //OptimalControlProblem ocp_;
-    OptimalControlProblem ocp1_;
-    OptimalControlProblem ocp2_;
-    
-    std::shared_ptr<ReferenceManager> referenceManagerPtr_;
-    
-    ocs2::rollout::Settings rolloutSettings_;
-    std::unique_ptr<RolloutBase> rolloutPtr_;
-    
-    std::unique_ptr<Initializer> initializerPtr_;
-
-    std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
-    RobotModelInfo robotModelInfo_;
-
-    std::string baseStateMsg_;
-    std::string armStateMsg_;
-
-    std::string baseControlMsg_;
-    std::string armControlMsg_;
-
-    std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_;
-    std::shared_ptr<ExtMapUtility> emuPtr_;
-
-    /// NUA NOTE: ADDING THE REQUIRED MPC & MRT PROCESSES
-    PointsOnRobot::points_radii_t pointsAndRadii_;
-    std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr_;
-
-    vector_t currentTarget_;
-
-    benchmark::RepeatedTimer mpcTimer1_;
-    benchmark::RepeatedTimer mpcTimer2_;
-    benchmark::RepeatedTimer mpcTimer3_;
-    benchmark::RepeatedTimer mpcTimer4_;
-    benchmark::RepeatedTimer mpcTimer5_;
-    benchmark::RepeatedTimer mpcTimer6_;
-    benchmark::RepeatedTimer mpcTimer7_;
-    benchmark::RepeatedTimer mpcTimer8_;
-
-    benchmark::RepeatedTimer mrtTimer1_;
-    benchmark::RepeatedTimer mrtTimer2_;
-    benchmark::RepeatedTimer mrtTimer3_;
-    benchmark::RepeatedTimer mrtTimer4_;
-    benchmark::RepeatedTimer mrtTimer5_;
-    benchmark::RepeatedTimer mrtTimer6_;
-    benchmark::RepeatedTimer mrtTimer7_;
-
-    ros::Subscriber modelModeSubscriber_;
-    ros::Subscriber targetTrajectoriesSubscriber_;
-
-    ros::ServiceServer setActionDRLService_;
-
-    //ros::ServiceClient setMPCInitReadyFlagClient_;
-};
-
-}  // namespace mobile_manipulator
-}  // namespace ocs2
+  } // namespace mobile_manipulator
+} // namespace ocs2

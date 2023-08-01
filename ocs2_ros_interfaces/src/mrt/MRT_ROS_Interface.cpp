@@ -276,6 +276,9 @@ void MRT_ROS_Interface::shutdownNodes()
 
   // shutdown publishers
   mpcObservationPublisher_.shutdown();
+
+  setenv("mrtExitFlag", "true", 1);
+  
   std::cout << "[MRT_ROS_Interface::shutdownNodes] END" << std::endl;
 }
 
