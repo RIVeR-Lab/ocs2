@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.28
+// LAST UPDATE: 2023.07.31
 //
 // AUTHOR: Neset Unver Akmandor  (NUA)
 //
@@ -32,12 +32,18 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
 {
   //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START" << std::endl;
 
+  mpcTimer0_.reset();
   mpcTimer1_.reset();
   mpcTimer2_.reset();
   mpcTimer3_.reset();
   mpcTimer4_.reset();
   mpcTimer5_.reset();
   mpcTimer6_.reset();
+  mpcTimer7_.reset();
+  mpcTimer8_.reset();
+  mpcTimer9_.reset();
+  mpcTimer10_.reset();
+  mpcTimer11_.reset();
 
   mrtTimer1_.reset();
   mrtTimer2_.reset();
@@ -45,6 +51,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   mrtTimer4_.reset();
   mrtTimer5_.reset();
   mrtTimer6_.reset();
+  mrtTimer7_.reset();
 
   currentTarget_.resize(7);
 
@@ -201,12 +208,18 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
 {
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface(6)] START" << std::endl;
 
+  mpcTimer0_.reset();
   mpcTimer1_.reset();
   mpcTimer2_.reset();
   mpcTimer3_.reset();
   mpcTimer4_.reset();
   mpcTimer5_.reset();
   mpcTimer6_.reset();
+  mpcTimer7_.reset();
+  mpcTimer8_.reset();
+  mpcTimer9_.reset();
+  mpcTimer10_.reset();
+  mpcTimer11_.reset();
 
   mrtTimer1_.reset();
   mrtTimer2_.reset();
@@ -214,10 +227,9 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   mrtTimer4_.reset();
   mrtTimer5_.reset();
   mrtTimer6_.reset();
+  mrtTimer7_.reset();
 
   currentTarget_.resize(7);
-
-  // Setting up the environment variable
 
   /// Check that task file exists
   boost::filesystem::path taskFilePath(taskFile_);
@@ -351,10 +363,66 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   // Set Rollout Settings
   rolloutSettings_ = rollout::loadSettings(taskFile_, "rollout", printOutFlag_);
 
+  /*
+  // Set PointsOnRobot
+  initializePointsOnRobotPtr(pointsAndRadii_);
+
+  // Set ExtMapUtility
+  emuPtr_.reset(new ExtMapUtility());
+  
+  //// NUA TODO: Set these parameters in taskfile!
+  std::string pub_name_oct_dist_visu = "occ_dist";
+  std::string pub_name_oct_dist_array_visu = "occ_dist_array";
+
+  emuPtr_->setWorldFrameName(worldFrameName_);
+  emuPtr_->setPubOccDistVisu(pub_name_oct_dist_visu);
+  emuPtr_->setPubOccDistArrayVisu(pub_name_oct_dist_array_visu);
+  */
+
   // Create costs/constraints
   size_t modelModeInt;
   bool isModeUpdated;
 
+  // Mode 0
+  modelModeInt = 0;
+  isModeUpdated = updateModelMode(robotModelInfo_, modelModeInt);
+
+  quadraticInputCostPtr_mode0_ = getQuadraticInputCost();
+  jointLimitSoftConstraintPtr_mode0_ = getJointLimitSoftConstraint();
+  endEffectorIntermediateConstraintPtr_mode0_ = getEndEffectorConstraint("endEffector");
+  endEffectorFinalConstraintPtr_mode0_ = getEndEffectorConstraint("finalEndEffector");
+  selfCollisionConstraintPtr_mode0_ = getSelfCollisionConstraint("selfCollision");
+  
+  //// NUA TODO: DEBUG AND TEST IS REQUIRED!
+  //initializePointsOnRobotPtr(pointsAndRadii_);
+  //extCollisionConstraintPtr_mode0_= getExtCollisionConstraint("extCollision");
+  
+  dynamicsPtr_mode0_.reset(new MobileBaseDynamics(robotModelInfo_, 
+                                                  "MobileBaseDynamics", 
+                                                  libraryFolder_, 
+                                                  recompileLibraries_, 
+                                                  printOutFlag_));
+
+  // Mode 1
+  modelModeInt = 1;
+  isModeUpdated = updateModelMode(robotModelInfo_, modelModeInt);
+
+  quadraticInputCostPtr_mode1_ = getQuadraticInputCost();
+  jointLimitSoftConstraintPtr_mode1_ = getJointLimitSoftConstraint();
+  endEffectorIntermediateConstraintPtr_mode1_ = getEndEffectorConstraint("endEffector");
+  endEffectorFinalConstraintPtr_mode1_ = getEndEffectorConstraint("finalEndEffector");
+  selfCollisionConstraintPtr_mode1_ = getSelfCollisionConstraint("selfCollision");
+  
+  //// NUA TODO: DEBUG AND TEST IS REQUIRED!
+  //initializePointsOnRobotPtr(pointsAndRadii_);
+  //extCollisionConstraintPtr_mode1_= getExtCollisionConstraint("extCollision");
+  
+  dynamicsPtr_mode1_.reset(new RobotArmDynamics(robotModelInfo_, 
+                                                "MobileBaseDynamics", 
+                                                libraryFolder_, 
+                                                recompileLibraries_, 
+                                                printOutFlag_));
+  
   // Mode 2
   modelModeInt = 2;
   isModeUpdated = updateModelMode(robotModelInfo_, modelModeInt);
@@ -364,24 +432,37 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   endEffectorIntermediateConstraintPtr_mode2_ = getEndEffectorConstraint("endEffector");
   endEffectorFinalConstraintPtr_mode2_ = getEndEffectorConstraint("finalEndEffector");
   selfCollisionConstraintPtr_mode2_ = getSelfCollisionConstraint("selfCollision");
+  
+  //// NUA TODO: DEBUG AND TEST IS REQUIRED!
+  //initializePointsOnRobotPtr(pointsAndRadii_);
+  //extCollisionConstraintPtr_mode2_= getExtCollisionConstraint("extCollision");
+  
+  dynamicsPtr_mode2_.reset(new MobileManipulatorDynamics(robotModelInfo_, 
+                                                         "MobileBaseDynamics", 
+                                                         libraryFolder_, 
+                                                         recompileLibraries_, 
+                                                         printOutFlag_));
 
   // Set MPC Problem
-  mpcTimer2_.startTimer();
+  //mpcTimer2_.startTimer();
   launchNodes(nodeHandle_);
-  mpcTimer2_.endTimer();
+  //mpcTimer2_.endTimer();
 
-  mpcTimer3_.startTimer();
-  setMPCProblem();
-  mpcTimer3_.endTimer();
+  //mpcTimer3_.startTimer();
+  //setMPCProblem();
+  //mpcTimer3_.endTimer();
 
-  std::cout << "\n### MPC_ROS Benchmarking mpcTimer2_";
-  std::cout << "\n###   Maximum : " << mpcTimer2_.getMaxIntervalInMilliseconds() << "[ms].";
-  std::cout << "\n###   Average : " << mpcTimer2_.getAverageInMilliseconds() << "[ms].";
-  std::cout << "\n###   Latest  : " << mpcTimer2_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
-  std::cout << "\n### MPC_ROS Benchmarking mpcTimer3_";
-  std::cout << "\n###   Maximum : " << mpcTimer3_.getMaxIntervalInMilliseconds() << "[ms].";
-  std::cout << "\n###   Average : " << mpcTimer3_.getAverageInMilliseconds() << "[ms].";
-  std::cout << "\n###   Latest  : " << mpcTimer3_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+  if (printOutFlag_)
+  {
+    std::cout << "\n### MPC_ROS Benchmarking mpcTimer2_";
+    std::cout << "\n###   Maximum : " << mpcTimer2_.getMaxIntervalInMilliseconds() << "[ms].";
+    std::cout << "\n###   Average : " << mpcTimer2_.getAverageInMilliseconds() << "[ms].";
+    std::cout << "\n###   Latest  : " << mpcTimer2_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+    std::cout << "\n### MPC_ROS Benchmarking mpcTimer3_";
+    std::cout << "\n###   Maximum : " << mpcTimer3_.getMaxIntervalInMilliseconds() << "[ms].";
+    std::cout << "\n###   Average : " << mpcTimer3_.getAverageInMilliseconds() << "[ms].";
+    std::cout << "\n###   Latest  : " << mpcTimer3_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+  }
 
   //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface(6)] DEBUG INF" << std::endl;
   //while(1);
@@ -389,13 +470,138 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface(6)] END" << std::endl;
 }
 
+///////// NUA TODO: NOT FUNCTIONAL, NEED DEBUG AND TESTING!!!
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorInterface::initializePointsOnRobotPtr(PointsOnRobot::points_radii_t& pointsAndRadii) 
+{
+  pointsOnRobotPtr_.reset(new PointsOnRobot(pointsAndRadii));
+  if (pointsOnRobotPtr_->getNumOfPoints() > 0) 
+  {
+    pointsOnRobotPtr_->initialize(*pinocchioInterfacePtr_,
+                                        MobileManipulatorPinocchioMapping(robotModelInfo_),
+                                        MobileManipulatorPinocchioMappingCppAd(robotModelInfo_),
+                                        robotModelInfo_,
+                                        "points_on_robot",
+                                        libraryFolder_,
+                                        recompileLibraries_,
+                                        false);
+  }
+  else
+  {
+    pointsOnRobotPtr_ = nullptr;
+  }
+
+  size_t modelModeInt = getModelModeInt(robotModelInfo_);
+  if (modelModeInt == 0)
+  {
+    pointsOnRobotPtr_mode0_.reset(new PointsOnRobot(pointsAndRadii));
+    if (pointsOnRobotPtr_mode0_->getNumOfPoints() > 0) 
+    {
+      ///////// NUA TODO: ADAPT TO MULTI MODAL!
+      pointsOnRobotPtr_mode0_->initialize(*pinocchioInterfacePtr_,
+                                          MobileManipulatorPinocchioMapping(robotModelInfo_),
+                                          MobileManipulatorPinocchioMappingCppAd(robotModelInfo_),
+                                          robotModelInfo_,
+                                          "points_on_robot",
+                                          libraryFolder_,
+                                          recompileLibraries_,
+                                          false);
+    }
+    else
+    {
+      pointsOnRobotPtr_mode0_ = nullptr;
+    }
+  }
+
+  else if (modelModeInt == 1)
+  {
+    pointsOnRobotPtr_mode1_.reset(new PointsOnRobot(pointsAndRadii));
+    if (pointsOnRobotPtr_mode1_->getNumOfPoints() > 0) 
+    {
+      ///////// NUA TODO: ADAPT TO MULTI MODAL!
+      pointsOnRobotPtr_mode1_->initialize(*pinocchioInterfacePtr_,
+                                          MobileManipulatorPinocchioMapping(robotModelInfo_),
+                                          MobileManipulatorPinocchioMappingCppAd(robotModelInfo_),
+                                          robotModelInfo_,
+                                          "points_on_robot",
+                                          libraryFolder_,
+                                          recompileLibraries_,
+                                          false);
+    }
+    else
+    {
+      pointsOnRobotPtr_mode1_ = nullptr;
+    }
+  }
+
+  else if (modelModeInt == 2)
+  {
+    pointsOnRobotPtr_mode2_.reset(new PointsOnRobot(pointsAndRadii));
+    if (pointsOnRobotPtr_mode2_->getNumOfPoints() > 0) 
+    {
+      ///////// NUA TODO: ADAPT TO MULTI MODAL!
+      pointsOnRobotPtr_mode2_->initialize(*pinocchioInterfacePtr_,
+                                          MobileManipulatorPinocchioMapping(robotModelInfo_),
+                                          MobileManipulatorPinocchioMappingCppAd(robotModelInfo_),
+                                          robotModelInfo_,
+                                          "points_on_robot",
+                                          libraryFolder_,
+                                          recompileLibraries_,
+                                          false);
+    }
+    else
+    {
+      pointsOnRobotPtr_mode2_ = nullptr;
+    }
+  }
+}
+
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
 {
-  //std::cout << "[MobileManipulatorInterface::setMPCProblem] START" << std::endl;
+  std::cout << "[MobileManipulatorInterface::setMPCProblem] START" << std::endl;
 
+  /*
+  while(!mpcExitFlag_)
+  {
+    //std::cout << "[MobileManipulatorInterface::setMPCProblem] WAITING..." << std::endl;
+    spinOnce();
+  }
+  */
+
+  mpcTimer0_.startTimer();
+
+  mpcTimer1_.startTimer();
+
+  ocp_.costPtr->clear();
+  ocp_.stateCostPtr->clear();
+  ocp_.preJumpCostPtr->clear();
+  ocp_.finalCostPtr->clear();
+
+  ocp_.softConstraintPtr->clear();
+  ocp_.stateSoftConstraintPtr->clear();
+  ocp_.preJumpSoftConstraintPtr->clear();
+  ocp_.finalSoftConstraintPtr->clear();
+
+  ocp_.equalityConstraintPtr->clear();
+  ocp_.stateEqualityConstraintPtr->clear();
+  ocp_.preJumpEqualityConstraintPtr->clear();
+  ocp_.finalEqualityConstraintPtr->clear();
+
+  ocp_.equalityLagrangianPtr->clear();
+  ocp_.stateEqualityLagrangianPtr->clear();
+  ocp_.inequalityLagrangianPtr->clear();
+  ocp_.stateInequalityLagrangianPtr->clear();
+  ocp_.preJumpEqualityLagrangianPtr->clear();
+  ocp_.preJumpInequalityLagrangianPtr->clear();
+  ocp_.finalEqualityLagrangianPtr->clear();
+  ocp_.finalInequalityLagrangianPtr->clear();
+
+  /*
   ocp1_.costPtr->clear();
   ocp1_.stateCostPtr->clear();
   ocp1_.preJumpCostPtr->clear();
@@ -445,12 +651,17 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
   ocp2_.preJumpInequalityLagrangianPtr->clear();
   ocp2_.finalEqualityLagrangianPtr->clear();
   ocp2_.finalInequalityLagrangianPtr->clear();
+  */
 
+  mpcTimer1_.endTimer();
+
+  /*
   int iter = mpcIter_;
   if (iterFlag)
   {
     iter++;
   }
+  */
 
   // Set MPC Problem Settings
   size_t modelModeInt = modelModeIntQuery_;
@@ -460,39 +671,410 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
     modelModeInt = mpcProblemSettings_.modelMode;
   }
 
-  //std::cout << "[MobileManipulatorInterface::setMPCProblem] modelModeInt: " << modelModeInt << std::endl;
+  mpcTimer2_.startTimer();
+  std::cout << "[MobileManipulatorInterface::setMPCProblem] modelModeInt: " << modelModeInt << std::endl;
   bool isModeUpdated = updateModelMode(robotModelInfo_, modelModeInt);
   std::cout << "[MobileManipulatorInterface::setMPCProblem] isModeUpdated: " << isModeUpdated << std::endl;
   //printRobotModelInfo(robotModelInfo_);
+  mpcTimer2_.endTimer();
 
   //std::cout << "[MobileManipulatorInterface::setMPCProblem] DEBUG INF" << std::endl;
   //while(1);
 
+  //// Optimal control problem
+  if (modelModeInt == 0)
+  {
+    mpcTimer3_.startTimer();
+    ocp_.costPtr->add("inputCost", quadraticInputCostPtr_mode0_);
+    mpcTimer3_.endTimer();
+
+    mpcTimer4_.startTimer();
+    ocp_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode0_);
+    mpcTimer4_.endTimer();
+
+    mpcTimer5_.startTimer();
+    ocp_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode0_);
+    mpcTimer5_.endTimer();
+    
+    mpcTimer6_.startTimer();
+    ocp_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode0_);
+    mpcTimer6_.endTimer();
+
+    mpcTimer7_.startTimer();
+    if (activateSelfCollision_) 
+    {
+      //ocp_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode0_);
+    }
+    mpcTimer7_.endTimer();
+
+    mpcTimer8_.startTimer();
+    if (activateExtCollision_) 
+    {
+      //ocp_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode0_);
+    }
+    mpcTimer8_.endTimer();
+
+    mpcTimer9_.startTimer();
+    //ocp_.dynamicsPtr = dynamicsPtr_mode0_;
+    std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr: MobileBaseDynamics" << std::endl;
+    ocp_.dynamicsPtr.reset(new MobileBaseDynamics(robotModelInfo_, 
+                                                      "MobileBaseDynamics", 
+                                                      libraryFolder_, 
+                                                      recompileLibraries_, 
+                                                      printOutFlag_));
+    mpcTimer9_.endTimer();
+  }
+
+  else if (modelModeInt == 1)
+  {
+    mpcTimer3_.startTimer();
+    ocp_.costPtr->add("inputCost", quadraticInputCostPtr_mode1_);
+    mpcTimer3_.endTimer();
+
+    mpcTimer4_.startTimer();
+    ocp_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode1_);
+    mpcTimer4_.endTimer();
+
+    mpcTimer5_.startTimer();
+    ocp_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode1_);
+    mpcTimer5_.endTimer();
+    
+    mpcTimer6_.startTimer();
+    ocp_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode1_);
+    mpcTimer6_.endTimer();
+
+    mpcTimer7_.startTimer();
+    if (activateSelfCollision_) 
+    {
+      ocp_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode1_);
+    }
+    mpcTimer7_.endTimer();
+
+    mpcTimer8_.startTimer();
+    if (activateExtCollision_) 
+    {
+      //ocp_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode1_);
+    }
+    mpcTimer8_.endTimer();
+
+    mpcTimer9_.startTimer();
+    //ocp_.dynamicsPtr = dynamicsPtr_mode1_;
+    std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr: RobotArmDynamics" << std::endl;
+    ocp_.dynamicsPtr.reset(new RobotArmDynamics(robotModelInfo_, 
+                                                    "RobotArmDynamics", 
+                                                    libraryFolder_, 
+                                                    recompileLibraries_, 
+                                                    printOutFlag_));
+    mpcTimer9_.endTimer();
+  }
+
+  else if (modelModeInt == 2)
+  {
+    mpcTimer3_.startTimer();
+    ocp_.costPtr->add("inputCost", quadraticInputCostPtr_mode2_);
+    mpcTimer3_.endTimer();
+
+    mpcTimer4_.startTimer();
+    ocp_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode2_);
+    mpcTimer4_.endTimer();
+
+    mpcTimer5_.startTimer();
+    ocp_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode2_);
+    mpcTimer5_.endTimer();
+    
+    mpcTimer6_.startTimer();
+    ocp_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode2_);
+    mpcTimer6_.endTimer();
+
+    mpcTimer7_.startTimer();
+    if (activateSelfCollision_) 
+    {
+      ocp_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode2_);
+    }
+    mpcTimer7_.endTimer();
+
+    mpcTimer8_.startTimer();
+    if (activateExtCollision_) 
+    {
+      //ocp_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode2_);
+    }
+    mpcTimer8_.endTimer();
+
+    mpcTimer9_.startTimer();
+    //ocp_.dynamicsPtr = dynamicsPtr_mode2_;
+    std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr: MobileManipulatorDynamics" << std::endl;
+    ocp_.dynamicsPtr.reset(new MobileManipulatorDynamics(robotModelInfo_, 
+                                                              "MobileManipulatorDynamics", 
+                                                              libraryFolder_, 
+                                                              recompileLibraries_, 
+                                                              printOutFlag_));
+    mpcTimer9_.endTimer();
+  }
+
+  /*
   if (iter % 2 == 0)
   {
     std::cout << "[MobileManipulatorInterface::setMPCProblem] ocp1_" << std::endl;
-    ocp1_.costPtr->add("inputCost", quadraticInputCostPtr_mode2_);
-    //ocp1_.costPtr->add("inputCost", getQuadraticInputCost());
-    ocp1_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode2_);
-    //ocp1_.softConstraintPtr->add("jointLimits", getJointLimitSoftConstraint());
-    ocp1_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode2_);
-    //ocp1_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint("endEffector"));
-    ocp1_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode2_);
-    //ocp1_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint("finalEndEffector"));
+
+    if (modelModeInt == 0)
+    {
+      mpcTimer3_.startTimer();
+      ocp1_.costPtr->add("inputCost", quadraticInputCostPtr_mode0_);
+      mpcTimer3_.endTimer();
+
+      mpcTimer4_.startTimer();
+      ocp1_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode0_);
+      mpcTimer4_.endTimer();
+
+      mpcTimer5_.startTimer();
+      ocp1_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode0_);
+      mpcTimer5_.endTimer();
+      
+      mpcTimer6_.startTimer();
+      ocp1_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode0_);
+      mpcTimer6_.endTimer();
+
+      mpcTimer7_.startTimer();
+      if (activateSelfCollision_) 
+      {
+        //ocp1_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode0_);
+      }
+      mpcTimer7_.endTimer();
+
+      mpcTimer8_.startTimer();
+      if (activateExtCollision_) 
+      {
+        //ocp1_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode0_);
+      }
+      mpcTimer8_.endTimer();
+
+      mpcTimer9_.startTimer();
+      //ocp1_.dynamicsPtr = dynamicsPtr_mode0_;
+      ocp1_.dynamicsPtr.reset(new MobileBaseDynamics(robotModelInfo_, 
+                                                        "MobileBaseDynamics", 
+                                                        libraryFolder_, 
+                                                        recompileLibraries_, 
+                                                        printOutFlag_));
+      mpcTimer9_.endTimer();
+    }
+
+    else if (modelModeInt == 1)
+    {
+      mpcTimer3_.startTimer();
+      ocp1_.costPtr->add("inputCost", quadraticInputCostPtr_mode1_);
+      mpcTimer3_.endTimer();
+
+      mpcTimer4_.startTimer();
+      ocp1_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode1_);
+      mpcTimer4_.endTimer();
+
+      mpcTimer5_.startTimer();
+      ocp1_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode1_);
+      mpcTimer5_.endTimer();
+      
+      mpcTimer6_.startTimer();
+      ocp1_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode1_);
+      mpcTimer6_.endTimer();
+
+      mpcTimer7_.startTimer();
+      if (activateSelfCollision_) 
+      {
+        ocp1_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode1_);
+      }
+      mpcTimer7_.endTimer();
+
+      mpcTimer8_.startTimer();
+      if (activateExtCollision_) 
+      {
+        //ocp1_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode1_);
+      }
+      mpcTimer8_.endTimer();
+
+      mpcTimer9_.startTimer();
+      //ocp1_.dynamicsPtr = dynamicsPtr_mode1_;
+      ocp1_.dynamicsPtr.reset(new RobotArmDynamics(robotModelInfo_, 
+                                                      "RobotArmDynamics", 
+                                                      libraryFolder_, 
+                                                      recompileLibraries_, 
+                                                      printOutFlag_));
+      mpcTimer9_.endTimer();
+    }
+
+    else if (modelModeInt == 2)
+    {
+      mpcTimer3_.startTimer();
+      ocp1_.costPtr->add("inputCost", quadraticInputCostPtr_mode2_);
+      mpcTimer3_.endTimer();
+
+      mpcTimer4_.startTimer();
+      ocp1_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode2_);
+      mpcTimer4_.endTimer();
+
+      mpcTimer5_.startTimer();
+      ocp1_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode2_);
+      mpcTimer5_.endTimer();
+      
+      mpcTimer6_.startTimer();
+      ocp1_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode2_);
+      mpcTimer6_.endTimer();
+
+      mpcTimer7_.startTimer();
+      if (activateSelfCollision_) 
+      {
+        ocp1_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode2_);
+      }
+      mpcTimer7_.endTimer();
+
+      mpcTimer8_.startTimer();
+      if (activateExtCollision_) 
+      {
+        //ocp1_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode2_);
+      }
+      mpcTimer8_.endTimer();
+
+      mpcTimer9_.startTimer();
+      //ocp1_.dynamicsPtr = dynamicsPtr_mode2_;
+      ocp1_.dynamicsPtr.reset(new MobileManipulatorDynamics(robotModelInfo_, 
+                                                               "MobileManipulatorDynamics", 
+                                                               libraryFolder_, 
+                                                               recompileLibraries_, 
+                                                               printOutFlag_));
+      mpcTimer9_.endTimer();
+    }
   }
   else
   {
     std::cout << "[MobileManipulatorInterface::setMPCProblem] ocp2_" << std::endl;
-    ocp2_.costPtr->add("inputCost", quadraticInputCostPtr_mode2_);
-    //ocp1_.costPtr->add("inputCost", getQuadraticInputCost());
-    ocp2_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode2_);
-    //ocp1_.softConstraintPtr->add("jointLimits", getJointLimitSoftConstraint());
-    ocp2_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode2_);
-    //ocp1_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint("endEffector"));
-    ocp2_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode2_);
-    //ocp1_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint("finalEndEffector"));
-  }
 
+    if (modelModeInt == 0)
+    {
+      mpcTimer3_.startTimer();
+      ocp2_.costPtr->add("inputCost", quadraticInputCostPtr_mode0_);
+      mpcTimer3_.endTimer();
+
+      mpcTimer4_.startTimer();
+      ocp2_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode0_);
+      mpcTimer4_.endTimer();
+
+      mpcTimer5_.startTimer();
+      ocp2_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode0_);
+      mpcTimer5_.endTimer();
+      
+      mpcTimer6_.startTimer();
+      ocp2_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode0_);
+      mpcTimer6_.endTimer();
+
+      mpcTimer7_.startTimer();
+      if (activateSelfCollision_) 
+      {
+        //ocp2_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode0_);
+      }
+      mpcTimer7_.endTimer();
+
+      mpcTimer8_.startTimer();
+      if (activateExtCollision_) 
+      {
+        //ocp2_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode0_);
+      }
+      mpcTimer8_.endTimer();
+
+      mpcTimer9_.startTimer();
+      //ocp2_.dynamicsPtr = dynamicsPtr_mode0_;
+      ocp2_.dynamicsPtr.reset(new MobileBaseDynamics(robotModelInfo_, 
+                                                        "MobileBaseDynamics", 
+                                                        libraryFolder_, 
+                                                        recompileLibraries_, 
+                                                        printOutFlag_));
+      mpcTimer9_.endTimer();
+    }
+
+    else if (modelModeInt == 1)
+    {
+      mpcTimer3_.startTimer();
+      ocp2_.costPtr->add("inputCost", quadraticInputCostPtr_mode1_);
+      mpcTimer3_.endTimer();
+
+      mpcTimer4_.startTimer();
+      ocp2_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode1_);
+      mpcTimer4_.endTimer();
+
+      mpcTimer5_.startTimer();
+      ocp2_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode1_);
+      mpcTimer5_.endTimer();
+      
+      mpcTimer6_.startTimer();
+      ocp2_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode1_);
+      mpcTimer6_.endTimer();
+
+      mpcTimer7_.startTimer();
+      if (activateSelfCollision_) 
+      {
+        ocp2_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode1_);
+      }
+      mpcTimer7_.endTimer();
+
+      mpcTimer8_.startTimer();
+      if (activateExtCollision_) 
+      {
+        //ocp2_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode1_);
+      }
+      mpcTimer8_.endTimer();
+
+      mpcTimer9_.startTimer();
+      //ocp2_.dynamicsPtr = dynamicsPtr_mode1_;
+      ocp2_.dynamicsPtr.reset(new RobotArmDynamics(robotModelInfo_, 
+                                                      "RobotArmDynamics", 
+                                                      libraryFolder_, 
+                                                      recompileLibraries_, 
+                                                      printOutFlag_));
+      mpcTimer9_.endTimer();
+    }
+
+    else if (modelModeInt == 2)
+    {
+      mpcTimer3_.startTimer();
+      ocp2_.costPtr->add("inputCost", quadraticInputCostPtr_mode2_);
+      mpcTimer3_.endTimer();
+
+      mpcTimer4_.startTimer();
+      ocp2_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode2_);
+      mpcTimer4_.endTimer();
+
+      mpcTimer5_.startTimer();
+      ocp2_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode2_);
+      mpcTimer5_.endTimer();
+      
+      mpcTimer6_.startTimer();
+      ocp2_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode2_);
+      mpcTimer6_.endTimer();
+
+      mpcTimer7_.startTimer();
+      if (activateSelfCollision_) 
+      {
+        ocp2_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode2_);
+      }
+      mpcTimer7_.endTimer();
+
+      mpcTimer8_.startTimer();
+      if (activateExtCollision_) 
+      {
+        //ocp2_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode2_);
+      }
+      mpcTimer8_.endTimer();
+
+      mpcTimer9_.startTimer();
+      //ocp2_.dynamicsPtr = dynamicsPtr_mode2_;
+      ocp2_.dynamicsPtr.reset(new MobileManipulatorDynamics(robotModelInfo_, 
+                                                               "MobileManipulatorDynamics", 
+                                                               libraryFolder_, 
+                                                               recompileLibraries_, 
+                                                               printOutFlag_));
+      mpcTimer9_.endTimer();
+    }    
+  }
+  */
+
+  /*
   /// Cost
   ////ocp_.costPtr->add("inputCost", getQuadraticInputCost());
   //std::cout << "" << std::endl;
@@ -514,6 +1096,7 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
 
   //std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getSelfCollisionConstraint" << std::endl;
   // Self-collision avoidance constraint
+  mpcTimer7_.startTimer();
   if (activateSelfCollision_) 
   {
     if (robotModelInfo_.modelMode == ModelMode::ArmMotion || robotModelInfo_.modelMode == ModelMode::WholeBodyMotion)
@@ -521,25 +1104,25 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
       if (iter % 2 == 0)
       {
         std::cout << "[MobileManipulatorInterface::setMPCProblem] activateSelfCollision_ ocp1_" << std::endl;
-        ocp1_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode2_);
-        //ocp1_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint("selfCollision"));
+        ocp1_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint("selfCollision"));
       }
       else
       {
         std::cout << "[MobileManipulatorInterface::setMPCProblem] activateSelfCollision_ ocp2_" << std::endl;
-        ocp2_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode2_);
-        //ocp2_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint("selfCollision"));
+        ocp2_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint("selfCollision"));
       }
     }
   }
+  mpcTimer7_.endTimer();
   //std::cout << "" << std::endl;
 
   //std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getExtCollisionConstraint" << std::endl;
   // External-collision avoidance constraint
+  mpcTimer8_.startTimer();
   activateExtCollision_ = false;
   if (activateExtCollision_) 
   {
-    createPointsOnRobotPtr(pointsAndRadii_);
+    initializePointsOnRobotPtr(pointsAndRadii_);
     
     if (pointsOnRobotPtr_->getNumOfPoints() > 0) 
     {
@@ -583,9 +1166,11 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
       ocp2_.stateSoftConstraintPtr->add("extCollision", getExtCollisionConstraint("extCollision"));
     }
   }
+  mpcTimer8_.endTimer();
   //std::cout << "" << std::endl;
 
   // Dynamics
+  mpcTimer9_.startTimer();
   std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE Dynamics" << std::endl;
   switch (robotModelInfo_.modelMode) 
   {
@@ -664,7 +1249,9 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
     default:
       throw std::invalid_argument("[MobileManipulatorInterface::setMPCProblem] ERROR: Invalid model mode!");
   }
+  mpcTimer9_.endTimer();
   //std::cout << "" << std::endl;
+  */
 
   /*
    * Pre-computation
@@ -679,7 +1266,10 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
   //std::cout << "" << std::endl;
 
   // Rollout
-  //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Rollout" << std::endl;
+  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Rollout" << std::endl;
+  mpcTimer10_.startTimer();
+  rolloutPtr_.reset(new TimeTriggeredRollout(*ocp_.dynamicsPtr, rolloutSettings_));
+  /*
   if (!iterFlag)
   {
     if (iter % 2 == 0)
@@ -693,18 +1283,79 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
       rolloutPtr_.reset(new TimeTriggeredRollout(*ocp2_.dynamicsPtr, rolloutSettings_));
     }
   }
+  */
+  mpcTimer10_.endTimer();
 
   // Initialization
+  mpcTimer11_.startTimer();
   auto modeInputDim = getModeInputDim(robotModelInfo_);
+  
+  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Initialization" << std::endl;
+  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] modeInputDim: " << modeInputDim << std::endl;
+  initializerPtr_.reset(new DefaultInitializer(modeInputDim));
+  /*
   if (!iterFlag)
   {
     initializerPtr_.reset(new DefaultInitializer(modeInputDim));
   }
+  */
+  mpcTimer11_.endTimer();
+
+  mpcTimer0_.endTimer();
+
+  std::cout << "\n### MPC_ROS Benchmarking mpcTimer0_: TOTAL";
+  std::cout << "\n###   Maximum : " << mpcTimer0_.getMaxIntervalInMilliseconds() << "[ms].";
+  std::cout << "\n###   Average : " << mpcTimer0_.getAverageInMilliseconds() << "[ms].";
+  std::cout << "\n###   Latest  : " << mpcTimer0_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+  std::cout << "\n### MPC_ROS Benchmarking mpcTimer1_: clear";
+  std::cout << "\n###   Maximum : " << mpcTimer1_.getMaxIntervalInMilliseconds() << "[ms].";
+  std::cout << "\n###   Average : " << mpcTimer1_.getAverageInMilliseconds() << "[ms].";
+  std::cout << "\n###   Latest  : " << mpcTimer1_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+  std::cout << "\n### MPC_ROS Benchmarking mpcTimer2_: updateModelMode";
+  std::cout << "\n###   Maximum : " << mpcTimer2_.getMaxIntervalInMilliseconds() << "[ms].";
+  std::cout << "\n###   Average : " << mpcTimer2_.getAverageInMilliseconds() << "[ms].";
+  std::cout << "\n###   Latest  : " << mpcTimer2_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+  std::cout << "\n### MPC_ROS Benchmarking mpcTimer3_: getQuadraticInputCost";
+  std::cout << "\n###   Maximum : " << mpcTimer3_.getMaxIntervalInMilliseconds() << "[ms].";
+  std::cout << "\n###   Average : " << mpcTimer3_.getAverageInMilliseconds() << "[ms].";
+  std::cout << "\n###   Latest  : " << mpcTimer3_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+  std::cout << "\n### MPC_ROS Benchmarking mpcTimer4_: getJointLimitSoftConstraint";
+  std::cout << "\n###   Maximum : " << mpcTimer4_.getMaxIntervalInMilliseconds() << "[ms].";
+  std::cout << "\n###   Average : " << mpcTimer4_.getAverageInMilliseconds() << "[ms].";
+  std::cout << "\n###   Latest  : " << mpcTimer4_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+  std::cout << "\n### MPC_ROS Benchmarking mpcTimer5_: INTER getEndEffectorConstraint";
+  std::cout << "\n###   Maximum : " << mpcTimer5_.getMaxIntervalInMilliseconds() << "[ms].";
+  std::cout << "\n###   Average : " << mpcTimer5_.getAverageInMilliseconds() << "[ms].";
+  std::cout << "\n###   Latest  : " << mpcTimer5_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+  std::cout << "\n### MPC_ROS Benchmarking mpcTimer6_: FINAL getEndEffectorConstraint";
+  std::cout << "\n###   Maximum : " << mpcTimer6_.getMaxIntervalInMilliseconds() << "[ms].";
+  std::cout << "\n###   Average : " << mpcTimer6_.getAverageInMilliseconds() << "[ms].";
+  std::cout << "\n###   Latest  : " << mpcTimer6_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+  std::cout << "\n### MPC_ROS Benchmarking mpcTimer7_: getSelfCollisionConstraint";
+  std::cout << "\n###   Maximum : " << mpcTimer7_.getMaxIntervalInMilliseconds() << "[ms].";
+  std::cout << "\n###   Average : " << mpcTimer7_.getAverageInMilliseconds() << "[ms].";
+  std::cout << "\n###   Latest  : " << mpcTimer7_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+  std::cout << "\n### MPC_ROS Benchmarking mpcTimer8_: getExtCollisionConstraint";
+  std::cout << "\n###   Maximum : " << mpcTimer8_.getMaxIntervalInMilliseconds() << "[ms].";
+  std::cout << "\n###   Average : " << mpcTimer8_.getAverageInMilliseconds() << "[ms].";
+  std::cout << "\n###   Latest  : " << mpcTimer8_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+  std::cout << "\n### MPC_ROS Benchmarking mpcTimer9_: dynamicsPtr";
+  std::cout << "\n###   Maximum : " << mpcTimer9_.getMaxIntervalInMilliseconds() << "[ms].";
+  std::cout << "\n###   Average : " << mpcTimer9_.getAverageInMilliseconds() << "[ms].";
+  std::cout << "\n###   Latest  : " << mpcTimer9_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+  std::cout << "\n### MPC_ROS Benchmarking mpcTimer10_: rolloutPtr_";
+  std::cout << "\n###   Maximum : " << mpcTimer10_.getMaxIntervalInMilliseconds() << "[ms].";
+  std::cout << "\n###   Average : " << mpcTimer10_.getAverageInMilliseconds() << "[ms].";
+  std::cout << "\n###   Latest  : " << mpcTimer10_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+  std::cout << "\n### MPC_ROS Benchmarking mpcTimer11_: initializerPtr_";
+  std::cout << "\n###   Maximum : " << mpcTimer11_.getMaxIntervalInMilliseconds() << "[ms].";
+  std::cout << "\n###   Average : " << mpcTimer11_.getAverageInMilliseconds() << "[ms].";
+  std::cout << "\n###   Latest  : " << mpcTimer11_.getLastIntervalInMilliseconds() << "[ms]." << std::endl << std::endl;
 
   //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] DEBUG INF" << std::endl;
   //while(1);
 
-  //std::cout << "[MobileManipulatorInterface::setMPCProblem] END" << std::endl;
+  std::cout << "[MobileManipulatorInterface::setMPCProblem] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -712,8 +1363,6 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
 {
-  std::string oct_msg_name = "octomap_scan";
-  std::string tf_msg_name = "tf";
   std::string model_mode_msg_name = "mobile_manipulator_model_mode";
   std::string target_msg_name = "mobile_manipulator_mpc_target";
 
@@ -721,20 +1370,36 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
 
   if (emuPtr_)
   {
+    std::string oct_msg_name = "octomap_scan";
     // Octomap Subscriber
     emuPtr_->setNodeHandle(nodeHandle_);
     emuPtr_->updateOct(oct_msg_name);
   }
 
-  if (pointsOnRobotPtr_)
+  // NUA NOTE: Visualize somewhere else!
+  /*
+  if (pointsOnRobotPtr_mode0_)
   {
-    pointsOnRobotPtr_->setNodeHandle(nodeHandle_);
-    pointsOnRobotPtr_->publishPointsOnRobotVisu(dt);
+    pointsOnRobotPtr_mode0_->setNodeHandle(nodeHandle_);
+    pointsOnRobotPtr_mode0_->publishPointsOnRobotVisu(dt);
   }
+
+  if (pointsOnRobotPtr_mode0_)
+  {
+    pointsOnRobotPtr_mode0_->setNodeHandle(nodeHandle_);
+    pointsOnRobotPtr_mode0_->publishPointsOnRobotVisu(dt);
+  }
+
+  if (pointsOnRobotPtr_mode0_)
+  {
+    pointsOnRobotPtr_mode0_->setNodeHandle(nodeHandle_);
+    pointsOnRobotPtr_mode0_->publishPointsOnRobotVisu(dt);
+  }
+  */
 
   if (drlFlag_)
   {
-    setActionDRLService_ = nodeHandle_.advertiseService("set_task", &MobileManipulatorInterface::setActionDRLSrv, this);
+    setActionDRLService_ = nodeHandle_.advertiseService("set_action_drl", &MobileManipulatorInterface::setActionDRLSrv, this);
   }
   else
   {
@@ -743,23 +1408,25 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
     {
       std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] START" << std::endl;
 
-      modelModeIntQuery_ = msg->data;
-      std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] modelModeIntQuery_: " << modelModeIntQuery_ << std::endl;
-
-      mpcTimer3_.startTimer();
-      setMPCProblem(true);
-      mpcTimer3_.endTimer();
-
-      //mpcProblemReadyFlag_ = true;
+      // Shutdown MRT
       std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] mrtShutDownFlag true"  << std::endl;
       mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "true", 1);
 
-      //modeSwitchCount_++;
+      modelModeIntQuery_ = msg->data;
+      std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] modelModeIntQuery_: " << modelModeIntQuery_ << std::endl;
 
-      std::cout << "\n### MPC_ROS Benchmarking mpcTimer3_";
-      std::cout << "\n###   Maximum : " << mpcTimer3_.getMaxIntervalInMilliseconds() << "[ms].";
-      std::cout << "\n###   Average : " << mpcTimer3_.getAverageInMilliseconds() << "[ms].";
-      std::cout << "\n###   Latest  : " << mpcTimer3_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+      //mpcTimer3_.startTimer();
+      //setMPCProblem(true);
+      //mpcTimer3_.endTimer();
+
+      //mpcProblemReadyFlag_ = true;
+      //std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] mrtShutDownFlag true"  << std::endl;
+      //mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "true", 1);
+
+      //std::cout << "\n### MPC_ROS Benchmarking mpcTimer3_";
+      //std::cout << "\n###   Maximum : " << mpcTimer3_.getMaxIntervalInMilliseconds() << "[ms].";
+      //std::cout << "\n###   Average : " << mpcTimer3_.getAverageInMilliseconds() << "[ms].";
+      //std::cout << "\n###   Latest  : " << mpcTimer3_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
 
       std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] END" << std::endl;
       std::cout << "" << std::endl;
@@ -898,29 +1565,37 @@ bool MobileManipulatorInterface::setActionDRLSrv(ocs2_msgs::setActionDRL::Reques
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::runMPC()
 {
-  std::cout << "[MobileManipulatorInterface::runMPC] START" << std::endl;
+  //std::cout << "[MobileManipulatorInterface::runMPC] START" << std::endl;
 
-  bool mpcPrintOutFlag = false;
+  bool mpcPrintOutFlag = true;
 
   RobotModelInfo robotModelInfo;
 
   mpcIter_ = 0;
   while (ros::ok() && ros::master::check())
   {
-    std::cout << "[MobileManipulatorInterface::runMRT] mpcIter_: " << mpcIter_ << std::endl;
-    std::cout << "[MobileManipulatorInterface::runMRT] mrtIter_: " << mrtIter_ << std::endl;
+    std::cout << "[MobileManipulatorInterface::runMPC] mpcIter_: " << mpcIter_ << std::endl;
+    std::cout << "[MobileManipulatorInterface::runMPC] mrtIter_: " << mrtIter_ << std::endl;
+
+    /*
+    if (mpcIter_ > 0)
+    {
+      std::cout << "[MobileManipulatorInterface::runMPC] DEBUG INF " << std::endl;
+      while(1);
+    }
+    */
 
     // Wait for sync mpc and mrt
     while(mpcIter_ != mrtIter_);
 
-    if (true)
+    if (mpcPrintOutFlag)
     {
       std::cout << "=====================================================" << std::endl;
       std::cout << "=====================================================" << std::endl;
       std::cout << "[MobileManipulatorInterface::runMPC] START ITERATION: " << mpcIter_ << std::endl;
     }
 
-    mpcTimer1_.startTimer();
+    //mpcTimer1_.startTimer();
 
     // Robot interface
     //std::cout << "[MobileManipulatorInterface::runMPC] START launchNodes" << std::endl;
@@ -934,15 +1609,26 @@ void MobileManipulatorInterface::runMPC()
     while(!mrtExitFlag_){spinOnce();}
     setenv("mpcShutDownFlag", "false", 1);
 
-    mpcTimer3_.startTimer();
-    //setMPCProblem(true);
-    mpcTimer3_.endTimer();
+    std::string mrtExitEnvStatus = getenv("mrtExitFlag");
+    //std::cout << "[OCS2_MRT_Loop::mrtLoop] mrtShutDownFlag_: " << mrtShutDownFlag_ << std::endl;
+
+    while(mrtExitEnvStatus == "false")
+    {
+      std::cout << "[OCS2_MRT_Loop::mrtLoop] CMOOOOOOOOOOOOOOOOOON: " << std::endl;
+      mrtExitEnvStatus = getenv("mrtExitFlag");
+    }
+
+    //mpcTimer3_.startTimer();
+    setMPCProblem();
+    //mpcTimer3_.endTimer();
     //printRobotModelInfo(robotModelInfo_);
 
-    std::cout << "[MobileManipulatorInterface::runMPC] BEFORE Setting MPC Parameters " << std::endl;
-    mpcTimer4_.startTimer();
+    //std::cout << "[MobileManipulatorInterface::runMPC] BEFORE Setting MPC Parameters " << std::endl;
+    //mpcTimer4_.startTimer();
     robotModelInfo = robotModelInfo_;
-    OptimalControlProblem ocp;
+    //OptimalControlProblem ocp;
+    //ocp.swap(ocp_);
+    /*
     if (mpcIter_ % 2 == 0)
     {
       std::cout << "[MobileManipulatorInterface::runMPC] ocp1_" << std::endl;
@@ -953,46 +1639,47 @@ void MobileManipulatorInterface::runMPC()
       std::cout << "[MobileManipulatorInterface::runMPC] ocp2_" << std::endl;
       ocp.swap(ocp2_);
     }
-    rolloutPtr_.reset(new TimeTriggeredRollout(*ocp.dynamicsPtr, rolloutSettings_));
-    initializerPtr_.reset(new DefaultInitializer(robotModelInfo.modeInputDim));
+    */
+    //rolloutPtr_.reset(new TimeTriggeredRollout(*ocp.dynamicsPtr, rolloutSettings_));
+    //initializerPtr_.reset(new DefaultInitializer(robotModelInfo.modeInputDim));
     mpcProblemReadyFlag_ = true;
-    mpcTimer4_.endTimer();
-    std::cout << "[MobileManipulatorInterface::runMPC] AFTER Setting MPC Parameters " << std::endl;
+    //mpcTimer4_.endTimer();
+    //std::cout << "[MobileManipulatorInterface::runMPC] AFTER Setting MPC Parameters " << std::endl;
 
     //std::cout << "[MobileManipulatorInterface::runMPC] BEFORE rosReferenceManagerPtr" << std::endl;
     // ROS ReferenceManager
-    mpcTimer5_.startTimer();
+    //mpcTimer5_.startTimer();
     //rosReferenceManagerPtr_ = std::shared_ptr<ocs2::RosReferenceManager>(new ocs2::RosReferenceManager(robotModelName_, referenceManagerPtr_));
-    mpcTimer5_.endTimer();
+    //mpcTimer5_.endTimer();
 
     //std::cout << "[MobileManipulatorInterface::runMPC] BEFORE rosReferenceManagerPtr subscribe" << std::endl;
-    mpcTimer6_.startTimer();
+    //mpcTimer6_.startTimer();
     //rosReferenceManagerPtr_->subscribe(nodeHandle_);
-    mpcTimer6_.endTimer();
+    //mpcTimer6_.endTimer();
 
     // MPC
     //std::cout << "[MobileManipulatorInterface::runMPC] BEFORE mpc" << std::endl;
-    mpcTimer7_.startTimer();
+    //mpcTimer7_.startTimer();
     ocs2::GaussNewtonDDP_MPC mpc(mpcSettings_, 
                                  ddpSettings_, 
                                  *rolloutPtr_, 
-                                 ocp, 
+                                 ocp_, 
                                  *initializerPtr_);
-    mpcTimer7_.endTimer();
+    //mpcTimer7_.endTimer();
 
     //std::cout << "[MobileManipulatorInterface::runMPC] BEFORE mpc setReferenceManager" << std::endl;
     mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr_);
 
     // Launch MPC ROS node
     //std::cout << "[MobileManipulatorInterface::runMPC] BEFORE mpc mpcNode" << std::endl;
-    mpcTimer8_.startTimer();
+    //mpcTimer8_.startTimer();
     MPC_ROS_Interface mpcNode(mpc, robotModelName_);
     mpcNode.setModelModeInt(getModelModeInt(robotModelInfo));
-    mpcTimer8_.endTimer();
+    //mpcTimer8_.endTimer();
 
-    mpcTimer1_.endTimer();
+    //mpcTimer1_.endTimer();
 
-    if (mpcPrintOutFlag)
+    if (false)
     {
       std::cout << '\n';
       std::cout << "\n### MPC_ROS Benchmarking mpcTimer1_";
@@ -1032,15 +1719,19 @@ void MobileManipulatorInterface::runMPC()
       std::cout << "\n###   Latest  : " << mpcTimer8_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
     }
 
-    std::cout << "[MobileManipulatorInterface::runMPC] BEFORE mpcLaunchReadyFlag_: " << mpcLaunchReadyFlag_ << std::endl;
+    //std::cout << "[MobileManipulatorInterface::runMPC] BEFORE mpcLaunchReadyFlag_: " << mpcLaunchReadyFlag_ << std::endl;
     mpcLaunchReadyFlag_ = true;
-    std::cout << "[MobileManipulatorInterface::runMPC] AFTER mpcLaunchReadyFlag_: " << mpcLaunchReadyFlag_ << std::endl;
+    //std::cout << "[MobileManipulatorInterface::runMPC] AFTER mpcLaunchReadyFlag_: " << mpcLaunchReadyFlag_ << std::endl;
 
     std::cout << "[MobileManipulatorInterface::runMPC] BEFORE mpc mpcNode launchNodes" << std::endl;
+    //mpcExitFlag_ = false;
+    printRobotModelInfo(robotModelInfo);
     mpcNode.launchNodes(nodeHandle_);
-    //std::cout << "[MobileManipulatorInterface::runMPC] AFTER mpc mpcNode launchNodes" << std::endl;
+    //mpcExitFlag_ = true;
+    mpcLaunchReadyFlag_ = false;
+    std::cout << "[MobileManipulatorInterface::runMPC] AFTER mpc mpcNode launchNodes" << std::endl;
  
-    if (true)
+    if (mpcPrintOutFlag)
     {
       std::cout << "[MobileManipulatorInterface::runMPC] END ITERATION: " << mpcIter_ << std::endl;
       std::cout << "=====================================================" << std::endl;
@@ -1053,7 +1744,7 @@ void MobileManipulatorInterface::runMPC()
     mpcIter_++;
   }
 
-  std::cout << "[MobileManipulatorInterface::runMPC] END" << std::endl;
+  //std::cout << "[MobileManipulatorInterface::runMPC] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1061,9 +1752,9 @@ void MobileManipulatorInterface::runMPC()
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::runMRT()
 {
-  std::cout << "[MobileManipulatorInterface::runMRT] START" << std::endl;
+  //std::cout << "[MobileManipulatorInterface::runMRT] START" << std::endl;
 
-  bool mrtPrintOutFlag = printOutFlag_;
+  bool mrtPrintOutFlag = true;
 
   RobotModelInfo robotModelInfo;
   //OptimalControlProblem ocp;
@@ -1079,10 +1770,10 @@ void MobileManipulatorInterface::runMRT()
     // Wait for sync mpc and mrt
     while(mpcIter_ != mrtIter_){spinOnce();}
     
-    std::cout << "[MobileManipulatorInterface::runMRT] BEFORE mpcLaunchReadyFlag_: " << mpcLaunchReadyFlag_ << std::endl;
-    while(!mpcLaunchReadyFlag_){spinOnce();}
-    std::cout << "[MobileManipulatorInterface::runMRT] AFTER mpcLaunchReadyFlag_: " << mpcLaunchReadyFlag_ << std::endl;
-    mpcLaunchReadyFlag_ = false;
+    //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE mpcLaunchReadyFlag_: " << mpcLaunchReadyFlag_ << std::endl;
+    //while(!mpcLaunchReadyFlag_){spinOnce();}
+    //std::cout << "[MobileManipulatorInterface::runMRT] AFTER mpcLaunchReadyFlag_: " << mpcLaunchReadyFlag_ << std::endl;
+    //mpcLaunchReadyFlag_ = false;
 
     if (mrtPrintOutFlag)
     {
@@ -1091,34 +1782,34 @@ void MobileManipulatorInterface::runMRT()
       std::cout << "[MobileManipulatorInterface::runMRT] START ITERATION: " << mrtIter_ << std::endl;
     }
 
-    mrtTimer1_.startTimer();
+    //mrtTimer1_.startTimer();
 
-    std::cout << "[MobileManipulatorInterface::runMRT] BEFORE setMPCProblem" << std::endl;
-    mrtTimer2_.startTimer();
+    //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE setMPCProblem" << std::endl;
+    //mrtTimer2_.startTimer();
     while(!mpcProblemReadyFlag_){spinOnce();}
     mpcProblemReadyFlag_ = false;
+    //setMPCProblem();
     robotModelInfo = robotModelInfo_;
-    mrtTimer2_.endTimer();
-    std::cout << "[MobileManipulatorInterface::runMRT] AFTER setMPCProblem" << std::endl;
-
-    mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "false", 1);
+    printRobotModelInfo(robotModelInfo);
+    //mrtTimer2_.endTimer();
+    //std::cout << "[MobileManipulatorInterface::runMRT] AFTER setMPCProblem" << std::endl;
 
     // MRT
     //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE mrt" << std::endl;
-    mrtTimer3_.startTimer();
+    //mrtTimer3_.startTimer();
     MRT_ROS_Interface mrt(robotModelInfo, robotModelName_);
-    mrtTimer3_.endTimer();
+    //mrtTimer3_.endTimer();
 
     //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE initRollout" << std::endl;
-    mrtTimer4_.startTimer();
+    //mrtTimer4_.startTimer();
     mrt.initRollout(&*rolloutPtr_);
-    mrtTimer4_.endTimer();
+    //mrtTimer4_.endTimer();
     //std::cout << "[MobileManipulatorInterface::runMRT] AFTER initRollout" << std::endl;
     
     //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE launchNodes" << std::endl;
-    mrtTimer5_.startTimer();
+    //mrtTimer5_.startTimer();
     mrt.launchNodes(nodeHandle_);
-    mrtTimer5_.endTimer();
+    //mrtTimer5_.endTimer();
     //std::cout << "[MobileManipulatorInterface::runMRT] AFTER launchNodes" << std::endl;
 
     // Visualization
@@ -1130,8 +1821,8 @@ void MobileManipulatorInterface::runMRT()
     //std::cout << "[MobileManipulatorInterface::runMRT] AFTER ocs2_mm_visu" << std::endl;
 
     // MRT loop
-    std::cout << "[MobileManipulatorInterface::runMRT] BEFORE mrt_loop" << std::endl;
-    mrtTimer6_.startTimer();
+    //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE mrt_loop" << std::endl;
+    //mrtTimer6_.startTimer();
     MRT_ROS_Gazebo_Loop mrt_loop(nodeHandle_, 
                                  mrt, 
                                  worldFrameName_,
@@ -1144,25 +1835,25 @@ void MobileManipulatorInterface::runMRT()
                                  err_threshold_ori_,
                                  mpcSettings_.mrtDesiredFrequency_, 
                                  mpcSettings_.mpcDesiredFrequency_);
-    mrtTimer6_.endTimer();
-    std::cout << "[MobileManipulatorInterface::runMRT] AFTER mrt_loop" << std::endl;
+    //mrtTimer6_.endTimer();
+    //std::cout << "[MobileManipulatorInterface::runMRT] AFTER mrt_loop" << std::endl;
 
     //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE subscribeObservers" << std::endl;
     //mrt_loop.subscribeObservers({ocs2_mm_visu});
     //std::cout << "[MobileManipulatorInterface::runMRT] AFTER subscribeObservers" << std::endl;
 
     // initial command
-    mrtTimer7_.startTimer();
+    //mrtTimer7_.startTimer();
     vector_t currentTarget;
     spinOnce();
     currentTarget = currentTarget_;
-    mrtTimer7_.endTimer();
+    //mrtTimer7_.endTimer();
 
     // Run mrt_loop
-    std::cout << "[MobileManipulatorInterface::runMRT] BEFORE run" << std::endl;
-    mrtTimer1_.endTimer();
+    //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE run" << std::endl;
+    //mrtTimer1_.endTimer();
 
-    if (mrtPrintOutFlag)
+    if (false)
     {
       std::cout << '\n';
       std::cout << "\n### MRT_ROS Benchmarking mrtTimer1_";
@@ -1195,7 +1886,13 @@ void MobileManipulatorInterface::runMRT()
       std::cout << "\n###   Latest  : " << mrtTimer7_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
     }
     
+    setenv("mrtExitFlag", "false", 1);
     mrtExitFlag_ = false;
+
+    printRobotModelInfo(robotModelInfo);
+
+    mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "false", 1);
+
     mrt_loop.run(currentTarget);
     mrtExitFlag_ = true;
     setenv("mpcShutDownFlag", "true", 1);
@@ -1223,7 +1920,7 @@ void MobileManipulatorInterface::runMRT()
     mrtIter_++;
   }
 
-  std::cout << "[MobileManipulatorInterface::runMRT] END" << std::endl;
+  //std::cout << "[MobileManipulatorInterface::runMRT] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
