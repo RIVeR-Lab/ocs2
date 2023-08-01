@@ -351,6 +351,20 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   // Set Rollout Settings
   rolloutSettings_ = rollout::loadSettings(taskFile_, "rollout", printOutFlag_);
 
+  // Create costs/constraints
+  size_t modelModeInt;
+  bool isModeUpdated;
+
+  // Mode 2
+  modelModeInt = 2;
+  isModeUpdated = updateModelMode(robotModelInfo_, modelModeInt);
+
+  quadraticInputCostPtr_mode2_ = getQuadraticInputCost();
+  jointLimitSoftConstraintPtr_mode2_ = getJointLimitSoftConstraint();
+  endEffectorIntermediateConstraintPtr_mode2_ = getEndEffectorConstraint("endEffector");
+  endEffectorFinalConstraintPtr_mode2_ = getEndEffectorConstraint("finalEndEffector");
+  selfCollisionConstraintPtr_mode2_ = getSelfCollisionConstraint("selfCollision");
+
   // Set MPC Problem
   mpcTimer2_.startTimer();
   launchNodes(nodeHandle_);
@@ -454,22 +468,29 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
   //std::cout << "[MobileManipulatorInterface::setMPCProblem] DEBUG INF" << std::endl;
   //while(1);
 
-  //// Optimal control problem
   if (iter % 2 == 0)
   {
     std::cout << "[MobileManipulatorInterface::setMPCProblem] ocp1_" << std::endl;
-    ocp1_.costPtr->add("inputCost", getQuadraticInputCost());
-    ocp1_.softConstraintPtr->add("jointLimits", getJointLimitSoftConstraint());
-    ocp1_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint("endEffector"));
-    ocp1_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint("finalEndEffector"));
+    ocp1_.costPtr->add("inputCost", quadraticInputCostPtr_mode2_);
+    //ocp1_.costPtr->add("inputCost", getQuadraticInputCost());
+    ocp1_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode2_);
+    //ocp1_.softConstraintPtr->add("jointLimits", getJointLimitSoftConstraint());
+    ocp1_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode2_);
+    //ocp1_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint("endEffector"));
+    ocp1_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode2_);
+    //ocp1_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint("finalEndEffector"));
   }
   else
   {
     std::cout << "[MobileManipulatorInterface::setMPCProblem] ocp2_" << std::endl;
-    ocp2_.costPtr->add("inputCost", getQuadraticInputCost());
-    ocp2_.softConstraintPtr->add("jointLimits", getJointLimitSoftConstraint());
-    ocp2_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint("endEffector"));
-    ocp2_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint("finalEndEffector"));
+    ocp2_.costPtr->add("inputCost", quadraticInputCostPtr_mode2_);
+    //ocp1_.costPtr->add("inputCost", getQuadraticInputCost());
+    ocp2_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode2_);
+    //ocp1_.softConstraintPtr->add("jointLimits", getJointLimitSoftConstraint());
+    ocp2_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode2_);
+    //ocp1_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint("endEffector"));
+    ocp2_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode2_);
+    //ocp1_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint("finalEndEffector"));
   }
 
   /// Cost
@@ -500,12 +521,14 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
       if (iter % 2 == 0)
       {
         std::cout << "[MobileManipulatorInterface::setMPCProblem] activateSelfCollision_ ocp1_" << std::endl;
-        ocp1_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint("selfCollision"));
+        ocp1_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode2_);
+        //ocp1_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint("selfCollision"));
       }
       else
       {
         std::cout << "[MobileManipulatorInterface::setMPCProblem] activateSelfCollision_ ocp2_" << std::endl;
-        ocp2_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint("selfCollision"));
+        ocp2_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode2_);
+        //ocp2_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint("selfCollision"));
       }
     }
   }

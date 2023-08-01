@@ -76,7 +76,7 @@ ScalarFunctionQuadraticApproximation StateAugmentedLagrangianCollection::getQuad
     scalar_t time, const vector_t& state, const std::vector<Multiplier>& termsMultiplier, const PreComputation& preComp) const {
   const auto firstActiveItr =
       std::find_if(terms_.begin(), terms_.end(),
-                   [time](const std::unique_ptr<StateAugmentedLagrangianInterface>& costTerm) { return costTerm->isActive(time); });
+                   [time](const std::shared_ptr<StateAugmentedLagrangianInterface>& costTerm) { return costTerm->isActive(time); });
 
   // no active terms (or terms is empty).
   if (firstActiveItr == terms_.end()) {

@@ -79,7 +79,7 @@ ScalarFunctionQuadraticApproximation StateInputCostCollection::getQuadraticAppro
 {
   const auto firstActive = std::find_if(terms_.begin(), 
                                         terms_.end(),
-                                        [time](const std::unique_ptr<StateInputCost>& costTerm) 
+                                        [time](const std::shared_ptr<StateInputCost>& costTerm) 
   { 
     return costTerm->isActive(time); 
   });
@@ -92,7 +92,7 @@ ScalarFunctionQuadraticApproximation StateInputCostCollection::getQuadraticAppro
 
   // Initialize with first active term, accumulate potentially other active terms.
   auto cost = (*firstActive)->getQuadraticApproximation(time, state, input, targetTrajectories, preComp);
-  std::for_each(std::next(firstActive), terms_.end(), [&](const std::unique_ptr<StateInputCost>& costTerm) 
+  std::for_each(std::next(firstActive), terms_.end(), [&](const std::shared_ptr<StateInputCost>& costTerm) 
   {
     if (costTerm->isActive(time)) 
     {

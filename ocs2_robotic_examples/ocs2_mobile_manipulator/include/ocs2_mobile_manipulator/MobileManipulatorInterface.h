@@ -378,6 +378,29 @@ class MobileManipulatorInterface final : public RobotInterface
     std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
     RobotModelInfo robotModelInfo_;
 
+    // NUA TODO: Added to speed up the mpc problem initialization, but GET RID OF THESE ASAP!
+    // -----------------
+    std::shared_ptr<StateInputCost> quadraticInputCostPtr_mode0_;
+    std::shared_ptr<StateInputCost> quadraticInputCostPtr_mode1_;
+    std::shared_ptr<StateInputCost> quadraticInputCostPtr_mode2_;
+
+    std::shared_ptr<StateInputCost> jointLimitSoftConstraintPtr_mode0_;
+    std::shared_ptr<StateInputCost> jointLimitSoftConstraintPtr_mode1_;
+    std::shared_ptr<StateInputCost> jointLimitSoftConstraintPtr_mode2_;
+
+    std::shared_ptr<StateCost> endEffectorIntermediateConstraintPtr_mode0_;
+    std::shared_ptr<StateCost> endEffectorIntermediateConstraintPtr_mode1_;
+    std::shared_ptr<StateCost> endEffectorIntermediateConstraintPtr_mode2_;
+
+    std::shared_ptr<StateCost> endEffectorFinalConstraintPtr_mode0_;
+    std::shared_ptr<StateCost> endEffectorFinalConstraintPtr_mode1_;
+    std::shared_ptr<StateCost> endEffectorFinalConstraintPtr_mode2_;
+
+    std::shared_ptr<StateCost> selfCollisionConstraintPtr_mode0_;
+    std::shared_ptr<StateCost> selfCollisionConstraintPtr_mode1_;
+    std::shared_ptr<StateCost> selfCollisionConstraintPtr_mode2_;
+    // -----------------
+
     std::string baseStateMsg_;
     std::string armStateMsg_;
 

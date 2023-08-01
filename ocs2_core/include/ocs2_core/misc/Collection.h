@@ -61,7 +61,7 @@ class Collection {
    * @param name: Name stored along with the term.
    * @param term: Term to be added.
    */
-  void add(std::string name, std::unique_ptr<T> term);
+  void add(std::string name, std::shared_ptr<T> term);
 
   /**
    * Erases a term from the collection.
@@ -72,12 +72,12 @@ class Collection {
   bool erase(const std::string& name) { return (extract(name) != nullptr); }
 
   /**
-   * Removes a term from the Collection and returns it as a unique_ptr.
+   * Removes a term from the Collection and returns it as a shared_ptr.
    *
    * @param name: Name of the term.
    * @return A unique pointer to the extracted term. If the term was not found it returns nullptr.
    */
-  std::unique_ptr<T> extract(const std::string& name);
+  std::shared_ptr<T> extract(const std::string& name);
 
   /**
    * Use to modify a term.
@@ -108,7 +108,7 @@ class Collection {
   Collection(const Collection& other);
 
   //! Contains all terms in the order they were added
-  std::vector<std::unique_ptr<T>> terms_;
+  std::vector<std::shared_ptr<T>> terms_;
 
  private:
   //! Lookup from cost term name to index in the cost term vector
@@ -128,7 +128,7 @@ void Collection<T>::clear() {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename T>
-void Collection<T>::add(std::string name, std::unique_ptr<T> term) {
+void Collection<T>::add(std::string name, std::shared_ptr<T> term) {
   const size_t nextIndex = terms_.size();
   auto info = termNameMap_.emplace(std::move(name), nextIndex);
   if (info.second) {
@@ -142,7 +142,7 @@ void Collection<T>::add(std::string name, std::unique_ptr<T> term) {
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <typename T>
-std::unique_ptr<T> Collection<T>::extract(const std::string& name) {
+std::shared_ptr<T> Collection<T>::extract(const std::string& name) {
   // find the term iterator with the name
   const auto termItr = termNameMap_.find(name);
 
