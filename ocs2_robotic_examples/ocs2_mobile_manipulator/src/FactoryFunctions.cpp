@@ -127,9 +127,10 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath,
   tf::StampedTransform transform_base_wrt_world;
   pinocchio::SE3 se3_base_wrt_world = pinocchio::SE3::Identity();
 
+  ros::spinOnce();
   try
   {
-    while(!tflistener.waitForTransform(world_frame_name, base_frame_name, ros::Time(0), ros::Duration(10.0)));
+    while(!tflistener.waitForTransform(world_frame_name, base_frame_name, ros::Time(0), ros::Duration(1.0)));
     tflistener.lookupTransform(world_frame_name, base_frame_name, ros::Time(0), transform_base_wrt_world);
   }
   catch (tf::TransformException ex)
