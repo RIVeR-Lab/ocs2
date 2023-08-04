@@ -77,6 +77,8 @@ ScalarFunctionQuadraticApproximation StateInputCostCollection::getQuadraticAppro
                                                                                          const TargetTrajectories& targetTrajectories,
                                                                                          const PreComputation& preComp) const 
 {
+  //std::cout << "[StateInputCostCollection::getQuadraticApproximation] START" << std::endl;
+
   const auto firstActive = std::find_if(terms_.begin(), 
                                         terms_.end(),
                                         [time](const std::shared_ptr<StateInputCost>& costTerm) 
@@ -91,14 +93,21 @@ ScalarFunctionQuadraticApproximation StateInputCostCollection::getQuadraticAppro
   }
 
   // Initialize with first active term, accumulate potentially other active terms.
+  //std::cout << "[StateInputCostCollection::getQuadraticApproximation] START firstActive getQuadraticApproximation" << std::endl;
   auto cost = (*firstActive)->getQuadraticApproximation(time, state, input, targetTrajectories, preComp);
+  //std::cout << "[StateInputCostCollection::getQuadraticApproximation] END firstActive getQuadraticApproximation" << std::endl;
+
   std::for_each(std::next(firstActive), terms_.end(), [&](const std::shared_ptr<StateInputCost>& costTerm) 
   {
     if (costTerm->isActive(time)) 
     {
+      //std::cout << "[StateInputCostCollection::getQuadraticApproximation] START getQuadraticApproximation" << std::endl;
       cost += costTerm->getQuadraticApproximation(time, state, input, targetTrajectories, preComp);
+      //std::cout << "[StateInputCostCollection::getQuadraticApproximation] END getQuadraticApproximation" << std::endl;
     }
   });
+
+  //std::cout << "[StateInputCostCollection::getQuadraticApproximation] START" << std::endl;
 
   return cost;
 }

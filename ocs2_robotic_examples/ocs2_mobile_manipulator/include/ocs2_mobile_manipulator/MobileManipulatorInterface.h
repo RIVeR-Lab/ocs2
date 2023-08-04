@@ -341,6 +341,8 @@ class MobileManipulatorInterface final : public RobotInterface
     
     ocs2::rollout::Settings rolloutSettings_;
     std::unique_ptr<RolloutBase> rolloutPtr_;
+    //std::unique_ptr<RolloutBase> mpcRolloutPtr_;
+    //std::unique_ptr<RolloutBase> mrtRolloutPtr_;
     
     std::unique_ptr<Initializer> initializerPtr_;
 
@@ -385,9 +387,9 @@ class MobileManipulatorInterface final : public RobotInterface
     std::shared_ptr<StateCost> extCollisionConstraintPtr_mode1_;
     std::shared_ptr<StateCost> extCollisionConstraintPtr_mode2_;
 
-    std::shared_ptr<SystemDynamicsBase> dynamicsPtr_mode0_;
-    std::shared_ptr<SystemDynamicsBase> dynamicsPtr_mode1_;
-    std::shared_ptr<SystemDynamicsBase> dynamicsPtr_mode2_;
+    //std::shared_ptr<SystemDynamicsBase> dynamicsPtr_mode0_;
+    //std::shared_ptr<SystemDynamicsBase> dynamicsPtr_mode1_;
+    //std::shared_ptr<SystemDynamicsBase> dynamicsPtr_mode2_;
     // -----------------
 
     std::string baseStateMsg_;

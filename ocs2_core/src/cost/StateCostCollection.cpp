@@ -169,9 +169,10 @@ ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximat
 
   //int ctr = 0;
   //int ctr2 = 0;
-  //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] START getQuadraticApproximation" << std::endl;
+  //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] START firstActive getQuadraticApproximation" << std::endl;
   // Initialize with first active term, accumulate potentially other active terms.
   auto cost = (*firstActive)->getQuadraticApproximation(time, state, fullState, targetTrajectories, preComp);
+  //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] END firstActive getQuadraticApproximation" << std::endl;
 
   //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] cost.f: " << cost.f << std::endl;
 
@@ -179,7 +180,10 @@ ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximat
   {
     if (costTerm->isActive(time)) 
     {
+      //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] START getQuadraticApproximation" << std::endl;
       const auto costTermApproximation = costTerm->getQuadraticApproximation(time, state, fullState, targetTrajectories, preComp);
+      //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] END getQuadraticApproximation" << std::endl;
+
       cost.f += costTermApproximation.f;
       cost.dfdx += costTermApproximation.dfdx;
       cost.dfdxx += costTermApproximation.dfdxx;

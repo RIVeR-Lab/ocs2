@@ -157,6 +157,9 @@ void MRT_BASE::rolloutPolicy(scalar_t currentTime,
 {
   std::cout << "[MRT_BASE::rolloutPolicy] START" << std::endl;
 
+  std::cout << "[MRT_BASE::rolloutPolicy] DEBUG INF" << std::endl;
+  while(1);
+
   if (rolloutPtr_ == nullptr) 
   {
     throw std::runtime_error("[MRT_BASE::rolloutPolicy] rollout class is not set! Use initRollout() to initialize it!");

@@ -27,6 +27,8 @@ find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
+find_package(nlohmann_json REQUIRED)
+
 #find_package(PCL REQUIRED)
 
 #find_package(Eigen3 3.3 REQUIRED NO_MODULE)

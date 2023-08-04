@@ -380,11 +380,11 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   // measure the delay in running MPC
   mpcTimer_.startTimer();
 
-  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] modelModeInt_: " << modelModeInt_ << std::endl;
-  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.state size: " << currentObservation.state.size() << std::endl;
-  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.full_state size: " << currentObservation.full_state.size() << std::endl;
-
   /*
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] modelModeInt_: " << modelModeInt_ << std::endl;
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.state size: " << currentObservation.state.size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.full_state size: " << currentObservation.full_state.size() << std::endl;
+
   std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.state:" << std::endl;
   std::cout << currentObservation.state << std::endl << std::endl;
   
@@ -395,7 +395,14 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   std::cout << currentObservation.full_state << std::endl;
   */
 
-  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START mpc_.run" << std::endl;
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START mpc_.run" << std::endl;
+
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.state:" << std::endl;
+  std::cout << currentObservation.state << std::endl << std::endl;
+
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.full_state:" << std::endl;
+  std::cout << currentObservation.full_state << std::endl;
+
   // run MPC
   //bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state);
   bool controllerIsUpdated;
@@ -406,7 +413,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
     return;
   }
   copyToBuffer(currentObservation);
-  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END mpc_.run" << std::endl;
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END mpc_.run" << std::endl;
 
   // Measure the delay for sending ROS messages
   mpcTimer_.endTimer();
@@ -472,9 +479,11 @@ void MPC_ROS_Interface::shutdownNode()
 
   // shutdown publishers
   mpcPolicyPublisher_.shutdown();
+
+   std::cout << "[MPC_ROS_Interface::shutdownNode] BEFORE mpcObservationSubscriber_" << std::endl << std::endl;
   mpcObservationSubscriber_.shutdown();
 
-  //std::cout << "[MPC_ROS_Interface::shutdownNode] END" << std::endl << std::endl;
+  std::cout << "[MPC_ROS_Interface::shutdownNode] END" << std::endl << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------

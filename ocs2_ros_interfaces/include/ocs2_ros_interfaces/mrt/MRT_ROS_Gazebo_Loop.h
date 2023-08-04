@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.26
+// LAST UPDATE: 2023.08.03
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -12,6 +12,11 @@
 #pragma once
 
 #include <math.h>
+#include <nlohmann/json.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+
 #include <tf/transform_listener.h>
 #include <nav_msgs/Odometry.h>
 #include <gazebo_msgs/LinkStates.h>
@@ -147,11 +152,30 @@ class MRT_ROS_Gazebo_Loop
 
     /** NUA TODO: Add description */
     //void publishCommand(const PrimalSolution& primalSolution);
-    void publishCommand(const PrimalSolution& currentPolicy);
+    void publishCommand(const PrimalSolution& currentPolicy, 
+                        const SystemObservation& currentObservation,
+                        std::vector<double>& currentStateVelocityBase);
+
+    /** NUA TODO: Add description */
+    const std::string getDateTime();
+
+    /** NUA TODO: Add description */
+    void writeData(bool endFlag=false);
+
+    std::string dataPath_ = "/home/akmandor/ros_workspaces/mobiman_ws/src/mobiman/mobiman_simulation/dataset/ocs2/";
+    std::vector<std::vector<double>> dataStatePosition_;
+    std::vector<std::vector<double>> dataStateVelocityBase_;
+    std::vector<std::vector<double>> dataCommand_;
+    double dataTimeStart_ = 0;
+    double dataTimeEnd_ = 0;
+    double dataWriteFreq_ = 10;
+    double dataWriteLastTime_ = 0;
 
     std::string worldFrameName_;
     std::string baseFrameName_;
     std::string graspFrameName_;
+
+    double initPolicyCtrMax_ = 1000;
 
     double err_threshold_pos_;
     double err_threshold_ori_;
@@ -176,10 +200,10 @@ class MRT_ROS_Gazebo_Loop
     vector_t currentTarget_;
     vector_t currentInput_;
 
-    std::vector<double> stateBase_;
-    std::vector<double> stateArm_;
+    std::vector<double> statePositionBase_;
+    std::vector<double> statePositionArm_;
 
-    std::vector<double> inputBase_;
+    std::vector<double> stateVelocityBase_;
     std::vector<double> inputArm_;
 
     tf::TransformListener tfListener_;

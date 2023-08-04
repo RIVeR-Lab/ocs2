@@ -178,6 +178,7 @@ std::pair<vector_t, matrix_t> SelfCollisionCppAd::getLinearApproximation(const P
 {
   //std::cout << "[SelfCollisionCppAd::getLinearApproximation(3)] START" << std::endl;
 
+  //std::cout << "[SelfCollisionCppAd::getLinearApproximation(3)] BEFORE computeDistances" << std::endl;
   const std::vector<hpp::fcl::DistanceResult> distanceArray = pinocchioGeometryInterface_.computeDistances(pinocchioInterface);
 
   auto n_points_param = distanceArray.size() * numberOfParamsPerResult_;
@@ -197,8 +198,13 @@ std::pair<vector_t, matrix_t> SelfCollisionCppAd::getLinearApproximation(const P
   params.head(stateDim) = fullState;
   params.tail(n_points_param) = pointsInWorldFrame;
 
+  //std::cout << "[SelfCollisionCppAd::getLinearApproximation(3)] BEFORE pointsInLinkFrame" << std::endl;
   const auto pointsInLinkFrame = cppAdInterfaceLinkPoints_->getFunctionValue(state, params);
+
+  //std::cout << "[SelfCollisionCppAd::getLinearApproximation(3)] BEFORE cppAdInterfaceDistanceCalculation_" << std::endl;
   const auto f = cppAdInterfaceDistanceCalculation_->getFunctionValue(state, params);
+
+  //std::cout << "[SelfCollisionCppAd::getLinearApproximation(3)] BEFORE cppAdInterfaceDistanceCalculation_" << std::endl;
   const auto dfdq = cppAdInterfaceDistanceCalculation_->getJacobian(state, params);
 
   //std::cout << "[SelfCollisionCppAd::getLinearApproximation] pointsInWorldFrame size: " << pointsInWorldFrame.size() << std::endl;

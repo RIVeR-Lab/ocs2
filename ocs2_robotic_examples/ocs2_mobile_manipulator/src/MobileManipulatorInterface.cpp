@@ -382,66 +382,76 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   // Create costs/constraints
   size_t modelModeInt;
   bool isModeUpdated;
+  std::string modelName;
 
   // Mode 0
   modelModeInt = 0;
   isModeUpdated = updateModelMode(robotModelInfo_, modelModeInt);
+  modelName = getModelModeString(robotModelInfo_);
 
   quadraticInputCostPtr_mode0_ = getQuadraticInputCost();
   jointLimitSoftConstraintPtr_mode0_ = getJointLimitSoftConstraint();
   endEffectorIntermediateConstraintPtr_mode0_ = getEndEffectorConstraint("endEffector");
   endEffectorFinalConstraintPtr_mode0_ = getEndEffectorConstraint("finalEndEffector");
-  selfCollisionConstraintPtr_mode0_ = getSelfCollisionConstraint("selfCollision");
+  //selfCollisionConstraintPtr_mode0_ = getSelfCollisionConstraint("selfCollision");
   
   //// NUA TODO: DEBUG AND TEST IS REQUIRED!
   //initializePointsOnRobotPtr(pointsAndRadii_);
   //extCollisionConstraintPtr_mode0_= getExtCollisionConstraint("extCollision");
   
+  /*
   dynamicsPtr_mode0_.reset(new MobileBaseDynamics(robotModelInfo_, 
                                                   "MobileBaseDynamics", 
                                                   libraryFolder_, 
                                                   recompileLibraries_, 
                                                   printOutFlag_));
+  */
 
   // Mode 1
   modelModeInt = 1;
   isModeUpdated = updateModelMode(robotModelInfo_, modelModeInt);
+  modelName = getModelModeString(robotModelInfo_);
 
   quadraticInputCostPtr_mode1_ = getQuadraticInputCost();
   jointLimitSoftConstraintPtr_mode1_ = getJointLimitSoftConstraint();
   endEffectorIntermediateConstraintPtr_mode1_ = getEndEffectorConstraint("endEffector");
   endEffectorFinalConstraintPtr_mode1_ = getEndEffectorConstraint("finalEndEffector");
-  selfCollisionConstraintPtr_mode1_ = getSelfCollisionConstraint("selfCollision");
+  selfCollisionConstraintPtr_mode1_ = getSelfCollisionConstraint(modelName);
   
   //// NUA TODO: DEBUG AND TEST IS REQUIRED!
   //initializePointsOnRobotPtr(pointsAndRadii_);
   //extCollisionConstraintPtr_mode1_= getExtCollisionConstraint("extCollision");
   
+  /*
   dynamicsPtr_mode1_.reset(new RobotArmDynamics(robotModelInfo_, 
                                                 "MobileBaseDynamics", 
                                                 libraryFolder_, 
                                                 recompileLibraries_, 
                                                 printOutFlag_));
+  */
   
   // Mode 2
   modelModeInt = 2;
   isModeUpdated = updateModelMode(robotModelInfo_, modelModeInt);
+  modelName = getModelModeString(robotModelInfo_);
 
   quadraticInputCostPtr_mode2_ = getQuadraticInputCost();
   jointLimitSoftConstraintPtr_mode2_ = getJointLimitSoftConstraint();
   endEffectorIntermediateConstraintPtr_mode2_ = getEndEffectorConstraint("endEffector");
   endEffectorFinalConstraintPtr_mode2_ = getEndEffectorConstraint("finalEndEffector");
-  selfCollisionConstraintPtr_mode2_ = getSelfCollisionConstraint("selfCollision");
+  selfCollisionConstraintPtr_mode2_ = getSelfCollisionConstraint(modelName);
   
   //// NUA TODO: DEBUG AND TEST IS REQUIRED!
   //initializePointsOnRobotPtr(pointsAndRadii_);
   //extCollisionConstraintPtr_mode2_= getExtCollisionConstraint("extCollision");
   
+  /*
   dynamicsPtr_mode2_.reset(new MobileManipulatorDynamics(robotModelInfo_, 
                                                          "MobileBaseDynamics", 
                                                          libraryFolder_, 
                                                          recompileLibraries_, 
                                                          printOutFlag_));
+  */
 
   // Set MPC Problem
   //mpcTimer2_.startTimer();
@@ -684,6 +694,8 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
   //// Optimal control problem
   if (modelModeInt == 0)
   {
+    std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr: MobileBaseDynamics" << std::endl;
+
     mpcTimer3_.startTimer();
     ocp_.costPtr->add("inputCost", quadraticInputCostPtr_mode0_);
     mpcTimer3_.endTimer();
@@ -1567,7 +1579,7 @@ void MobileManipulatorInterface::runMPC()
 {
   //std::cout << "[MobileManipulatorInterface::runMPC] START" << std::endl;
 
-  bool mpcPrintOutFlag = true;
+  bool mpcPrintOutFlag = false;
 
   RobotModelInfo robotModelInfo;
 
@@ -1610,13 +1622,14 @@ void MobileManipulatorInterface::runMPC()
     setenv("mpcShutDownFlag", "false", 1);
 
     std::string mrtExitEnvStatus = getenv("mrtExitFlag");
-    //std::cout << "[OCS2_MRT_Loop::mrtLoop] mrtShutDownFlag_: " << mrtShutDownFlag_ << std::endl;
+    //std::cout << "[MobileManipulatorInterface::runMPC] mrtExitEnvStatus: " << mrtExitEnvStatus << std::endl;
 
     while(mrtExitEnvStatus == "false")
     {
-      std::cout << "[OCS2_MRT_Loop::mrtLoop] CMOOOOOOOOOOOOOOOOOON: " << std::endl;
+      //std::cout << "[MobileManipulatorInterface::runMPC] CMOOOOOOOOOOOOOOOOOON: " << std::endl;
       mrtExitEnvStatus = getenv("mrtExitFlag");
     }
+    //std::cout << "[MobileManipulatorInterface::runMPC] MRT EXIT HAPPENED" << std::endl;
 
     //mpcTimer3_.startTimer();
     setMPCProblem();
@@ -1723,13 +1736,13 @@ void MobileManipulatorInterface::runMPC()
     mpcLaunchReadyFlag_ = true;
     //std::cout << "[MobileManipulatorInterface::runMPC] AFTER mpcLaunchReadyFlag_: " << mpcLaunchReadyFlag_ << std::endl;
 
-    std::cout << "[MobileManipulatorInterface::runMPC] BEFORE mpc mpcNode launchNodes" << std::endl;
+    //std::cout << "[MobileManipulatorInterface::runMPC] BEFORE mpc mpcNode launchNodes" << std::endl;
     //mpcExitFlag_ = false;
-    printRobotModelInfo(robotModelInfo);
+    //printRobotModelInfo(robotModelInfo);
     mpcNode.launchNodes(nodeHandle_);
     //mpcExitFlag_ = true;
     mpcLaunchReadyFlag_ = false;
-    std::cout << "[MobileManipulatorInterface::runMPC] AFTER mpc mpcNode launchNodes" << std::endl;
+    //std::cout << "[MobileManipulatorInterface::runMPC] AFTER mpc mpcNode launchNodes" << std::endl;
  
     if (mpcPrintOutFlag)
     {
@@ -1775,6 +1788,9 @@ void MobileManipulatorInterface::runMRT()
     //std::cout << "[MobileManipulatorInterface::runMRT] AFTER mpcLaunchReadyFlag_: " << mpcLaunchReadyFlag_ << std::endl;
     //mpcLaunchReadyFlag_ = false;
 
+    while(!mpcProblemReadyFlag_){spinOnce();}
+    mpcProblemReadyFlag_ = false;
+
     if (mrtPrintOutFlag)
     {
       std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
@@ -1784,15 +1800,17 @@ void MobileManipulatorInterface::runMRT()
 
     //mrtTimer1_.startTimer();
 
-    //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE setMPCProblem" << std::endl;
+    std::cout << "[MobileManipulatorInterface::runMRT] BEFORE setMPCProblem" << std::endl;
     //mrtTimer2_.startTimer();
-    while(!mpcProblemReadyFlag_){spinOnce();}
-    mpcProblemReadyFlag_ = false;
     //setMPCProblem();
+    //OptimalControlProblem ocp;
+    //ocp.swap(ocp_);
+    //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE TimeTriggeredRollout" << std::endl;
+    //mrtRolloutPtr_.reset(new TimeTriggeredRollout(*ocp_.dynamicsPtr, rolloutSettings_));
     robotModelInfo = robotModelInfo_;
-    printRobotModelInfo(robotModelInfo);
+    printRobotModelInfo(robotModelInfo); 
     //mrtTimer2_.endTimer();
-    //std::cout << "[MobileManipulatorInterface::runMRT] AFTER setMPCProblem" << std::endl;
+    std::cout << "[MobileManipulatorInterface::runMRT] AFTER setMPCProblem" << std::endl;
 
     // MRT
     //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE mrt" << std::endl;
@@ -1805,7 +1823,7 @@ void MobileManipulatorInterface::runMRT()
     mrt.initRollout(&*rolloutPtr_);
     //mrtTimer4_.endTimer();
     //std::cout << "[MobileManipulatorInterface::runMRT] AFTER initRollout" << std::endl;
-    
+
     //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE launchNodes" << std::endl;
     //mrtTimer5_.startTimer();
     mrt.launchNodes(nodeHandle_);
@@ -1889,15 +1907,21 @@ void MobileManipulatorInterface::runMRT()
     setenv("mrtExitFlag", "false", 1);
     mrtExitFlag_ = false;
 
-    printRobotModelInfo(robotModelInfo);
-
     mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "false", 1);
 
     mrt_loop.run(currentTarget);
     mrtExitFlag_ = true;
     setenv("mpcShutDownFlag", "true", 1);
 
-    if (mrtPrintOutFlag)
+    /*
+    if (mrtIter_ > 0)
+    {
+      std::cout << "[MobileManipulatorInterface::runMRT] DEBUG INF" << std::endl;
+      while(1);
+    }
+    */
+
+    if (false)
     {
       std::cout << "[MobileManipulatorInterface::runMRT] AFTER currentTarget size: " << currentTarget.size() << std::endl;
       for (size_t i = 0; i < currentTarget.size(); i++)
@@ -2235,11 +2259,11 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
 
   //std::cerr << "\n #### SelfCollision Settings: ";
   //std::cerr << "\n #### =============================================================================\n";
-  loadData::loadPtreeValue(pt, mu, prefix + ".mu", printOutFlag_);
-  loadData::loadPtreeValue(pt, delta, prefix + ".delta", printOutFlag_);
-  loadData::loadPtreeValue(pt, minimumDistance, prefix + ".minimumDistance", printOutFlag_);
-  loadData::loadStdVectorOfPair(taskFile_, prefix + ".collisionObjectPairs", collisionObjectPairs, printOutFlag_);
-  loadData::loadStdVectorOfPair(taskFile_, prefix + ".collisionLinkPairs", collisionLinkPairs, printOutFlag_);
+  loadData::loadPtreeValue(pt, mu, "selfCollision.mu", printOutFlag_);
+  loadData::loadPtreeValue(pt, delta, "selfCollision.delta", printOutFlag_);
+  loadData::loadPtreeValue(pt, minimumDistance, "selfCollision.minimumDistance", printOutFlag_);
+  loadData::loadStdVectorOfPair(taskFile_, "selfCollision.collisionObjectPairs", collisionObjectPairs, printOutFlag_);
+  loadData::loadStdVectorOfPair(taskFile_, "selfCollision.collisionLinkPairs", collisionLinkPairs, printOutFlag_);
   //std::cerr << " #### =============================================================================\n";
 
   PinocchioGeometryInterface geometryInterface(*pinocchioInterfacePtr_, collisionLinkPairs, collisionObjectPairs);
@@ -2265,7 +2289,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
                                                                                     std::move(geometryInterface), 
                                                                                     robotModelInfo_,
                                                                                     minimumDistance,
-                                                                                    "self_collision", 
+                                                                                    prefix + "_self_collision", 
                                                                                     libraryFolder_, 
                                                                                     recompileLibraries_, 
                                                                                     false));

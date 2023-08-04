@@ -46,7 +46,7 @@ IntegratorBase::IntegratorBase(std::shared_ptr<SystemEventHandler> eventHandlerP
 /******************************************************************************************************/
 IntegratorBase::system_func_t IntegratorBase::systemFunction(OdeBase& system, int maxNumSteps) const 
 {
-  //std::cout << "[IntegratorBase::systemFunction] START" << std::endl;
+  std::cout << "[IntegratorBase::systemFunction] START" << std::endl;
 
   return [&system, maxNumSteps](const vector_t& x, vector_t& dxdt, scalar_t t) 
   {
@@ -64,8 +64,18 @@ IntegratorBase::system_func_t IntegratorBase::systemFunction(OdeBase& system, in
     // max number of function calls
     if (system.incrementNumFunctionCalls() > maxNumSteps) 
     {
+      std::cout << "[IntegratorBase::systemFunction] x.size: " << x.size() << std::endl;
+      std::cout << x << std::endl << std::endl;
+
+      std::cout << "[IntegratorBase::systemFunction] dxdt.size: " << dxdt.size() << std::endl;
+      std::cout << dxdt << std::endl;
+
+      std::cout << "[IntegratorBase::systemFunction] DONT KILL MY VIBE, JUST RESET!" << std::endl;
+      std::cout << "[IntegratorBase::systemFunction] DEBUG INF" << std::endl;
+      while(1);
+
       std::stringstream msg;
-      msg << "Integration terminated since the maximum number of function calls is reached. State at termination time " << t << ":\n["
+      msg << "[IntegratorBase::systemFunction] Integration terminated since the maximum number of function calls is reached. State at termination time " << t << ":\n["
           << x.transpose() << "]\n";
       throw std::runtime_error(msg.str());
     }
@@ -104,8 +114,10 @@ void IntegratorBase::integrateTimes(OdeBase& system, Observer& observer, const v
                                     typename scalar_array_t::const_iterator beginTimeItr,
                                     typename scalar_array_t::const_iterator endTimeItr, scalar_t dtInitial /*= 0.01*/,
                                     scalar_t AbsTol /*= 1e-6*/, scalar_t RelTol /*= 1e-3*/,
-                                    int maxNumSteps /*= std::numeric_limits<int>::max()*/) {
-  observer_func_t callback = [&](const vector_t& x, scalar_t t) {
+                                    int maxNumSteps /*= std::numeric_limits<int>::max()*/) 
+{
+  observer_func_t callback = [&](const vector_t& x, scalar_t t) 
+  {
     observer.observe(x, t);
     eventHandlerPtr_->handleEvent(system, t, x);
   };

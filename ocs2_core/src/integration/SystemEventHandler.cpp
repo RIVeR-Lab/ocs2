@@ -43,16 +43,23 @@ std::pair<bool, size_t> SystemEventHandler::checkEvent(OdeBase& system, scalar_t
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void SystemEventHandler::handleEvent(OdeBase& system, scalar_t time, const vector_t& state) {
-  if (killIntegration_) {
-    throw std::runtime_error("Integration terminated due to an external signal triggered by a program.");
+void SystemEventHandler::handleEvent(OdeBase& system, scalar_t time, const vector_t& state) 
+{
+  if (killIntegration_) 
+  {
+    std::cout << "[SystemEventHandler::handleEvent] DONT KILL MY VIBE, JUST RESET!" << std::endl;
+    std::cout << "[SystemEventHandler::handleEvent] DEBUG INF" << std::endl;
+    while(1);
+
+    throw std::runtime_error("[SystemEventHandler::handleEvent] Integration terminated due to an external signal triggered by a program.");
   }
 
   // derived class events
   size_t eventID;
   bool event;
   std::tie(event, eventID) = this->checkEvent(system, time, state);
-  if (event) {
+  if (event) 
+  {
     throw eventID;
   }
 }

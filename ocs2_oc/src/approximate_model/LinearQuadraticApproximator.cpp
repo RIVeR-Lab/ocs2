@@ -151,7 +151,7 @@ void approximateIntermediateLQ(OptimalControlProblem& problem,
   //std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] START Lagrangians" << std::endl;
   if (!problem.stateEqualityLagrangianPtr->empty()) 
   {
-    std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] stateEqualityLagrangianPtr" << std::endl;
+    //std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] stateEqualityLagrangianPtr" << std::endl;
     auto approx = problem.stateEqualityLagrangianPtr->getQuadraticApproximation(time, state, multipliers.stateEq, preComputation);
     modelData.cost.f += approx.f;
     modelData.cost.dfdx += approx.dfdx;
@@ -160,7 +160,7 @@ void approximateIntermediateLQ(OptimalControlProblem& problem,
   
   if (!problem.stateInequalityLagrangianPtr->empty()) 
   {
-    std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] stateInequalityLagrangianPtr" << std::endl;
+    //std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] stateInequalityLagrangianPtr" << std::endl;
     auto approx = problem.stateInequalityLagrangianPtr->getQuadraticApproximation(time, state, multipliers.stateIneq, preComputation);
     modelData.cost.f += approx.f;
     modelData.cost.dfdx += approx.dfdx;
@@ -169,13 +169,13 @@ void approximateIntermediateLQ(OptimalControlProblem& problem,
 
   if (!problem.equalityLagrangianPtr->empty()) 
   {
-    std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] equalityLagrangianPtr" << std::endl;
+    //std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] equalityLagrangianPtr" << std::endl;
     modelData.cost += problem.equalityLagrangianPtr->getQuadraticApproximation(time, state, input, multipliers.stateInputEq, preComputation);
   }
 
   if (!problem.inequalityLagrangianPtr->empty()) 
   {
-    std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] inequalityLagrangianPtr" << std::endl;
+    //std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] inequalityLagrangianPtr" << std::endl;
     modelData.cost += problem.inequalityLagrangianPtr->getQuadraticApproximation(time, state, input, multipliers.stateInputIneq, preComputation);
   }
   //std::cout << "[LinearQuadraticApproximator::approximateIntermediateLQ(7)] END Lagrangians" << std::endl;

@@ -192,21 +192,36 @@ VectorFunctionLinearApproximation SelfCollisionConstraintCppAd::getLinearApproxi
 {
   //std::cout << "[SelfCollisionConstraintCppAd::getLinearApproximation] START" << std::endl;
 
+  //std::cout << "[SelfCollisionConstraintCppAd::getLinearApproximation] BEFORE getPinocchioJointPosition" << std::endl;
   const auto q = mappingPtr_->getPinocchioJointPosition(state, fullState);
+
+  //std::cout << "[SelfCollisionConstraintCppAd::getLinearApproximation] BEFORE getModel" << std::endl;
   const auto& model = pinocchioInterface_.getModel();
+
+  //std::cout << "[SelfCollisionConstraintCppAd::getLinearApproximation] BEFORE getData" << std::endl;
   auto& data = pinocchioInterface_.getData();
+
+  //std::cout << "[SelfCollisionConstraintCppAd::getLinearApproximation] BEFORE forwardKinematics" << std::endl;
   pinocchio::forwardKinematics(model, data, q);
-  updateCallback_(state, pinocchioInterface_);
+
+  //std::cout << "[SelfCollisionConstraintCppAd::getLinearApproximation] BEFORE updateCallback_" << std::endl;
+  //updateCallback_(state, pinocchioInterface_);
 
   VectorFunctionLinearApproximation constraint;
   matrix_t dfdq, dfdv;
   //std::tie(constraint.f, dfdq) = selfCollision_.getLinearApproximation(pinocchioInterface_, q);
+
+  //std::cout << "[SelfCollisionConstraintCppAd::getLinearApproximation] BEFORE getLinearApproximation" << std::endl;
   std::tie(constraint.f, dfdq) = selfCollision_.getLinearApproximation(pinocchioInterface_, state, fullState);
   dfdv.setZero(dfdq.rows(), dfdq.cols());
+
+  //std::cout << "[SelfCollisionConstraintCppAd::getLinearApproximation] BEFORE getOcs2Jacobian" << std::endl;
   std::tie(constraint.dfdx, std::ignore) = mappingPtr_->getOcs2Jacobian(state, dfdq, dfdv);
 
   //std::cout << "[SelfCollisionConstraintCppAd::getLinearApproximation] constraint.f: " << std::endl;
   //std::cout << constraint.f << std::endl;
+
+  //std::cout << "[SelfCollisionConstraintCppAd::getLinearApproximation] END" << std::endl;
 
   return constraint;
 }
