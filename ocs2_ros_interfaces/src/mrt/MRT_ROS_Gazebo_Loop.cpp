@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.27
+// LAST UPDATE: 2023.08.09
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -66,7 +66,7 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   
   // Subscribers
   //// NUA TODO: Consider localization error
-  //odometrySub_ = nh.subscribe("/jackal_velocity_controller/odom", 10, &MRT_ROS_Gazebo_Loop::odometryCallback, this);
+  //odometrySub_ = nh.subscribe("/jackal_velocity_controller/odom", 5, &MRT_ROS_Gazebo_Loop::odometryCallback, this);
   if (baseStateMsg != "")
   {
     linkStateSub_ = nh.subscribe(baseStateMsg, 5, &MRT_ROS_Gazebo_Loop::linkStateCallback, this);
@@ -77,8 +77,7 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
     tfSub_ = nh.subscribe("/tf", 5, &MRT_ROS_Gazebo_Loop::tfCallback, this);
   }
   
-  //jointStateSub_ = nh.subscribe("/joint_states", 10, &MRT_ROS_Gazebo_Loop::jointStateCallback, this);
-  //jointTrajectoryPControllerStateSub_ = nh.subscribe("/arm_controller/state", 10, &MRT_ROS_Gazebo_Loop::jointTrajectoryControllerStateCallback, this);
+  //jointStateSub_ = nh.subscribe("/joint_states", 5, &MRT_ROS_Gazebo_Loop::jointStateCallback, this);
   jointTrajectoryPControllerStateSub_ = nh.subscribe(armStateMsg, 5, &MRT_ROS_Gazebo_Loop::jointTrajectoryControllerStateCallback, this);
 
   currentTarget_.resize(7);
@@ -420,15 +419,18 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
         shutDownFlag_ = true;
       }
 
-      //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START spinMRT" << std::endl;
-      mrt_.spinMRT();
+      if (!shutDownFlag_)
+      {
+        //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START spinMRT" << std::endl;
+        mrt_.spinMRT();
 
-      // Get current observation
-      currentObservation = getCurrentObservation(false);
-      currentStateVelocityBase = stateVelocityBase_;
+        // Get current observation
+        currentObservation = getCurrentObservation(false);
+        currentStateVelocityBase = stateVelocityBase_;
 
-      // Set current observation
-      mrt_.setCurrentObservation(currentObservation);
+        // Set current observation
+        mrt_.setCurrentObservation(currentObservation);
+      }
 
       mrtShutDownFlag_ = getenv("mrtShutDownFlag");
       //std::cout << "[MPC_ROS_Interface::spin] mrtShutDownFlag_: " << mrtShutDownFlag_ << std::endl;
@@ -537,7 +539,6 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
     {
       //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] CMOOOOOOOOOOOOOOOOOON: " << std::endl;
       shutDownFlag_ = true;
-      writeData();
     }
     
     /*
@@ -641,10 +642,10 @@ void MRT_ROS_Gazebo_Loop::tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg)
 
   try
   {
-    tfListener_.waitForTransform(worldFrameName_, baseFrameName_, ros::Time::now(), ros::Duration(0.5));
+    tfListener_.waitForTransform(worldFrameName_, baseFrameName_, ros::Time::now(), ros::Duration(5.0));
     tfListener_.lookupTransform(worldFrameName_, baseFrameName_, ros::Time(0), tf_robot_wrt_world_);
 
-    tfListener_.waitForTransform(worldFrameName_, robotModelInfo_.robotArm.eeFrame, ros::Time::now(), ros::Duration(0.5));
+    tfListener_.waitForTransform(worldFrameName_, robotModelInfo_.robotArm.eeFrame, ros::Time::now(), ros::Duration(5.0));
     tfListener_.lookupTransform(worldFrameName_, robotModelInfo_.robotArm.eeFrame, ros::Time(0), tf_ee_wrt_world_);
 
     //tfListener_.waitForTransform(worldFrameName_, graspFrameName_, ros::Time::now(), ros::Duration(1.0));
@@ -976,7 +977,7 @@ bool MRT_ROS_Gazebo_Loop::isPickDropPoseReached(int taskMode)
   //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] err_threshold_pos_: " << err_threshold_pos_ << std::endl;
   //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] err_threshold_ori_: " << err_threshold_ori_ << std::endl;
 
-  if (!taskEndFlag_ && taskMode != 0)
+  if (!shutDownFlag_ && !taskEndFlag_ && taskMode != 0)
   {
     vector_t currentTarget = currentTarget_;
 
