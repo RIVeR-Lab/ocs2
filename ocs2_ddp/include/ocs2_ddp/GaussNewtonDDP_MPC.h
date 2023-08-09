@@ -122,13 +122,15 @@ class GaussNewtonDDP_MPC final : public MPC_BASE
       ddpPtr_->run(initTime, initState, finalTime);
     }
 
-    void calculateController(scalar_t initTime, const vector_t& initState, const vector_t& initFullState, scalar_t finalTime) override 
+    bool calculateController(scalar_t initTime, const vector_t& initState, const vector_t& initFullState, scalar_t finalTime) override 
     {
       if (settings().coldStart_) 
       {
         ddpPtr_->reset();
       }
       ddpPtr_->run(initTime, initState, initFullState, finalTime);
+
+      return ddpPtr_->getInternalShutDownFlag();
     }
 
     ddp::Settings ddpSettings_;

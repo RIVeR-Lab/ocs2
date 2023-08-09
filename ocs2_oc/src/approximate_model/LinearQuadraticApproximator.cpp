@@ -721,7 +721,7 @@ MetricsCollection computeIntermediateMetrics(OptimalControlProblem& problem,
   MetricsCollection metrics;
 
   // Cost
-  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] START computeCost" << std::endl;
+  //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] START computeCost time:" << time << std::endl;
   //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] state size: " << state.size() << std::endl;
   //std::cout << "[LinearQuadraticApproximator::computeIntermediateMetrics(6)] input size: " << input.size() << std::endl;
   metrics.cost = computeCost(problem, time, state, fullState, input);

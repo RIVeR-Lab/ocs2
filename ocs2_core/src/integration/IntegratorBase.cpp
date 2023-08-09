@@ -35,8 +35,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 IntegratorBase::IntegratorBase(std::shared_ptr<SystemEventHandler> eventHandlerPtr /*= nullptr*/)
-    : eventHandlerPtr_(std::move(eventHandlerPtr)) {
-  if (eventHandlerPtr_ == nullptr) {
+  : eventHandlerPtr_(std::move(eventHandlerPtr)) 
+{
+  if (eventHandlerPtr_ == nullptr) 
+  {
     eventHandlerPtr_ = std::make_shared<SystemEventHandler>();
   }
 }
@@ -46,14 +48,17 @@ IntegratorBase::IntegratorBase(std::shared_ptr<SystemEventHandler> eventHandlerP
 /******************************************************************************************************/
 IntegratorBase::system_func_t IntegratorBase::systemFunction(OdeBase& system, int maxNumSteps) const 
 {
-  std::cout << "[IntegratorBase::systemFunction] START" << std::endl;
+  //std::cout << "[IntegratorBase::systemFunction] START" << std::endl;
 
   return [&system, maxNumSteps](const vector_t& x, vector_t& dxdt, scalar_t t) 
   {
+    //std::cout << "[IntegratorBase::systemFunction::lambda] START" << std::endl;
     //std::cout << "[IntegratorBase::systemFunction] x.size: " << x.size() << std::endl;
     //std::cout << x << std::endl << std::endl;
 
     dxdt = system.computeFlowMap(t, x);
+
+    //std::cout << "[IntegratorBase::systemFunction] numFunctionCalls: " << system.getNumFunctionCalls() << std::endl;
 
     //std::cout << "[IntegratorBase::systemFunction] dxdt.size: " << dxdt.size() << std::endl;
     //std::cout << dxdt << std::endl;
@@ -64,22 +69,27 @@ IntegratorBase::system_func_t IntegratorBase::systemFunction(OdeBase& system, in
     // max number of function calls
     if (system.incrementNumFunctionCalls() > maxNumSteps) 
     {
-      std::cout << "[IntegratorBase::systemFunction] x.size: " << x.size() << std::endl;
-      std::cout << x << std::endl << std::endl;
+      //std::cout << "[IntegratorBase::systemFunction] x.size: " << x.size() << std::endl;
+      //std::cout << x << std::endl << std::endl;
 
-      std::cout << "[IntegratorBase::systemFunction] dxdt.size: " << dxdt.size() << std::endl;
-      std::cout << dxdt << std::endl;
+      //std::cout << "[IntegratorBase::systemFunction] dxdt.size: " << dxdt.size() << std::endl;
+      //std::cout << dxdt << std::endl;
 
-      std::cout << "[IntegratorBase::systemFunction] DONT KILL MY VIBE, JUST RESET!" << std::endl;
-      std::cout << "[IntegratorBase::systemFunction] DEBUG INF" << std::endl;
-      while(1);
+      //std::cout << "[IntegratorBase::systemFunction] DONT KILL MY VIBE, JUST RESET!" << std::endl;
+      //std::cout << "[IntegratorBase::systemFunction] numFunctionCalls: " << system.getNumFunctionCalls() << std::endl;
+
+      //std::cout << "[IntegratorBase::systemFunction] DEBUG INF" << std::endl;
+      //while(1);
 
       std::stringstream msg;
       msg << "[IntegratorBase::systemFunction] Integration terminated since the maximum number of function calls is reached. State at termination time " << t << ":\n["
           << x.transpose() << "]\n";
       throw std::runtime_error(msg.str());
     }
+    //std::cout << "[IntegratorBase::systemFunction::lambda] END" << std::endl;
   };
+
+  //std::cout << "[IntegratorBase::systemFunction] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -110,18 +120,72 @@ void IntegratorBase::integrateAdaptive(OdeBase& system, Observer& observer, cons
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void IntegratorBase::integrateTimes(OdeBase& system, Observer& observer, const vector_t& initialState,
+void IntegratorBase::integrateTimes(OdeBase& system, 
+                                    Observer& observer, 
+                                    const vector_t& initialState,
                                     typename scalar_array_t::const_iterator beginTimeItr,
-                                    typename scalar_array_t::const_iterator endTimeItr, scalar_t dtInitial /*= 0.01*/,
-                                    scalar_t AbsTol /*= 1e-6*/, scalar_t RelTol /*= 1e-3*/,
+                                    typename scalar_array_t::const_iterator endTimeItr, 
+                                    scalar_t dtInitial /*= 0.01*/,
+                                    scalar_t AbsTol /*= 1e-6*/, 
+                                    scalar_t RelTol /*= 1e-3*/,
                                     int maxNumSteps /*= std::numeric_limits<int>::max()*/) 
 {
+  //std::cout << "[IntegratorBase::integrateTimes] START" << std::endl;
+  //std::cout << "[IntegratorBase::integrateTimes] maxNumSteps: " << maxNumSteps << std::endl;
+  //std::cout << "[IntegratorBase::integrateTimes] shutDownFlag: " << system.getShutDownFlag() << std::endl << std::endl;
+
+  /*
+  if (initialState.size() != 9)
+  {
+    std::cout << "[IntegratorBase::integrateTimes] WATCHOUT: " << initialState.size() << std::endl << std::endl;
+    //std::cout << "[IntegratorBase::integrateTimes] DEBUG INF" << std::endl << std::endl;
+    //while(1);
+  }
+  */
+
   observer_func_t callback = [&](const vector_t& x, scalar_t t) 
   {
+    //std::cout << "[IntegratorBase::integrateTimes::callback] START" << std::endl;
     observer.observe(x, t);
     eventHandlerPtr_->handleEvent(system, t, x);
+
+    //std::cout << "[IntegratorBase::integrateTimes] numFunctionCalls: " << system.getNumFunctionCalls() << std::endl << std::endl;
+    //std::cout << "[IntegratorBase::integrateTimes] maxNumSteps: " << maxNumSteps << std::endl << std::endl;
+
+    /*
+    if (system.getNumFunctionCalls() > maxNumSteps)
+    {
+      std::cout << "[IntegratorBase::integrateTimes] t: " << t << std::endl << std::endl;
+      std::cout << "[IntegratorBase::integrateTimes] STOPPPPPPPPPPPPPPPPP" << std::endl << std::endl;
+    }
+    */
+
+    //std::cout << "[IntegratorBase::integrateTimes::callback] END" << std::endl;
   };
-  runIntegrateTimes(systemFunction(system, maxNumSteps), callback, initialState, beginTimeItr, endTimeItr, dtInitial, AbsTol, RelTol);
+
+  /*
+  std::cout << "[IntegratorBase::integrateTimes] START runIntegrateTimes" << std::endl;
+  std::cout << "[IntegratorBase::integrateTimes] initialState size: " << initialState.size() << std::endl << std::endl;
+  for (size_t i = 0; i < initialState.size(); i++)
+  {
+    std::cout << i << " -> " << initialState[i] << std::endl;
+  }
+  */
+  
+  try
+  {
+    runIntegrateTimes(systemFunction(system, maxNumSteps), callback, initialState, beginTimeItr, endTimeItr, dtInitial, AbsTol, RelTol);
+  }
+  catch (const std::runtime_error& error) 
+  {
+    std::cout << "[IntegratorBase::integrateTimes] INTEGRATION TERMINATED!!!" << std::endl << std::endl;
+    //std::cout << "[IntegratorBase::integrateTimes] DEBUG INF" << std::endl << std::endl;
+    //while(1);
+  }
+  
+  //std::cout << "[IntegratorBase::integrateTimes] END runIntegrateTimes" << std::endl << std::endl;
+
+  //std::cout << "[IntegratorBase::integrateTimes] END" << std::endl << std::endl;
 }
 
 }  // namespace ocs2

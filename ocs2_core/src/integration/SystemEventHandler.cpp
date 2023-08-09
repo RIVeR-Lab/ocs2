@@ -36,7 +36,24 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::pair<bool, size_t> SystemEventHandler::checkEvent(OdeBase& system, scalar_t time, const vector_t& state) {
+std::pair<bool, size_t> SystemEventHandler::checkEvent(OdeBase& system, scalar_t time, const vector_t& state) 
+{
+  //std::cout << "[SystemEventHandler::checkEvent] START" << std::endl;
+
+  //std::cout << "[SystemEventHandler::checkEvent] state size: " << state.size() << std::endl;
+  //std::cout << state << std::endl;
+
+  /*
+  if (state.size() != 9)
+  {
+    std::cout << "[SystemEventHandler::checkEvent] WATCHOUT: " << state.size() << std::endl;
+    //killIntegration_ = true;
+    //return {true, 1};
+  }
+  */
+
+  //std::cout << "[SystemEventHandler::checkEvent] END" << std::endl;
+
   return {false, 0};
 }
 
@@ -45,13 +62,15 @@ std::pair<bool, size_t> SystemEventHandler::checkEvent(OdeBase& system, scalar_t
 /******************************************************************************************************/
 void SystemEventHandler::handleEvent(OdeBase& system, scalar_t time, const vector_t& state) 
 {
+  //std::cout << "[SystemEventHandler::handleEvent] START" << std::endl;
+
   if (killIntegration_) 
   {
-    std::cout << "[SystemEventHandler::handleEvent] DONT KILL MY VIBE, JUST RESET!" << std::endl;
-    std::cout << "[SystemEventHandler::handleEvent] DEBUG INF" << std::endl;
-    while(1);
+    std::cout << "[SystemEventHandler::handleEvent] killIntegration_ TRUE" << std::endl;
+    //std::cout << "[SystemEventHandler::handleEvent] DEBUG INF" << std::endl;
+    //while(1);
 
-    throw std::runtime_error("[SystemEventHandler::handleEvent] Integration terminated due to an external signal triggered by a program.");
+    //throw std::runtime_error("[SystemEventHandler::handleEvent] Integration terminated due to an external signal triggered by a program.");
   }
 
   // derived class events
@@ -60,8 +79,11 @@ void SystemEventHandler::handleEvent(OdeBase& system, scalar_t time, const vecto
   std::tie(event, eventID) = this->checkEvent(system, time, state);
   if (event) 
   {
-    throw eventID;
+    //std::cout << "[SystemEventHandler::handleEvent] WTF" << std::endl;
+    //throw eventID;
   }
+
+  //std::cout << "[SystemEventHandler::handleEvent] END" << std::endl;
 }
 
 }  // namespace ocs2

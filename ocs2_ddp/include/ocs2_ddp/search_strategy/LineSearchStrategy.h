@@ -145,6 +145,8 @@ class LineSearchStrategy final : public SearchStrategyBase {
   scalar_t baselineMerit_ = 0.0;                  // the merit of the rollout for zero learning rate
   scalar_t unoptimizedControllerUpdateIS_ = 0.0;  // integral of the squared (IS) norm of the controller update.
 
+  bool internalShutDownFlag_ = false;
+
   // threading
   std::atomic_size_t nextTaskId_{0};
   std::atomic_size_t alphaExpNext_{0};

@@ -109,6 +109,7 @@ class SLQ final : public GaussNewtonDDP
     vector_array2_t allSsTrajectoryStock_;
     scalar_array2_t SsNormalizedTimeTrajectoryStock_;
     size_array2_t SsNormalizedEventsPastTheEndIndecesStock_;
+    bool internalShutDownFlag_ = false;
 };
 
 }  // namespace ocs2

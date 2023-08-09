@@ -68,8 +68,7 @@ void computeRolloutMetrics(OptimalControlProblem& problem,
 {
   //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics(4)] START" << std::endl;
 
-  //// NUA TODO: REMOVE AFTER MULTI-MODEL IS COMPLETED!
-  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics(4)] DEBUG INF LOOP!" << std::endl;
+  std::cout << "[DDP_HelperFunctions::computeRolloutMetrics(4)] DEBUG INF" << std::endl;
   while(1);
 
   const auto& tTrajectory = primalSolution.timeTrajectory_;
@@ -148,6 +147,8 @@ void computeRolloutMetrics(OptimalControlProblem& problem,
   auto nextPostEventIndexItr = postEventIndices.begin();
   const auto request = Request::Cost + Request::Constraint + Request::SoftConstraint;
   
+  //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics(5)] START LOOP computeIntermediateMetrics" << std::endl;
+  //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics(5)] tTrajectory.size(): " << tTrajectory.size() << std::endl;
   for (size_t k = 0; k < tTrajectory.size(); k++) 
   {
     // intermediate time cost and constraints
@@ -183,6 +184,7 @@ void computeRolloutMetrics(OptimalControlProblem& problem,
       nextPostEventIndexItr++;
     }
   }
+  //std::cout << "[DDP_HelperFunctions::computeRolloutMetrics(5)] END LOOP computeIntermediateMetrics" << std::endl;
 
   // final time cost and constraints
   if (!tTrajectory.empty()) 

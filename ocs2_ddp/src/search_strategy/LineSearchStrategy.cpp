@@ -339,11 +339,16 @@ bool LineSearchStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod,
   } 
   catch (const std::exception& error) 
   {
-    if (baseSettings_.displayInfo) {
-      printString("    [Thread " + std::to_string(taskId) + "] rollout with step length " + std::to_string(stepLength) +
+    if (baseSettings_.displayInfo) 
+    {
+      printString("[LineSearchStrategy::run(8)] [Thread " + std::to_string(taskId) + "] rollout with step length " + std::to_string(stepLength) +
                   " is terminated: " + error.what() + '\n');
     }
-    throw std::runtime_error("[SearchStrategy::run(8)] DDP controller does not generate a stable rollout!");
+
+    std::cout << "[LineSearchStrategy::run(8)] BEFORE internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
+    internalShutDownFlag_ = true;
+    std::cout << "[LineSearchStrategy::run(8)] AFTER internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
+    //throw std::runtime_error("[LineSearchStrategy::run(8)] DDP controller does not generate a stable rollout!");
   }
 
   //std::cout << "[LineSearchStrategy::run(8)] START lineSearchTask" << std::endl;

@@ -239,12 +239,19 @@ inline void Integrator<Stepper>::runIntegrateAdaptive(system_func_t system, obse
 /******************************************************************************************************/
 /******************************************************************************************************/
 template <class Stepper>
-inline void Integrator<Stepper>::runIntegrateTimes(system_func_t system, observer_func_t observer, const vector_t& initialState,
+inline void Integrator<Stepper>::runIntegrateTimes(system_func_t system, 
+                                                   observer_func_t observer, 
+                                                   const vector_t& initialState,
                                                    typename scalar_array_t::const_iterator beginTimeItr,
-                                                   typename scalar_array_t::const_iterator endTimeItr, scalar_t dtInitial, scalar_t AbsTol,
-                                                   scalar_t RelTol) {
+                                                   typename scalar_array_t::const_iterator endTimeItr, 
+                                                   scalar_t dtInitial, 
+                                                   scalar_t AbsTol,
+                                                   scalar_t RelTol) 
+{
+  //std::cout << "[Integrator::runIntegrateTimes] START" << std::endl;
   vector_t internalStartState = initialState;
   integrateTimesSpecialized<Stepper>(system, observer, internalStartState, beginTimeItr, endTimeItr, dtInitial, AbsTol, RelTol);
+  //std::cout << "[Integrator::runIntegrateTimes] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -275,19 +282,33 @@ inline typename std::enable_if<!std::is_same<S, runge_kutta_dopri5_t>::value, vo
 /******************************************************************************************************/
 template <class Stepper>
 template <typename S>
-inline typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t>::value, void>::type Integrator<Stepper>::integrateTimesSpecialized(
-    system_func_t system, observer_func_t observer, vector_t& initialState, typename scalar_array_t::const_iterator beginTimeItr,
-    typename scalar_array_t::const_iterator endTimeItr, scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol) {
-#if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 60)
-  boost::numeric::odeint::max_step_checker maxStepChecker(
-      std::numeric_limits<int>::max());  // maxNumSteps is already checked by event handler.
+inline typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t>::value, void>::type Integrator<Stepper>::integrateTimesSpecialized(system_func_t system, 
+                                                                                                                                        observer_func_t observer, 
+                                                                                                                                        vector_t& initialState, 
+                                                                                                                                        typename scalar_array_t::const_iterator beginTimeItr,
+                                                                                                                                        typename scalar_array_t::const_iterator endTimeItr, 
+                                                                                                                                        scalar_t dtInitial, 
+                                                                                                                                        scalar_t AbsTol, 
+                                                                                                                                        scalar_t RelTol) 
+{
+  //std::cout << "[Integrator::integrateTimesSpecialized] START" << std::endl;
 
-  boost::numeric::odeint::integrate_times(boost::numeric::odeint::make_controlled<S>(AbsTol, RelTol), system, initialState, beginTimeItr,
-                                          endTimeItr, dtInitial, observer, maxStepChecker);
+#if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 60)
+  boost::numeric::odeint::max_step_checker maxStepChecker(std::numeric_limits<int>::max());  // maxNumSteps is already checked by event handler.
+
+  boost::numeric::odeint::integrate_times(boost::numeric::odeint::make_controlled<S>(AbsTol, RelTol), 
+                                          system, 
+                                          initialState, 
+                                          beginTimeItr,
+                                          endTimeItr, 
+                                          dtInitial, 
+                                          observer, 
+                                          maxStepChecker);
 #else
   boost::numeric::odeint::integrate_times(boost::numeric::odeint::make_controlled<S>(AbsTol, RelTol), system, initialState, beginTimeItr,
                                           endTimeItr, dtInitial, observer);
 #endif
+  //std::cout << "[Integrator::integrateTimesSpecialized] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -295,9 +316,20 @@ inline typename std::enable_if<std::is_same<S, runge_kutta_dopri5_t>::value, voi
 /******************************************************************************************************/
 template <class Stepper>
 template <typename S>
-inline typename std::enable_if<!std::is_same<S, runge_kutta_dopri5_t>::value, void>::type Integrator<Stepper>::integrateTimesSpecialized(
-    system_func_t system, observer_func_t observer, vector_t& initialState, typename scalar_array_t::const_iterator beginTimeItr,
-    typename scalar_array_t::const_iterator endTimeItr, scalar_t dtInitial, scalar_t AbsTol, scalar_t RelTol) {
+inline typename std::enable_if<!std::is_same<S, runge_kutta_dopri5_t>::value, void>::type Integrator<Stepper>::integrateTimesSpecialized(system_func_t system, 
+                                                                                                                                         observer_func_t observer, 
+                                                                                                                                         vector_t& initialState, 
+                                                                                                                                         typename scalar_array_t::const_iterator beginTimeItr,
+                                                                                                                                         typename scalar_array_t::const_iterator endTimeItr, 
+                                                                                                                                         scalar_t dtInitial, 
+                                                                                                                                         scalar_t AbsTol, 
+                                                                                                                                         scalar_t RelTol) 
+{
+  std::cout << "[(NOT runge_kutta_dopri5_t)Integrator::integrateTimesSpecialized] START" << std::endl;
+
+  std::cout << "[Integrator::integrateTimesSpecialized] DEBUG INF" << std::endl;
+  while(1);
+
 #if (BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 60)
   boost::numeric::odeint::max_step_checker maxStepChecker(
       std::numeric_limits<int>::max());  // maxNumSteps is already checked by event handler.
@@ -307,6 +339,8 @@ inline typename std::enable_if<!std::is_same<S, runge_kutta_dopri5_t>::value, vo
 #else
   boost::numeric::odeint::integrate_times(stepper_, system, initialState, beginTimeItr, endTimeItr, dtInitial, observer);
 #endif
+
+  std::cout << "[(NOT runge_kutta_dopri5_t)Integrator::integrateTimesSpecialized] END" << std::endl;
 }
 
 /******************************************************************************************************/
