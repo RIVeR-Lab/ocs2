@@ -164,6 +164,26 @@ bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_ms
     resetMpcNode(std::move(targetTrajectories));
     res.done = static_cast<uint8_t>(true);
 
+    /*
+    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] targetTrajectories.timeTrajectory size: " << targetTrajectories.timeTrajectory.size() << std::endl;
+    for (size_t i = 0; i < targetTrajectories.timeTrajectory.size(); i++)
+    {
+      std::cout << i << " -> " << targetTrajectories.timeTrajectory[i] << std::endl;
+    }
+
+    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] targetTrajectories.stateTrajectory size: " << targetTrajectories.stateTrajectory.size() << std::endl;
+    for (size_t i = 0; i < targetTrajectories.stateTrajectory.size(); i++)
+    {
+      std::cout << i << " -> " << targetTrajectories.stateTrajectory[i] << std::endl;
+    }
+
+    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] targetTrajectories.inputTrajectory size: " << targetTrajectories.inputTrajectory.size() << std::endl;
+    for (size_t i = 0; i < targetTrajectories.inputTrajectory.size(); i++)
+    {
+      std::cout << i << " -> " << targetTrajectories.inputTrajectory[i] << std::endl;
+    }
+    */
+
     std::cerr << "\n#####################################################"
               << "\n#####################################################"
               << "\n#################  MPC is reset.  ###################"
@@ -404,6 +424,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
     
     if (!controllerIsUpdated) 
     {
+      std::cout << "[MPC_ROS_Interface::mpcObservationCallback] CONTROLLER IS NOT UPDATED" << std::endl;
       return;
     }
     copyToBuffer(currentObservation);

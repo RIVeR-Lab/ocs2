@@ -175,7 +175,7 @@ class MRT_ROS_Gazebo_Loop
     std::string baseFrameName_;
     std::string graspFrameName_;
 
-    double initPolicyCtrMax_ = 1000;
+    double initPolicyCtrMax_ = 5000;
 
     double err_threshold_pos_;
     double err_threshold_ori_;
@@ -185,6 +185,7 @@ class MRT_ROS_Gazebo_Loop
     bool tfFlag_ = false;
     bool initFlagBaseState_ = false;
     bool initFlagArmState_ = false;
+    bool targetReceivedFlag_ = false;
 
     std::vector<int> stateIndexMap_;
 

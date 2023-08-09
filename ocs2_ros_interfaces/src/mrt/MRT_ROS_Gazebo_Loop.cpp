@@ -168,27 +168,35 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
 {
   ROS_INFO_STREAM("[MRT_ROS_Gazebo_Loop::run] Waiting for the initial policy...");
   
-  currentTarget_ = initTarget;
+  //currentTarget_ = initTarget;
   taskEndFlag_ = true;
 
-  while(!isStateInitialized())
-  {
-    //std::cout << "[MRT_ROS_Gazebo_Loop::run] WARNING: State not initialized!" << std::endl;
-    ros::spinOnce();
-  }
+  std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting for the state to be initialized..." << std::endl;
+  while(!isStateInitialized()){ros::spinOnce();}
 
   //ROS_INFO_STREAM("[MRT_ROS_Gazebo_Loop::run] BEFORE getCurrentObservation");
 
   SystemObservation initObservation = getCurrentObservation(true);
+  
+  std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting for the target to be received..." << std::endl;
+  while(!targetReceivedFlag_){ros::spinOnce();}
+  vector_t currentTarget = currentTarget_;
 
-  std::cout << "[MRT_ROS_Gazebo_Loop::run] BEFORE currentTarget size: " << initTarget.size() << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::run] BEFORE initTarget size: " << initTarget.size() << std::endl;
   for (size_t i = 0; i < initTarget.size(); i++)
   {
     std::cout << i << " -> " << initTarget[i] << std::endl;
   }
   std::cout << "------------" << std::endl;
 
-  const TargetTrajectories initTargetTrajectories({0}, {initTarget}, {initObservation.input});
+  std::cout << "[MRT_ROS_Gazebo_Loop::run] BEFORE currentTarget size: " << currentTarget.size() << std::endl;
+  for (size_t i = 0; i < currentTarget.size(); i++)
+  {
+    std::cout << i << " -> " << currentTarget[i] << std::endl;
+  }
+  std::cout << "------------" << std::endl;
+
+  const TargetTrajectories initTargetTrajectories({0}, {currentTarget}, {initObservation.input});
 
   // Reset MPC node
   mrt_.resetMpcNode(initTargetTrajectories);
@@ -1098,6 +1106,7 @@ bool MRT_ROS_Gazebo_Loop::setTaskSrv(ocs2_msgs::setTask::Request &req,
   res.success = true;
 
   taskEndFlag_ = false;
+  targetReceivedFlag_ = true;
 
   std::cout << "[MRT_ROS_Gazebo_Loop::setTaskModeSrv] taskMode_: " << taskMode_ << std::endl;
   std::cout << "[MRT_ROS_Gazebo_Loop::setTaskModeSrv] END" << std::endl;

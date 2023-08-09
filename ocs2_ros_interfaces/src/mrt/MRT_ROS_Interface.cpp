@@ -70,6 +70,10 @@ RobotModelInfo MRT_ROS_Interface::getRobotModelInfo()
 /******************************************************************************************************/
 void MRT_ROS_Interface::resetMpcNode(const TargetTrajectories& initTargetTrajectories) 
 {
+  std::cout << "[MRT_ROS_Interface::resetMpcNode] START" << std::endl;
+
+  //std::cout << "[MRT_ROS_Interface::resetMpcNode] initTargetTrajectories size: " << initTargetTrajectories.inputTrajectory.size() << std::endl;
+
   this->reset();
 
   ocs2_msgs::reset resetSrv;
@@ -83,6 +87,8 @@ void MRT_ROS_Interface::resetMpcNode(const TargetTrajectories& initTargetTraject
 
   mpcResetServiceClient_.call(resetSrv);
   ROS_INFO_STREAM("[MRT_ROS_Interface::resetMpcNode] MPC node has been reset.");
+
+  std::cout << "[MRT_ROS_Interface::resetMpcNode] END" << std::endl;
 }
 
 /******************************************************************************************************/
