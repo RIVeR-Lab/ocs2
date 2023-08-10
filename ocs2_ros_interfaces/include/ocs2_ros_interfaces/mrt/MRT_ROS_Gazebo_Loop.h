@@ -66,7 +66,7 @@ class MRT_ROS_Gazebo_Loop
                         double err_threshold_ori_,
                         scalar_t mrtDesiredFrequency,
                         scalar_t mpcDesiredFrequency = -1,
-                        bool updateIndexMapFlag=false);
+                        bool updateIndexMapFlag=true);
 
     /**
      * Destructor.
@@ -175,6 +175,8 @@ class MRT_ROS_Gazebo_Loop
     std::string baseFrameName_;
     std::string graspFrameName_;
 
+    bool dataCollectionFlag_ = true;
+
     double initPolicyCtrMax_ = 5000;
 
     double err_threshold_pos_;
@@ -185,6 +187,7 @@ class MRT_ROS_Gazebo_Loop
     bool tfFlag_ = false;
     bool initFlagBaseState_ = false;
     bool initFlagArmState_ = false;
+    bool initFlagArmState2_ = false;
     bool targetReceivedFlag_ = false;
 
     std::vector<int> stateIndexMap_;
@@ -203,6 +206,7 @@ class MRT_ROS_Gazebo_Loop
 
     std::vector<double> statePositionBase_;
     std::vector<double> statePositionArm_;
+    std::vector<double> statePositionArmTmp_;
 
     std::vector<double> stateVelocityBase_;
     std::vector<double> inputArm_;
@@ -239,7 +243,7 @@ class MRT_ROS_Gazebo_Loop
     ros::Subscriber odometrySub_;
     ros::Subscriber linkStateSub_;
     ros::Subscriber jointStateSub_;
-    ros::Subscriber jointTrajectoryPControllerStateSub_;
+    ros::Subscriber jointTrajectoryControllerStateSub_;
     ros::Subscriber targetTrajectoriesSubscriber_;
 
     ros::Publisher baseTwistPub_;
