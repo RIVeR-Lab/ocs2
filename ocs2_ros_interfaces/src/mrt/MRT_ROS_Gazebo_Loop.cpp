@@ -1212,16 +1212,18 @@ void MRT_ROS_Gazebo_Loop::writeData(bool endFlag)
 {
   if ( (time_ - dataWriteLastTime_) > dataWriteFreq_ || shutDownFlag_)
   {
-    std::cout << "[MRT_ROS_Gazebo_Loop::writeData] START" << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::writeData] START" << std::endl;
 
     dataTimeEnd_ = time_;
 
+    /*
     std::cout << "[MRT_ROS_Gazebo_Loop::writeData] dataTimeStart_: " << dataTimeStart_ << std::endl;
     std::cout << "[MRT_ROS_Gazebo_Loop::writeData] dataTimeEnd_: " << dataTimeEnd_ << std::endl;
     std::cout << "[MRT_ROS_Gazebo_Loop::writeData] dataPath_: " << dataPath_ << std::endl;
     std::cout << "[MRT_ROS_Gazebo_Loop::writeData] dataStatePosition_ size: " << dataStatePosition_.size() << std::endl;
     std::cout << "[MRT_ROS_Gazebo_Loop::writeData] dataStateVelocityBase_ size: " << dataStateVelocityBase_.size() << std::endl;
     std::cout << "[MRT_ROS_Gazebo_Loop::writeData] dataCommand_ size: " << dataCommand_.size() << std::endl;
+    */
 
     dataTimeEnd_ = time_;
 
@@ -1230,6 +1232,9 @@ void MRT_ROS_Gazebo_Loop::writeData(bool endFlag)
     j["time_start"] = dataTimeStart_;
     j["time_end"] = dataTimeEnd_;
     j["end_flag"] = endFlag;
+    j["model_mode"] = getRobotModelTypeString(robotModelInfo_);
+    j["state_arm_offset"] = robotModelInfo_.mobileBase.stateDim;
+    j["input_arm_offset"] = robotModelInfo_.mobileBase.inputDim;
     j["state_position"] = dataStatePosition_;
     j["state_velocity_base"] = dataStateVelocityBase_;
     j["command"] = dataCommand_;
@@ -1244,7 +1249,7 @@ void MRT_ROS_Gazebo_Loop::writeData(bool endFlag)
     dataCommand_.clear();
     dataWriteLastTime_ = time_;
 
-    std::cout << "[MRT_ROS_Gazebo_Loop::writeData] END" << std::endl << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::writeData] END" << std::endl << std::endl;
   }
 }
 

@@ -36,55 +36,81 @@ namespace ocs2 {
 /**
  * The base class for autonomous system dynamics.
  */
-class OdeBase {
- public:
-  /** Default constructor */
-  OdeBase() = default;
+class OdeBase 
+{
+  public:
+    /** Default constructor */
+    OdeBase() = default;
 
-  /** Default destructor */
-  virtual ~OdeBase() = default;
+    /** Default destructor */
+    virtual ~OdeBase() = default;
 
-  /** Returns the number of function calls. */
-  size_t getNumFunctionCalls() const { return numFunctionCalls_; }
+    /** Returns the number of function calls. */
+    size_t getNumFunctionCalls() const 
+    { 
+      return numFunctionCalls_; 
+    }
 
-  /** Resets the number of function calls to zero. */
-  void resetNumFunctionCalls() { numFunctionCalls_ = 0; }
+    /*
+    bool getShutDownFlag() const 
+    { 
+      return shutDownFlag_; 
+    }
 
-  /** Increments the number of function calls. */
-  size_t incrementNumFunctionCalls() { return ++numFunctionCalls_; }
+    
+    bool setShutDownFlag(bool shutDownFlag) 
+    { 
+      std::cout << "[OdeBase::setShutDownFlag] START" << std::endl;
+      shutDownFlag_ = shutDownFlag; 
+      std::cout << "[OdeBase::setShutDownFlag] END" << std::endl;
+    }
+    */
 
-  /**
-   * Computes the autonomous system dynamics.
-   * @param [in] t: Current time.
-   * @param [in] x: Current state.
-   * @return Current state time derivative
-   */
-  virtual vector_t computeFlowMap(scalar_t t, const vector_t& x) = 0;
+    /** Resets the number of function calls to zero. */
+    void resetNumFunctionCalls()
+    { 
+      numFunctionCalls_ = 0; 
+    }
 
-  /**
-   * State map at the transition time
-   *
-   * @param [in] time: transition time
-   * @param [in] state: transition state
-   * @return mapped state after transition
-   */
-  virtual vector_t computeJumpMap(scalar_t time, const vector_t& state);
+    /** Increments the number of function calls. */
+    size_t incrementNumFunctionCalls() 
+    { 
+      return ++numFunctionCalls_; 
+    }
 
-  /**
-   * Interface method to the guard surfaces.
-   *
-   * @param [in] time: transition time
-   * @param [in] state: transition state
-   * @return An array of guard surfaces values
-   */
-  virtual vector_t computeGuardSurfaces(scalar_t time, const vector_t& state);
+    /**
+     * Computes the autonomous system dynamics.
+     * @param [in] t: Current time.
+     * @param [in] x: Current state.
+     * @return Current state time derivative
+     */
+    virtual vector_t computeFlowMap(scalar_t t, const vector_t& x) = 0;
 
- protected:
-  /** Copy constructor */
-  OdeBase(const OdeBase& rhs) : numFunctionCalls_(0) {}
+    /**
+     * State map at the transition time
+     *
+     * @param [in] time: transition time
+     * @param [in] state: transition state
+     * @return mapped state after transition
+     */
+    virtual vector_t computeJumpMap(scalar_t time, const vector_t& state);
 
- private:
-  size_t numFunctionCalls_ = 0;
+    /**
+     * Interface method to the guard surfaces.
+     *
+     * @param [in] time: transition time
+     * @param [in] state: transition state
+     * @return An array of guard surfaces values
+     */
+    virtual vector_t computeGuardSurfaces(scalar_t time, const vector_t& state);
+
+  protected:
+    /** Copy constructor */
+    OdeBase(const OdeBase& rhs) : numFunctionCalls_(0) {}
+
+  private:
+    size_t numFunctionCalls_ = 0;
+    bool shutDownFlag_ = false;
 };
 
 }  // namespace ocs2

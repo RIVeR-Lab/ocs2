@@ -103,6 +103,16 @@ class MPC_BASE
       return mpcSettings_.timeHorizon_; 
     }
 
+    bool getInternalShutDownFlag() const 
+    { 
+      return internalShutDownFlag_; 
+    }
+
+    void setInternalShutDownFlag(bool internalShutDownFlag) 
+    { 
+      internalShutDownFlag_ = internalShutDownFlag; 
+    }
+
     /** Gets the MPC settings. */
     const mpc::Settings& settings() const 
     { 
@@ -127,7 +137,7 @@ class MPC_BASE
      * @param [in] initState: Initial full state.
      * @param [in] finalTime: Final time. This value can be adjusted by the optimizer.
      */
-    virtual void calculateController(scalar_t initTime, const vector_t& initState, const vector_t& initFullState, scalar_t finalTime) = 0;
+    virtual bool calculateController(scalar_t initTime, const vector_t& initState, const vector_t& initFullState, scalar_t finalTime) = 0;
 
     /** Whether this is the first iteration of MPC or not. */
     bool isFirstMpcRun() const 
@@ -140,6 +150,8 @@ class MPC_BASE
     const mpc::Settings mpcSettings_;
 
     benchmark::RepeatedTimer mpcTimer_;
+
+    bool internalShutDownFlag_ = false;
 
     //int modelMode_ = 2;     // 0: base, 1: arm, 2: arm+base
     //int baseStateDim_ = 3;

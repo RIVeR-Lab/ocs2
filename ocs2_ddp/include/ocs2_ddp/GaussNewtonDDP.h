@@ -68,8 +68,10 @@ class GaussNewtonDDP : public SolverBase
     * @param [in] optimalControlProblem: The optimal control problem formulation.
     * @param [in] initializer: This class initializes the state-input for the time steps that no controller is available.
     */
-    GaussNewtonDDP(ddp::Settings ddpSettings, const RolloutBase& rollout, const OptimalControlProblem& optimalControlProblem,
-                  const Initializer& initializer);
+    GaussNewtonDDP(ddp::Settings ddpSettings, 
+                   const RolloutBase& rollout, 
+                   const OptimalControlProblem& optimalControlProblem,
+                   const Initializer& initializer);
 
     /**
      * Destructor.
@@ -78,42 +80,79 @@ class GaussNewtonDDP : public SolverBase
 
     void reset() override;
 
-    size_t getNumIterations() const override { return totalNumIterations_; }
+    size_t getNumIterations() const override 
+    { 
+      return totalNumIterations_; 
+    }
 
-    scalar_t getFinalTime() const override { return finalTime_; }
+    scalar_t getFinalTime() const override 
+    { 
+      return finalTime_; 
+    }
 
-    const OptimalControlProblem& getOptimalControlProblem() const override { return optimalControlProblemStock_.front(); }
+    const OptimalControlProblem& getOptimalControlProblem() const override 
+    { 
+      return optimalControlProblemStock_.front(); 
+    }
 
-    const PerformanceIndex& getPerformanceIndeces() const override { return performanceIndex_; }
+    const PerformanceIndex& getPerformanceIndeces() const override 
+    { 
+      return performanceIndex_; 
+    }
 
-    const std::vector<PerformanceIndex>& getIterationsLog() const override { return performanceIndexHistory_; }
+    const std::vector<PerformanceIndex>& getIterationsLog() const override 
+    { 
+      return performanceIndexHistory_; 
+    }
 
     void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const final;
 
-    const DualSolution& getDualSolution() const override { return optimizedDualSolution_; }
+    const DualSolution& getDualSolution() const override 
+    { 
+      return optimizedDualSolution_; 
+    }
 
-    const ProblemMetrics& getSolutionMetrics() const override { return optimizedProblemMetrics_; }
+    const ProblemMetrics& getSolutionMetrics() const override 
+    { 
+      return optimizedProblemMetrics_; 
+    }
 
-    ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override {
+    ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override 
+    {
       return getValueFunctionImpl(time, state, nominalPrimalData_.primalSolution, nominalDualData_.valueFunctionTrajectory);
     }
 
     ScalarFunctionQuadraticApproximation getHamiltonian(scalar_t time, const vector_t& state, const vector_t& input) override;
 
-    vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override {
+    vector_t getStateInputEqualityConstraintLagrangian(scalar_t time, const vector_t& state) const override 
+    {
       return getStateInputEqualityConstraintLagrangianImpl(time, state, nominalPrimalData_, nominalDualData_);
     }
 
-    MultiplierCollection getIntermediateDualSolution(scalar_t time) const override {
+    MultiplierCollection getIntermediateDualSolution(scalar_t time) const override 
+    {
       return getIntermediateDualSolutionAtTime(nominalDualData_.dualSolution, time);
     }
 
     std::string getBenchmarkingInfo() const override;
 
+    bool getInternalShutDownFlag() const 
+    { 
+      return internalShutDownFlag_; 
+    }
+
+    void setInternalShutDownFlag(bool internalShutDownFlag) 
+    { 
+      internalShutDownFlag_ = internalShutDownFlag; 
+    }
+
     /**
      * Const access to ddp settings
      */
-    const ddp::Settings& settings() const { return ddpSettings_; }
+    const ddp::Settings& settings() const 
+    { 
+      return ddpSettings_; 
+    }
 
   protected:
     /**
@@ -122,7 +161,8 @@ class GaussNewtonDDP : public SolverBase
      * @param [in] taskFunction: task function
      * @param [in] N: number of times to run taskFunction, if N = 1 it is run in the main thread
      */
-    void runParallel(std::function<void(void)> taskFunction, size_t N) {
+    void runParallel(std::function<void(void)> taskFunction, size_t N) 
+    {
       threadPool_.runParallel([&](int) { taskFunction(); }, N);
     }
 
@@ -137,8 +177,10 @@ class GaussNewtonDDP : public SolverBase
      * @param [out] projectedModelData: The projected model data.
      * @param [out] riccatiModification: The Riccati equation modifier.
      */
-    void computeProjectionAndRiccatiModification(const ModelData& modelData, const matrix_t& Sm, ModelData& projectedModelData,
-                                                riccati_modification::Data& riccatiModification) const;
+    void computeProjectionAndRiccatiModification(const ModelData& modelData, 
+                                                 const matrix_t& Sm, 
+                                                 ModelData& projectedModelData,
+                                                 riccati_modification::Data& riccatiModification) const;
 
     /**
      * Computes the Hessian of Hamiltonian based on the search strategy and algorithm.
@@ -167,8 +209,10 @@ class GaussNewtonDDP : public SolverBase
      * @param [in] dualData: Dual data used to calculate controller
      * @param [out] dstController: The destination controller
      */
-    virtual void calculateControllerWorker(size_t timeIndex, const PrimalDataContainer& primalData, const DualDataContainer& dualData,
-                                          LinearController& dstController) = 0;
+    virtual void calculateControllerWorker(size_t timeIndex, 
+                                           const PrimalDataContainer& primalData, 
+                                           const DualDataContainer& dualData,
+                                           LinearController& dstController) = 0;
 
     /**
      * Solves Riccati equations.
@@ -193,7 +237,8 @@ class GaussNewtonDDP : public SolverBase
      * @param [in] partitionInterval: Current active interval
      * @param [in] finalValueFunction The final Sm(dfdxx), Sv(dfdx), s(f), for Riccati equation.
      */
-    virtual void riccatiEquationsWorker(size_t workerIndex, const std::pair<int, int>& partitionInterval,
+    virtual void riccatiEquationsWorker(size_t workerIndex, 
+                                        const std::pair<int, int>& partitionInterval,
                                         const ScalarFunctionQuadraticApproximation& finalValueFunction) = 0;
 
   private:
@@ -206,8 +251,10 @@ class GaussNewtonDDP : public SolverBase
      * @param [in] dualData: DualData
      * @return vector_t
      */
-    vector_t getStateInputEqualityConstraintLagrangianImpl(scalar_t time, const vector_t& state, const PrimalDataContainer& primalData,
-                                                          const DualDataContainer& dualData) const;
+    vector_t getStateInputEqualityConstraintLagrangianImpl(scalar_t time, 
+                                                           const vector_t& state, 
+                                                           const PrimalDataContainer& primalData,
+                                                           const DualDataContainer& dualData) const;
 
     /**
      * Get the Value Function at time (time) from valueFunctionTrajectory. The the gradient of the value function will be corrected by using
@@ -219,9 +266,10 @@ class GaussNewtonDDP : public SolverBase
      * @param [in] valueFunctionTrajectory: A trajectory of the value function quadratic approximation.
      * @return value function
      */
-    ScalarFunctionQuadraticApproximation getValueFunctionImpl(
-        const scalar_t time, const vector_t& state, const PrimalSolution& primalSolution,
-        const std::vector<ScalarFunctionQuadraticApproximation>& valueFunctionTrajectory) const;
+    ScalarFunctionQuadraticApproximation getValueFunctionImpl(const scalar_t time, 
+                                                              const vector_t& state, 
+                                                              const PrimalSolution& primalSolution,
+                                                              const std::vector<ScalarFunctionQuadraticApproximation>& valueFunctionTrajectory) const;
 
     /**
      * @brief Get the Value Function From Cache
@@ -230,7 +278,8 @@ class GaussNewtonDDP : public SolverBase
      * @param [in] state: Current state
      * @return ScalarFunctionQuadraticApproximation
      */
-    ScalarFunctionQuadraticApproximation getValueFunctionFromCache(scalar_t time, const vector_t& state) const {
+    ScalarFunctionQuadraticApproximation getValueFunctionFromCache(scalar_t time, const vector_t& state) const 
+    {
       return getValueFunctionImpl(time, state, cachedPrimalData_.primalSolution, cachedDualData_.valueFunctionTrajectory);
     }
 
@@ -301,7 +350,9 @@ class GaussNewtonDDP : public SolverBase
      * @param [out] constraintRangeProjector: The projection matrix to the constrained subspace.
      * @param [out] constraintNullProjector: The projection matrix to the null space of constrained.
      */
-    void computeProjections(const matrix_t& Hm, const matrix_t& Dm, matrix_t& constraintRangeProjector,
+    void computeProjections(const matrix_t& Hm, 
+                            const matrix_t& Dm, 
+                            matrix_t& constraintRangeProjector,
                             matrix_t& constraintNullProjector) const;
 
     /** Initialize the constraint penalty coefficients. */
@@ -335,7 +386,8 @@ class GaussNewtonDDP : public SolverBase
      * @param [in] currentPerformanceIndex: The current iteration's PerformanceIndex.
      * @return A pair of (isOptimizationConverged, infoString)
      */
-    std::pair<bool, std::string> checkConvergence(bool isInitalControllerEmpty, const PerformanceIndex& previousPerformanceIndex,
+    std::pair<bool, std::string> checkConvergence(bool isInitalControllerEmpty, 
+                                                  const PerformanceIndex& previousPerformanceIndex,
                                                   const PerformanceIndex& currentPerformanceIndex) const;
 
     void runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) override;
@@ -368,6 +420,8 @@ class GaussNewtonDDP : public SolverBase
 
   private:
     const ddp::Settings ddpSettings_;
+
+    bool internalShutDownFlag_ = false;
 
     ThreadPool threadPool_;
 

@@ -85,6 +85,8 @@ scalar_t StateCostCollection::getValue(scalar_t time,
   //std::cout << "[StateCostCollection::getValue(5)] START" << std::endl;
   scalar_t cost = 0.0;
 
+  //std::cout << "[StateCostCollection::getValue(5)] this->terms_.size: " << this->terms_.size() << std::endl;
+
   // accumulate cost terms
   for (const auto& costTerm : this->terms_) 
   {

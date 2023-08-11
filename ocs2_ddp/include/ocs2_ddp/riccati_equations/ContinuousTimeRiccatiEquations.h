@@ -84,7 +84,8 @@ struct ContinuousTimeRiccatiData {
  * @param [in] state_dim: Dimension of the state space.
  * @return Dimension of the flattened and concatenated vector from Sm, Sv and s.
  */
-static constexpr int s_vector_dim(int state_dim) {
+static constexpr int s_vector_dim(int state_dim) 
+{
   /** If STATE_DIM=n, Then: n(n+1)/2 entries from triangular matrix Sm, n entries from vector Sv and +1 one from a scalar */
   return state_dim == Eigen::Dynamic ? Eigen::Dynamic : (state_dim * (state_dim + 1) / 2 + state_dim + 1);
 }
@@ -103,46 +104,48 @@ static constexpr int riccati_matrix_dim(int flattened_dim) {
 /**
  * This class implements the Riccati differential equations for SLQ problem.
  */
-class ContinuousTimeRiccatiEquations final : public OdeBase {
- public:
-  /**
-   * Constructor.
-   *
-   * @param [in] reducedFormRiccati: The reduced form of the Riccati equation is yield by assuming that Hessein of
-   * the Hamiltonian is positive definite. In this case, the computation of Riccati equation is more efficient.
-   * @param [in] isRiskSensitive: Neither the risk sensitive variant is used or not.
-   */
-  explicit ContinuousTimeRiccatiEquations(bool reducedFormRiccati, bool isRiskSensitive = false);
+class ContinuousTimeRiccatiEquations final : public OdeBase 
+{
+  public:
+    /**
+     * Constructor.
+     *
+     * @param [in] reducedFormRiccati: The reduced form of the Riccati equation is yield by assuming that Hessein of
+     * the Hamiltonian is positive definite. In this case, the computation of Riccati equation is more efficient.
+     * @param [in] isRiskSensitive: Neither the risk sensitive variant is used or not.
+     */
+    explicit ContinuousTimeRiccatiEquations(bool reducedFormRiccati, bool isRiskSensitive = false);
 
-  /**
-   * Default destructor.
-   */
-  ~ContinuousTimeRiccatiEquations() override = default;
+    /**
+     * Default destructor.
+     */
+    ~ContinuousTimeRiccatiEquations() override = default;
 
-  /**
-   * Sets risk-sensitive coefficient.
-   */
-  void setRiskSensitiveCoefficient(scalar_t riskSensitiveCoeff);
+    /**
+     * Sets risk-sensitive coefficient.
+     */
+    void setRiskSensitiveCoefficient(scalar_t riskSensitiveCoeff);
 
-  /**
-   * Transcribe symmetric matrix Sm, vector Sv and scalar s into a single vector.
-   *
-   * @param [in] Sm: \f$ S_m \f$
-   * @param [in] Sv: \f$ S_v \f$
-   * @param [in] s: \f$ s \f$
-   * @return Single vector constructed by concatenating Sm, Sv and s.
-   */
-  static vector_t convert2Vector(const matrix_t& Sm, const vector_t& Sv, const scalar_t& s);
+    /**
+     * Transcribe symmetric matrix Sm, vector Sv and scalar s into a single vector.
+     *
+     * @param [in] Sm: \f$ S_m \f$
+     * @param [in] Sv: \f$ S_v \f$
+     * @param [in] s: \f$ s \f$
+     * @return Single vector constructed by concatenating Sm, Sv and s.
+     */
+    static vector_t convert2Vector(const matrix_t& Sm, const vector_t& Sv, const scalar_t& s);
 
-  /**
-   * Transcribe value function approximation into a single vector.
-   *
-   * @param [in] valueFunction: value function approximation
-   * @return Single vector constructed by concatenating Sm, Sv and s.
-   */
-  static vector_t convert2Vector(const ScalarFunctionQuadraticApproximation& valueFunction) {
-    return ContinuousTimeRiccatiEquations::convert2Vector(valueFunction.dfdxx, valueFunction.dfdx, valueFunction.f);
-  }
+    /**
+     * Transcribe value function approximation into a single vector.
+     *
+     * @param [in] valueFunction: value function approximation
+     * @return Single vector constructed by concatenating Sm, Sv and s.
+     */
+    static vector_t convert2Vector(const ScalarFunctionQuadraticApproximation& valueFunction) 
+    {
+      return ContinuousTimeRiccatiEquations::convert2Vector(valueFunction.dfdxx, valueFunction.dfdx, valueFunction.f);
+    }
 
   /**
    * Transcribes the stacked vector allSs into a symmetric matrix, Sm, a vector, Sv and a single scalar, s.

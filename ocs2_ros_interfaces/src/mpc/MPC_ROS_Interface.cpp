@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.20
+// LAST UPDATE: 2023.08.09
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -352,94 +352,89 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
 {
   //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START" << std::endl;
 
-  std::lock_guard<std::mutex> resetLock(resetMutex_);
-
-  if (!resetRequestedEver_.load()) 
+  if (!shutDownFlag_ && !internalShutDownFlag_)
   {
-    ROS_WARN_STREAM("[MPC_ROS_Interface::mpcObservationCallback] MPC should be reset first. Either call MPC_ROS_Interface::reset() or use the reset service.");
-    return;
-  }
+    std::lock_guard<std::mutex> resetLock(resetMutex_);
 
-  //if (shutDownFlag_)
-  //{
-  //  mpcObservationSubscriber_.shutdown();
-  //  shutdownNode();
-  //  std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] AFTER shutdownNode: " << std::endl;
-  //}
-  /*
-  else
-  {
-    std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] NO shutdownNode: " << std::endl;
-    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] mpcProblemReadyFlag: " << getenv("mpcProblemReadyFlag") << std::endl;
-  }
-  */
+    if (!resetRequestedEver_.load()) 
+    {
+      ROS_WARN_STREAM("[MPC_ROS_Interface::mpcObservationCallback] MPC should be reset first. Either call MPC_ROS_Interface::reset() or use the reset service.");
+      return;
+    }
 
-  // current time, state, input, and subsystem
-  const auto currentObservation = ros_msg_conversions::readObservationMsg(*msg);
+    // current time, state, input, and subsystem
+    const auto currentObservation = ros_msg_conversions::readObservationMsg(*msg);
 
-  // measure the delay in running MPC
-  mpcTimer_.startTimer();
+    // measure the delay in running MPC
+    mpcTimer_.startTimer();
 
-  /*
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] modelModeInt_: " << modelModeInt_ << std::endl;
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.state size: " << currentObservation.state.size() << std::endl;
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.full_state size: " << currentObservation.full_state.size() << std::endl;
+    /*
+    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] modelModeInt_: " << modelModeInt_ << std::endl;
+    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.state size: " << currentObservation.state.size() << std::endl;
+    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.full_state size: " << currentObservation.full_state.size() << std::endl;
 
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.state:" << std::endl;
-  std::cout << currentObservation.state << std::endl << std::endl;
-  
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.input:" << std::endl;
-  std::cout << currentObservation.input << std::endl;
+    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.state:" << std::endl;
+    std::cout << currentObservation.state << std::endl << std::endl;
+    
+    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.input:" << std::endl;
+    std::cout << currentObservation.input << std::endl;
 
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.full_state:" << std::endl;
-  std::cout << currentObservation.full_state << std::endl;
-  */
+    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.full_state:" << std::endl;
+    std::cout << currentObservation.full_state << std::endl;
+    */
 
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START mpc_.run" << std::endl;
+    
+    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START mpc_.run" << std::endl;
+    /*
+    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.state:" << std::endl;
+    std::cout << currentObservation.state << std::endl << std::endl;
 
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.state:" << std::endl;
-  std::cout << currentObservation.state << std::endl << std::endl;
+    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.full_state:" << std::endl;
+    std::cout << currentObservation.full_state << std::endl;
+    */
 
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] currentObservation.full_state:" << std::endl;
-  std::cout << currentObservation.full_state << std::endl;
+    // run MPC
+    //bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state);
+    bool controllerIsUpdated;
+    internalShutDownFlag_ = false;
+    controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state, currentObservation.full_state);
 
-  // run MPC
-  //bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state);
-  bool controllerIsUpdated;
-  controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state, currentObservation.full_state);
-  
-  if (!controllerIsUpdated) 
-  {
-    return;
-  }
-  copyToBuffer(currentObservation);
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END mpc_.run" << std::endl;
+    internalShutDownFlag_ = mpc_.getInternalShutDownFlag();
+    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
+    
+    if (!controllerIsUpdated) 
+    {
+      return;
+    }
+    copyToBuffer(currentObservation);
+    
+    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END mpc_.run" << std::endl << std::endl;
 
-  // Measure the delay for sending ROS messages
-  mpcTimer_.endTimer();
+    // Measure the delay for sending ROS messages
+    mpcTimer_.endTimer();
 
-  // Check MPC delay and solution window compatibility
-  scalar_t timeWindow;
-  timeWindow = mpc_.settings().solutionTimeWindow_;
-  if (mpc_.settings().solutionTimeWindow_ < 0) 
-  {
-    timeWindow = mpc_.getSolverPtr()->getFinalTime() - currentObservation.time;
-  }
+    // Check MPC delay and solution window compatibility
+    scalar_t timeWindow;
+    timeWindow = mpc_.settings().solutionTimeWindow_;
+    if (mpc_.settings().solutionTimeWindow_ < 0) 
+    {
+      timeWindow = mpc_.getSolverPtr()->getFinalTime() - currentObservation.time;
+    }
 
-  if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) 
-  {
-    std::cerr << "[MPC_ROS_Interface::mpcObservationCallback] WARNING: The solution time window might be shorter than the MPC delay!\n";
-  }
+    if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) 
+    {
+      std::cerr << "[MPC_ROS_Interface::mpcObservationCallback] WARNING: The solution time window might be shorter than the MPC delay!\n";
+    }
 
-  // Display time benchmarks
-  if (mpc_.settings().debugPrint_) 
-  {
-    std::cerr << '\n';
-    std::cerr << "\n### MPC_ROS Benchmarking";
-    std::cerr << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
-    std::cerr << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].";
-    std::cerr << "\n###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
-  }
+    // Display time benchmarks
+    if (mpc_.settings().debugPrint_) 
+    {
+      std::cerr << '\n';
+      std::cerr << "\n### MPC_ROS Benchmarking";
+      std::cerr << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
+      std::cerr << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].";
+      std::cerr << "\n###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+    }
 
 #ifdef PUBLISH_THREAD
   std::unique_lock<std::mutex> lk(publisherMutex_);
@@ -450,7 +445,21 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   ocs2_msgs::mpc_flattened_controller mpcPolicyMsg = createMpcPolicyMsg(*bufferPrimalSolutionPtr_, *bufferCommandPtr_, *bufferPerformanceIndicesPtr_);
   mpcPolicyPublisher_.publish(mpcPolicyMsg);
 #endif
-
+  }
+  else
+  {
+    if (!callbackEndFlag_)
+    {
+      if (internalShutDownFlag_)
+      {
+        std::cout << "[MPC_ROS_Interface::mpcObservationCallback] INTERNALLY SHUT DOWN!!!: " << internalShutDownFlag_ << std::endl;
+      }
+      std::cout << "[MPC_ROS_Interface::mpcObservationCallback] shutDownFlag_: " << shutDownFlag_ << std::endl;
+      std::cout << "[MPC_ROS_Interface::mpcObservationCallback] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
+      std::cout << "[MPC_ROS_Interface::mpcObservationCallback] Shutting down..." << std::endl;
+    }
+    callbackEndFlag_ = true;
+  }
   //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END" << std::endl << std::endl;
 }
 
@@ -500,15 +509,9 @@ void MPC_ROS_Interface::spin()
 
     if (mpcShutDownFlag_ == "true")
     {
-      std::cout << "[MPC_ROS_Interface::spin] SHUTTING DOWN GUYS!!!" << std::endl;
+      std::cout << "[MPC_ROS_Interface::spin] Shutting down..." << std::endl;
       shutDownFlag_ = true;
     }
-    /*
-    else
-    {
-      std::cout << "[MPC_ROS_Interface::spin] OMG shutDownFlag_: false" << std::endl;
-    }
-    */
 
     ros::getGlobalCallbackQueue()->callAvailable(ros::WallDuration(0.1));
   }

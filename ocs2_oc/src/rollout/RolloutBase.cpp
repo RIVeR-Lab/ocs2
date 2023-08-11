@@ -41,8 +41,10 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::vector<std::pair<scalar_t, scalar_t>> RolloutBase::findActiveModesTimeInterval(scalar_t initTime, scalar_t finalTime,
-                                                                                    const scalar_array_t& eventTimes) const {
+std::vector<std::pair<scalar_t, scalar_t>> RolloutBase::findActiveModesTimeInterval(scalar_t initTime, 
+                                                                                    scalar_t finalTime,
+                                                                                    const scalar_array_t& eventTimes) const 
+{
   // switching times
   const auto firstIndex = std::upper_bound(eventTimes.cbegin(), eventTimes.cend(), initTime);  // no event at initial time
   const auto lastIndex = std::upper_bound(eventTimes.cbegin(), eventTimes.cend(), finalTime);  // can be an event at final time
@@ -106,9 +108,12 @@ void RolloutBase::display(const scalar_array_t& timeTrajectory, const size_array
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void RolloutBase::checkNumericalStability(const ControllerBase& controller, const scalar_array_t& timeTrajectory,
-                                          const size_array_t& postEventIndices, const vector_array_t& stateTrajectory,
-                                          const vector_array_t& inputTrajectory) const {
+void RolloutBase::checkNumericalStability(const ControllerBase& controller, 
+                                          const scalar_array_t& timeTrajectory,
+                                          const size_array_t& postEventIndices, 
+                                          const vector_array_t& stateTrajectory,
+                                          const vector_array_t& inputTrajectory) const 
+{
   if (!rolloutSettings_.checkNumericalStability) {
     return;
   }
@@ -116,13 +121,13 @@ void RolloutBase::checkNumericalStability(const ControllerBase& controller, cons
   for (size_t i = 0; i < timeTrajectory.size(); i++) {
     try {
       if (!stateTrajectory[i].allFinite()) {
-        throw std::runtime_error("Rollout: state is not finite");
+        throw std::runtime_error("[RolloutBase::checkNumericalStability] State is not finite");
       }
       if (rolloutSettings_.reconstructInputTrajectory && !inputTrajectory[i].allFinite()) {
-        throw std::runtime_error("Rollout: input is not finite");
+        throw std::runtime_error("[RolloutBase::checkNumericalStability] input is not finite");
       }
     } catch (const std::exception& error) {
-      std::cerr << "what(): " << error.what() << " at time " + std::to_string(timeTrajectory[i]) + " [sec]." << '\n';
+      std::cerr << "[RolloutBase::checkNumericalStability] what(): " << error.what() << " at time " + std::to_string(timeTrajectory[i]) + " [sec]." << '\n';
 
       // truncate trajectories
       scalar_array_t timeTrajectoryTemp;

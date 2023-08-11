@@ -52,7 +52,10 @@ void ContinuousTimeRiccatiEquations::setRiskSensitiveCoefficient(scalar_t riskSe
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t ContinuousTimeRiccatiEquations::convert2Vector(const matrix_t& Sm, const vector_t& Sv, const scalar_t& s) {
+vector_t ContinuousTimeRiccatiEquations::convert2Vector(const matrix_t& Sm, const vector_t& Sv, const scalar_t& s) 
+{
+  //std::cout << "[ContinuousTimeRiccatiEquations::convert2Vector] START" << std::endl;
+
   /* Sm is symmetric. Here, we only extract the upper triangular part and
    * transcribe it in column-wise fashion into allSs*/
   size_t count = 0;  // count the total number of scalar entries covered
@@ -63,7 +66,11 @@ vector_t ContinuousTimeRiccatiEquations::convert2Vector(const matrix_t& Sm, cons
   assert(Sm.rows() == state_dim);
   assert(Sv.rows() == state_dim);
 
+  //std::cout << "[ContinuousTimeRiccatiEquations::convert2Vector] 1state_dim: " << state_dim << std::endl;
+
   vector_t allSs(s_vector_dim(state_dim));
+
+  //std::cout << "[ContinuousTimeRiccatiEquations::convert2Vector] 1allSs size: " << allSs.size() << std::endl;
 
   for (size_t col = 0; col < state_dim; col++) {
     nRows = col + 1;
@@ -74,8 +81,16 @@ vector_t ContinuousTimeRiccatiEquations::convert2Vector(const matrix_t& Sm, cons
   /* add data from Sv on top*/
   allSs.segment(count, state_dim) << Eigen::Map<const vector_t>(Sv.data(), state_dim);
 
+  //std::cout << "[ContinuousTimeRiccatiEquations::convert2Vector] 2state_dim: " << state_dim << std::endl;
+  //std::cout << "[ContinuousTimeRiccatiEquations::convert2Vector] 2allSs size: " << allSs.size() << std::endl;
+
   /* add s as last element*/
   allSs.template tail<1>() << s;
+
+  //std::cout << "[ContinuousTimeRiccatiEquations::convert2Vector] 3state_dim: " << state_dim << std::endl;
+  //std::cout << "[ContinuousTimeRiccatiEquations::convert2Vector] 3allSs size: " << allSs.size() << std::endl;
+
+  //std::cout << "[ContinuousTimeRiccatiEquations::convert2Vector] END" << std::endl;
 
   return allSs;
 }
@@ -149,7 +164,9 @@ vector_t ContinuousTimeRiccatiEquations::computeJumpMap(scalar_t z, const vector
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t ContinuousTimeRiccatiEquations::computeFlowMap(scalar_t z, const vector_t& allSs) {
+vector_t ContinuousTimeRiccatiEquations::computeFlowMap(scalar_t z, const vector_t& allSs) 
+{
+  //std::cout << "[ContinuousTimeRiccatiEquations::computeFlowMap] START" << std::endl;
   // index
   const scalar_t t = -z;  // denormalized time
   const auto indexAlpha = LinearInterpolation::timeSegment(t, *timeStampPtr_);
@@ -164,6 +181,8 @@ vector_t ContinuousTimeRiccatiEquations::computeFlowMap(scalar_t z, const vector
                       continuousTimeRiccatiData_, continuousTimeRiccatiData_.dSm_, continuousTimeRiccatiData_.dSv_,
                       continuousTimeRiccatiData_.ds_);
   }
+
+  //std::cout << "[ContinuousTimeRiccatiEquations::computeFlowMap] END" << std::endl;
 
   return convert2Vector(continuousTimeRiccatiData_.dSm_, continuousTimeRiccatiData_.dSv_, continuousTimeRiccatiData_.ds_);
 }

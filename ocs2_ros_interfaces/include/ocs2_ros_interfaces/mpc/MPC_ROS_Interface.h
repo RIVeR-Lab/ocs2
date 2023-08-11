@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.13
+// LAST UPDATE: 2023.08.09
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -191,6 +191,8 @@ class MPC_ROS_Interface
     std_msgs::Bool statusModelModeMPCMsg_;
 
     std::string mpcShutDownFlag_;
+    bool internalShutDownFlag_ = false;
+    bool callbackEndFlag_ = false;
 
     std::string topicPrefix_;
 
