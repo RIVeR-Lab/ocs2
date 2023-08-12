@@ -1463,7 +1463,15 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
       std::cout << "[MobileManipulatorInterface::targetTrajectoriesCallback] ERROR: Size mismatch!" << std::endl;
     }
 
-    targetReadyFlag_ = true;
+    /*
+    std::cout << "[MobileManipulatorInterface::targetTrajectoriesCallback] currentTarget_.size(): " << currentTarget_.size() << std::endl;
+    for (size_t i = 0; i < currentTarget_.size(); i++)
+    {
+      std::cout << i << " -> " << currentTarget_[i] << std::endl;
+    }
+    */
+    
+    //targetReadyFlag_ = true;
     //std::cout << "[MobileManipulatorInterface::targetTrajectoriesCallback] END" << std::endl;
   };
   targetTrajectoriesSubscriber_ = nodeHandle_.subscribe<ocs2_msgs::mpc_target_trajectories>(target_msg_name, 5, targetTrajectoriesCallback);

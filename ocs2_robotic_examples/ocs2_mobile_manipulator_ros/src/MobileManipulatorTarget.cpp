@@ -69,13 +69,15 @@ int main(int argc, char* argv[])
   gu.initializeInteractiveMarkerAutoTarget();
   gu.initializeInteractiveMarkerModelMode();
 
-  gu.setTaskMode(1);
+  gu.setTaskMode(0);
+  gu.setTargetToEEPose();
 
   ros::Rate r(100);
   while(ros::ok)
   {
     //gu.updateObservationAndTarget();
     gu.updateTarget(true);
+    gu.publishTargetTrajectories();
     gu.publishTargetVisu();
     gu.publishGraspFrame();
     gu.publishDropFrame();

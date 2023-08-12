@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.07.28
+// LAST UPDATE: 2022.08.11
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -71,6 +71,7 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
   {
     std::lock_guard<std::mutex> lock(latestObservationMutex_);
     latestObservation_ = ros_msg_conversions::readObservationMsg(*msg);
+    policyReceivedFlag_ = true;
   };
   observationSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mpc_observation>(topicPrefix + "_mpc_observation", 1, observationCallback);
 
@@ -102,7 +103,8 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
   };
   statusModelModeMRTSubscriber_ = nodeHandle.subscribe<std_msgs::Bool>(topicPrefix + "_model_mode_mrt_status", 5, statusModelModeMRTCallback);
 
-  gazeboModelStatesSubscriber_ = nodeHandle.subscribe(gazeboModelMsgName, 10, &TargetTrajectoriesGazebo::gazeboModelStatesCallback, this);
+  gazeboModelStatesSubscriber_ = nodeHandle.subscribe(gazeboModelMsgName, 5, &TargetTrajectoriesGazebo::gazeboModelStatesCallback, this);
+  tfSubscriber_ = nodeHandle.subscribe("/tf", 5, &TargetTrajectoriesGazebo::tfCallback, this);
 
   /// Publishers
   targetTrajectoriesPublisherPtr_.reset(new TargetTrajectoriesRosPublisher(nodeHandle, topicPrefix));
@@ -116,6 +118,7 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
   /// Services
   //setTaskModeService_ = nodeHandle.advertiseService("set_task_mode", &TargetTrajectoriesGazebo::setTaskModeSrv, this);
   setPickedFlagService_ = nodeHandle.advertiseService("set_picked_flag", &TargetTrajectoriesGazebo::setPickedFlagSrv, this);
+  setSystemObservationService_ = nodeHandle.advertiseService("set_system_observation", &TargetTrajectoriesGazebo::setSystemObservationSrv, this);
 }
 
 TargetTrajectoriesGazebo::~TargetTrajectoriesGazebo()
@@ -511,6 +514,29 @@ void TargetTrajectoriesGazebo::gazeboModelStatesCallback(const gazebo_msgs::Mode
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg)
+{
+  //std::cout << "[TargetTrajectoriesGazebo::gazeboModelStatesCallback] Incoming..." << std::endl;
+
+  tf::StampedTransform tf_ee_wrt_world;
+  try
+  {
+    tflistenerPtr_->waitForTransform(worldFrameName_, eeFrame_, ros::Time(0), ros::Duration(1.0));
+    tflistenerPtr_->lookupTransform(worldFrameName_, eeFrame_, ros::Time(0), tf_ee_wrt_world);
+  }
+  catch (tf::TransformException ex)
+  {
+    ROS_INFO("[TargetTrajectoriesGazebo::getEEPose] ERROR: Couldn't get transform!");
+    ROS_ERROR("%s", ex.what());
+  }
+
+  tf_ee_wrt_world_ = tf_ee_wrt_world;
+  initTFCallbackFlag_ = true;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::updateTargetInfo()
 {
   gazebo_msgs::ModelStates ms = modelStatesMsg_;
@@ -625,7 +651,6 @@ void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
 
       graspReadyFlag_ = true;
 
-      fillTargetVisu();
       //publishTargetVisu();
       //publishGraspFrame();
     }
@@ -669,10 +694,12 @@ void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
 
     dropReadyFlag_ = true;
 
-    fillTargetVisu();
+    
     //publishTargetVisu();
     //publishDropFrame();
   }
+
+  fillTargetVisu();
 
   //std::cout << "[TargetTrajectoriesGazebo::updateTarget] DEBUG INF" << std::endl;
   //while(1);
@@ -816,6 +843,57 @@ void TargetTrajectoriesGazebo::updateDropPose(const Eigen::Vector3d& targetPos, 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::setTargetToEEPose()
+{
+  //std::cout << "[TargetTrajectoriesGazebo::updateEEPose] START" << std::endl;
+
+  while(!initTFCallbackFlag_){ros::spinOnce();}
+
+  tf::StampedTransform tf_ee_wrt_world = tf_ee_wrt_world_;
+
+  currentTargetPosition_.x() = tf_ee_wrt_world.getOrigin().x();
+  currentTargetPosition_.y() = tf_ee_wrt_world.getOrigin().y();
+  currentTargetPosition_.z() = tf_ee_wrt_world.getOrigin().z();
+  currentTargetOrientation_.x() = tf_ee_wrt_world.getRotation().x();
+  currentTargetOrientation_.y() = tf_ee_wrt_world.getRotation().y();
+  currentTargetOrientation_.z() = tf_ee_wrt_world.getRotation().z();
+  currentTargetOrientation_.w() = tf_ee_wrt_world.getRotation().w();
+
+  std::cout << "[TargetTrajectoriesGazebo::updateEEPose] pos x: " << currentTargetPosition_.x() << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::updateEEPose] pos y: " << currentTargetPosition_.y() << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::updateEEPose] pos z: " << currentTargetPosition_.z() << std::endl;
+
+  std::cout << "[TargetTrajectoriesGazebo::updateEEPose] ori x: " << currentTargetOrientation_.x() << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::updateEEPose] ori y: " << currentTargetOrientation_.y() << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::updateEEPose] ori z: " << currentTargetOrientation_.z() << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::updateEEPose] ori w: " << currentTargetOrientation_.w() << std::endl;
+
+  //std::cout << "[TargetTrajectoriesGazebo::updateEEPose] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::updateEEPose(Eigen::Vector3d& eePos, Eigen::Quaterniond& eeOri)
+{
+  //std::cout << "[TargetTrajectoriesGazebo::updateEEPose] START" << std::endl;
+
+  tf::StampedTransform tf_ee_wrt_world = tf_ee_wrt_world_;
+
+  eePos.x() = tf_ee_wrt_world.getOrigin().x();
+  eePos.y() = tf_ee_wrt_world.getOrigin().y();
+  eePos.z() = tf_ee_wrt_world.getOrigin().z();
+  eeOri.x() = tf_ee_wrt_world.getRotation().x();
+  eeOri.y() = tf_ee_wrt_world.getRotation().y();
+  eeOri.z() = tf_ee_wrt_world.getRotation().z();
+  eeOri.w() = tf_ee_wrt_world.getRotation().w();
+
+  //std::cout << "[TargetTrajectoriesGazebo::updateEEPose] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::fillTargetVisu()
 {
   //std::cout << "[TargetTrajectoriesGazebo::fillTargetVisu] START" << std::endl;
@@ -953,6 +1031,56 @@ void TargetTrajectoriesGazebo::publishDropFrame()
   }
 
   //std::cout << "[TargetTrajectoriesGazebo::publishDropFrame] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::publishTargetTrajectories()
+{
+  //std::cout << "[TargetTrajectoriesGazebo::publishTargetTrajectories] START" << std::endl;
+
+  //while(!policyReceivedFlag_){ros::spinOnce();}
+  //policyReceivedFlag_ = false;
+
+  // Get the latest observation
+  SystemObservation observation;
+  {
+    std::lock_guard<std::mutex> lock(latestObservationMutex_);
+    observation = latestObservation_;
+  }
+
+  // Get target trajectories
+  auto targetTrajectories = goalPoseToTargetTrajectories_(currentTargetPosition_, currentTargetOrientation_, observation);
+  targetTrajectories.taskMode = taskMode_;
+
+  // Publish target trajectories
+  targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
+
+  //std::cout << "[TargetTrajectoriesGazebo::publishTargetTrajectories] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::publishTargetTrajectories(Eigen::Vector3d& position, Eigen::Quaterniond& orientation)
+{
+  //while(!policyReceivedFlag_){ros::spinOnce();}
+  //policyReceivedFlag_ = false;
+
+  // Get the latest observation
+  SystemObservation observation;
+  {
+    std::lock_guard<std::mutex> lock(latestObservationMutex_);
+    observation = latestObservation_;
+  }
+
+  // Get target trajectories
+  auto targetTrajectories = goalPoseToTargetTrajectories_(position, orientation, observation);
+  targetTrajectories.taskMode = taskMode_;
+
+  // Publish target trajectories
+  targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1292,7 +1420,7 @@ void TargetTrajectoriesGazebo::createMenuModelMode()
 //-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::processFeedbackTarget(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback) 
 {
-  //std::cout << "[TargetTrajectoriesGazebo::processFeedbackTarget] START" << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::processFeedbackTarget] START" << std::endl;
 
   // Set task mode
   taskMode_ = 0;
@@ -1306,19 +1434,28 @@ void TargetTrajectoriesGazebo::processFeedbackTarget(const visualization_msgs::I
                                        feedback->pose.orientation.y,
                                        feedback->pose.orientation.z);
 
+  //std::cout << "[TargetTrajectoriesGazebo::processFeedbackTarget] Waiting a new policy..." << std::endl;
+  //while(!policyReceivedFlag_){ros::spinOnce();}
+  //policyReceivedFlag_ = false;
+
   // Get the latest observation
-  SystemObservation observation;
-  {
-    std::lock_guard<std::mutex> lock(latestObservationMutex_);
-    observation = latestObservation_;
-  }
+  //SystemObservation observation;
+  //{
+  //  std::lock_guard<std::mutex> lock(latestObservationMutex_);
+  //  observation = latestObservation_;
+  //}
 
   // Update target
   updateTarget(position, orientation);
 
+  publishTargetTrajectories();
+
   // Get target trajectories
-  auto targetTrajectories = goalPoseToTargetTrajectories_(position, orientation, observation);
-  targetTrajectories.taskMode = taskMode_;
+  //auto targetTrajectories = goalPoseToTargetTrajectories_(position, orientation, observation);
+  //targetTrajectories.taskMode = taskMode_;
+
+  // Publish target trajectories
+  //targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
 
   // Run service client to set task
   geometry_msgs::Pose target;
@@ -1332,10 +1469,19 @@ void TargetTrajectoriesGazebo::processFeedbackTarget(const visualization_msgs::I
   bool taskModeSuccess = setTask(taskMode_, target);
   std::cout << "[TargetTrajectoriesGazebo::processFeedbackTarget] taskModeSuccess: " << taskModeSuccess << std::endl;
 
-  // Publish target trajectories
-  targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
+  initTargetFlag_ = true;
 
-  //std::cout << "[TargetTrajectoriesGazebo::processFeedbackTarget] END" << std::endl;
+  //ros::Duration(5.0).sleep();
+
+  // Get target trajectories
+  //auto targetTrajectories2 = goalPoseToTargetTrajectories_(position, orientation, observation);
+  //targetTrajectories2.taskMode = taskMode_;
+  //std::cout << "[TargetTrajectoriesGazebo::processFeedbackTarget] DUBLO" << std::endl;
+
+  // Publish target trajectories
+  //targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories2);
+
+  std::cout << "[TargetTrajectoriesGazebo::processFeedbackTarget] END" << std::endl << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1374,19 +1520,21 @@ void TargetTrajectoriesGazebo::processFeedbackAutoTarget(const visualization_msg
     orientation = currentDropOrientation_;
   }
 
+  publishTargetTrajectories(position, orientation);
+
   // Get the latest observation
-  SystemObservation observation;
-  {
-    std::lock_guard<std::mutex> lock(latestObservationMutex_);
-    observation = latestObservation_;
-  }
+  //SystemObservation observation;
+  //{
+  //  std::lock_guard<std::mutex> lock(latestObservationMutex_);
+  //  observation = latestObservation_;
+  //}
 
   // Get target trajectories
-  auto targetTrajectories = goalPoseToTargetTrajectories_(position, orientation, observation);
-  targetTrajectories.taskMode = taskMode_;
+  //auto targetTrajectories = goalPoseToTargetTrajectories_(position, orientation, observation);
+  //targetTrajectories.taskMode = taskMode_;
 
   // Publish target trajectories
-  targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
+  //targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
 
   // Run service client to set task
   geometry_msgs::Pose target;
@@ -1399,6 +1547,8 @@ void TargetTrajectoriesGazebo::processFeedbackAutoTarget(const visualization_msg
   target.orientation.w = orientation.w();
   bool taskModeSuccess = setTask(taskMode_, target);
   std::cout << "[TargetTrajectoriesGazebo::processFeedbackTarget] taskModeSuccess: " << taskModeSuccess << std::endl;
+
+  initTargetFlag_ = true;
 
   //std::cout << "[TargetTrajectoriesGazebo::processFeedbackAutoTarget] END" << std::endl;
 }
@@ -1530,6 +1680,22 @@ bool TargetTrajectoriesGazebo::setPickedFlagSrv(ocs2_msgs::setBool::Request &req
 
   std::cout << "[TargetTrajectoriesGazebo::setPickedFlagSrv] pickedFlag_: " << pickedFlag_ << std::endl;
   std::cout << "[TargetTrajectoriesGazebo::setPickedFlagSrv] END" << std::endl;
+  return res.success;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+bool TargetTrajectoriesGazebo::setSystemObservationSrv(ocs2_msgs::setSystemObservation::Request &req, 
+                                                       ocs2_msgs::setSystemObservation::Response &res)
+{
+  std::cout << "[TargetTrajectoriesGazebo::setSystemObservationSrv] START" << std::endl;
+  latestObservation_ = ros_msg_conversions::readObservationMsg(req.obs);
+  res.success = true;
+
+  policyReceivedFlag_ = true;
+  
+  std::cout << "[TargetTrajectoriesGazebo::setSystemObservationSrv] END" << std::endl;
   return res.success;
 }
 

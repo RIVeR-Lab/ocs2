@@ -1,0 +1,5 @@
+# Request
+mpc_observation obs
+---
+# Result
+bool success

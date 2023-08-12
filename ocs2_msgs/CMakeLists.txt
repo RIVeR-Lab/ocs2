@@ -29,6 +29,7 @@ add_service_files(
     setInt.srv
     setTask.srv
     setActionDRL.srv
+    setSystemObservation.srv
 )
 
 generate_messages(

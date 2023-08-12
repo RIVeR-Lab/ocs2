@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.07.28
+// LAST UPDATE: 2022.08.11
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -25,6 +25,7 @@
 #include "ocs2_msgs/setBool.h"
 #include "ocs2_msgs/setInt.h"
 #include "ocs2_msgs/setTask.h"
+#include "ocs2_msgs/setSystemObservation.h"
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_ros_interfaces/command/TargetTrajectoriesRosPublisher.h>
 
@@ -75,6 +76,12 @@ class TargetTrajectoriesGazebo final
     void updateTarget(bool autoFlag=false);
 
     // DESCRIPTION: TODO...
+    void setTargetToEEPose();
+
+    // DESCRIPTION: TODO...
+    void updateEEPose(Eigen::Vector3d& eePos, Eigen::Quaterniond& eeOri);
+
+    // DESCRIPTION: TODO...
     void initializeInteractiveMarkerTarget();
 
     // DESCRIPTION: TODO...
@@ -94,6 +101,12 @@ class TargetTrajectoriesGazebo final
 
     // DESCRIPTION: TODO...
     void publishDropFrame();
+
+    // DESCRIPTION: TODO...
+    void publishTargetTrajectories();
+
+    // DESCRIPTION: TODO...
+    void publishTargetTrajectories(Eigen::Vector3d& position, Eigen::Quaterniond& orientation);
 
   private:
     /// FUNCTIONS:
@@ -120,6 +133,9 @@ class TargetTrajectoriesGazebo final
 
     // DESCRIPTION: TODO...
     void gazeboModelStatesCallback(const gazebo_msgs::ModelStatesPtr& feedback);
+
+    // DESCRIPTION: TODO...
+    void tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg);
 
     // DESCRIPTION: TODO...
     void updateTargetInfo();
@@ -183,8 +199,14 @@ class TargetTrajectoriesGazebo final
     bool setPickedFlagSrv(ocs2_msgs::setBool::Request& req, 
                           ocs2_msgs::setBool::Response& res);
 
+    // DESCRIPTION: TODO...
+    bool setSystemObservationSrv(ocs2_msgs::setSystemObservation::Request &req, 
+                                 ocs2_msgs::setSystemObservation::Response &res);
+
     /// VARIABLES:
+    bool initTargetFlag_ = false;
     bool initCallbackFlag_ = false;
+    bool initTFCallbackFlag_ = false;
     bool initMenuModelModeFlag_ = false;
 
     //bool graspFrameReadyFlag_ = false;
@@ -200,9 +222,12 @@ class TargetTrajectoriesGazebo final
     std::string worldFrameName_ = "world";
     std::string robotFrameName_ = "base_link"; 
     std::string graspFrameName_ = "grasp"; 
-    std::string dropFrameName_ = "drop"; 
+    std::string dropFrameName_ = "drop";
+    std::string eeFrame_ = "j2n6s300_end_effector";
 
     gazebo_msgs::ModelStates modelStatesMsg_;
+
+    tf::StampedTransform tf_ee_wrt_world_;
 
     std::vector<std::string> targetNames_;
     std::string dropTargetName_;
@@ -258,14 +283,16 @@ class TargetTrajectoriesGazebo final
 
     ros::Subscriber observationSubscriber_;
     ros::Subscriber gazeboModelStatesSubscriber_;
+    ros::Subscriber tfSubscriber_;
 
     //ros::ServiceClient setTaskModeClient_;
     ros::ServiceClient setTaskClient_;
     //ros::ServiceServer setTaskModeService_;
     ros::ServiceServer setPickedFlagService_;
+    ros::ServiceServer setSystemObservationService_;
 
+    bool policyReceivedFlag_ = false;
     mutable std::mutex latestObservationMutex_;
-    
     SystemObservation latestObservation_;
 };
 

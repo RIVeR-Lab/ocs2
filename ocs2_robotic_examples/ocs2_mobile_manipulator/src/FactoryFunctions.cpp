@@ -130,7 +130,7 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath,
   ros::spinOnce();
   try
   {
-    while(!tflistener.waitForTransform(world_frame_name, base_frame_name, ros::Time(0), ros::Duration(1.0)));
+    tflistener.waitForTransform(world_frame_name, base_frame_name, ros::Time(0), ros::Duration(5.0));
     tflistener.lookupTransform(world_frame_name, base_frame_name, ros::Time(0), transform_base_wrt_world);
   }
   catch (tf::TransformException ex)

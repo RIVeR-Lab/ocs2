@@ -30,6 +30,7 @@
 #include "ocs2_msgs/setBool.h"
 #include "ocs2_msgs/setInt.h"
 #include "ocs2_msgs/setTask.h"
+#include "ocs2_msgs/setSystemObservation.h"
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 #include "ocs2_ros_interfaces/mrt/DummyObserver.h"
@@ -66,7 +67,7 @@ class MRT_ROS_Gazebo_Loop
                         double err_threshold_ori_,
                         scalar_t mrtDesiredFrequency,
                         scalar_t mpcDesiredFrequency = -1,
-                        bool updateIndexMapFlag=false);
+                        bool updateIndexMapFlag=true);
 
     /**
      * Destructor.
@@ -140,7 +141,11 @@ class MRT_ROS_Gazebo_Loop
     /** NUA TODO: Add description */
     //bool setTaskMode(int val);
 
+    /** NUA TODO: Add description */
     bool setPickedFlag(bool val);
+
+    /** NUA TODO: Add description */
+    bool setSystemObservation(const SystemObservation& currentObservation);
 
     // DESCRIPTION: TODO...
     //bool setTaskModeSrv(ocs2_msgs::setInt::Request &req, 
@@ -175,6 +180,8 @@ class MRT_ROS_Gazebo_Loop
     std::string baseFrameName_;
     std::string graspFrameName_;
 
+    bool dataCollectionFlag_ = true;
+
     double initPolicyCtrMax_ = 1000;
 
     double err_threshold_pos_;
@@ -185,6 +192,8 @@ class MRT_ROS_Gazebo_Loop
     bool tfFlag_ = false;
     bool initFlagBaseState_ = false;
     bool initFlagArmState_ = false;
+    bool initFlagArmState2_ = false;
+    bool targetReceivedFlag_ = false;
 
     std::vector<int> stateIndexMap_;
 
@@ -238,7 +247,7 @@ class MRT_ROS_Gazebo_Loop
     ros::Subscriber odometrySub_;
     ros::Subscriber linkStateSub_;
     ros::Subscriber jointStateSub_;
-    ros::Subscriber jointTrajectoryPControllerStateSub_;
+    ros::Subscriber jointTrajectoryControllerStateSub_;
     ros::Subscriber targetTrajectoriesSubscriber_;
 
     ros::Publisher baseTwistPub_;
@@ -248,6 +257,7 @@ class MRT_ROS_Gazebo_Loop
     ros::ServiceClient detachClient_;
     //ros::ServiceClient setTaskModeClient_;
     ros::ServiceClient setPickedFlagClient_;
+    ros::ServiceClient setSystemObservationClient_;
 
     //ros::ServiceServer setTaskModeService_;
     ros::ServiceServer setTaskService_;
