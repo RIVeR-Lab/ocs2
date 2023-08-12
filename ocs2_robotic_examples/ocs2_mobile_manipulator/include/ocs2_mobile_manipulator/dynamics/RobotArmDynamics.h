@@ -39,7 +39,7 @@ class RobotArmDynamics final : public SystemDynamicsBaseAD
      * @param [in] recompileLibraries : If true, always compile the model library, else try to load existing library if available.
      * @param [in] verbose : Display information.
      */
-    RobotArmDynamics(const RobotModelInfo& modelInfo, 
+    RobotArmDynamics(RobotModelInfo modelInfo, 
                     const std::string& modelName,
                     const std::string& modelFolder = "/tmp/ocs2", 
                     bool recompileLibraries = true, 
@@ -59,6 +59,8 @@ class RobotArmDynamics final : public SystemDynamicsBaseAD
                               const ad_vector_t& state, 
                               const ad_vector_t& input,
                               const ad_vector_t& /*parameters*/) const override;
+
+    const RobotModelInfo info_;
 };
 
 }  // namespace mobile_manipulator

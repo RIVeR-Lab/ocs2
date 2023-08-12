@@ -97,7 +97,7 @@ struct OptimalControlProblem
 
   /* Dynamics */
   /** System dynamics pointer */
-  std::unique_ptr<SystemDynamicsBase> dynamicsPtr;
+  std::shared_ptr<SystemDynamicsBase> dynamicsPtr;
 
   /* Misc. */
   /** The pre-computation module */

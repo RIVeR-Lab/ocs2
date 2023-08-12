@@ -387,9 +387,9 @@ class MobileManipulatorInterface final : public RobotInterface
     std::shared_ptr<StateCost> extCollisionConstraintPtr_mode1_;
     std::shared_ptr<StateCost> extCollisionConstraintPtr_mode2_;
 
-    //std::shared_ptr<SystemDynamicsBase> dynamicsPtr_mode0_;
-    //std::shared_ptr<SystemDynamicsBase> dynamicsPtr_mode1_;
-    //std::shared_ptr<SystemDynamicsBase> dynamicsPtr_mode2_;
+    std::shared_ptr<SystemDynamicsBase> dynamicsPtr_mode0_;
+    std::shared_ptr<SystemDynamicsBase> dynamicsPtr_mode1_;
+    std::shared_ptr<SystemDynamicsBase> dynamicsPtr_mode2_;
     // -----------------
 
     std::string baseStateMsg_;

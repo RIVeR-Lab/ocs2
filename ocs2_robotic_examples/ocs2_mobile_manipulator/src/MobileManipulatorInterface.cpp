@@ -398,14 +398,12 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   //// NUA TODO: DEBUG AND TEST IS REQUIRED!
   //initializePointsOnRobotPtr(pointsAndRadii_);
   //extCollisionConstraintPtr_mode0_= getExtCollisionConstraint("extCollision");
-  
-  /*
+
   dynamicsPtr_mode0_.reset(new MobileBaseDynamics(robotModelInfo_, 
                                                   "MobileBaseDynamics", 
                                                   libraryFolder_, 
                                                   recompileLibraries_, 
                                                   printOutFlag_));
-  */
 
   // Mode 1
   modelModeInt = 1;
@@ -422,13 +420,11 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   //initializePointsOnRobotPtr(pointsAndRadii_);
   //extCollisionConstraintPtr_mode1_= getExtCollisionConstraint("extCollision");
   
-  /*
   dynamicsPtr_mode1_.reset(new RobotArmDynamics(robotModelInfo_, 
-                                                "MobileBaseDynamics", 
+                                                "RobotArmDynamics", 
                                                 libraryFolder_, 
                                                 recompileLibraries_, 
                                                 printOutFlag_));
-  */
   
   // Mode 2
   modelModeInt = 2;
@@ -444,14 +440,12 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   //// NUA TODO: DEBUG AND TEST IS REQUIRED!
   //initializePointsOnRobotPtr(pointsAndRadii_);
   //extCollisionConstraintPtr_mode2_= getExtCollisionConstraint("extCollision");
-  
-  /*
+
   dynamicsPtr_mode2_.reset(new MobileManipulatorDynamics(robotModelInfo_, 
-                                                         "MobileBaseDynamics", 
+                                                         "MobileManipulatorDynamics", 
                                                          libraryFolder_, 
                                                          recompileLibraries_, 
                                                          printOutFlag_));
-  */
 
   // Set MPC Problem
   //mpcTimer2_.startTimer();
@@ -490,13 +484,13 @@ void MobileManipulatorInterface::initializePointsOnRobotPtr(PointsOnRobot::point
   if (pointsOnRobotPtr_->getNumOfPoints() > 0) 
   {
     pointsOnRobotPtr_->initialize(*pinocchioInterfacePtr_,
-                                        MobileManipulatorPinocchioMapping(robotModelInfo_),
-                                        MobileManipulatorPinocchioMappingCppAd(robotModelInfo_),
-                                        robotModelInfo_,
-                                        "points_on_robot",
-                                        libraryFolder_,
-                                        recompileLibraries_,
-                                        false);
+                                  MobileManipulatorPinocchioMapping(robotModelInfo_),
+                                  MobileManipulatorPinocchioMappingCppAd(robotModelInfo_),
+                                  robotModelInfo_,
+                                  "points_on_robot",
+                                  libraryFolder_,
+                                  recompileLibraries_,
+                                  false);
   }
   else
   {
@@ -611,58 +605,6 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
   ocp_.finalEqualityLagrangianPtr->clear();
   ocp_.finalInequalityLagrangianPtr->clear();
 
-  /*
-  ocp1_.costPtr->clear();
-  ocp1_.stateCostPtr->clear();
-  ocp1_.preJumpCostPtr->clear();
-  ocp1_.finalCostPtr->clear();
-
-  ocp1_.softConstraintPtr->clear();
-  ocp1_.stateSoftConstraintPtr->clear();
-  ocp1_.preJumpSoftConstraintPtr->clear();
-  ocp1_.finalSoftConstraintPtr->clear();
-
-  ocp1_.equalityConstraintPtr->clear();
-  ocp1_.stateEqualityConstraintPtr->clear();
-  ocp1_.preJumpEqualityConstraintPtr->clear();
-  ocp1_.finalEqualityConstraintPtr->clear();
-
-  ocp1_.equalityLagrangianPtr->clear();
-  ocp1_.stateEqualityLagrangianPtr->clear();
-  ocp1_.inequalityLagrangianPtr->clear();
-  ocp1_.stateInequalityLagrangianPtr->clear();
-  ocp1_.preJumpEqualityLagrangianPtr->clear();
-  ocp1_.preJumpInequalityLagrangianPtr->clear();
-  ocp1_.finalEqualityLagrangianPtr->clear();
-  ocp1_.finalInequalityLagrangianPtr->clear();
-
-  // ---------------------------------------
-
-  ocp2_.costPtr->clear();
-  ocp2_.stateCostPtr->clear();
-  ocp2_.preJumpCostPtr->clear();
-  ocp2_.finalCostPtr->clear();
-
-  ocp2_.softConstraintPtr->clear();
-  ocp2_.stateSoftConstraintPtr->clear();
-  ocp2_.preJumpSoftConstraintPtr->clear();
-  ocp2_.finalSoftConstraintPtr->clear();
-
-  ocp2_.equalityConstraintPtr->clear();
-  ocp2_.stateEqualityConstraintPtr->clear();
-  ocp2_.preJumpEqualityConstraintPtr->clear();
-  ocp2_.finalEqualityConstraintPtr->clear();
-
-  ocp2_.equalityLagrangianPtr->clear();
-  ocp2_.stateEqualityLagrangianPtr->clear();
-  ocp2_.inequalityLagrangianPtr->clear();
-  ocp2_.stateInequalityLagrangianPtr->clear();
-  ocp2_.preJumpEqualityLagrangianPtr->clear();
-  ocp2_.preJumpInequalityLagrangianPtr->clear();
-  ocp2_.finalEqualityLagrangianPtr->clear();
-  ocp2_.finalInequalityLagrangianPtr->clear();
-  */
-
   mpcTimer1_.endTimer();
 
   /*
@@ -727,13 +669,16 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
     mpcTimer8_.endTimer();
 
     mpcTimer9_.startTimer();
-    //ocp_.dynamicsPtr = dynamicsPtr_mode0_;
     std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr: MobileBaseDynamics" << std::endl;
+    ocp_.dynamicsPtr = dynamicsPtr_mode0_;
+    //ocp_.dynamicsPtr.swap(dynamicsPtr_mode0_);
+    /*
     ocp_.dynamicsPtr.reset(new MobileBaseDynamics(robotModelInfo_, 
                                                       "MobileBaseDynamics", 
                                                       libraryFolder_, 
                                                       recompileLibraries_, 
                                                       printOutFlag_));
+    */
     mpcTimer9_.endTimer();
   }
 
@@ -770,13 +715,16 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
     mpcTimer8_.endTimer();
 
     mpcTimer9_.startTimer();
-    //ocp_.dynamicsPtr = dynamicsPtr_mode1_;
     std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr: RobotArmDynamics" << std::endl;
+    ocp_.dynamicsPtr = dynamicsPtr_mode1_;
+    //ocp_.dynamicsPtr.swap(dynamicsPtr_mode2_);
+    /*
     ocp_.dynamicsPtr.reset(new RobotArmDynamics(robotModelInfo_, 
                                                     "RobotArmDynamics", 
                                                     libraryFolder_, 
                                                     recompileLibraries_, 
                                                     printOutFlag_));
+    */
     mpcTimer9_.endTimer();
   }
 
@@ -813,13 +761,16 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
     mpcTimer8_.endTimer();
 
     mpcTimer9_.startTimer();
-    //ocp_.dynamicsPtr = dynamicsPtr_mode2_;
     std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr: MobileManipulatorDynamics" << std::endl;
+    ocp_.dynamicsPtr = dynamicsPtr_mode2_;
+    //ocp_.dynamicsPtr.swap(dynamicsPtr_mode2_);
+    /*
     ocp_.dynamicsPtr.reset(new MobileManipulatorDynamics(robotModelInfo_, 
                                                               "MobileManipulatorDynamics", 
                                                               libraryFolder_, 
                                                               recompileLibraries_, 
                                                               printOutFlag_));
+    */
     mpcTimer9_.endTimer();
   }
 

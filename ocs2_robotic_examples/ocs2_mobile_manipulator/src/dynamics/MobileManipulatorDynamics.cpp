@@ -20,7 +20,8 @@ namespace mobile_manipulator {
 MobileManipulatorDynamics::MobileManipulatorDynamics(RobotModelInfo info, 
                                                      const std::string& modelName,
                                                      const std::string& modelFolder /*= "/tmp/ocs2"*/,
-                                                     bool recompileLibraries /*= true*/, bool verbose /*= true*/)
+                                                     bool recompileLibraries /*= true*/, 
+                                                     bool verbose /*= true*/)
   : info_(std::move(info)) 
 {
   //std::cout << "[MobileManipulatorDynamics::MobileManipulatorDynamics] START" << std::endl;
