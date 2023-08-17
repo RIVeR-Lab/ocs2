@@ -31,6 +31,8 @@
 #include <ocs2_core/soft_constraint/StateInputSoftBoxConstraint.h>
 #include <ocs2_core/soft_constraint/StateSoftConstraint.h>
 #include <ocs2_core/dynamics/MultiModelFunctions.h>
+//#include <ocs2_core/misc/LoadData.h>
+//#include <ocs2_core/misc/LoadStdVectorOfPair.h>
 
 #include "ocs2_msgs/setActionDRL.h"
 
@@ -299,6 +301,9 @@ class MobileManipulatorInterface final : public RobotInterface
     std::string worldFrameName_ = "world";
     //std::string graspFrameName_ = "grasp";
 
+    std::vector<std::pair<size_t, size_t>> collisionObjectPairs_;
+    std::vector<std::pair<std::string, std::string>> collisionLinkPairs_;
+
     size_t initModelModeInt_ = 2;
     size_t modelModeIntQuery_ = 2;
 
@@ -354,6 +359,8 @@ class MobileManipulatorInterface final : public RobotInterface
     std::shared_ptr<ExtMapUtility> emuPtr_;
     PointsOnRobot::points_radii_t pointsAndRadii_;
 
+    std::shared_ptr<ocs2::mobile_manipulator::MobileManipulatorVisualization> mobileManipulatorVisu_;
+
     RobotModelInfo robotModelInfo_;
 
     // NUA TODO: Added to speed up the mpc problem initialization, but GET RID OF THESE ASAP!
@@ -379,9 +386,9 @@ class MobileManipulatorInterface final : public RobotInterface
     std::shared_ptr<StateCost> selfCollisionConstraintPtr_mode2_;
 
     /// NUA NOTE: Should it depend on model mode?
-    std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_mode0_;
-    std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_mode1_;
-    std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_mode2_;
+    //std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_mode0_;
+    //std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_mode1_;
+    //std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_mode2_;
 
     std::shared_ptr<StateCost> extCollisionConstraintPtr_mode0_;
     std::shared_ptr<StateCost> extCollisionConstraintPtr_mode1_;
@@ -397,6 +404,8 @@ class MobileManipulatorInterface final : public RobotInterface
 
     std::string baseControlMsg_;
     std::string armControlMsg_;
+    
+    std::string logSavePathRel_;
     
     vector_t currentTarget_;
 

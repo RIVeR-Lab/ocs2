@@ -337,7 +337,7 @@ void PointsOnRobot::publishPointsOnRobotVisu(const ros::TimerEvent& e)
 /******************************************************************************************************/
 void PointsOnRobot::publishPointsOnRobotVisu(double dt)
 {
-  pointsOnRobot_visu_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("points_on_robot", 10);
+  pointsOnRobot_visu_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("points_on_robot", 5);
   timer_ = nh_.createTimer(ros::Duration(dt), &PointsOnRobot::publishPointsOnRobotVisu, this);
 }
 

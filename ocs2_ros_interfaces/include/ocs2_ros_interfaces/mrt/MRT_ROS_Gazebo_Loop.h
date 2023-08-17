@@ -17,6 +17,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
+#include <ros/package.h>
 #include <tf/transform_listener.h>
 #include <nav_msgs/Odometry.h>
 #include <gazebo_msgs/LinkStates.h>
@@ -67,7 +68,7 @@ class MRT_ROS_Gazebo_Loop
                         double err_threshold_ori_,
                         scalar_t mrtDesiredFrequency,
                         scalar_t mpcDesiredFrequency = -1,
-                        bool updateIndexMapFlag=true);
+                        std::string logSavePath="");
 
     /**
      * Destructor.
@@ -167,10 +168,13 @@ class MRT_ROS_Gazebo_Loop
     /** NUA TODO: Add description */
     void writeData(bool endFlag=false);
 
-    std::string dataPath_ = "/home/akmandor/ros_workspaces/mobiman_ws/src/mobiman/mobiman_simulation/dataset/ocs2/";
+    std::string dataPathReL_;
     std::vector<std::vector<double>> dataStatePosition_;
     std::vector<std::vector<double>> dataStateVelocityBase_;
     std::vector<std::vector<double>> dataCommand_;
+    std::vector<std::vector<double>> dataMPCTimeTrajectory_;
+    std::vector< std::vector<std::vector<double>> > dataMPCStateTrajectory_;
+    std::vector< std::vector<std::vector<double>> > dataMPCInputTrajectory_;
     double dataTimeStart_ = 0;
     double dataTimeEnd_ = 0;
     double dataWriteFreq_ = 10;
@@ -195,6 +199,7 @@ class MRT_ROS_Gazebo_Loop
     bool initFlagArmState2_ = false;
     bool targetReceivedFlag_ = false;
 
+    bool updateIndexMapFlag_ = true;
     std::vector<int> stateIndexMap_;
 
     scalar_t mrtDesiredFrequency_;
@@ -214,6 +219,10 @@ class MRT_ROS_Gazebo_Loop
 
     std::vector<double> stateVelocityBase_;
     std::vector<double> inputArm_;
+
+    std::vector<double> mpcTimeTrajectory_;
+    std::vector<std::vector<double>> mpcStateTrajectory_;
+    std::vector<std::vector<double>> mpcInputTrajectory_;
 
     tf::TransformListener tfListener_;
 

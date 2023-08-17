@@ -130,7 +130,7 @@ target_compile_options(mobile_manipulator_distance_visualization PUBLIC ${FLAGS}
 # Gazebo MRT node
 add_executable(mobile_manipulator_gazebo_mrt_node
   src/MobileManipulatorGazeboMRT.cpp
-  src/MobileManipulatorGazeboVisualization.cpp
+  #src/MobileManipulatorGazeboVisualization.cpp
 )
 add_dependencies(mobile_manipulator_gazebo_mrt_node
   ${catkin_EXPORTED_TARGETS}

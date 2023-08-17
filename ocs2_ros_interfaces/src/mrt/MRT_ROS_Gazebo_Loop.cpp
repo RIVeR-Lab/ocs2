@@ -25,14 +25,15 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                                          double err_threshold_ori,
                                          scalar_t mrtDesiredFrequency,
                                          scalar_t mpcDesiredFrequency,
-                                         bool updateIndexMapFlag)
+                                         std::string logSavePathRel)
   : mrt_(mrt), 
     worldFrameName_(worldFrameName),
     err_threshold_pos_(err_threshold_pos),
     err_threshold_ori_(err_threshold_ori),
     mrtDesiredFrequency_(mrtDesiredFrequency), 
     mpcDesiredFrequency_(mpcDesiredFrequency),
-    robotModelInfo_(mrt.getRobotModelInfo())
+    robotModelInfo_(mrt.getRobotModelInfo()),
+    dataPathReL_(logSavePathRel)
 {
   //std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] START" << std::endl;
 
@@ -60,8 +61,10 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
       break;
   }
 
+  dataCollectionFlag_ = (dataPathReL_ == "") ? false : true;
+
   timer2_.startTimer();
-  updateStateIndexMap(armStateMsg, updateIndexMapFlag);
+  updateStateIndexMap(armStateMsg, updateIndexMapFlag_);
   timer2_.endTimer();
   
   // Subscribers
@@ -542,24 +545,14 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
 
         //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START observer" << std::endl;
         // Update observers for visualization
-        //for (auto& observer : observers_) 
-        //{
-        //  observer->update(currentObservation, currentPolicy, mrt_.getCommand());
-        //}
+        for (auto& observer : observers_) 
+        {
+          observer->update(currentObservation, currentPolicy, mrt_.getCommand());
+        }
 
         //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START publishCommand" << std::endl;
         // Publish the control command 
         publishCommand(currentPolicy, currentObservation, currentStateVelocityBase);
-
-        if (time_ == 0)
-        {
-          std::cout << "[MRT_ROS_Gazebo_Loop::run] BEFORE currentObservation.input size: " << currentObservation.input.size() << std::endl;
-          for (size_t i = 0; i < currentObservation.input.size(); i++)
-          {
-            std::cout << i << " -> " << currentObservation.input[i] << std::endl;
-          }
-          std::cout << "------------" << std::endl;
-        }
 
         writeData();
 
@@ -1185,7 +1178,50 @@ void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy,
                                          const SystemObservation& currentObservation,
                                          std::vector<double>& currentStateVelocityBase)
 {
-  //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] START" << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] START time_: " << time_ << std::endl;
+
+  mpcTimeTrajectory_ = currentPolicy.timeTrajectory_;
+  dataMPCTimeTrajectory_.push_back(mpcTimeTrajectory_);
+
+  mpcStateTrajectory_.clear();
+  for (auto traj : currentPolicy.stateTrajectory_)
+  {
+    std::vector<double> traj_tmp;
+    for (size_t i = 0; i < traj.size(); i++)
+    {
+      traj_tmp.push_back(traj[i]);
+    }
+    mpcStateTrajectory_.push_back(traj_tmp);
+  }
+  dataMPCStateTrajectory_.push_back(mpcStateTrajectory_);
+
+  mpcInputTrajectory_.clear();
+  for (auto traj : currentPolicy.inputTrajectory_)
+  {
+    std::vector<double> traj_tmp;
+    for (size_t i = 0; i < traj.size(); i++)
+    {
+      traj_tmp.push_back(traj[i]);
+    }
+    mpcInputTrajectory_.push_back(traj_tmp);
+  }
+  dataMPCInputTrajectory_.push_back(mpcInputTrajectory_);
+
+  /*
+  std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] mpcTimeTrajectory_ size: " << mpcTimeTrajectory_.size() << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] mpcStateTrajectory_ size: " << mpcStateTrajectory_.size() << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] mpcInputTrajectory_ size: " << mpcInputTrajectory_.size() << std::endl;
+
+  if (mpcStateTrajectory_.size() > 0)
+  {
+    std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] mpcStateTrajectory_[0] size: " << mpcInputTrajectory_[0].size() << std::endl;
+  }
+
+  if (mpcInputTrajectory_.size() > 0)
+  {
+    std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] mpcInputTrajectory_[0] size: " << mpcInputTrajectory_[0].size() << std::endl;
+  }
+  */
 
   std::vector<double> state_pos;
   for (size_t i = 0; i < currentObservation.full_state.size(); i++)
@@ -1295,10 +1331,17 @@ void MRT_ROS_Gazebo_Loop::writeData(bool endFlag)
       /*
       std::cout << "[MRT_ROS_Gazebo_Loop::writeData] dataTimeStart_: " << dataTimeStart_ << std::endl;
       std::cout << "[MRT_ROS_Gazebo_Loop::writeData] dataTimeEnd_: " << dataTimeEnd_ << std::endl;
-      std::cout << "[MRT_ROS_Gazebo_Loop::writeData] dataPath_: " << dataPath_ << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::writeData] dataPathReL_: " << dataPathReL_ << std::endl;
       std::cout << "[MRT_ROS_Gazebo_Loop::writeData] dataStatePosition_ size: " << dataStatePosition_.size() << std::endl;
       std::cout << "[MRT_ROS_Gazebo_Loop::writeData] dataStateVelocityBase_ size: " << dataStateVelocityBase_.size() << std::endl;
       std::cout << "[MRT_ROS_Gazebo_Loop::writeData] dataCommand_ size: " << dataCommand_.size() << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::writeData] dataMPCTimeTrajectory_ size: " << dataMPCTimeTrajectory_.size() << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::writeData] dataMPCStateTrajectory_ size: " << dataMPCStateTrajectory_.size() << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::writeData] dataMPCStateTrajectory_[0] size: " << dataMPCStateTrajectory_[0].size() << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::writeData] dataMPCStateTrajectory_[0][0] size: " << dataMPCStateTrajectory_[0][0].size() << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::writeData] dataMPCInputTrajectory_ size: " << dataMPCInputTrajectory_.size() << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::writeData] dataMPCInputTrajectory_[0] size: " << dataMPCInputTrajectory_[0].size() << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::writeData] dataMPCInputTrajectory_[0][0] size: " << dataMPCInputTrajectory_[0][0].size() << std::endl;
       */
 
       dataTimeEnd_ = time_;
@@ -1308,21 +1351,31 @@ void MRT_ROS_Gazebo_Loop::writeData(bool endFlag)
       j["time_start"] = dataTimeStart_;
       j["time_end"] = dataTimeEnd_;
       j["end_flag"] = endFlag;
-      j["model_mode"] = getRobotModelTypeString(robotModelInfo_);
+      j["model_mode"] = getModelModeInt(robotModelInfo_);
       j["state_arm_offset"] = robotModelInfo_.mobileBase.stateDim;
       j["input_arm_offset"] = robotModelInfo_.mobileBase.inputDim;
       j["state_position"] = dataStatePosition_;
       j["state_velocity_base"] = dataStateVelocityBase_;
       j["command"] = dataCommand_;
+      j["mpc_time_trajectory"] = dataMPCTimeTrajectory_;
+      j["mpc_state_trajectory"] = dataMPCStateTrajectory_;
+      j["mpc_input_trajectory"] = dataMPCInputTrajectory_;
 
+      std::string pkg_dir = ros::package::getPath("mobiman_simulation") + "/";
+      std::string dataPath = pkg_dir + dataPathReL_;
+
+      boost::filesystem::create_directories(pkg_dir + dataPathReL_);
       std::string filename = getDateTime() + ".json";
-      std::ofstream o(dataPath_ + filename);
+      std::ofstream o(dataPath + filename);
       o << std::setw(4) << j << std::endl;
 
       dataTimeStart_ = dataTimeEnd_;
       dataStatePosition_.clear();
       dataStateVelocityBase_.clear();
       dataCommand_.clear();
+      dataMPCTimeTrajectory_.clear();
+      dataMPCStateTrajectory_.clear();
+      dataMPCInputTrajectory_.clear();
       dataWriteLastTime_ = time_;
 
       //std::cout << "[MRT_ROS_Gazebo_Loop::writeData] END" << std::endl << std::endl;

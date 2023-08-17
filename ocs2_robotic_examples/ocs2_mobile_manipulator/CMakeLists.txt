@@ -101,6 +101,7 @@ add_library(${PROJECT_NAME}
   src/dynamics/DefaultManipulatorDynamics.cpp
   src/dynamics/FloatingArmManipulatorDynamics.cpp
   src/dynamics/FullyActuatedFloatingArmManipulatorDynamics.cpp
+  src/MobileManipulatorVisualization.cpp
   src/MobileManipulatorInterface.cpp
 )
 add_dependencies(${PROJECT_NAME}

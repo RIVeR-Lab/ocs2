@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.31
+// LAST UPDATE: 2023.08.15
 //
 // AUTHOR: Neset Unver Akmandor  (NUA)
 //
@@ -10,6 +10,7 @@
 // [1] https://github.com/leggedrobotics/ocs2
 
 #include "ocs2_mobile_manipulator/MobileManipulatorInterface.h"
+//#include <ocs2_core/misc/LoadData.h>
 #include <ocs2_core/misc/LoadStdVectorOfPair.h>
 
 namespace ocs2 {
@@ -288,6 +289,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   loadData::loadPtreeValue<std::string>(pt, armStateMsg_, "model_information.armStateMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, baseControlMsg_, "model_information.baseControlMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, armControlMsg_, "model_information.armControlMsg", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, logSavePathRel_, "model_information.logSavePathRel", printOutFlag_);
 
   if (printOutFlag_)
   {
@@ -363,10 +365,10 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   // Set Rollout Settings
   rolloutSettings_ = rollout::loadSettings(taskFile_, "rollout", printOutFlag_);
 
-  /*
   // Set PointsOnRobot
   initializePointsOnRobotPtr(pointsAndRadii_);
 
+  /*
   // Set ExtMapUtility
   emuPtr_.reset(new ExtMapUtility());
   
@@ -439,34 +441,28 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   
   //// NUA TODO: DEBUG AND TEST IS REQUIRED!
   //initializePointsOnRobotPtr(pointsAndRadii_);
-  //extCollisionConstraintPtr_mode2_= getExtCollisionConstraint("extCollision");
+  //extCollisionConstraintPtr_mode2_ = getExtCollisionConstraint("extCollision");
 
   dynamicsPtr_mode2_.reset(new MobileManipulatorDynamics(robotModelInfo_, 
                                                          "MobileManipulatorDynamics", 
                                                          libraryFolder_, 
                                                          recompileLibraries_, 
                                                          printOutFlag_));
+  
+  // Visualization
+  std::cout << "[MobileManipulatorInterface::runMRT] BEFORE ocs2_mm_visu" << std::endl;
+  mobileManipulatorVisu_ .reset(new ocs2::mobile_manipulator::MobileManipulatorVisualization(nodeHandle_, 
+                                                                                             *pinocchioInterfacePtr_,
+                                                                                             robotModelInfo_,
+                                                                                             activateSelfCollision_,
+                                                                                             activateExtCollision_,
+                                                                                             removeJointNames,
+                                                                                             collisionObjectPairs_,
+                                                                                             collisionLinkPairs_,
+                                                                                             urdfFile_));
+  std::cout << "[MobileManipulatorInterface::runMRT] AFTER ocs2_mm_visu" << std::endl;
 
-  // Set MPC Problem
-  //mpcTimer2_.startTimer();
   launchNodes(nodeHandle_);
-  //mpcTimer2_.endTimer();
-
-  //mpcTimer3_.startTimer();
-  //setMPCProblem();
-  //mpcTimer3_.endTimer();
-
-  if (printOutFlag_)
-  {
-    std::cout << "\n### MPC_ROS Benchmarking mpcTimer2_";
-    std::cout << "\n###   Maximum : " << mpcTimer2_.getMaxIntervalInMilliseconds() << "[ms].";
-    std::cout << "\n###   Average : " << mpcTimer2_.getAverageInMilliseconds() << "[ms].";
-    std::cout << "\n###   Latest  : " << mpcTimer2_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
-    std::cout << "\n### MPC_ROS Benchmarking mpcTimer3_";
-    std::cout << "\n###   Maximum : " << mpcTimer3_.getMaxIntervalInMilliseconds() << "[ms].";
-    std::cout << "\n###   Average : " << mpcTimer3_.getAverageInMilliseconds() << "[ms].";
-    std::cout << "\n###   Latest  : " << mpcTimer3_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
-  }
 
   //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface(6)] DEBUG INF" << std::endl;
   //while(1);
@@ -495,70 +491,6 @@ void MobileManipulatorInterface::initializePointsOnRobotPtr(PointsOnRobot::point
   else
   {
     pointsOnRobotPtr_ = nullptr;
-  }
-
-  size_t modelModeInt = getModelModeInt(robotModelInfo_);
-  if (modelModeInt == 0)
-  {
-    pointsOnRobotPtr_mode0_.reset(new PointsOnRobot(pointsAndRadii));
-    if (pointsOnRobotPtr_mode0_->getNumOfPoints() > 0) 
-    {
-      ///////// NUA TODO: ADAPT TO MULTI MODAL!
-      pointsOnRobotPtr_mode0_->initialize(*pinocchioInterfacePtr_,
-                                          MobileManipulatorPinocchioMapping(robotModelInfo_),
-                                          MobileManipulatorPinocchioMappingCppAd(robotModelInfo_),
-                                          robotModelInfo_,
-                                          "points_on_robot",
-                                          libraryFolder_,
-                                          recompileLibraries_,
-                                          false);
-    }
-    else
-    {
-      pointsOnRobotPtr_mode0_ = nullptr;
-    }
-  }
-
-  else if (modelModeInt == 1)
-  {
-    pointsOnRobotPtr_mode1_.reset(new PointsOnRobot(pointsAndRadii));
-    if (pointsOnRobotPtr_mode1_->getNumOfPoints() > 0) 
-    {
-      ///////// NUA TODO: ADAPT TO MULTI MODAL!
-      pointsOnRobotPtr_mode1_->initialize(*pinocchioInterfacePtr_,
-                                          MobileManipulatorPinocchioMapping(robotModelInfo_),
-                                          MobileManipulatorPinocchioMappingCppAd(robotModelInfo_),
-                                          robotModelInfo_,
-                                          "points_on_robot",
-                                          libraryFolder_,
-                                          recompileLibraries_,
-                                          false);
-    }
-    else
-    {
-      pointsOnRobotPtr_mode1_ = nullptr;
-    }
-  }
-
-  else if (modelModeInt == 2)
-  {
-    pointsOnRobotPtr_mode2_.reset(new PointsOnRobot(pointsAndRadii));
-    if (pointsOnRobotPtr_mode2_->getNumOfPoints() > 0) 
-    {
-      ///////// NUA TODO: ADAPT TO MULTI MODAL!
-      pointsOnRobotPtr_mode2_->initialize(*pinocchioInterfacePtr_,
-                                          MobileManipulatorPinocchioMapping(robotModelInfo_),
-                                          MobileManipulatorPinocchioMappingCppAd(robotModelInfo_),
-                                          robotModelInfo_,
-                                          "points_on_robot",
-                                          libraryFolder_,
-                                          recompileLibraries_,
-                                          false);
-    }
-    else
-    {
-      pointsOnRobotPtr_mode2_ = nullptr;
-    }
   }
 }
 
@@ -775,448 +707,6 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
   }
 
   /*
-  if (iter % 2 == 0)
-  {
-    std::cout << "[MobileManipulatorInterface::setMPCProblem] ocp1_" << std::endl;
-
-    if (modelModeInt == 0)
-    {
-      mpcTimer3_.startTimer();
-      ocp1_.costPtr->add("inputCost", quadraticInputCostPtr_mode0_);
-      mpcTimer3_.endTimer();
-
-      mpcTimer4_.startTimer();
-      ocp1_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode0_);
-      mpcTimer4_.endTimer();
-
-      mpcTimer5_.startTimer();
-      ocp1_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode0_);
-      mpcTimer5_.endTimer();
-      
-      mpcTimer6_.startTimer();
-      ocp1_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode0_);
-      mpcTimer6_.endTimer();
-
-      mpcTimer7_.startTimer();
-      if (activateSelfCollision_) 
-      {
-        //ocp1_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode0_);
-      }
-      mpcTimer7_.endTimer();
-
-      mpcTimer8_.startTimer();
-      if (activateExtCollision_) 
-      {
-        //ocp1_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode0_);
-      }
-      mpcTimer8_.endTimer();
-
-      mpcTimer9_.startTimer();
-      //ocp1_.dynamicsPtr = dynamicsPtr_mode0_;
-      ocp1_.dynamicsPtr.reset(new MobileBaseDynamics(robotModelInfo_, 
-                                                        "MobileBaseDynamics", 
-                                                        libraryFolder_, 
-                                                        recompileLibraries_, 
-                                                        printOutFlag_));
-      mpcTimer9_.endTimer();
-    }
-
-    else if (modelModeInt == 1)
-    {
-      mpcTimer3_.startTimer();
-      ocp1_.costPtr->add("inputCost", quadraticInputCostPtr_mode1_);
-      mpcTimer3_.endTimer();
-
-      mpcTimer4_.startTimer();
-      ocp1_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode1_);
-      mpcTimer4_.endTimer();
-
-      mpcTimer5_.startTimer();
-      ocp1_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode1_);
-      mpcTimer5_.endTimer();
-      
-      mpcTimer6_.startTimer();
-      ocp1_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode1_);
-      mpcTimer6_.endTimer();
-
-      mpcTimer7_.startTimer();
-      if (activateSelfCollision_) 
-      {
-        ocp1_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode1_);
-      }
-      mpcTimer7_.endTimer();
-
-      mpcTimer8_.startTimer();
-      if (activateExtCollision_) 
-      {
-        //ocp1_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode1_);
-      }
-      mpcTimer8_.endTimer();
-
-      mpcTimer9_.startTimer();
-      //ocp1_.dynamicsPtr = dynamicsPtr_mode1_;
-      ocp1_.dynamicsPtr.reset(new RobotArmDynamics(robotModelInfo_, 
-                                                      "RobotArmDynamics", 
-                                                      libraryFolder_, 
-                                                      recompileLibraries_, 
-                                                      printOutFlag_));
-      mpcTimer9_.endTimer();
-    }
-
-    else if (modelModeInt == 2)
-    {
-      mpcTimer3_.startTimer();
-      ocp1_.costPtr->add("inputCost", quadraticInputCostPtr_mode2_);
-      mpcTimer3_.endTimer();
-
-      mpcTimer4_.startTimer();
-      ocp1_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode2_);
-      mpcTimer4_.endTimer();
-
-      mpcTimer5_.startTimer();
-      ocp1_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode2_);
-      mpcTimer5_.endTimer();
-      
-      mpcTimer6_.startTimer();
-      ocp1_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode2_);
-      mpcTimer6_.endTimer();
-
-      mpcTimer7_.startTimer();
-      if (activateSelfCollision_) 
-      {
-        ocp1_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode2_);
-      }
-      mpcTimer7_.endTimer();
-
-      mpcTimer8_.startTimer();
-      if (activateExtCollision_) 
-      {
-        //ocp1_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode2_);
-      }
-      mpcTimer8_.endTimer();
-
-      mpcTimer9_.startTimer();
-      //ocp1_.dynamicsPtr = dynamicsPtr_mode2_;
-      ocp1_.dynamicsPtr.reset(new MobileManipulatorDynamics(robotModelInfo_, 
-                                                               "MobileManipulatorDynamics", 
-                                                               libraryFolder_, 
-                                                               recompileLibraries_, 
-                                                               printOutFlag_));
-      mpcTimer9_.endTimer();
-    }
-  }
-  else
-  {
-    std::cout << "[MobileManipulatorInterface::setMPCProblem] ocp2_" << std::endl;
-
-    if (modelModeInt == 0)
-    {
-      mpcTimer3_.startTimer();
-      ocp2_.costPtr->add("inputCost", quadraticInputCostPtr_mode0_);
-      mpcTimer3_.endTimer();
-
-      mpcTimer4_.startTimer();
-      ocp2_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode0_);
-      mpcTimer4_.endTimer();
-
-      mpcTimer5_.startTimer();
-      ocp2_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode0_);
-      mpcTimer5_.endTimer();
-      
-      mpcTimer6_.startTimer();
-      ocp2_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode0_);
-      mpcTimer6_.endTimer();
-
-      mpcTimer7_.startTimer();
-      if (activateSelfCollision_) 
-      {
-        //ocp2_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode0_);
-      }
-      mpcTimer7_.endTimer();
-
-      mpcTimer8_.startTimer();
-      if (activateExtCollision_) 
-      {
-        //ocp2_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode0_);
-      }
-      mpcTimer8_.endTimer();
-
-      mpcTimer9_.startTimer();
-      //ocp2_.dynamicsPtr = dynamicsPtr_mode0_;
-      ocp2_.dynamicsPtr.reset(new MobileBaseDynamics(robotModelInfo_, 
-                                                        "MobileBaseDynamics", 
-                                                        libraryFolder_, 
-                                                        recompileLibraries_, 
-                                                        printOutFlag_));
-      mpcTimer9_.endTimer();
-    }
-
-    else if (modelModeInt == 1)
-    {
-      mpcTimer3_.startTimer();
-      ocp2_.costPtr->add("inputCost", quadraticInputCostPtr_mode1_);
-      mpcTimer3_.endTimer();
-
-      mpcTimer4_.startTimer();
-      ocp2_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode1_);
-      mpcTimer4_.endTimer();
-
-      mpcTimer5_.startTimer();
-      ocp2_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode1_);
-      mpcTimer5_.endTimer();
-      
-      mpcTimer6_.startTimer();
-      ocp2_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode1_);
-      mpcTimer6_.endTimer();
-
-      mpcTimer7_.startTimer();
-      if (activateSelfCollision_) 
-      {
-        ocp2_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode1_);
-      }
-      mpcTimer7_.endTimer();
-
-      mpcTimer8_.startTimer();
-      if (activateExtCollision_) 
-      {
-        //ocp2_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode1_);
-      }
-      mpcTimer8_.endTimer();
-
-      mpcTimer9_.startTimer();
-      //ocp2_.dynamicsPtr = dynamicsPtr_mode1_;
-      ocp2_.dynamicsPtr.reset(new RobotArmDynamics(robotModelInfo_, 
-                                                      "RobotArmDynamics", 
-                                                      libraryFolder_, 
-                                                      recompileLibraries_, 
-                                                      printOutFlag_));
-      mpcTimer9_.endTimer();
-    }
-
-    else if (modelModeInt == 2)
-    {
-      mpcTimer3_.startTimer();
-      ocp2_.costPtr->add("inputCost", quadraticInputCostPtr_mode2_);
-      mpcTimer3_.endTimer();
-
-      mpcTimer4_.startTimer();
-      ocp2_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode2_);
-      mpcTimer4_.endTimer();
-
-      mpcTimer5_.startTimer();
-      ocp2_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode2_);
-      mpcTimer5_.endTimer();
-      
-      mpcTimer6_.startTimer();
-      ocp2_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode2_);
-      mpcTimer6_.endTimer();
-
-      mpcTimer7_.startTimer();
-      if (activateSelfCollision_) 
-      {
-        ocp2_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode2_);
-      }
-      mpcTimer7_.endTimer();
-
-      mpcTimer8_.startTimer();
-      if (activateExtCollision_) 
-      {
-        //ocp2_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode2_);
-      }
-      mpcTimer8_.endTimer();
-
-      mpcTimer9_.startTimer();
-      //ocp2_.dynamicsPtr = dynamicsPtr_mode2_;
-      ocp2_.dynamicsPtr.reset(new MobileManipulatorDynamics(robotModelInfo_, 
-                                                               "MobileManipulatorDynamics", 
-                                                               libraryFolder_, 
-                                                               recompileLibraries_, 
-                                                               printOutFlag_));
-      mpcTimer9_.endTimer();
-    }    
-  }
-  */
-
-  /*
-  /// Cost
-  ////ocp_.costPtr->add("inputCost", getQuadraticInputCost());
-  //std::cout << "" << std::endl;
-
-  /// Constraints
-  // Joint limits constraint
-  ////ocp_.softConstraintPtr->add("jointLimits", getJointLimitSoftConstraint());
-  //std::cout << "" << std::endl;
-
-  // Mobile base or End-effector state constraint
-  //std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getEndEffectorConstraint" << std::endl;
-  ////ocp_.stateSoftConstraintPtr->add("endEffector", getEndEffectorConstraint("endEffector"));
-  //std::cout << "[MobileManipulatorInterface::setMPCProblem] AFTER getEndEffectorConstraint" << std::endl;
-  ////ocp_.finalSoftConstraintPtr->add("finalEndEffector", getEndEffectorConstraint("finalEndEffector"));
-  //std::cout << "" << std::endl;
-
-  //std::cout << "[MobileManipulatorInterface::setMPCProblem] DEBUG INF" << std::endl;
-  //while(1);
-
-  //std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getSelfCollisionConstraint" << std::endl;
-  // Self-collision avoidance constraint
-  mpcTimer7_.startTimer();
-  if (activateSelfCollision_) 
-  {
-    if (robotModelInfo_.modelMode == ModelMode::ArmMotion || robotModelInfo_.modelMode == ModelMode::WholeBodyMotion)
-    {
-      if (iter % 2 == 0)
-      {
-        std::cout << "[MobileManipulatorInterface::setMPCProblem] activateSelfCollision_ ocp1_" << std::endl;
-        ocp1_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint("selfCollision"));
-      }
-      else
-      {
-        std::cout << "[MobileManipulatorInterface::setMPCProblem] activateSelfCollision_ ocp2_" << std::endl;
-        ocp2_.stateSoftConstraintPtr->add("selfCollision", getSelfCollisionConstraint("selfCollision"));
-      }
-    }
-  }
-  mpcTimer7_.endTimer();
-  //std::cout << "" << std::endl;
-
-  //std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE getExtCollisionConstraint" << std::endl;
-  // External-collision avoidance constraint
-  mpcTimer8_.startTimer();
-  activateExtCollision_ = false;
-  if (activateExtCollision_) 
-  {
-    initializePointsOnRobotPtr(pointsAndRadii_);
-    
-    if (pointsOnRobotPtr_->getNumOfPoints() > 0) 
-    {
-      //esdfCachingServerPtr_.reset(new voxblox::EsdfCachingServer(ros::NodeHandle(), ros::NodeHandle("~")));
-      //voxbloxInterpolatorPtr_ = esdfCachingServerPtr_->getInterpolator();
-
-      ///////// NUA TODO: ADAPT TO MULTI MODAL!
-      pointsOnRobotPtr_->initialize(*pinocchioInterfacePtr_,
-                                    MobileManipulatorPinocchioMapping(robotModelInfo_),
-                                    MobileManipulatorPinocchioMappingCppAd(robotModelInfo_),
-                                    robotModelInfo_,
-                                    "points_on_robot",
-                                    libraryFolder_,
-                                    recompileLibraries_,
-                                    false);
-    }
-    else
-    {
-      pointsOnRobotPtr_ = nullptr;
-    }
-
-    emuPtr_.reset(new ExtMapUtility());
-    
-    //// NUA TODO: Set these parameters in taskfile!
-    std::string world_frame_name = "world";
-    std::string pub_name_oct_dist_visu = "occ_dist";
-    std::string pub_name_oct_dist_array_visu = "occ_dist_array";
-
-    emuPtr_->setWorldFrameName(world_frame_name);
-    emuPtr_->setPubOccDistVisu(pub_name_oct_dist_visu);
-    emuPtr_->setPubOccDistArrayVisu(pub_name_oct_dist_array_visu);
-    
-    if (iter % 2 == 0)
-    {
-      std::cout << "[MobileManipulatorInterface::setMPCProblem] activateExtCollision_ ocp1_" << std::endl;
-      ocp1_.stateSoftConstraintPtr->add("extCollision", getExtCollisionConstraint("extCollision"));
-    }
-    else
-    {
-      std::cout << "[MobileManipulatorInterface::setMPCProblem] activateExtCollision_ ocp2_" << std::endl;
-      ocp2_.stateSoftConstraintPtr->add("extCollision", getExtCollisionConstraint("extCollision"));
-    }
-  }
-  mpcTimer8_.endTimer();
-  //std::cout << "" << std::endl;
-
-  // Dynamics
-  mpcTimer9_.startTimer();
-  std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE Dynamics" << std::endl;
-  switch (robotModelInfo_.modelMode) 
-  {
-    case ModelMode::BaseMotion:
-    {
-      std::cout << "[MobileManipulatorInterface::setMPCProblem] Mobile Base" << std::endl;
-      if (iter % 2 == 0)
-      {
-        std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr ocp1_" << std::endl;
-        ocp1_.dynamicsPtr.reset(new MobileBaseDynamics(robotModelInfo_, 
-                                                        "MobileBaseDynamics", 
-                                                        libraryFolder_, 
-                                                        recompileLibraries_, 
-                                                        printOutFlag_));
-      }
-      else
-      {
-        std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr ocp2_" << std::endl;
-        ocp2_.dynamicsPtr.reset(new MobileBaseDynamics(robotModelInfo_, 
-                                                        "MobileBaseDynamics", 
-                                                        libraryFolder_, 
-                                                        recompileLibraries_, 
-                                                        printOutFlag_));
-      }
-      break;
-    }
-    
-    case ModelMode::ArmMotion:
-    {
-      std::cout << "[MobileManipulatorInterface::setMPCProblem] Robotics Arm" << std::endl;
-      if (iter % 2 == 0)
-      {
-        std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr ocp1_" << std::endl;
-        ocp1_.dynamicsPtr.reset(new RobotArmDynamics(robotModelInfo_, 
-                                                      "RobotArmDynamics", 
-                                                      libraryFolder_, 
-                                                      recompileLibraries_, 
-                                                      printOutFlag_));
-      }
-      else
-      {
-        std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr ocp2_" << std::endl;
-        ocp2_.dynamicsPtr.reset(new RobotArmDynamics(robotModelInfo_, 
-                                                      "RobotArmDynamics", 
-                                                      libraryFolder_, 
-                                                      recompileLibraries_, 
-                                                      printOutFlag_));
-      }
-      break;
-    }
-    
-    case ModelMode::WholeBodyMotion: 
-    {
-      std::cout << "[MobileManipulatorInterface::setMPCProblem] Mobile Manipulator" << std::endl;
-      if (iter % 2 == 0)
-      {
-        std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr ocp1_" << std::endl;
-        ocp1_.dynamicsPtr.reset(new MobileManipulatorDynamics(robotModelInfo_, 
-                                                               "MobileManipulatorDynamics", 
-                                                               libraryFolder_, 
-                                                               recompileLibraries_, 
-                                                               printOutFlag_));
-      }
-      else
-      {
-        std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr ocp2_" << std::endl;
-        ocp2_.dynamicsPtr.reset(new MobileManipulatorDynamics(robotModelInfo_, 
-                                                               "MobileManipulatorDynamics", 
-                                                               libraryFolder_, 
-                                                               recompileLibraries_, 
-                                                               printOutFlag_));
-      }
-      break;
-    }
-
-    default:
-      throw std::invalid_argument("[MobileManipulatorInterface::setMPCProblem] ERROR: Invalid model mode!");
-  }
-  mpcTimer9_.endTimer();
-  //std::cout << "" << std::endl;
-  */
-
-  /*
    * Pre-computation
    */
   //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Pre-computation" << std::endl;
@@ -1232,36 +722,14 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Rollout" << std::endl;
   mpcTimer10_.startTimer();
   rolloutPtr_.reset(new TimeTriggeredRollout(*ocp_.dynamicsPtr, rolloutSettings_));
-  /*
-  if (!iterFlag)
-  {
-    if (iter % 2 == 0)
-    {
-      std::cout << "[MobileManipulatorInterface::setMPCProblem] rolloutSettings_ ocp1_" << std::endl;
-      rolloutPtr_.reset(new TimeTriggeredRollout(*ocp1_.dynamicsPtr, rolloutSettings_));
-    }
-    else
-    {
-      std::cout << "[MobileManipulatorInterface::setMPCProblem] rolloutSettings_ ocp2_" << std::endl;
-      rolloutPtr_.reset(new TimeTriggeredRollout(*ocp2_.dynamicsPtr, rolloutSettings_));
-    }
-  }
-  */
   mpcTimer10_.endTimer();
 
   // Initialization
   mpcTimer11_.startTimer();
   auto modeInputDim = getModeInputDim(robotModelInfo_);
-  
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Initialization" << std::endl;
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] modeInputDim: " << modeInputDim << std::endl;
   initializerPtr_.reset(new DefaultInitializer(modeInputDim));
-  /*
-  if (!iterFlag)
-  {
-    initializerPtr_.reset(new DefaultInitializer(modeInputDim));
-  }
-  */
   mpcTimer11_.endTimer();
 
   mpcTimer0_.endTimer();
@@ -1340,25 +808,11 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
   }
 
   // NUA NOTE: Visualize somewhere else!
-  /*
-  if (pointsOnRobotPtr_mode0_)
+  if (pointsOnRobotPtr_)
   {
-    pointsOnRobotPtr_mode0_->setNodeHandle(nodeHandle_);
-    pointsOnRobotPtr_mode0_->publishPointsOnRobotVisu(dt);
+    pointsOnRobotPtr_->setNodeHandle(nodeHandle_);
+    pointsOnRobotPtr_->publishPointsOnRobotVisu(dt);
   }
-
-  if (pointsOnRobotPtr_mode0_)
-  {
-    pointsOnRobotPtr_mode0_->setNodeHandle(nodeHandle_);
-    pointsOnRobotPtr_mode0_->publishPointsOnRobotVisu(dt);
-  }
-
-  if (pointsOnRobotPtr_mode0_)
-  {
-    pointsOnRobotPtr_mode0_->setNodeHandle(nodeHandle_);
-    pointsOnRobotPtr_mode0_->publishPointsOnRobotVisu(dt);
-  }
-  */
 
   if (drlFlag_)
   {
@@ -1789,14 +1243,6 @@ void MobileManipulatorInterface::runMRT()
     //mrtTimer5_.endTimer();
     //std::cout << "[MobileManipulatorInterface::runMRT] AFTER launchNodes" << std::endl;
 
-    // Visualization
-    //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE ocs2_mm_visu" << std::endl;
-    //std::shared_ptr<ocs2::mobile_manipulator::OCS2_Mobile_Manipulator_Visualization> ocs2_mm_visu(new ocs2::mobile_manipulator::OCS2_Mobile_Manipulator_Visualization(nodeHandle_,
-    //                                                                                                                                                                  *pinocchioInterfacePtr_,
-    //                                                                                                                                                                 urdfFile_,
-    //                                                                                                                                                                  taskFile_));
-    //std::cout << "[MobileManipulatorInterface::runMRT] AFTER ocs2_mm_visu" << std::endl;
-
     // MRT loop
     //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE mrt_loop" << std::endl;
     //mrtTimer6_.startTimer();
@@ -1811,12 +1257,15 @@ void MobileManipulatorInterface::runMRT()
                                  err_threshold_pos_,
                                  err_threshold_ori_,
                                  mpcSettings_.mrtDesiredFrequency_, 
-                                 mpcSettings_.mpcDesiredFrequency_);
+                                 mpcSettings_.mpcDesiredFrequency_,
+                                 logSavePathRel_);
+
     //mrtTimer6_.endTimer();
     //std::cout << "[MobileManipulatorInterface::runMRT] AFTER mrt_loop" << std::endl;
 
     //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE subscribeObservers" << std::endl;
-    //mrt_loop.subscribeObservers({ocs2_mm_visu});
+    mobileManipulatorVisu_->updateModelMode(getModelModeInt(robotModelInfo));
+    mrt_loop.subscribeObservers({mobileManipulatorVisu_});
     //std::cout << "[MobileManipulatorInterface::runMRT] AFTER subscribeObservers" << std::endl;
 
     // initial command
@@ -2213,19 +1662,19 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getSelfCollisionConstrain
   scalar_t mu = 1e-2;
   scalar_t delta = 1e-3;
   scalar_t minimumDistance = 0.2;
-  std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
-  std::vector<std::pair<std::string, std::string>> collisionLinkPairs;
+  //std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
+  //std::vector<std::pair<std::string, std::string>> collisionLinkPairs;
 
   //std::cerr << "\n #### SelfCollision Settings: ";
   //std::cerr << "\n #### =============================================================================\n";
   loadData::loadPtreeValue(pt, mu, "selfCollision.mu", printOutFlag_);
   loadData::loadPtreeValue(pt, delta, "selfCollision.delta", printOutFlag_);
   loadData::loadPtreeValue(pt, minimumDistance, "selfCollision.minimumDistance", printOutFlag_);
-  loadData::loadStdVectorOfPair(taskFile_, "selfCollision.collisionObjectPairs", collisionObjectPairs, printOutFlag_);
-  loadData::loadStdVectorOfPair(taskFile_, "selfCollision.collisionLinkPairs", collisionLinkPairs, printOutFlag_);
+  loadData::loadStdVectorOfPair(taskFile_, "selfCollision.collisionObjectPairs", collisionObjectPairs_, printOutFlag_);
+  loadData::loadStdVectorOfPair(taskFile_, "selfCollision.collisionLinkPairs", collisionLinkPairs_, printOutFlag_);
   //std::cerr << " #### =============================================================================\n";
 
-  PinocchioGeometryInterface geometryInterface(*pinocchioInterfacePtr_, collisionLinkPairs, collisionObjectPairs);
+  PinocchioGeometryInterface geometryInterface(*pinocchioInterfacePtr_, collisionLinkPairs_, collisionObjectPairs_);
   const size_t numCollisionPairs = geometryInterface.getNumCollisionPairs();
   //std::cerr << "[MobileManipulatorInterface::getSelfCollisionConstraint] Testing for " << numCollisionPairs << " collision pairs\n";
 
