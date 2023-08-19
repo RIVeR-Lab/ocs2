@@ -27,6 +27,7 @@
 #include <geometry_msgs/Twist.h>
 #include <trajectory_msgs/JointTrajectory.h>
 #include <std_msgs/Float64.h>
+#include <kinova_msgs/JointVelocity.h>
 
 #include "ocs2_msgs/setBool.h"
 #include "ocs2_msgs/setInt.h"
@@ -36,7 +37,6 @@
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 #include "ocs2_ros_interfaces/mrt/DummyObserver.h"
 #include "ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h"
-
 #include "gazebo_ros_link_attacher/Attach.h"
 
 namespace ocs2 {
@@ -261,6 +261,7 @@ class MRT_ROS_Gazebo_Loop
 
     ros::Publisher baseTwistPub_;
     ros::Publisher armJointTrajectoryPub_;
+    ros::Publisher armJointVelocityPub_;
 
     ros::ServiceClient attachClient_;
     ros::ServiceClient detachClient_;
