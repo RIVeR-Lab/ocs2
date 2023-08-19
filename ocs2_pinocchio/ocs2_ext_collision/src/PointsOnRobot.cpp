@@ -176,12 +176,15 @@ void PointsOnRobot::initialize(ocs2::PinocchioInterface& pinocchioInterface,
 /******************************************************************************************************/
 Eigen::VectorXd PointsOnRobot::getPointsPositionCppAd(const Eigen::VectorXd& state) const
 {
-  //std::cout << "[PointsOnRobot::getPointsPositionCppAd] START" << std::endl;
+  std::cout << "[PointsOnRobot::getPointsPositionCppAd] START" << std::endl;
+  std::cout << "[PointsOnRobot::getPointsPositionCppAd] DEBUG INF" << std::endl;
+  while(1);
 
   points_on_robot_ = cppAdInterface_->getFunctionValue(state);
 
   fillPointsOnRobotVisu();
-  //std::cout << "[PointsOnRobot::getPointsPositionCppAd] END" << std::endl;
+
+  std::cout << "[PointsOnRobot::getPointsPositionCppAd] END" << std::endl;
 
   return points_on_robot_;
 }
@@ -193,7 +196,10 @@ Eigen::VectorXd PointsOnRobot::getPointsPositionCppAd(const Eigen::VectorXd& sta
 {
   //std::cout << "[PointsOnRobot::getPointsPositionCppAd] START" << std::endl;
 
-  points_on_robot_ = cppAdInterface_->getFunctionValue(state);
+  points_on_robot_ = cppAdInterface_->getFunctionValue(state, fullState);
+
+  std::cout << "[PointsOnRobot::getPointsPositionCppAd] points_on_robot_ size: " << points_on_robot_.size() << std::endl;
+  std::cout << points_on_robot_ << std::endl;
 
   fillPointsOnRobotVisu();
   //std::cout << "[PointsOnRobot::getPointsPositionCppAd] END" << std::endl;

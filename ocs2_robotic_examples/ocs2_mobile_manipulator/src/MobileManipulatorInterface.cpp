@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.08.15
+// LAST UPDATE: 2023.08.18
 //
 // AUTHOR: Neset Unver Akmandor  (NUA)
 //
@@ -282,6 +282,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   // Read the frame names
   std::string robotName, baseFrame, armBaseFrame, eeFrame;
   loadData::loadPtreeValue<std::string>(pt, robotName, "model_information.robotName", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, worldFrameName_, "model_information.worldFrame", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, baseFrame, "model_information.baseFrame", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, armBaseFrame, "model_information.armBaseFrame", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, eeFrame, "model_information.eeFrame", printOutFlag_);
@@ -450,17 +451,22 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
                                                          printOutFlag_));
   
   // Visualization
-  std::cout << "[MobileManipulatorInterface::runMRT] BEFORE ocs2_mm_visu" << std::endl;
-  mobileManipulatorVisu_ .reset(new ocs2::mobile_manipulator::MobileManipulatorVisualization(nodeHandle_, 
-                                                                                             *pinocchioInterfacePtr_,
-                                                                                             robotModelInfo_,
-                                                                                             activateSelfCollision_,
-                                                                                             activateExtCollision_,
-                                                                                             removeJointNames,
-                                                                                             collisionObjectPairs_,
-                                                                                             collisionLinkPairs_,
-                                                                                             urdfFile_));
-  std::cout << "[MobileManipulatorInterface::runMRT] AFTER ocs2_mm_visu" << std::endl;
+  std::cout << "[MobileManipulatorInterface::runMRT] BEFORE mobileManipulatorVisu_" << std::endl;
+  mobileManipulatorVisu_.reset(new ocs2::mobile_manipulator::MobileManipulatorVisualization(nodeHandle_, 
+                                                                                            *pinocchioInterfacePtr_,
+                                                                                            worldFrameName_,
+                                                                                            baseFrame,
+                                                                                            urdfFile,
+                                                                                            armStateMsg_,
+                                                                                            robotModelInfo_,
+                                                                                            activateSelfCollision_,
+                                                                                            activateExtCollision_,
+                                                                                            removeJointNames,
+                                                                                            collisionObjectPairs_,
+                                                                                            collisionLinkPairs_,
+                                                                                            pointsOnRobotPtr_,
+                                                                                            emuPtr_));
+  std::cout << "[MobileManipulatorInterface::runMRT] AFTER mobileManipulatorVisu_" << std::endl;
 
   launchNodes(nodeHandle_);
 
@@ -470,7 +476,6 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface(6)] END" << std::endl;
 }
 
-///////// NUA TODO: NOT FUNCTIONAL, NEED DEBUG AND TESTING!!!
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -799,6 +804,7 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
 
   double dt = 0.1;
 
+  /*
   if (emuPtr_)
   {
     std::string oct_msg_name = "octomap_scan";
@@ -806,13 +812,16 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
     emuPtr_->setNodeHandle(nodeHandle_);
     emuPtr_->updateOct(oct_msg_name);
   }
+  */
 
   // NUA NOTE: Visualize somewhere else!
+  /*
   if (pointsOnRobotPtr_)
   {
     pointsOnRobotPtr_->setNodeHandle(nodeHandle_);
     pointsOnRobotPtr_->publishPointsOnRobotVisu(dt);
   }
+  */
 
   if (drlFlag_)
   {

@@ -42,26 +42,26 @@ ExtMapUtility::ExtMapUtility()
 }
 
 ExtMapUtility::ExtMapUtility(ros::NodeHandle& nh,
-                       string oct_msg_name,
-                       string pub_name_oct_msg)
+                             string oct_msg_name,
+                             string pub_name_oct_msg)
 {
   nh_ = nh;
 
-  sub_oct_msg_ = nh.subscribe(oct_msg_name, 100, &ExtMapUtility::octMsgCallback, this);
-  //sub_map = nh.subscribe(robot_param.local_map_msg, 1000, &Tentabot::mapCallback, this);
+  sub_oct_msg_ = nh.subscribe(oct_msg_name, 5, &ExtMapUtility::octMsgCallback, this);
+  //sub_map = nh.subscribe(robot_param.local_map_msg, 5, &Tentabot::mapCallback, this);
 
-  nh.advertise<octomap_msgs::Octomap>(pub_name_oct_msg, 100);
+  nh.advertise<octomap_msgs::Octomap>(pub_name_oct_msg, 10);
 }
 
 ExtMapUtility::ExtMapUtility(NodeHandle& nh,
-                       NodeHandle& pnh,
-                       string new_world_frame_name,
-                       string gz_model_msg,
-                       vector<string> frame_name_pkgs_ign, 
-                       vector<string> frame_name_pkgs_man,
-                       vector<sensor_msgs::PointCloud2> pc2_msg_gz_pkgs_ign,
-                       vector<sensor_msgs::PointCloud2> pc2_msg_gz_pkgs_man,
-                       double map_resolution)
+                             NodeHandle& pnh,
+                             string new_world_frame_name,
+                             string gz_model_msg,
+                             vector<string> frame_name_pkgs_ign, 
+                             vector<string> frame_name_pkgs_man,
+                             vector<sensor_msgs::PointCloud2> pc2_msg_gz_pkgs_ign,
+                             vector<sensor_msgs::PointCloud2> pc2_msg_gz_pkgs_man,
+                             double map_resolution)
 {
   nh_ = nh;
   tflistener = new tf::TransformListener;
@@ -81,22 +81,22 @@ ExtMapUtility::ExtMapUtility(NodeHandle& nh,
   oct = std::make_shared<octomap::ColorOcTree>(map_resolution_);
 
   // Subscribers
-  sub_gz_model_ = nh_.subscribe(gz_model_msg, 100, &ExtMapUtility::gazeboModelCallback, this);
+  sub_gz_model_ = nh_.subscribe(gz_model_msg, 5, &ExtMapUtility::gazeboModelCallback, this);
 
   // Publishers
   pub_pc2_msg_scan_ = nh_.advertise<sensor_msgs::PointCloud2>("pc2_scan", 100);
   pub_oct_msg_ = nh_.advertise<octomap_msgs::Octomap>("octomap_scan", 100);
 
-  pub_pc2_msg_gz_pkg_ign_conveyor_ = nh_.advertise<sensor_msgs::PointCloud2>("pc2_scan_conveyor", 100);
-  pub_pc2_msg_gz_pkg_ign_red_cube_ = nh_.advertise<sensor_msgs::PointCloud2>("pc2_scan_red_cube", 100);
-  pub_pc2_msg_gz_pkg_ign_green_cube_ = nh_.advertise<sensor_msgs::PointCloud2>("pc2_scan_green_cube", 100);
-  pub_pc2_msg_gz_pkg_ign_blue_cube_ = nh_.advertise<sensor_msgs::PointCloud2>("pc2_scan_blue_cube", 100);
-  pub_pc2_msg_gz_pkg_man_normal_pkg_ = nh_.advertise<sensor_msgs::PointCloud2>("pc2_scan_normal_pkg", 100);
-  pub_pc2_msg_gz_pkg_man_long_pkg_ = nh_.advertise<sensor_msgs::PointCloud2>("pc2_scan_long_pkg", 100);
-  pub_pc2_msg_gz_pkg_man_longwide_pkg_ = nh_.advertise<sensor_msgs::PointCloud2>("pc2_scan_longwide_pkg", 100);
+  pub_pc2_msg_gz_pkg_ign_conveyor_ = nh_.advertise<sensor_msgs::PointCloud2>("pc2_scan_conveyor", 10);
+  pub_pc2_msg_gz_pkg_ign_red_cube_ = nh_.advertise<sensor_msgs::PointCloud2>("pc2_scan_red_cube", 10);
+  pub_pc2_msg_gz_pkg_ign_green_cube_ = nh_.advertise<sensor_msgs::PointCloud2>("pc2_scan_green_cube", 10);
+  pub_pc2_msg_gz_pkg_ign_blue_cube_ = nh_.advertise<sensor_msgs::PointCloud2>("pc2_scan_blue_cube", 10);
+  pub_pc2_msg_gz_pkg_man_normal_pkg_ = nh_.advertise<sensor_msgs::PointCloud2>("pc2_scan_normal_pkg", 10);
+  pub_pc2_msg_gz_pkg_man_long_pkg_ = nh_.advertise<sensor_msgs::PointCloud2>("pc2_scan_long_pkg", 10);
+  pub_pc2_msg_gz_pkg_man_longwide_pkg_ = nh_.advertise<sensor_msgs::PointCloud2>("pc2_scan_longwide_pkg", 10);
 
   pub_occ_distance_visu_ = nh_.advertise<visualization_msgs::Marker>("occupancy_distance", 10);
-  pub_occ_distance_array_visu_ = nh_.advertise<visualization_msgs::MarkerArray>("occupancy_distance_array", 100);
+  pub_occ_distance_array_visu_ = nh_.advertise<visualization_msgs::MarkerArray>("occupancy_distance_array", 10);
 }
 
 ExtMapUtility::ExtMapUtility(NodeHandle& nh, 
@@ -141,15 +141,15 @@ ExtMapUtility::ExtMapUtility(NodeHandle& nh,
   pc2_msg.header.frame_id = world_frame_name;
 
   // SUBSCRIBE TO THE OCCUPANCY SENSOR DATA (PointCloud2)
-  sub_pc2 = nh.subscribe(sensor_pc2_msg_name, 1000, &ExtMapUtility::pc2Callback, this);
+  sub_pc2 = nh.subscribe(sensor_pc2_msg_name, 5, &ExtMapUtility::pc2Callback, this);
 
   // SUBSCRIBE TO THE OCCUPANCY SENSOR DATA (LaserScan)
-  sub_laser = nh.subscribe(sensor_laser_msg_name, 1000, &ExtMapUtility::laserCallback, this);
+  sub_laser = nh.subscribe(sensor_laser_msg_name, 5, &ExtMapUtility::laserCallback, this);
 
   // NUA TODO: MAP SERVICE
   //ros::ServiceServer service_reset_map_utility = nh.advertiseService("reset_map_utility", &ExtMapUtility::reset_map_utility, this);
 
-  pub_oct_msg_ = nh.advertise<octomap_msgs::Octomap>("octomap_" + map_name, 1000);
+  pub_oct_msg_ = nh.advertise<octomap_msgs::Octomap>("octomap_" + map_name, 10);
   pc_msg_pub = nh.advertise<sensor_msgs::PointCloud>("PC_" + map_name, 10);
   pc2_msg_pub = nh.advertise<sensor_msgs::PointCloud2>("PC2_" + map_name, 10);
   debug_array_visu_pub = nh.advertise<visualization_msgs::MarkerArray>("debug_array_" + map_name, 10);
@@ -762,7 +762,7 @@ void ExtMapUtility::setFrameNamePkgsMan(vector<string> frame_name_pkgs_man)
 
 void ExtMapUtility::setPubOctMsg(string pub_name_oct_msg)
 {
-  pub_oct_msg_ = nh_.advertise<octomap_msgs::Octomap>(pub_name_oct_msg, 100);
+  pub_oct_msg_ = nh_.advertise<octomap_msgs::Octomap>(pub_name_oct_msg, 10);
 }
 
 void ExtMapUtility::setPubOccDistVisu(string pub_name_occ_dist_visu)
@@ -772,7 +772,7 @@ void ExtMapUtility::setPubOccDistVisu(string pub_name_occ_dist_visu)
 
 void ExtMapUtility::setPubOccDistArrayVisu(string pub_name_occ_dist_array_visu)
 {
-  pub_occ_distance_array_visu_ = nh_.advertise<visualization_msgs::MarkerArray>(pub_name_occ_dist_array_visu, 100);
+  pub_occ_distance_array_visu_ = nh_.advertise<visualization_msgs::MarkerArray>(pub_name_occ_dist_array_visu, 10);
 }
 
 void ExtMapUtility::createTimerPubOctDistVisu(ros::Duration dt)
@@ -1085,8 +1085,7 @@ void ExtMapUtility::fillOccDistanceVisu(geometry_msgs::Point& p0, geometry_msgs:
 
 void ExtMapUtility::fillOccDistanceArrayVisu(vector<geometry_msgs::Point>& p0_vec, vector<geometry_msgs::Point>& p1_vec) const
 {
-  occ_distance_array_visu_.markers.clear();
-
+  visualization_msgs::MarkerArray occ_distance_array_visu;
   for (size_t i = 0; i < p0_vec.size(); i++)
   {
     visualization_msgs::Marker occ_distance_visu;
@@ -1111,8 +1110,9 @@ void ExtMapUtility::fillOccDistanceArrayVisu(vector<geometry_msgs::Point>& p0_ve
     //occ_distance_visu.header.seq++;
     occ_distance_visu.header.stamp = ros::Time::now();
 
-    occ_distance_array_visu_.markers.push_back(occ_distance_visu);
+    occ_distance_array_visu.markers.push_back(occ_distance_visu);
   }
+  occ_distance_array_visu_ = occ_distance_array_visu;
 }
 
 void ExtMapUtility::fillDebugArrayVisu(vector<tf::Vector3>& v)
@@ -1834,6 +1834,15 @@ void ExtMapUtility::updateOctPC()
   }
 }
 
+void ExtMapUtility::updateOct()
+{
+  if (!octUpdateFlag_)
+  {
+    oct = std::shared_ptr<octomap::ColorOcTree> (dynamic_cast<octomap::ColorOcTree*> (octomap_msgs::msgToMap(oct_msg)));
+  }
+  octUpdateFlag_ = true;
+}
+
 void ExtMapUtility::updateOct(sensor_msgs::PointCloud2& pc2_msg)
 {
   oct->clear();
@@ -1842,10 +1851,10 @@ void ExtMapUtility::updateOct(sensor_msgs::PointCloud2& pc2_msg)
   fillOctMsgFromOct();
 }
 
-void ExtMapUtility::updateOct(string oct_msg_name)
+void ExtMapUtility::subscribeOctMsg(string oct_msg_name)
 {
-  //std::cout << "[ExtMapUtility::updateOct] oct_msg_name: " << oct_msg_name << std::endl;
-  sub_oct_msg_ = nh_.subscribe(oct_msg_name, 100, &ExtMapUtility::octMsgCallback, this);
+  //std::cout << "[ExtMapUtility::subscribeOctMsg] oct_msg_name: " << oct_msg_name << std::endl;
+  sub_oct_msg_ = nh_.subscribe(oct_msg_name, 10, &ExtMapUtility::octMsgCallback, this);
 }
 
 void ExtMapUtility::pointcloud2ToOctPc2(const sensor_msgs::PointCloud2& cloud_pc2, octomap::Pointcloud& cloud_octomap)
@@ -1868,11 +1877,14 @@ void ExtMapUtility::pointcloud2ToOctPc2(const sensor_msgs::PointCloud2& cloud_pc
 
 void ExtMapUtility::publishOctMsg()
 {
+  std::cout << "[ExtMapUtility::publishOctMsg] START" << std::endl;
   oct_msg.header.frame_id = world_frame_name;
   //oct_msg.header.seq++;
   oct_msg.header.stamp = ros::Time::now();
 
   pub_oct_msg_.publish(oct_msg);
+
+  std::cout << "[ExtMapUtility::publishOctMsg] END" << std::endl;
 }
 
 void ExtMapUtility::publishPCMsg()
@@ -1999,7 +2011,7 @@ void ExtMapUtility::publishDebugVisu()
 void ExtMapUtility::printDataSize()
 {
   cout << "" << endl;
-  cout << "map_utility::printDataSize -> oct: " << oct -> size() << endl;
+  cout << "map_utility::printDataSize -> oct: " << oct->size() << endl;
   cout << "map_utility::printDataSize -> oct_msg: " << oct_msg.data.size() << endl;
   cout << "map_utility::printDataSize -> oct_pc: " << oct_pc.size() << endl;
   //cout << "map_utility::printDataSize -> measured_pc_msg: " << measured_pc_msg.points.size() << endl;
@@ -2137,14 +2149,21 @@ void ExtMapUtility::laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg)
 
 void ExtMapUtility::octMsgCallback(const octomap_msgs::Octomap::ConstPtr& msg)
 {
-  //cout << "[ExtMapUtility::octMsgCallback] Incoming data..." << endl;
+  //cout << "[ExtMapUtility::octMsgCallback] START" << endl;
 
-  oct = std::shared_ptr<octomap::ColorOcTree> (dynamic_cast<octomap::ColorOcTree*> (octomap_msgs::msgToMap(*msg)));
+  //cout << "[ExtMapUtility::octMsgCallback] BEFORE oct" << endl;
+  //oct = std::shared_ptr<octomap::ColorOcTree> (dynamic_cast<octomap::ColorOcTree*> (octomap_msgs::msgToMap(*msg)));
+  //cout << "[ExtMapUtility::octMsgCallback] AFTER oct" << endl;
   //fillOctMsgFromOct();
   oct_msg = *msg;
+  //cout << "[ExtMapUtility::octMsgCallback] AFTER oct_msg" << endl;
 
-  publishOccDistanceVisu();
-  publishOccDistanceArrayVisu();
+  initOctMsgFlag_ =  true;
+
+  //publishOccDistanceVisu();
+  //publishOccDistanceArrayVisu();
+
+  //cout << "[ExtMapUtility::octMsgCallback] END" << endl;
 }
 
 void ExtMapUtility::gazeboModelCallback(const gazebo_msgs::ModelStates::ConstPtr& msg)
@@ -2444,57 +2463,103 @@ double ExtMapUtility::getNearestOccupancyDist(double x, double y, double z, geom
   return dist_min;
 }
 
-double ExtMapUtility::getNearestOccupancyDist2(double x, double y, double z, geometry_msgs::Point& min_p, double max_dist, bool pub_flag) const
+bool ExtMapUtility::getNearestOccupancyDist2(double x, double y, double z, double max_dist, geometry_msgs::Point& min_p, double& min_p_dist, bool pub_flag) const
 {
-  //std::cout << "[ExtMapUtility::getNearestOccupancyDist2] START" << std::endl;
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist2] START" << std::endl;
 
-  octomap::ColorOcTree::iterator it = oct -> begin();  
+  while(!octUpdateFlag_)
+  {
+    std::cout << "[ExtMapUtility::getNearestOccupancyDist2] WAITING octUpdateFlag_..." << std::endl;
+    ros::spinOnce();
+  }
+
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 0" << std::endl;
+  //octomap::ColorOcTree oct_tmp(*oct);
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 0.1" << std::endl;
+
+  octomap::ColorOcTree::iterator it = oct->begin(); 
+
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 1" << std::endl;
 
   if (it == NULL)
   {
-    return max_dist;
+    std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 2" << std::endl;
+    return false;
   }
   else
   {
-    double dist_min, dist_tmp;
+    std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 3" << std::endl;
+    double dist_tmp;
     geometry_msgs::Point collision_p;
     geometry_msgs::Point query_p;
     query_p.x = x;
     query_p.y = y;
     query_p.z = z;
 
-    if (it != oct -> end())
+    bool success = false;
+
+    std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 4" << std::endl;
+    if (it != oct->end())
     {
+      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 5" << std::endl;
       collision_p.x = it.getX();
       collision_p.y = it.getY();
       collision_p.z = it.getZ();
-      dist_min = find_Euclidean_distance(query_p, collision_p);
-      min_p = collision_p;
+
+      if (!std::isnan (collision_p.x) && !std::isnan (collision_p.y) && !std::isnan (collision_p.z))
+      {
+        min_p_dist = find_Euclidean_distance(query_p, collision_p);
+        min_p = collision_p;
+        success = true;
+      }
+      else
+      {
+        min_p_dist = max_dist;
+      }
+      
+      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 6" << std::endl;
     }
     else
     {
-      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] DEBUG INF" << std::endl;
-      while(1);
-
-      return max_dist;
+      return success;
     }
 
-    for(it = oct -> begin(); it != oct -> end(); it++)
+    std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 7" << std::endl;
+    for(it = oct->begin(); it != oct->end(); ++it)
     {
+      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 8.1" << std::endl;
+      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] x: " << it.getX() << std::endl;
+      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] y: " << it.getY() << std::endl;
+      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] z: " << it.getZ() << std::endl;
       collision_p.x = it.getX();
       collision_p.y = it.getY();
       collision_p.z = it.getZ();
-      dist_tmp = find_Euclidean_distance(query_p, collision_p);
 
-      if (dist_tmp < dist_min)
+      if (!std::isnan (collision_p.x) && !std::isnan (collision_p.y) && !std::isnan (collision_p.z))
       {
-        dist_min = dist_tmp;
+        dist_tmp = find_Euclidean_distance(query_p, collision_p);
+        success = true;
+      }
+      else
+      {
+        dist_tmp = max_dist;
+      }
+
+      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] dist_tmp: " << dist_tmp << std::endl;
+
+      if (dist_tmp < min_p_dist)
+      {
+        std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 8.2" << std::endl;
+        min_p_dist = dist_tmp;
         min_p = collision_p;
       }
+      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 8.3" << std::endl;
     }
 
-    if (dist_min > max_dist)
+    std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 9" << std::endl;
+    if (min_p_dist > max_dist)
     {
+      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 10" << std::endl;
       geometry_msgs::Point end_tmp;
       end_tmp.x = min_p.x;
       end_tmp.y = min_p.y;
@@ -2503,9 +2568,13 @@ double ExtMapUtility::getNearestOccupancyDist2(double x, double y, double z, geo
       double alpha = (end_tmp.y - query_p.y) * (end_tmp.y - query_p.y) / ((end_tmp.x - query_p.x) * (end_tmp.x - query_p.x));
       double beta = (end_tmp.z - query_p.z) * (end_tmp.z - query_p.z) / ((end_tmp.x - query_p.x) * (end_tmp.x - query_p.x));
 
+      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 11" << std::endl;
+
       min_p.x = query_p.x + max_dist / sqrt(1 + alpha + beta);
 
       double m = (min_p.x - query_p.x) / (end_tmp.x - query_p.x);
+
+      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 12" << std::endl;
 
       if (m < 0)
       {
@@ -2513,21 +2582,91 @@ double ExtMapUtility::getNearestOccupancyDist2(double x, double y, double z, geo
         m = (min_p.x - query_p.x) / (end_tmp.x - query_p.x);
       }
 
+      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 13" << std::endl;
+
       min_p.y = query_p.y + m * (end_tmp.y - query_p.y);
       min_p.z = query_p.z + m * (end_tmp.z - query_p.z);
 
-      dist_min = max_dist;
+      min_p_dist = max_dist;
     }
 
     if (pub_flag)
     {
+      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 14" << std::endl;
       fillOccDistanceVisu(query_p, min_p);
+      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 15" << std::endl;
     }
 
-    //std::cout << "[ExtMapUtility::getNearestOccupancyDist2] END" << std::endl;
+    std::cout << "[ExtMapUtility::getNearestOccupancyDist2] END" << std::endl;
 
-    return dist_min;
+    return success;
   }
+}
+
+bool ExtMapUtility::getNearestOccupancyDist3(double x, double y, double z, double max_dist, geometry_msgs::Point& min_p, double& min_p_dist, bool pub_flag) const
+{
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist3] START" << std::endl;
+
+  Eigen::Affine3d world_transform_eigen, query_tranform_eigen;
+  world_transform_eigen.setIdentity();
+  query_tranform_eigen.setIdentity();
+  fcl::Vector3d query_translation(x, y, z);
+  query_tranform_eigen.translation() = query_translation;
+
+  fcl::Transform3d world_transform_fcl, query_tranform_fcl;
+  robot_collision_checking::FCLInterface::transform2fcl(world_transform_eigen, world_transform_fcl);
+  robot_collision_checking::FCLInterface::transform2fcl(query_tranform_eigen, query_tranform_fcl);
+
+  worldFCLCollisionGeometryPtr_ = robot_collision_checking::FCLInterface::createCollisionGeometry(oct_msg);
+  worldFCLCollisionObjectPtr_ = std::make_shared<fcl::CollisionObjectd>(worldFCLCollisionGeometryPtr_, world_transform_fcl);
+
+  std::shared_ptr<fcl::CollisionGeometryd> queryFCLCollisionGeometryPtr(new fcl::Sphered(0.1));
+  FCLCollisionObjectPtr queryFCLCollisionObjectPtr_ = std::make_shared<fcl::CollisionObjectd>(queryFCLCollisionGeometryPtr, query_tranform_fcl);
+
+  fcl::DistanceRequestd dist_req;
+  dist_req.enable_nearest_points = true;
+  dist_req.gjk_solver_type = fcl::GJKSolverType::GST_LIBCCD;
+
+  fcl::DistanceResultd dist_result;
+  dist_result.nearest_points[0].setZero();
+  dist_result.nearest_points[1].setZero();
+
+  fcl::distance(worldFCLCollisionObjectPtr_.get(),
+                queryFCLCollisionObjectPtr_.get(),
+                dist_req,
+                dist_result);
+
+  Eigen::Vector3d world_min_p;
+  world_min_p.x() = dist_result.nearest_points[0].x();
+  world_min_p.y() = dist_result.nearest_points[0].y();
+  world_min_p.z() = dist_result.nearest_points[0].z();
+
+  Eigen::Vector3d query_min_p;
+  query_min_p.x() = dist_result.nearest_points[1].x();
+  query_min_p.y() = dist_result.nearest_points[1].y();
+  query_min_p.z() = dist_result.nearest_points[1].z();
+
+  min_p.x = world_min_p.x();
+  min_p.y = world_min_p.y();
+  min_p.z = world_min_p.z();
+
+  min_p_dist = dist_result.min_distance;
+
+  /*
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist3] world_min_p x: " << world_min_p.x() << std::endl;
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist3] world_min_p y: " << world_min_p.y() << std::endl;
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist3] world_min_p z: " << world_min_p.z() << std::endl;
+
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist3] query_min_p x: " << query_min_p.x() << std::endl;
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist3] query_min_p y: " << query_min_p.y() << std::endl;
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist3] query_min_p z: " << query_min_p.z() << std::endl;
+
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist3] min_p_dist: " << min_p_dist << std::endl;
+  */
+
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist3] END" << std::endl << std::endl;
+
+  return true;
 }
 
 /*
