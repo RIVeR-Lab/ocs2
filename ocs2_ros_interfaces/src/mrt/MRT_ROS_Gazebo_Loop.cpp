@@ -1287,16 +1287,28 @@ void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy,
   if (mrt_.getRobotModelInfo().modelMode == ModelMode::ArmMotion || 
       mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
   {
+    
+    //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] ARM PUB" << std::endl;
+    armJointTrajectoryPub_.publish(armJointTrajectoryMsg);
+
+  }
+
+  if(mrt_.getRobotModelInfo().modelMode == ModelMode::ArmMotion) {
+    armJointVelocityMsg.joint1 = currentInput_[0] * (180.0/M_PIf32);
+    armJointVelocityMsg.joint2 = currentInput_[1] * (180.0/M_PIf32);
+    armJointVelocityMsg.joint3 = currentInput_[2] * (180.0/M_PIf32);
+    armJointVelocityMsg.joint4 = currentInput_[3] * (180.0/M_PIf32);
+    armJointVelocityMsg.joint5 = currentInput_[4] * (180.0/M_PIf32);
+    armJointVelocityMsg.joint6 = currentInput_[5] * (180.0/M_PIf32);
+    armJointVelocityPub_.publish(armJointVelocityMsg);
+  } else if (mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion) {
     armJointVelocityMsg.joint1 = currentInput_[2] * (180.0/M_PIf32);
     armJointVelocityMsg.joint2 = currentInput_[3] * (180.0/M_PIf32);
     armJointVelocityMsg.joint3 = currentInput_[4] * (180.0/M_PIf32);
     armJointVelocityMsg.joint4 = currentInput_[5] * (180.0/M_PIf32);
     armJointVelocityMsg.joint5 = currentInput_[6] * (180.0/M_PIf32);
     armJointVelocityMsg.joint6 = currentInput_[7] * (180.0/M_PIf32);
-    //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] ARM PUB" << std::endl;
-    armJointTrajectoryPub_.publish(armJointTrajectoryMsg);
     armJointVelocityPub_.publish(armJointVelocityMsg);
-
   }
 
   dataStatePosition_.push_back(state_pos);
