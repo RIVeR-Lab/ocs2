@@ -37,7 +37,7 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "distance_visualization");
   ros::NodeHandle nodeHandle;
 
-  ros::MultiThreadedSpinner spinner(4);
+  ros::MultiThreadedSpinner spinner(0);
   //ros::AsyncSpinner spinner(0);
   //spinner.start();
   
@@ -193,7 +193,8 @@ int main(int argc, char** argv)
                                  recompileLibraries,
                                  false);
     pointsOnRobotPtr->setNodeHandle(nodeHandle);
-    pointsOnRobotPtr->publishPointsOnRobotVisu(0.01);
+    pointsOnRobotPtr->setPointsOnRobotVisu();
+    //pointsOnRobotPtr->setTimerPointsOnRobotVisu(0.01);
   }
   else
   {
@@ -235,7 +236,7 @@ int main(int argc, char** argv)
   //double emu_dt = 0.01;
   //ros::Timer octUpdateTimer = nodeHandle.createTimer(ros::Duration(emu_dt), &MobileManipulatorVisualization::updateOctCallback, &mobileManipulatorVisu);
   
-  double dist_dt = 0.05;
+  double dist_dt = 0.001;
   ros::Timer distanceTimer = nodeHandle.createTimer(ros::Duration(dist_dt), &MobileManipulatorVisualization::updateDistancesCallback, &mobileManipulatorVisu);
 
   /*
@@ -244,7 +245,7 @@ int main(int argc, char** argv)
   {
     std::cout << "[MobileManipulatorDistanceVisualization::main] START LOOP" << std::endl;
 
-    updateDistances(false);
+    mobileManipulatorVisu.updateDistances(false);
 
     ros::spinOnce();
     r.sleep();

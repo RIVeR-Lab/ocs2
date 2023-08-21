@@ -133,6 +133,7 @@ class MobileManipulatorVisualization final : public DummyObserver
     ocs2::benchmark::RepeatedTimer timer2_;
     ocs2::benchmark::RepeatedTimer timer3_;
     ocs2::benchmark::RepeatedTimer timer4_;
+    ocs2::benchmark::RepeatedTimer timer5_;
 
     ros::Subscriber jointStatesSub_;
     ros::Subscriber tfSub_;

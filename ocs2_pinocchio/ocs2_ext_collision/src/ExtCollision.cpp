@@ -54,6 +54,9 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
   //std::cout << "[ExtCollision::getValue] START" << std::endl;
   //std::cout << "[ExtCollision::getValue] state size: " << state.size() << std::endl;
   //std::cout << "[ExtCollision::getValue] maxDistance_: " << maxDistance_ << std::endl;
+
+  std::cout << "[ExtCollision::getValue] DEBUG INF" << std::endl;
+  while(1);
   
   vector_t violations;
 
@@ -88,9 +91,10 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
       p0.z = position(2);
 
       geometry_msgs::Point p1;
-      bool success = emuPtr_->getNearestOccupancyDist2(position(0), 
+      bool success = emuPtr_->getNearestOccupancyDist(position(0), 
                                                      position(1), 
                                                      position(2), 
+                                                     radii(i),
                                                      maxDistance_,
                                                      p1, 
                                                      distance,
@@ -118,7 +122,7 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
       }
     }
 
-    emuPtr_->fillOccDistanceArrayVisu(p0_vec_, p1_vec_);
+    //emuPtr_->fillOccDistanceArrayVisu(p0_vec_, p1_vec_);
 
     violations = distances_;
 

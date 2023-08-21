@@ -292,8 +292,8 @@ void ExtCollisionCppAd::updateDistances(const vector_t& state, bool normalize_fl
   //vector<geometry_msgs::Point> p0_vec;
   //vector<geometry_msgs::Point> p1_vec;
 
-  p0_vec_.clear();
-  p1_vec_.clear();
+  //p0_vec_.clear();
+  //p1_vec_.clear();
 
   for (int i = 0; i < numPoints; i++)
   {
@@ -306,17 +306,18 @@ void ExtCollisionCppAd::updateDistances(const vector_t& state, bool normalize_fl
 
     geometry_msgs::Point p1;
     
-    bool success = emuPtr_->getNearestOccupancyDist2(position(0), 
-                                                     position(1), 
-                                                     position(2), 
-                                                     maxDistance_,
-                                                     p1, 
-                                                     distance,
-                                                     false);
+    bool success = emuPtr_->getNearestOccupancyDist(position(0), 
+                                                    position(1), 
+                                                    position(2), 
+                                                    radii(i),
+                                                    maxDistance_,
+                                                    p1, 
+                                                    distance,
+                                                    false);
     if(success)
     {
-      p0_vec_.push_back(p0);
-      p1_vec_.push_back(p1);
+      //p0_vec_.push_back(p0);
+      //p1_vec_.push_back(p1);
 
       distances_[i] = distance - radii(i);
 
@@ -336,7 +337,7 @@ void ExtCollisionCppAd::updateDistances(const vector_t& state, bool normalize_fl
     }
   }
 
-  emuPtr_->fillOccDistanceArrayVisu(p0_vec_, p1_vec_);
+  //emuPtr_->fillOccDistanceArrayVisu(p0_vec_, p1_vec_);
 
   std::cout << "[ExtCollisionCppAd::updateDistances(1)] END" << std::endl;
 }
@@ -355,8 +356,8 @@ void ExtCollisionCppAd::updateDistances(const vector_t& state, const vector_t& f
   assert(positionPointsOnRobot.size() % 3 == 0);
   
   double distance;
-  p0_vec_.clear();
-  p1_vec_.clear();
+  //p0_vec_.clear();
+  //p1_vec_.clear();
 
   timer1_.startTimer();
   //std::cout << "[ExtCollisionCppAd::updateDistances(2)] numPoints: " << numPoints << std::endl;
@@ -372,17 +373,18 @@ void ExtCollisionCppAd::updateDistances(const vector_t& state, const vector_t& f
     p0.z = position(2);
 
     geometry_msgs::Point p1;
-    bool success = emuPtr_->getNearestOccupancyDist2(position(0), 
-                                                     position(1), 
-                                                     position(2), 
-                                                     maxDistance_,
-                                                     p1, 
-                                                     distance,
-                                                     false);
+    bool success = emuPtr_->getNearestOccupancyDist(position(0), 
+                                                    position(1), 
+                                                    position(2),
+                                                    radii(i), 
+                                                    maxDistance_,
+                                                    p1, 
+                                                    distance,
+                                                    false);
     if(success)
     {
-      p0_vec_.push_back(p0);
-      p1_vec_.push_back(p1);
+      //p0_vec_.push_back(p0);
+      //p1_vec_.push_back(p1);
 
       distances_[i] = distance - radii(i);
 
@@ -408,7 +410,7 @@ void ExtCollisionCppAd::updateDistances(const vector_t& state, const vector_t& f
   timer1_.endTimer();
 
   timer2_.startTimer();
-  emuPtr_->fillOccDistanceArrayVisu(p0_vec_, p1_vec_);
+  //emuPtr_->fillOccDistanceArrayVisu(p0_vec_, p1_vec_);
   timer2_.endTimer();
 
   /*

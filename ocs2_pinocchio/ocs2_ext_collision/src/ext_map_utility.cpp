@@ -96,7 +96,7 @@ ExtMapUtility::ExtMapUtility(NodeHandle& nh,
   pub_pc2_msg_gz_pkg_man_longwide_pkg_ = nh_.advertise<sensor_msgs::PointCloud2>("pc2_scan_longwide_pkg", 10);
 
   pub_occ_distance_visu_ = nh_.advertise<visualization_msgs::Marker>("occupancy_distance", 10);
-  pub_occ_distance_array_visu_ = nh_.advertise<visualization_msgs::MarkerArray>("occupancy_distance_array", 10);
+  pub_occ_distance_array_visu_ = nh_.advertise<visualization_msgs::MarkerArray>("occupancy_distance_array", 1000);
 }
 
 ExtMapUtility::ExtMapUtility(NodeHandle& nh, 
@@ -772,7 +772,7 @@ void ExtMapUtility::setPubOccDistVisu(string pub_name_occ_dist_visu)
 
 void ExtMapUtility::setPubOccDistArrayVisu(string pub_name_occ_dist_array_visu)
 {
-  pub_occ_distance_array_visu_ = nh_.advertise<visualization_msgs::MarkerArray>(pub_name_occ_dist_array_visu, 10);
+  pub_occ_distance_array_visu_ = nh_.advertise<visualization_msgs::MarkerArray>(pub_name_occ_dist_array_visu, 1000);
 }
 
 void ExtMapUtility::createTimerPubOctDistVisu(ros::Duration dt)
@@ -1979,8 +1979,8 @@ void ExtMapUtility::publishOccDistanceVisu(geometry_msgs::Point p0, geometry_msg
 
 void ExtMapUtility::publishOccDistanceArrayVisu()
 {
-  visualization_msgs::MarkerArray occ_distance_array_visu = occ_distance_array_visu_;
-  pub_occ_distance_array_visu_.publish(occ_distance_array_visu);
+  //visualization_msgs::MarkerArray occ_distance_array_visu = occ_distance_array_visu_;
+  pub_occ_distance_array_visu_.publish(occ_distance_array_visu_);
 }
 
 void ExtMapUtility::publishOccDistanceArrayVisu(vector<geometry_msgs::Point> p0_vec, vector<geometry_msgs::Point> p1_vec)
@@ -2365,247 +2365,19 @@ void getPointOnLine(geometry_msgs::Point& origin, geometry_msgs::Point& end, dou
   end.z = m * (end_tmp.z - origin.z) + origin.z;
 }
 
-double ExtMapUtility::getNearestOccupancyDist(double x, double y, double z, geometry_msgs::Point& min_p, double max_dist, bool pub_flag)
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+bool ExtMapUtility::getNearestOccupancyDist(double x, 
+                                            double y, 
+                                            double z, 
+                                            double radii, 
+                                            double max_dist, 
+                                            geometry_msgs::Point& min_p, 
+                                            double& min_p_dist, 
+                                            bool normalize_flag) const
 {
-  //std::cout << "[ExtMapUtility::getNearestOccupancyDist] START" << std::endl;
-
-  double dist_min, dist_tmp;
-  string name_min;
-  int idx_min;
-  geometry_msgs::Point collision_p;
-  geometry_msgs::Point query_p;
-  query_p.x = x;
-  query_p.y = y;
-  query_p.z = z;
-  
-  if (transform_pkgs_ign_.size() > 0)
-  {
-    collision_p.x = transform_pkgs_ign_[0].getOrigin().x();
-    collision_p.y = transform_pkgs_ign_[0].getOrigin().y();
-    collision_p.z = transform_pkgs_ign_[0].getOrigin().z();
-    dist_min = find_Euclidean_distance(query_p, collision_p);
-    name_min = frame_name_pkgs_ign_[0];
-    idx_min = 0;
-  }
-  else
-  {
-    return max_dist;
-  }
-
-  //std::cout << "[ExtMapUtility::getNearestOccupancyDist] transform_pkgs_ign_.size(): " << transform_pkgs_ign_.size() << std::endl;
-  //std::cout << "[ExtMapUtility::getNearestOccupancyDist] frame_name_pkgs_ign_.size(): " << frame_name_pkgs_ign_.size() << std::endl;
-
-  for (size_t i = 0; i < transform_pkgs_ign_.size(); i++)
-  {
-    collision_p.x = transform_pkgs_ign_[i].getOrigin().x();
-    collision_p.y = transform_pkgs_ign_[i].getOrigin().y();
-    collision_p.z = transform_pkgs_ign_[i].getOrigin().z();
-    dist_tmp = find_Euclidean_distance(query_p, collision_p);
-
-    if (dist_tmp < dist_min)
-    {
-      dist_min = dist_tmp;
-      name_min = frame_name_pkgs_ign_[i];
-      idx_min = i;
-    }
-  }
- 
-  //std::cout << "[ExtMapUtility::getNearestOccupancyDist] dist_min: " << dist_min << std::endl;
-  //std::cout << "[ExtMapUtility::getNearestOccupancyDist] name_min: " << name_min << std::endl;
-  //std::cout << "[ExtMapUtility::getNearestOccupancyDist] idx_min: " << idx_min << std::endl;
-
-  tf::Transform transform_pc2;
-  transform_pc2.setIdentity();
-  transform_pc2.setOrigin(transform_pkgs_ign_[idx_min].getOrigin());
-  transform_pc2.setRotation(transform_pkgs_ign_[idx_min].getRotation());
-
-  sensor_msgs::PointCloud2 pc2_wrt_world;
-  pcl_ros::transformPointCloud(world_frame_name, transform_pc2, pc2_msg_gz_pkgs_ign_[idx_min], pc2_wrt_world);
-  
-  sensor_msgs::PointCloud2ConstIterator<float> iter_x(pc2_wrt_world, "x");
-  sensor_msgs::PointCloud2ConstIterator<float> iter_y(pc2_wrt_world, "y");
-  sensor_msgs::PointCloud2ConstIterator<float> iter_z(pc2_wrt_world, "z");
-
-  if (iter_x != iter_x.end())
-  {
-    collision_p.x = *iter_x;
-    collision_p.y = *iter_y;
-    collision_p.z = *iter_z;
-    dist_min = find_Euclidean_distance(query_p, collision_p);
-    min_p = collision_p;
-  }
-  else
-  {
-    return max_dist;
-  }
-
-  for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z)
-  {
-    collision_p.x = *iter_x;
-    collision_p.y = *iter_y;
-    collision_p.z = *iter_z;
-    dist_tmp = find_Euclidean_distance(query_p, collision_p);
-
-    if (dist_tmp < dist_min)
-    {
-      dist_min = dist_tmp;
-      min_p = collision_p;
-    }
-  }
-
-  if (pub_flag)
-  {
-    fillOccDistanceVisu(query_p, min_p);
-  }
-
-  //std::cout << "[ExtMapUtility::getNearestOccupancyDist] END" << std::endl;
-
-  return dist_min;
-}
-
-bool ExtMapUtility::getNearestOccupancyDist2(double x, double y, double z, double max_dist, geometry_msgs::Point& min_p, double& min_p_dist, bool pub_flag) const
-{
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist2] START" << std::endl;
-
-  while(!octUpdateFlag_)
-  {
-    std::cout << "[ExtMapUtility::getNearestOccupancyDist2] WAITING octUpdateFlag_..." << std::endl;
-    ros::spinOnce();
-  }
-
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 0" << std::endl;
-  //octomap::ColorOcTree oct_tmp(*oct);
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 0.1" << std::endl;
-
-  octomap::ColorOcTree::iterator it = oct->begin(); 
-
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 1" << std::endl;
-
-  if (it == NULL)
-  {
-    std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 2" << std::endl;
-    return false;
-  }
-  else
-  {
-    std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 3" << std::endl;
-    double dist_tmp;
-    geometry_msgs::Point collision_p;
-    geometry_msgs::Point query_p;
-    query_p.x = x;
-    query_p.y = y;
-    query_p.z = z;
-
-    bool success = false;
-
-    std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 4" << std::endl;
-    if (it != oct->end())
-    {
-      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 5" << std::endl;
-      collision_p.x = it.getX();
-      collision_p.y = it.getY();
-      collision_p.z = it.getZ();
-
-      if (!std::isnan (collision_p.x) && !std::isnan (collision_p.y) && !std::isnan (collision_p.z))
-      {
-        min_p_dist = find_Euclidean_distance(query_p, collision_p);
-        min_p = collision_p;
-        success = true;
-      }
-      else
-      {
-        min_p_dist = max_dist;
-      }
-      
-      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 6" << std::endl;
-    }
-    else
-    {
-      return success;
-    }
-
-    std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 7" << std::endl;
-    for(it = oct->begin(); it != oct->end(); ++it)
-    {
-      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 8.1" << std::endl;
-      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] x: " << it.getX() << std::endl;
-      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] y: " << it.getY() << std::endl;
-      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] z: " << it.getZ() << std::endl;
-      collision_p.x = it.getX();
-      collision_p.y = it.getY();
-      collision_p.z = it.getZ();
-
-      if (!std::isnan (collision_p.x) && !std::isnan (collision_p.y) && !std::isnan (collision_p.z))
-      {
-        dist_tmp = find_Euclidean_distance(query_p, collision_p);
-        success = true;
-      }
-      else
-      {
-        dist_tmp = max_dist;
-      }
-
-      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] dist_tmp: " << dist_tmp << std::endl;
-
-      if (dist_tmp < min_p_dist)
-      {
-        std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 8.2" << std::endl;
-        min_p_dist = dist_tmp;
-        min_p = collision_p;
-      }
-      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 8.3" << std::endl;
-    }
-
-    std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 9" << std::endl;
-    if (min_p_dist > max_dist)
-    {
-      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 10" << std::endl;
-      geometry_msgs::Point end_tmp;
-      end_tmp.x = min_p.x;
-      end_tmp.y = min_p.y;
-      end_tmp.z = min_p.z;
-
-      double alpha = (end_tmp.y - query_p.y) * (end_tmp.y - query_p.y) / ((end_tmp.x - query_p.x) * (end_tmp.x - query_p.x));
-      double beta = (end_tmp.z - query_p.z) * (end_tmp.z - query_p.z) / ((end_tmp.x - query_p.x) * (end_tmp.x - query_p.x));
-
-      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 11" << std::endl;
-
-      min_p.x = query_p.x + max_dist / sqrt(1 + alpha + beta);
-
-      double m = (min_p.x - query_p.x) / (end_tmp.x - query_p.x);
-
-      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 12" << std::endl;
-
-      if (m < 0)
-      {
-        min_p.x = query_p.x - max_dist / sqrt(1 + alpha + beta);
-        m = (min_p.x - query_p.x) / (end_tmp.x - query_p.x);
-      }
-
-      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 13" << std::endl;
-
-      min_p.y = query_p.y + m * (end_tmp.y - query_p.y);
-      min_p.z = query_p.z + m * (end_tmp.z - query_p.z);
-
-      min_p_dist = max_dist;
-    }
-
-    if (pub_flag)
-    {
-      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 14" << std::endl;
-      fillOccDistanceVisu(query_p, min_p);
-      std::cout << "[ExtMapUtility::getNearestOccupancyDist2] TROLLY 15" << std::endl;
-    }
-
-    std::cout << "[ExtMapUtility::getNearestOccupancyDist2] END" << std::endl;
-
-    return success;
-  }
-}
-
-bool ExtMapUtility::getNearestOccupancyDist3(double x, double y, double z, double max_dist, geometry_msgs::Point& min_p, double& min_p_dist, bool pub_flag) const
-{
-  //std::cout << "[ExtMapUtility::getNearestOccupancyDist3] START" << std::endl;
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7)] START" << std::endl;
 
   Eigen::Affine3d world_transform_eigen, query_tranform_eigen;
   world_transform_eigen.setIdentity();
@@ -2620,8 +2392,11 @@ bool ExtMapUtility::getNearestOccupancyDist3(double x, double y, double z, doubl
   worldFCLCollisionGeometryPtr_ = robot_collision_checking::FCLInterface::createCollisionGeometry(oct_msg);
   worldFCLCollisionObjectPtr_ = std::make_shared<fcl::CollisionObjectd>(worldFCLCollisionGeometryPtr_, world_transform_fcl);
 
-  std::shared_ptr<fcl::CollisionGeometryd> queryFCLCollisionGeometryPtr(new fcl::Sphered(0.1));
-  FCLCollisionObjectPtr queryFCLCollisionObjectPtr_ = std::make_shared<fcl::CollisionObjectd>(queryFCLCollisionGeometryPtr, query_tranform_fcl);
+  queryFCLCollisionGeometryPtr_ = std::make_shared<fcl::Sphered>(0.1);
+  //std::shared_ptr<fcl::CollisionGeometryd> queryFCLCollisionGeometryPtr(new fcl::Sphered(0.1));
+
+  FCLCollisionObjectPtr queryFCLCollisionObjectPtr = std::make_shared<fcl::CollisionObjectd>(queryFCLCollisionGeometryPtr_, query_tranform_fcl);
+  //queryFCLCollisionObjectPtr_ = std::make_shared<fcl::CollisionObjectd>(queryFCLCollisionGeometryPtr, query_tranform_fcl);
 
   fcl::DistanceRequestd dist_req;
   dist_req.enable_nearest_points = true;
@@ -2632,7 +2407,7 @@ bool ExtMapUtility::getNearestOccupancyDist3(double x, double y, double z, doubl
   dist_result.nearest_points[1].setZero();
 
   fcl::distance(worldFCLCollisionObjectPtr_.get(),
-                queryFCLCollisionObjectPtr_.get(),
+                queryFCLCollisionObjectPtr.get(),
                 dist_req,
                 dist_result);
 
@@ -2641,10 +2416,10 @@ bool ExtMapUtility::getNearestOccupancyDist3(double x, double y, double z, doubl
   world_min_p.y() = dist_result.nearest_points[0].y();
   world_min_p.z() = dist_result.nearest_points[0].z();
 
-  Eigen::Vector3d query_min_p;
-  query_min_p.x() = dist_result.nearest_points[1].x();
-  query_min_p.y() = dist_result.nearest_points[1].y();
-  query_min_p.z() = dist_result.nearest_points[1].z();
+  //Eigen::Vector3d query_min_p;
+  //query_min_p.x() = dist_result.nearest_points[1].x();
+  //query_min_p.y() = dist_result.nearest_points[1].y();
+  //query_min_p.z() = dist_result.nearest_points[1].z();
 
   min_p.x = world_min_p.x();
   min_p.y = world_min_p.y();
@@ -2653,18 +2428,235 @@ bool ExtMapUtility::getNearestOccupancyDist3(double x, double y, double z, doubl
   min_p_dist = dist_result.min_distance;
 
   /*
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist3] world_min_p x: " << world_min_p.x() << std::endl;
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist3] world_min_p y: " << world_min_p.y() << std::endl;
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist3] world_min_p z: " << world_min_p.z() << std::endl;
+  if (min_p_dist > max_dist)
+  {
+    geometry_msgs::Point end_tmp;
+    end_tmp.x = min_p.x;
+    end_tmp.y = min_p.y;
+    end_tmp.z = min_p.z;
 
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist3] query_min_p x: " << query_min_p.x() << std::endl;
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist3] query_min_p y: " << query_min_p.y() << std::endl;
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist3] query_min_p z: " << query_min_p.z() << std::endl;
+    double alpha = (end_tmp.y - y) * (end_tmp.y - y) / ((end_tmp.x - x) * (end_tmp.x - x));
+    double beta = (end_tmp.z - z) * (end_tmp.z - z) / ((end_tmp.x - x) * (end_tmp.x - x));
 
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist3] min_p_dist: " << min_p_dist << std::endl;
+    min_p.x = x + max_dist / sqrt(1 + alpha + beta);
+
+    double m = (min_p.x - x) / (end_tmp.x - x);
+
+    if (m < 0)
+    {
+      min_p.x = x - max_dist / sqrt(1 + alpha + beta);
+      m = (min_p.x - x) / (end_tmp.x - x);
+    }
+
+    min_p.y = y + m * (end_tmp.y - y);
+    min_p.z = z + m * (end_tmp.z - z);
+
+    min_p_dist = max_dist;
+  }
   */
 
-  //std::cout << "[ExtMapUtility::getNearestOccupancyDist3] END" << std::endl << std::endl;
+  double min_dist = dist_result.min_distance - radii;
+
+  if (normalize_flag)
+  {
+    min_dist /= max_dist - radii;
+  }
+
+  /*
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] world_min_p x: " << world_min_p.x() << std::endl;
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] world_min_p y: " << world_min_p.y() << std::endl;
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] world_min_p z: " << world_min_p.z() << std::endl;
+
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] query_min_p x: " << query_min_p.x() << std::endl;
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] query_min_p y: " << query_min_p.y() << std::endl;
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] query_min_p z: " << query_min_p.z() << std::endl;
+
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] min_dist: " << min_dist << std::endl;
+  */
+
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] END" << std::endl << std::endl;
+
+  return true;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+bool ExtMapUtility::getNearestOccupancyDist(std::vector<geometry_msgs::Point>& query_points, 
+                                            Eigen::VectorXd& radii, 
+                                            double max_dist, 
+                                            std::vector<geometry_msgs::Point>& min_points, 
+                                            std::vector<double>& min_distances, 
+                                            bool normalize_flag) const
+{
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(6)] START" << std::endl;
+
+  min_points.clear();
+  min_distances.clear();
+
+  Eigen::Affine3d world_transform_eigen, query_tranform_eigen;
+  world_transform_eigen.setIdentity();
+  query_tranform_eigen.setIdentity();
+
+  fcl::Transform3d world_transform_fcl, query_tranform_fcl;
+  robot_collision_checking::FCLInterface::transform2fcl(world_transform_eigen, world_transform_fcl);
+
+  worldFCLCollisionGeometryPtr_ = robot_collision_checking::FCLInterface::createCollisionGeometry(oct_msg);
+  worldFCLCollisionObjectPtr_ = std::make_shared<fcl::CollisionObjectd>(worldFCLCollisionGeometryPtr_, world_transform_fcl);
+
+  std::shared_ptr<fcl::CollisionGeometryd> queryFCLCollisionGeometryPtr(new fcl::Sphered(0.1));
+
+  for (size_t i = 0; i < query_points.size(); i++)
+  {
+    fcl::Vector3d query_translation(query_points[i].x, query_points[i].y, query_points[i].z);
+    query_tranform_eigen.translation() = query_translation;
+    robot_collision_checking::FCLInterface::transform2fcl(query_tranform_eigen, query_tranform_fcl);
+
+    FCLCollisionObjectPtr queryFCLCollisionObjectPtr_ = std::make_shared<fcl::CollisionObjectd>(queryFCLCollisionGeometryPtr, query_tranform_fcl);
+
+    fcl::DistanceRequestd dist_req;
+    dist_req.enable_nearest_points = true;
+    dist_req.gjk_solver_type = fcl::GJKSolverType::GST_LIBCCD;
+
+    fcl::DistanceResultd dist_result;
+    dist_result.nearest_points[0].setZero();
+    dist_result.nearest_points[1].setZero();
+
+    fcl::distance(worldFCLCollisionObjectPtr_.get(),
+                  queryFCLCollisionObjectPtr_.get(),
+                  dist_req,
+                  dist_result);
+
+    Eigen::Vector3d world_min_p;
+    world_min_p.x() = dist_result.nearest_points[0].x();
+    world_min_p.y() = dist_result.nearest_points[0].y();
+    world_min_p.z() = dist_result.nearest_points[0].z();
+
+    //Eigen::Vector3d query_min_p;
+    //query_min_p.x() = dist_result.nearest_points[1].x();
+    //query_min_p.y() = dist_result.nearest_points[1].y();
+    //query_min_p.z() = dist_result.nearest_points[1].z();
+
+    geometry_msgs::Point min_p;
+    min_p.x = world_min_p.x();
+    min_p.y = world_min_p.y();
+    min_p.z = world_min_p.z();
+
+    double min_dist = dist_result.min_distance - radii(i);
+
+    if (normalize_flag)
+    {
+      min_dist /= max_dist - radii(i);
+    }
+
+    /*
+    std::cout << "[ExtMapUtility::getNearestOccupancyDist(6)] world_min_p x: " << world_min_p.x() << std::endl;
+    std::cout << "[ExtMapUtility::getNearestOccupancyDist(6)] world_min_p y: " << world_min_p.y() << std::endl;
+    std::cout << "[ExtMapUtility::getNearestOccupancyDist(6)] world_min_p z: " << world_min_p.z() << std::endl;
+
+    std::cout << "[ExtMapUtility::getNearestOccupancyDist(6)] query_min_p x: " << query_min_p.x() << std::endl;
+    std::cout << "[ExtMapUtility::getNearestOccupancyDist(6)] query_min_p y: " << query_min_p.y() << std::endl;
+    std::cout << "[ExtMapUtility::getNearestOccupancyDist(6)] query_min_p z: " << query_min_p.z() << std::endl;
+
+    std::cout << "[ExtMapUtility::getNearestOccupancyDist(6)] min_dist: " << min_dist << std::endl;
+    */
+
+    min_points.push_back(min_p);
+    min_distances.push_back(min_dist);
+  }
+
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(6)] END" << std::endl << std::endl;
+
+  return true;
+}
+
+bool ExtMapUtility::getNearestOccupancyDist(int numPoints,
+                                            Eigen::VectorXd& positionPointsOnRobot, 
+                                            Eigen::VectorXd& radii, 
+                                            double max_dist, 
+                                            std::vector<geometry_msgs::Point>& min_points, 
+                                            std::vector<double>& min_distances, 
+                                            bool normalize_flag)
+{
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7)] START" << std::endl;
+
+  min_points.clear();
+  min_distances.clear();
+
+  Eigen::Affine3d world_transform_eigen, query_tranform_eigen;
+  world_transform_eigen.setIdentity();
+  query_tranform_eigen.setIdentity();
+
+  fcl::Transform3d world_transform_fcl, query_tranform_fcl;
+  robot_collision_checking::FCLInterface::transform2fcl(world_transform_eigen, world_transform_fcl);
+
+  worldFCLCollisionGeometryPtr_ = robot_collision_checking::FCLInterface::createCollisionGeometry(oct_msg);
+  worldFCLCollisionObjectPtr_ = std::make_shared<fcl::CollisionObjectd>(worldFCLCollisionGeometryPtr_, world_transform_fcl);
+
+  std::shared_ptr<fcl::CollisionGeometryd> queryFCLCollisionGeometryPtr(new fcl::Sphered(0.1));
+
+  for (size_t i = 0; i < numPoints; i++)
+  {
+    Eigen::Ref<Eigen::Matrix<ocs2::scalar_t, 3, 1>> position = positionPointsOnRobot.segment<3>(i * 3);
+
+    fcl::Vector3d query_translation(position(0), position(1), position(2));
+    query_tranform_eigen.translation() = query_translation;
+    robot_collision_checking::FCLInterface::transform2fcl(query_tranform_eigen, query_tranform_fcl);
+
+    FCLCollisionObjectPtr queryFCLCollisionObjectPtr_ = std::make_shared<fcl::CollisionObjectd>(queryFCLCollisionGeometryPtr, query_tranform_fcl);
+
+    fcl::DistanceRequestd dist_req;
+    dist_req.enable_nearest_points = true;
+    dist_req.gjk_solver_type = fcl::GJKSolverType::GST_LIBCCD;
+
+    fcl::DistanceResultd dist_result;
+    dist_result.nearest_points[0].setZero();
+    dist_result.nearest_points[1].setZero();
+
+    fcl::distance(worldFCLCollisionObjectPtr_.get(),
+                  queryFCLCollisionObjectPtr_.get(),
+                  dist_req,
+                  dist_result);
+
+    Eigen::Vector3d world_min_p;
+    world_min_p.x() = dist_result.nearest_points[0].x();
+    world_min_p.y() = dist_result.nearest_points[0].y();
+    world_min_p.z() = dist_result.nearest_points[0].z();
+
+    //Eigen::Vector3d query_min_p;
+    //query_min_p.x() = dist_result.nearest_points[1].x();
+    //query_min_p.y() = dist_result.nearest_points[1].y();
+    //query_min_p.z() = dist_result.nearest_points[1].z();
+
+    geometry_msgs::Point min_p;
+    min_p.x = world_min_p.x();
+    min_p.y = world_min_p.y();
+    min_p.z = world_min_p.z();
+
+    double min_dist = dist_result.min_distance - radii(i);
+
+    if (normalize_flag)
+    {
+      min_dist /= max_dist - radii(i);
+    }
+
+    /*
+    std::cout << "[ExtMapUtility::getNearestOccupancyDist(7)] world_min_p x: " << world_min_p.x() << std::endl;
+    std::cout << "[ExtMapUtility::getNearestOccupancyDist(7)] world_min_p y: " << world_min_p.y() << std::endl;
+    std::cout << "[ExtMapUtility::getNearestOccupancyDist(7)] world_min_p z: " << world_min_p.z() << std::endl;
+
+    std::cout << "[ExtMapUtility::getNearestOccupancyDist(7)] query_min_p x: " << query_min_p.x() << std::endl;
+    std::cout << "[ExtMapUtility::getNearestOccupancyDist(7)] query_min_p y: " << query_min_p.y() << std::endl;
+    std::cout << "[ExtMapUtility::getNearestOccupancyDist(7)] query_min_p z: " << query_min_p.z() << std::endl;
+
+    std::cout << "[ExtMapUtility::getNearestOccupancyDist(7)] min_dist: " << min_dist << std::endl;
+    */
+
+    min_points.push_back(min_p);
+    min_distances.push_back(min_dist);
+  }
+
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7)] END" << std::endl << std::endl;
 
   return true;
 }

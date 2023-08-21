@@ -802,8 +802,7 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
   std::string model_mode_msg_name = "mobile_manipulator_model_mode";
   std::string target_msg_name = "mobile_manipulator_mpc_target";
 
-  double dt = 0.1;
-
+  //double dt = 0.1;
   /*
   if (emuPtr_)
   {

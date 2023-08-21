@@ -545,6 +545,7 @@ void MobileManipulatorVisualization::updateState()
     statePositionArm_.push_back(jointStateMsg.position[stateIndexMap_[i]]);
   }
 
+  /*
   std::cout << "[MobileManipulatorVisualization::updateState] statePositionBase_ size: " << statePositionBase_.size() << std::endl;
   for (size_t i = 0; i < statePositionBase_.size(); i++)
   {
@@ -556,6 +557,7 @@ void MobileManipulatorVisualization::updateState()
   {
     std::cout << i << " -> " << statePositionArm_[i] << std::endl;
   }
+  */
 
   updateModelState();
 
@@ -586,8 +588,17 @@ void MobileManipulatorVisualization::updateDistances(bool normalize_flag)
   p0_vec_.clear();
   p1_vec_.clear();
 
-  //std::cout << "[MobileManipulatorVisualization::updateDistances] START getNearestOccupancyDist3" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::updateDistances] START getNearestOccupancyDist" << std::endl;
   timer3_.startTimer();
+  
+  pointsOnRobotPtr_->getPointsEigenToGeometryMsgsVec(positionPointsOnRobot, p0_vec_);
+
+  //std::vector<geometry_msgs::Point> min_points;
+  std::vector<double> min_distances;
+
+  bool success = emuPtr_->getNearestOccupancyDist(numPoints, positionPointsOnRobot, radii, maxDistance_, p1_vec_, min_distances, false);
+
+  /*
   for (int i = 0; i < numPoints; i++)
   {
     Eigen::Ref<Eigen::Matrix<scalar_t, 3, 1>> position = positionPointsOnRobot.segment<3>(i * 3);
@@ -599,7 +610,7 @@ void MobileManipulatorVisualization::updateDistances(bool normalize_flag)
 
     geometry_msgs::Point p1;
     //if (emuPtr_->getNearestOccupancyDist2(position(0), position(1), position(2), maxDistance_, p1, distance, false))
-    if (emuPtr_->getNearestOccupancyDist3(position(0), position(1), position(2), maxDistance_, p1, distance, false))
+    if (emuPtr_->getNearestOccupancyDist(position(0), position(1), position(2), maxDistance_, p1, distance, false))
     {
       p0_vec_.push_back(p0);
       p1_vec_.push_back(p1);
@@ -621,6 +632,7 @@ void MobileManipulatorVisualization::updateDistances(bool normalize_flag)
     //std::cout << "radii: " << radii(i) << std::endl;
     //std::cout << "distances_: " << distances_[i] << std::endl;
   }
+  */
   timer3_.endTimer();
 
   //std::cout << "[MobileManipulatorVisualization::updateDistances] START fillOccDistanceArrayVisu" << std::endl;
@@ -628,8 +640,12 @@ void MobileManipulatorVisualization::updateDistances(bool normalize_flag)
   emuPtr_->fillOccDistanceArrayVisu(p0_vec_, p1_vec_);
   timer4_.endTimer();
 
-  //std::cout << "[MobileManipulatorVisualization::updateDistances] START publishOccDistanceArrayVisu" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::updateDistances] BEFORE publishOccDistanceArrayVisu" << std::endl;
+  timer5_.startTimer();
+  pointsOnRobotPtr_->publishPointsOnRobotVisu();
   emuPtr_->publishOccDistanceArrayVisu();
+  timer5_.endTimer();
+  //std::cout << "[MobileManipulatorVisualization::updateDistances] AFTER publishOccDistanceArrayVisu" << std::endl;
   
   timer0_.endTimer();
 
@@ -658,6 +674,11 @@ void MobileManipulatorVisualization::updateDistances(bool normalize_flag)
   std::cout << "###   Average : " << timer4_.getAverageInMilliseconds() << "[ms]" << std::endl;
   std::cout << "###   Latest  : " << timer4_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
 
+  std::cout << "### MPC_ROS Benchmarking timer5_ publishOccDistanceArrayVisu:" << std::endl;
+  std::cout << "###   Maximum : " << timer5_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer5_.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer5_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+
   //std::cout << "[MobileManipulatorVisualization::updateDistances] DEBUG INF" << std::endl;
   //while(1);
 
@@ -683,7 +704,7 @@ void MobileManipulatorVisualization::updateDistancesCallback(const ros::TimerEve
 {
   //std::cout << "[MobileManipulatorVisualization::updateDistancesCallback] START" << std::endl;
 
-  updateDistances(true);
+  updateDistances(false);
 
   //std::cout << "[MobileManipulatorVisualization::updateDistancesCallback] END" << std::endl;
 }

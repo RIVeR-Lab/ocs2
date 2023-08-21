@@ -685,13 +685,31 @@ class ExtMapUtility
     void getPointOnLine(geometry_msgs::Point& origin, geometry_msgs::Point& end, double dist);
 
     // DESCRIPTION: TODO...
-    double getNearestOccupancyDist(double x, double y, double z, geometry_msgs::Point& min_point, double max_dist, bool pub_flag=true);
+    bool getNearestOccupancyDist(double x, 
+                                 double y, 
+                                 double z, 
+                                 double radii, 
+                                 double max_dist, 
+                                 geometry_msgs::Point& min_point, 
+                                 double& min_p_dist, 
+                                 bool normalize_flag=false) const;
 
     // DESCRIPTION: TODO...
-    bool getNearestOccupancyDist2(double x, double y, double z, double max_dist, geometry_msgs::Point& min_point, double& min_p_dist, bool pub_flag=true) const;
+    bool getNearestOccupancyDist(std::vector<geometry_msgs::Point>& query_points, 
+                                 Eigen::VectorXd& radii, 
+                                 double max_dist, 
+                                 std::vector<geometry_msgs::Point>& min_points, 
+                                 std::vector<double>& min_distances, 
+                                 bool normalize_flag=false) const;
 
     // DESCRIPTION: TODO...
-    bool getNearestOccupancyDist3(double x, double y, double z, double max_dist, geometry_msgs::Point& min_point, double& min_p_dist, bool pub_flag=true) const;
+    bool getNearestOccupancyDist(int numPoints,
+                                 Eigen::VectorXd& positionPointsOnRobot, 
+                                 Eigen::VectorXd& radii, 
+                                 double max_dist, 
+                                 std::vector<geometry_msgs::Point>& min_points, 
+                                 std::vector<double>& min_distances, 
+                                 bool normalize_flag=false);
 
     // DESCRIPTION: TODO...
     //bool getNearestOccupancyDistSrv(mobiman_simulation::getNearestOccDist::Request &req, 
@@ -814,6 +832,9 @@ class ExtMapUtility
 
     mutable FCLCollisionGeometryPtr worldFCLCollisionGeometryPtr_;
     mutable FCLCollisionObjectPtr worldFCLCollisionObjectPtr_;
+
+    mutable std::shared_ptr<fcl::CollisionGeometryd> queryFCLCollisionGeometryPtr_;
+    mutable FCLCollisionObjectPtr queryFCLCollisionObjectPtr_;
 
     mutable visualization_msgs::Marker occ_distance_visu_;
     mutable visualization_msgs::MarkerArray occ_distance_array_visu_;
