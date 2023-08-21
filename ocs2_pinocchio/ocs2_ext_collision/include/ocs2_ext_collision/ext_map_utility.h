@@ -1,7 +1,7 @@
 #ifndef EXT_MAP_UTILITY_H
 #define EXT_MAP_UTILITY_H
 
-// LAST UPDATE: 2023.05.02
+// LAST UPDATE: 2023.08.18
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -10,6 +10,7 @@
 // DESCRIPTION: TODO...
 
 // --EXTERNAL LIBRARIES--
+#include <ros/package.h>
 #include <boost/algorithm/string.hpp>
 #include <message_filters/subscriber.h>
 #include <tf/transform_listener.h>
@@ -21,6 +22,7 @@
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <sensor_msgs/LaserScan.h>
 #include <gazebo_msgs/ModelStates.h>
+#include <laser_geometry/laser_geometry.h>
 #include <octomap_msgs/conversions.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <nav_msgs/Odometry.h>
@@ -29,11 +31,11 @@
 #include <fcl/fcl.h>
 #include <fcl/geometry/shape/convex.h>
 #include <laser_geometry/laser_geometry.h>
-#include <ros/package.h>
 //#include <cv_bridge/cv_bridge.h>
 //#include <voxblox_ros/esdf_server.h>
 
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
+#include <robot_collision_checking/fcl_interface.h>
 
 // --CUSTOM LIBRARIES--
 //#include "ocs2_ext_collision/ext_common_utility.h"
@@ -590,10 +592,13 @@ class ExtMapUtility
     void updateOctPC();
 
     // DESCRIPTION: TODO...
+    void updateOct();
+
+    // DESCRIPTION: TODO...
     void updateOct(sensor_msgs::PointCloud2& pc2_msg);
 
     // DESCRIPTION: TODO...
-    void updateOct(string oct_msg_name);
+    void subscribeOctMsg(string oct_msg_name);
 
     // DESCRIPTION: TODO...
     void pointcloud2ToOctPc2(const sensor_msgs::PointCloud2& cloud, octomap::Pointcloud& octomapCloud);
@@ -683,7 +688,10 @@ class ExtMapUtility
     double getNearestOccupancyDist(double x, double y, double z, geometry_msgs::Point& min_point, double max_dist, bool pub_flag=true);
 
     // DESCRIPTION: TODO...
-    double getNearestOccupancyDist2(double x, double y, double z, geometry_msgs::Point& min_point, double max_dist, bool pub_flag=true) const;
+    bool getNearestOccupancyDist2(double x, double y, double z, double max_dist, geometry_msgs::Point& min_point, double& min_p_dist, bool pub_flag=true) const;
+
+    // DESCRIPTION: TODO...
+    bool getNearestOccupancyDist3(double x, double y, double z, double max_dist, geometry_msgs::Point& min_point, double& min_p_dist, bool pub_flag=true) const;
 
     // DESCRIPTION: TODO...
     //bool getNearestOccupancyDistSrv(mobiman_simulation::getNearestOccDist::Request &req, 
@@ -734,6 +742,8 @@ class ExtMapUtility
     double crop_y_min;
     double crop_z_max;
     double crop_z_min;
+
+    bool octUpdateFlag_ = false;
 
     bool filter_ground;
     double filter_ground_threshold;
@@ -789,6 +799,8 @@ class ExtMapUtility
     ros::Publisher debug_visu_pub;
 
     // NUA TODO: Add them in constructors if necessary.
+    bool initOctMsgFlag_ = false;
+
     ros::Subscriber sub_gz_model_;
 
     vector<string> frame_name_pkgs_ign_;
@@ -799,6 +811,9 @@ class ExtMapUtility
 
     vector<sensor_msgs::PointCloud2> pc2_msg_gz_pkgs_ign_;
     vector<sensor_msgs::PointCloud2> pc2_msg_gz_pkgs_man_;
+
+    mutable FCLCollisionGeometryPtr worldFCLCollisionGeometryPtr_;
+    mutable FCLCollisionObjectPtr worldFCLCollisionObjectPtr_;
 
     mutable visualization_msgs::Marker occ_distance_visu_;
     mutable visualization_msgs::MarkerArray occ_distance_array_visu_;

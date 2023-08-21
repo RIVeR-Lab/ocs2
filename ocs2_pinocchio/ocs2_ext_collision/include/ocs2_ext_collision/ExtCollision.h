@@ -92,7 +92,11 @@ class ExtCollision
     size_t modalInputDim_;
     */
 
+    bool normalize_flag_ = false;
     mutable Eigen::Matrix<scalar_t, -1, 1> distances_;
+    mutable vector<geometry_msgs::Point> p0_vec_;
+    mutable vector<geometry_msgs::Point> p1_vec_;
+
     mutable Eigen::MatrixXd gradientsVoxblox_;
     mutable Eigen::Matrix<scalar_t, -1, -1> gradients_;
     std::shared_ptr<ExtMapUtility> emuPtr_;

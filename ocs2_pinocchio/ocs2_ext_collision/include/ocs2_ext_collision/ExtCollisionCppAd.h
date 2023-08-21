@@ -144,8 +144,6 @@ class ExtCollisionCppAd
                          const std::string& modelName, 
                          const std::string& modelFolder);
 
-    bool normalize_flag_;
-
     // Number of params per result = 3 + 3 + 1 (nearest point 1, nearest point 2, sign indicator)
     const size_t numberOfParamsPerResult_ = 7;
 
@@ -163,7 +161,7 @@ class ExtCollisionCppAd
     //size_t modalMode_;
     std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_;
     ocs2::scalar_t maxDistance_;
-
+    bool normalize_flag_ = false;
     mutable Eigen::Matrix<scalar_t, -1, 1> distances_;
     mutable vector<geometry_msgs::Point> p0_vec_;
     mutable vector<geometry_msgs::Point> p1_vec_;

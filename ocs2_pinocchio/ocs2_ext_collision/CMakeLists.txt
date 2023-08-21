@@ -19,6 +19,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   pcl_msgs 
   pcl_conversions 
   pcl_ros
+  robot_collision_checking
   #ocs2_self_collision
   #voxblox
   #voxblox_ros
