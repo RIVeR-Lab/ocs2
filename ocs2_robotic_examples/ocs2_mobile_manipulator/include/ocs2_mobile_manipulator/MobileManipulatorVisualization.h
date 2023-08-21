@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.08.18
+// LAST UPDATE: 2023.08.21
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -54,7 +54,9 @@ class MobileManipulatorVisualization final : public DummyObserver
 
     void update(const SystemObservation& observation, const PrimalSolution& policy, const CommandData& command) override;
 
-    void publishDistances(const ocs2::vector_t& state, const ocs2::vector_t& fullState, const RobotModelInfo& robotModelInfo);
+    void publishSelfCollisionDistances();
+
+    void publishSelfCollisionDistances(const ocs2::vector_t& state, const ocs2::vector_t& fullState, const RobotModelInfo& robotModelInfo);
 
     void getPoint(std::string& baseFrameName, std::string& pointFrameName, geometry_msgs::Point p);
 
@@ -64,11 +66,11 @@ class MobileManipulatorVisualization final : public DummyObserver
 
     void updateState();
 
-    void updateDistances(bool normalize_flag);
+    void updateExtCollisionDistances(bool normalize_flag);
 
     void updateOctCallback(const ros::TimerEvent& event);
 
-    void updateDistancesCallback(const ros::TimerEvent& event);
+    void distanceVisualizationCallback(const ros::TimerEvent& event);
 
   private:
     void launchVisualizerNode(ros::NodeHandle& nodeHandle);
@@ -134,6 +136,11 @@ class MobileManipulatorVisualization final : public DummyObserver
     ocs2::benchmark::RepeatedTimer timer3_;
     ocs2::benchmark::RepeatedTimer timer4_;
     ocs2::benchmark::RepeatedTimer timer5_;
+
+    ocs2::benchmark::RepeatedTimer timer6_;
+    ocs2::benchmark::RepeatedTimer timer7_;
+    ocs2::benchmark::RepeatedTimer timer8_;
+    ocs2::benchmark::RepeatedTimer timer9_;
 
     ros::Subscriber jointStatesSub_;
     ros::Subscriber tfSub_;

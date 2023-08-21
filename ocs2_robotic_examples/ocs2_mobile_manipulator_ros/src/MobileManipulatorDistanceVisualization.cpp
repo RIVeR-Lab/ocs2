@@ -237,7 +237,7 @@ int main(int argc, char** argv)
   //ros::Timer octUpdateTimer = nodeHandle.createTimer(ros::Duration(emu_dt), &MobileManipulatorVisualization::updateOctCallback, &mobileManipulatorVisu);
   
   double dist_dt = 0.001;
-  ros::Timer distanceTimer = nodeHandle.createTimer(ros::Duration(dist_dt), &MobileManipulatorVisualization::updateDistancesCallback, &mobileManipulatorVisu);
+  ros::Timer distanceTimer = nodeHandle.createTimer(ros::Duration(dist_dt), &MobileManipulatorVisualization::distanceVisualizationCallback, &mobileManipulatorVisu);
 
   /*
   ros::Rate r(100);

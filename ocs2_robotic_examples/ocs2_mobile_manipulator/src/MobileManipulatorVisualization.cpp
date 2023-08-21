@@ -226,15 +226,140 @@ void MobileManipulatorVisualization::update(const SystemObservation& observation
   
   if (visualizationInterfacePtr_ != nullptr) 
   {
-    //publishDistances(observation.state, observation.full_state, robotModelInfo_);
+    //publishSelfCollisionDistances(observation.state, observation.full_state, robotModelInfo_);
   }
 
   //std::cout << "[MobileManipulatorVisualization::update] END" << std::endl;
 }
 
-void MobileManipulatorVisualization::publishDistances(const ocs2::vector_t& state, const ocs2::vector_t& fullState, const RobotModelInfo& modelInfo) 
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::publishSelfCollisionDistances() 
 {
-  std::cout << "[MobileManipulatorVisualization::publishDistances] START" << std::endl;
+  std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances] START" << std::endl;
+
+  const auto& model = pinocchioInterface_.getModel();
+  auto& data = pinocchioInterface_.getData();
+
+  RobotModelInfo robotModelInfo = robotModelInfo_;
+
+  timer6_.startTimer();
+  
+  timer7_.startTimer();
+  ocs2::mobile_manipulator::MobileManipulatorPinocchioMapping pinocchioMapping(robotModelInfo);
+  const vector_t q = pinocchioMapping.getPinocchioJointPosition(state_, fullState_);
+  pinocchio::forwardKinematics(model, data, q);
+  const auto results = visualizationInterfacePtr_->getGeometryInterface().computeDistances(pinocchioInterface_);
+  timer7_.endTimer();
+  
+  timer8_.startTimer();
+  visualization_msgs::MarkerArray markerArray;
+  constexpr size_t numMarkersPerResult = 5;
+
+  visualization_msgs::Marker markerTemplate;
+  markerTemplate.color = ros_msg_helpers::getColor({0, 1, 0}, 1);
+  markerTemplate.header.frame_id = worldFrameName_;
+  markerTemplate.header.stamp = ros::Time::now();
+  markerTemplate.pose.orientation = ros_msg_helpers::getOrientationMsg({1, 0, 0, 0});
+  markerArray.markers.resize(results.size() * numMarkersPerResult, markerTemplate);
+
+  std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances] results.size(): " << results.size() << std::endl;
+
+
+  for (size_t i = 0; i < results.size(); ++i) 
+  {
+    // I apologize for the magic numbers, it's mostly just visualization numbers(so 0.02 scale corresponds rougly to 0.02 cm)
+
+    for (size_t j = 0; j < numMarkersPerResult; ++j) 
+    {
+      markerArray.markers[numMarkersPerResult * i + j].ns = std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].first) +
+                                                            " - " +
+                                                            std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].second);
+    }
+
+    // The actual distance line, also denoting direction of the distance
+    markerArray.markers[numMarkersPerResult * i].type = visualization_msgs::Marker::ARROW;
+    markerArray.markers[numMarkersPerResult * i].points.push_back(ros_msg_helpers::getPointMsg(results[i].nearest_points[0]));
+    markerArray.markers[numMarkersPerResult * i].points.push_back(ros_msg_helpers::getPointMsg(results[i].nearest_points[1]));
+    markerArray.markers[numMarkersPerResult * i].id = numMarkersPerResult * i;
+    markerArray.markers[numMarkersPerResult * i].scale.x = 0.01;
+    markerArray.markers[numMarkersPerResult * i].scale.y = 0.02;
+    markerArray.markers[numMarkersPerResult * i].scale.z = 0.04;
+
+    // Dots at the end of the arrow, denoting the close locations on the body
+    markerArray.markers[numMarkersPerResult * i + 1].type = visualization_msgs::Marker::SPHERE_LIST;
+    markerArray.markers[numMarkersPerResult * i + 1].points.push_back(ros_msg_helpers::getPointMsg(results[i].nearest_points[0]));
+    markerArray.markers[numMarkersPerResult * i + 1].points.push_back(ros_msg_helpers::getPointMsg(results[i].nearest_points[1]));
+    markerArray.markers[numMarkersPerResult * i + 1].scale.x = 0.02;
+    markerArray.markers[numMarkersPerResult * i + 1].scale.y = 0.02;
+    markerArray.markers[numMarkersPerResult * i + 1].scale.z = 0.02;
+    markerArray.markers[numMarkersPerResult * i + 1].id = numMarkersPerResult * i + 1;
+
+    // Text denoting the object number in the geometry model, raised above the spheres
+    markerArray.markers[numMarkersPerResult * i + 2].id = numMarkersPerResult * i + 2;
+    markerArray.markers[numMarkersPerResult * i + 2].type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    markerArray.markers[numMarkersPerResult * i + 2].scale.z = 0.02;
+    markerArray.markers[numMarkersPerResult * i + 2].pose.position = ros_msg_helpers::getPointMsg(results[i].nearest_points[0]);
+    markerArray.markers[numMarkersPerResult * i + 2].pose.position.z += 0.015;
+    markerArray.markers[numMarkersPerResult * i + 2].text = "obj " + std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].first);
+    markerArray.markers[numMarkersPerResult * i + 3].id = numMarkersPerResult * i + 3;
+    markerArray.markers[numMarkersPerResult * i + 3].type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    markerArray.markers[numMarkersPerResult * i + 3].pose.position = ros_msg_helpers::getPointMsg(results[i].nearest_points[1]);
+    markerArray.markers[numMarkersPerResult * i + 3].pose.position.z += 0.015;
+    markerArray.markers[numMarkersPerResult * i + 3].text = "obj " + std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].second);
+    markerArray.markers[numMarkersPerResult * i + 3].scale.z = 0.02;
+
+    // Text above the arrow, denoting the distance
+    markerArray.markers[numMarkersPerResult * i + 4].id = numMarkersPerResult * i + 4;
+    markerArray.markers[numMarkersPerResult * i + 4].type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    markerArray.markers[numMarkersPerResult * i + 4].pose.position = ros_msg_helpers::getPointMsg((results[i].nearest_points[0] + results[i].nearest_points[1]) / 2.0);
+    markerArray.markers[numMarkersPerResult * i + 4].pose.position.z += 0.015;
+    markerArray.markers[numMarkersPerResult * i + 4].text = "dist " + std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].first) + " - " +
+                                                                                     std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].second) + 
+                                                                                     ": " + std::to_string(results[i].min_distance);
+    markerArray.markers[numMarkersPerResult * i + 4].scale.z = 0.02;
+  }
+  timer8_.endTimer();
+
+  timer9_.startTimer();
+  markerPublisher_.publish(markerArray);
+  timer9_.endTimer();
+
+  timer6_.endTimer();
+
+  std::cout << "### MPC_ROS Benchmarking timer6_ TOTAL:" << std::endl;
+  std::cout << "###   Maximum : " << timer6_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer6_.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer6_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+
+  std::cout << "### MPC_ROS Benchmarking timer7_ computeDistances:" << std::endl;
+  std::cout << "###   Maximum : " << timer7_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer7_.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer7_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+
+  std::cout << "### MPC_ROS Benchmarking timer8_ fill marker:" << std::endl;
+  std::cout << "###   Maximum : " << timer8_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer8_.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer8_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+
+  std::cout << "### MPC_ROS Benchmarking timer9_ markerPublisher_:" << std::endl;
+  std::cout << "###   Maximum : " << timer9_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer9_.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer9_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+
+  std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::publishSelfCollisionDistances(const ocs2::vector_t& state, const ocs2::vector_t& fullState, const RobotModelInfo& modelInfo) 
+{
+  std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances(3)] START" << std::endl;
+
+  std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances(3)] DEBUG INF" << std::endl;
+  while(1);
 
   //std::string prefix = "selfCollision";
   //std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
@@ -267,7 +392,7 @@ void MobileManipulatorVisualization::publishDistances(const ocs2::vector_t& stat
   markerTemplate.pose.orientation = ros_msg_helpers::getOrientationMsg({1, 0, 0, 0});
   markerArray.markers.resize(results.size() * numMarkersPerResult, markerTemplate);
 
-  //std::cout << "[MobileManipulatorVisualization::publishDistances] results.size(): " << results.size() << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances(3)] results.size(): " << results.size() << std::endl;
 
   for (size_t i = 0; i < results.size(); ++i) 
   {
@@ -327,9 +452,12 @@ void MobileManipulatorVisualization::publishDistances(const ocs2::vector_t& stat
 
   markerPublisher_.publish(markerArray);
 
-  std::cout << "[MobileManipulatorVisualization::publishDistances] END" << std::endl;
+  std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances(3)] END" << std::endl;
 }
 
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MobileManipulatorVisualization::getPoint(std::string& baseFrameName, std::string& pointFrameName, geometry_msgs::Point p)
 {
   //std::cerr << "[MobileManipulatorVisualization::getPoint] START " << std::endl;
@@ -349,6 +477,9 @@ void MobileManipulatorVisualization::getPoint(std::string& baseFrameName, std::s
   //std::cerr << "[MobileManipulatorVisualization::getPoint] END " << std::endl;
 }
 
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MobileManipulatorVisualization::updateStateIndexMap()
 {
   //std::cout << "[MobileManipulatorVisualization::updateStateIndexMap] START" << std::endl;
@@ -396,6 +527,9 @@ void MobileManipulatorVisualization::updateStateIndexMap()
   //std::cout << "[MobileManipulatorVisualization::updateStateIndexMap] END" << std::endl;
 }
 
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MobileManipulatorVisualization::updateModelState()
 {
   //std::cout << "[MobileManipulatorVisualization::updateModelState] START " << std::endl;
@@ -521,6 +655,9 @@ void MobileManipulatorVisualization::updateModelState()
   //std::cout << "[MobileManipulatorVisualization::updateModelState] END " << std::endl;
 }
 
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MobileManipulatorVisualization::updateState()
 {
   //std::cout << "[MobileManipulatorVisualization::updateState] START " << std::endl;
@@ -564,18 +701,21 @@ void MobileManipulatorVisualization::updateState()
   //std::cout << "[MobileManipulatorVisualization::updateState] END " << std::endl << std::endl;
 }
 
-void MobileManipulatorVisualization::updateDistances(bool normalize_flag)
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::updateExtCollisionDistances(bool normalize_flag)
 {
-  std::cout << "[MobileManipulatorVisualization::updateDistances] START" << std::endl;
+  std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START" << std::endl;
 
   timer0_.startTimer();
 
-  //std::cout << "[MobileManipulatorVisualization::updateDistances] START updateState" << std::endl;
-  timer1_.startTimer();
-  updateState();
-  timer1_.endTimer();
+  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START updateState" << std::endl;
+  //timer1_.startTimer();
+  //updateState();
+  //timer1_.endTimer();
 
-  //std::cout << "[MobileManipulatorVisualization::updateDistances] START getPointsPositionCppAd" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START getPointsPositionCppAd" << std::endl;
   int numPoints = pointsOnRobotPtr_->getNumOfPoints();
   timer2_.startTimer();
   Eigen::VectorXd positionPointsOnRobot = pointsOnRobotPtr_->getPointsPositionCppAd(state_, fullState_);
@@ -588,7 +728,7 @@ void MobileManipulatorVisualization::updateDistances(bool normalize_flag)
   p0_vec_.clear();
   p1_vec_.clear();
 
-  //std::cout << "[MobileManipulatorVisualization::updateDistances] START getNearestOccupancyDist" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START getNearestOccupancyDist" << std::endl;
   timer3_.startTimer();
   
   pointsOnRobotPtr_->getPointsEigenToGeometryMsgsVec(positionPointsOnRobot, p0_vec_);
@@ -624,7 +764,7 @@ void MobileManipulatorVisualization::updateDistances(bool normalize_flag)
     }
     else
     {
-      std::cout << "[MobileManipulatorVisualization::updateDistances] DEBUG INF" << std::endl;
+      std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] DEBUG INF" << std::endl;
       while(1);
     }
 
@@ -635,17 +775,17 @@ void MobileManipulatorVisualization::updateDistances(bool normalize_flag)
   */
   timer3_.endTimer();
 
-  //std::cout << "[MobileManipulatorVisualization::updateDistances] START fillOccDistanceArrayVisu" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START fillOccDistanceArrayVisu" << std::endl;
   timer4_.startTimer();
   emuPtr_->fillOccDistanceArrayVisu(p0_vec_, p1_vec_);
   timer4_.endTimer();
 
-  //std::cout << "[MobileManipulatorVisualization::updateDistances] BEFORE publishOccDistanceArrayVisu" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] BEFORE publishOccDistanceArrayVisu" << std::endl;
   timer5_.startTimer();
   pointsOnRobotPtr_->publishPointsOnRobotVisu();
   emuPtr_->publishOccDistanceArrayVisu();
   timer5_.endTimer();
-  //std::cout << "[MobileManipulatorVisualization::updateDistances] AFTER publishOccDistanceArrayVisu" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] AFTER publishOccDistanceArrayVisu" << std::endl;
   
   timer0_.endTimer();
 
@@ -653,11 +793,6 @@ void MobileManipulatorVisualization::updateDistances(bool normalize_flag)
   std::cout << "###   Maximum : " << timer0_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
   std::cout << "###   Average : " << timer0_.getAverageInMilliseconds() << "[ms]" << std::endl;
   std::cout << "###   Latest  : " << timer0_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
-
-  std::cout << "### MPC_ROS Benchmarking timer1_ updateState:" << std::endl;
-  std::cout << "###   Maximum : " << timer1_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
-  std::cout << "###   Average : " << timer1_.getAverageInMilliseconds() << "[ms]" << std::endl;
-  std::cout << "###   Latest  : " << timer1_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
 
   std::cout << "### MPC_ROS Benchmarking timer2_ getPointsPositionCppAd:" << std::endl;
   std::cout << "###   Maximum : " << timer2_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
@@ -679,10 +814,10 @@ void MobileManipulatorVisualization::updateDistances(bool normalize_flag)
   std::cout << "###   Average : " << timer5_.getAverageInMilliseconds() << "[ms]" << std::endl;
   std::cout << "###   Latest  : " << timer5_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
 
-  //std::cout << "[MobileManipulatorVisualization::updateDistances] DEBUG INF" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] DEBUG INF" << std::endl;
   //while(1);
 
-  std::cout << "[MobileManipulatorVisualization::updateDistances] END" << std::endl << std::endl;;
+  std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] END" << std::endl << std::endl;;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -700,13 +835,24 @@ void MobileManipulatorVisualization::updateOctCallback(const ros::TimerEvent& ev
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MobileManipulatorVisualization::updateDistancesCallback(const ros::TimerEvent& event)
+void MobileManipulatorVisualization::distanceVisualizationCallback(const ros::TimerEvent& event)
 {
-  //std::cout << "[MobileManipulatorVisualization::updateDistancesCallback] START" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] START" << std::endl;
 
-  updateDistances(false);
+  timer1_.startTimer();
+  updateState();
+  timer1_.endTimer();
 
-  //std::cout << "[MobileManipulatorVisualization::updateDistancesCallback] END" << std::endl;
+  updateExtCollisionDistances(false);
+
+  publishSelfCollisionDistances();
+
+  std::cout << "### MPC_ROS Benchmarking timer1_ updateState:" << std::endl;
+  std::cout << "###   Maximum : " << timer1_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer1_.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer1_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+
+  //std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
