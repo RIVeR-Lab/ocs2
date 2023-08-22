@@ -201,10 +201,12 @@ void MobileManipulatorVisualization::update(const SystemObservation& observation
   const ros::Time timeStamp = ros::Time::now();
   publishOptimizedTrajectory(timeStamp, policy, observation.full_state);
   
+  /*
   if (visualizationInterfacePtr_ != nullptr) 
   {
-    //publishSelfCollisionDistances(observation.state, observation.full_state, robotModelInfo_);
+    publishSelfCollisionDistances(observation.state, observation.full_state, robotModelInfo_);
   }
+  */
 
   //std::cout << "[MobileManipulatorVisualization::update] END" << std::endl;
 }
@@ -334,22 +336,8 @@ void MobileManipulatorVisualization::publishSelfCollisionDistances()
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorVisualization::publishSelfCollisionDistances(const ocs2::vector_t& state, const ocs2::vector_t& fullState, const RobotModelInfo& modelInfo) 
 {
-  std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances(3)] START" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances(3)] START" << std::endl;
 
-  std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances(3)] DEBUG INF" << std::endl;
-  while(1);
-
-  //std::string prefix = "selfCollision";
-  //std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
-  //std::vector<std::pair<std::string, std::string>> collisionLinkPairs;
-
-  //loadData::loadStdVectorOfPair(taskFile_, prefix + ".collisionObjectPairs", collisionObjectPairs, true);
-  //loadData::loadStdVectorOfPair(taskFile_, prefix + ".collisionLinkPairs", collisionLinkPairs, true);
-
-  //PinocchioInterface pinocchioInterface(mobile_manipulator::createPinocchioInterface(urdfFile_, robotModelInfo_.robotModelType, removeJointNames_));
-  //PinocchioGeometryInterface geometryInterface(pinocchioInterface, collisionLinkPairs_, collisionObjectPairs_);
-
-  std::string pinocchioWorldFrame_ = "world";
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
 
@@ -365,7 +353,7 @@ void MobileManipulatorVisualization::publishSelfCollisionDistances(const ocs2::v
 
   visualization_msgs::Marker markerTemplate;
   markerTemplate.color = ros_msg_helpers::getColor({0, 1, 0}, 1);
-  markerTemplate.header.frame_id = pinocchioWorldFrame_;
+  markerTemplate.header.frame_id = worldFrameName_;
   markerTemplate.header.stamp = ros::Time::now();
   markerTemplate.pose.orientation = ros_msg_helpers::getOrientationMsg({1, 0, 0, 0});
   markerArray.markers.resize(results.size() * numMarkersPerResult, markerTemplate);
@@ -376,14 +364,12 @@ void MobileManipulatorVisualization::publishSelfCollisionDistances(const ocs2::v
   {
     // I apologize for the magic numbers, it's mostly just visualization numbers(so 0.02 scale corresponds rougly to 0.02 cm)
 
-    /*
     for (size_t j = 0; j < numMarkersPerResult; ++j) 
     {
-      markerArray.markers[numMarkersPerResult * i + j].ns = std::to_string(model.collisionPairs[i].first) +
+      markerArray.markers[numMarkersPerResult * i + j].ns = std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].first) +
                                                             " - " +
-                                                            std::to_string(geometryVisualization_->getGeometryInterface().getGeometryModel().collisionPairs[i].second);
+                                                            std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].second);
     }
-    */
 
     // The actual distance line, also denoting direction of the distance
     markerArray.markers[numMarkersPerResult * i].type = visualization_msgs::Marker::ARROW;
@@ -409,12 +395,12 @@ void MobileManipulatorVisualization::publishSelfCollisionDistances(const ocs2::v
     markerArray.markers[numMarkersPerResult * i + 2].scale.z = 0.02;
     markerArray.markers[numMarkersPerResult * i + 2].pose.position = ros_msg_helpers::getPointMsg(results[i].nearest_points[0]);
     markerArray.markers[numMarkersPerResult * i + 2].pose.position.z += 0.015;
-    //markerArray.markers[numMarkersPerResult * i + 2].text = "obj " + std::to_string(geometryVisualization_->getGeometryInterface().getGeometryModel().collisionPairs[i].first);
+    markerArray.markers[numMarkersPerResult * i + 2].text = "obj " + std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].first);
     markerArray.markers[numMarkersPerResult * i + 3].id = numMarkersPerResult * i + 3;
     markerArray.markers[numMarkersPerResult * i + 3].type = visualization_msgs::Marker::TEXT_VIEW_FACING;
     markerArray.markers[numMarkersPerResult * i + 3].pose.position = ros_msg_helpers::getPointMsg(results[i].nearest_points[1]);
     markerArray.markers[numMarkersPerResult * i + 3].pose.position.z += 0.015;
-    //markerArray.markers[numMarkersPerResult * i + 3].text = "obj " + std::to_string(geometryVisualization_->getGeometryInterface().getGeometryModel().collisionPairs[i].second);
+    markerArray.markers[numMarkersPerResult * i + 3].text = "obj " + std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].second);
     markerArray.markers[numMarkersPerResult * i + 3].scale.z = 0.02;
 
     // Text above the arrow, denoting the distance
@@ -422,15 +408,15 @@ void MobileManipulatorVisualization::publishSelfCollisionDistances(const ocs2::v
     markerArray.markers[numMarkersPerResult * i + 4].type = visualization_msgs::Marker::TEXT_VIEW_FACING;
     markerArray.markers[numMarkersPerResult * i + 4].pose.position = ros_msg_helpers::getPointMsg((results[i].nearest_points[0] + results[i].nearest_points[1]) / 2.0);
     markerArray.markers[numMarkersPerResult * i + 4].pose.position.z += 0.015;
-    //markerArray.markers[numMarkersPerResult * i + 4].text = "dist " + std::to_string(geometryVisualization_->getGeometryInterface().getGeometryModel().collisionPairs[i].first) + " - " +
-    //                                                                                 std::to_string(geometryVisualization_->getGeometryInterface().getGeometryModel().collisionPairs[i].second) + 
-    //                                                                                 ": " + std::to_string(results[i].min_distance);
+    markerArray.markers[numMarkersPerResult * i + 4].text = "dist " + std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].first) + " - " +
+                                                                                     std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].second) + 
+                                                                                     ": " + std::to_string(results[i].min_distance);
     markerArray.markers[numMarkersPerResult * i + 4].scale.z = 0.02;
   }
 
   markerPublisher_.publish(markerArray);
 
-  std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances(3)] END" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances(3)] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
