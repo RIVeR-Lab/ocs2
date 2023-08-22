@@ -57,6 +57,7 @@ int main(int argc, char** argv)
   std::string worldFrameName, robotName, baseFrameName, armBaseFrame, eeFrame, baseStateMsg, armStateMsg, baseControlMsg, armControlMsg, occupancyDistanceMsg, octomapMsg;
   std::vector<std::pair<size_t, size_t>> selfCollisionObjectPairs;
   std::vector<std::pair<std::string, std::string>> selfCollisionLinkPairs;
+  double maxDistance;
   bool recompileLibraries;
   bool printOutFlag_ = false;
 
@@ -76,8 +77,9 @@ int main(int argc, char** argv)
   loadData::loadPtreeValue<std::string>(pt, octomapMsg, "model_information.octomapMsg", printOutFlag_);
   loadData::loadStdVector<std::string>(taskFile, "model_information.armJointFrameNames", armJointFrameNames, printOutFlag_);
   loadData::loadStdVector<std::string>(taskFile, "model_information.armJointNames", armJointNames, printOutFlag_);
-  loadData::loadStdVectorOfPair(taskFile, "selfCollision.collisionObjectPairs", selfCollisionObjectPairs);
-  loadData::loadStdVectorOfPair(taskFile, "selfCollision.collisionLinkPairs", selfCollisionLinkPairs);
+  loadData::loadStdVectorOfPair(taskFile, "selfCollision.collisionObjectPairs", selfCollisionObjectPairs, printOutFlag_);
+  loadData::loadStdVectorOfPair(taskFile, "selfCollision.collisionLinkPairs", selfCollisionLinkPairs, printOutFlag_);
+  loadData::loadPtreeValue(pt, maxDistance, "extCollision.maxDistance", printOutFlag_);
   loadData::loadPtreeValue(pt, recompileLibraries, "model_settings.recompileLibraries", printOutFlag_);
 
   // Print out parameter values
@@ -228,7 +230,8 @@ int main(int argc, char** argv)
                                                        selfCollisionObjectPairs,
                                                        selfCollisionLinkPairs,
                                                        pointsOnRobotPtr,
-                                                       emuPtr);
+                                                       emuPtr,
+                                                       maxDistance);
   std::cout << "[MobileManipulatorInterface::runMRT] AFTER mobileManipulatorVisu_" << std::endl;
 
   mobileManipulatorVisu.updateStateIndexMap();

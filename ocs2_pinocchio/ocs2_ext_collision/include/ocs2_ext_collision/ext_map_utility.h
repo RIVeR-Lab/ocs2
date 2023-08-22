@@ -684,6 +684,8 @@ class ExtMapUtility
     // DESCRIPTION: TODO...
     void getPointOnLine(geometry_msgs::Point& origin, geometry_msgs::Point& end, double dist);
 
+    Eigen::Vector3d calculateInteriorPoint(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2, double d);
+
     // DESCRIPTION: TODO...
     bool getNearestOccupancyDist(double x, 
                                  double y, 
@@ -834,7 +836,7 @@ class ExtMapUtility
     mutable FCLCollisionObjectPtr worldFCLCollisionObjectPtr_;
 
     mutable std::shared_ptr<fcl::CollisionGeometryd> queryFCLCollisionGeometryPtr_;
-    mutable FCLCollisionObjectPtr queryFCLCollisionObjectPtr_;
+    //mutable FCLCollisionObjectPtr queryFCLCollisionObjectPtr_;
 
     mutable visualization_msgs::Marker occ_distance_visu_;
     mutable visualization_msgs::MarkerArray occ_distance_array_visu_;

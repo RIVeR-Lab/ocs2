@@ -46,7 +46,8 @@ class MobileManipulatorVisualization final : public DummyObserver
                                    std::vector<std::pair<size_t, size_t>>& collisionObjectPairs,
                                    std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
                                    std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
-                                   std::shared_ptr<ExtMapUtility> emuPtr);
+                                   std::shared_ptr<ExtMapUtility> emuPtr,
+                                   double maxDistance);
 
     ~MobileManipulatorVisualization() override = default;
 

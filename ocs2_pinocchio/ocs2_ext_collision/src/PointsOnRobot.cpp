@@ -222,6 +222,8 @@ ocs2::RobotModelInfo PointsOnRobot::getRobotModelInfo() const
 
 void PointsOnRobot::getPointsEigenToGeometryMsgsVec(Eigen::VectorXd& pointsEigen, std::vector<geometry_msgs::Point>& pointsGeometryMsgsVec)
 {
+  //std::cout << "[PointsOnRobot::getPointsEigenToGeometryMsgsVec] START" << std::endl;
+
   pointsGeometryMsgsVec.clear();
   int numPoints = getNumOfPoints();
 
@@ -234,7 +236,16 @@ void PointsOnRobot::getPointsEigenToGeometryMsgsVec(Eigen::VectorXd& pointsEigen
     pgm.y = position(1);
     pgm.z = position(2);
     pointsGeometryMsgsVec.push_back(pgm);
+
+    /*
+    std::cout << "[PointsOnRobot::getPointsEigenToGeometryMsgsVec] i: " << i << std::endl;
+    std::cout << "[PointsOnRobot::getPointsEigenToGeometryMsgsVec] pgm.x: " << pgm.x << std::endl;
+    std::cout << "[PointsOnRobot::getPointsEigenToGeometryMsgsVec] pgm.y: " << pgm.y << std::endl;
+    std::cout << "[PointsOnRobot::getPointsEigenToGeometryMsgsVec] pgm.z: " << pgm.z << std::endl << std::endl;
+    */
   }
+
+  //std::cout << "[PointsOnRobot::getPointsEigenToGeometryMsgsVec] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -298,7 +309,7 @@ void PointsOnRobot::setNodeHandle(ros::NodeHandle& nh)
 //-------------------------------------------------------------------------------------------------------
 void PointsOnRobot::setPointsOnRobotVisu()
 {
-  pointsOnRobot_visu_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("points_on_robot", 1000);
+  pointsOnRobot_visu_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("points_on_robot", 100);
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -314,7 +325,7 @@ void PointsOnRobot::setTimerPointsOnRobotVisu(double dt)
 //-------------------------------------------------------------------------------------------------------
 void PointsOnRobot::fillPointsOnRobotVisu() const
 {
-  std::cout << "[PointsOnRobot::fillPointsOnRobotVisu] START" << std::endl;
+  //std::cout << "[PointsOnRobot::fillPointsOnRobotVisu] START" << std::endl;
   //pointsOnRobot_visu_.markers.resize(radii_.size());
 
   Eigen::VectorXd points_on_robot = points_on_robot_;
@@ -326,9 +337,9 @@ void PointsOnRobot::fillPointsOnRobotVisu() const
     marker.type = visualization_msgs::Marker::Type::SPHERE;
     marker.id = i;
     //marker.action = 0;
-    marker.scale.x = radii_[i] * 1;
-    marker.scale.y = radii_[i] * 1;
-    marker.scale.z = radii_[i] * 1;
+    marker.scale.x = radii_[i] * 2;
+    marker.scale.y = radii_[i] * 2;
+    marker.scale.z = radii_[i] * 2;
     marker.pose.position.x = points_on_robot(3 * i + 0);
     marker.pose.position.y = points_on_robot(3 * i + 1);
     marker.pose.position.z = points_on_robot(3 * i + 2);
@@ -352,7 +363,7 @@ void PointsOnRobot::fillPointsOnRobotVisu() const
     pointsOnRobot_visu_.markers.push_back(marker);
   }
 
-  std::cout << "[PointsOnRobot::fillPointsOnRobotVisu] END" << std::endl;
+  //std::cout << "[PointsOnRobot::fillPointsOnRobotVisu] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------

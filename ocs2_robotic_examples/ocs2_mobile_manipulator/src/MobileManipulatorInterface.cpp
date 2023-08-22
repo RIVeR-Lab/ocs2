@@ -465,7 +465,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
                                                                                             collisionObjectPairs_,
                                                                                             collisionLinkPairs_,
                                                                                             pointsOnRobotPtr_,
-                                                                                            emuPtr_));
+                                                                                            emuPtr_,
+                                                                                            maxDistance_));
   std::cout << "[MobileManipulatorInterface::runMRT] AFTER mobileManipulatorVisu_" << std::endl;
 
   launchNodes(nodeHandle_);
@@ -1733,13 +1734,14 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
 
   scalar_t mu = 1e-2;
   scalar_t delta = 1e-3;
-  scalar_t maxDistance = 10;
+  //scalar_t maxDistance = 10;
   std::cerr << "\n #### ExtCollision Settings: ";
   std::cerr << "\n #### =============================================================================\n";
   loadData::loadPtreeValue(pt, mu, prefix + ".mu", true);
   loadData::loadPtreeValue(pt, delta, prefix + ".delta", true);
-  loadData::loadPtreeValue(pt, maxDistance, prefix + ".maxDistance", true);
+  loadData::loadPtreeValue(pt, maxDistance_, prefix + ".maxDistance", true);
   std::cerr << " #### =============================================================================\n";
+
 
   ExtCollisionPinocchioGeometryInterface extCollisionPinocchioGeometryInterface(*pinocchioInterfacePtr_);
   std::unique_ptr<StateConstraint> constraint;
@@ -1755,7 +1757,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
     constraint = std::unique_ptr<StateConstraint>(new MobileManipulatorExtCollisionConstraint(MobileManipulatorPinocchioMapping(robotModelInfo_), 
                                                                                               std::move(extCollisionPinocchioGeometryInterface), 
                                                                                               pointsOnRobotPtr_,
-                                                                                              maxDistance,
+                                                                                              maxDistance_,
                                                                                               emuPtr_,
                                                                                               modelModeInt,
                                                                                               modelStateDim));
@@ -1768,7 +1770,7 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
                                                                                   MobileManipulatorPinocchioMapping(robotModelInfo_), 
                                                                                   MobileManipulatorPinocchioMappingCppAd(robotModelInfo_),
                                                                                   pointsOnRobotPtr_,
-                                                                                  maxDistance,
+                                                                                  maxDistance_,
                                                                                   emuPtr_,
                                                                                   "ext_collision", 
                                                                                   libraryFolder_, 

@@ -356,6 +356,7 @@ class MobileManipulatorInterface final : public RobotInterface
     /// NUA NOTE: Should it depend on model mode?
     std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_;
 
+    double maxDistance_ = 10;
     std::shared_ptr<ExtMapUtility> emuPtr_;
     PointsOnRobot::points_radii_t pointsAndRadii_;
 
