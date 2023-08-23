@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.31
+// LAST UPDATE: 2023.08.23
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -96,14 +96,12 @@ class MobileManipulatorInterface final : public RobotInterface
     MobileManipulatorInterface(const std::string& taskFile, 
                                const std::string& libraryFolder, 
                                const std::string& urdfFile,
-                               PointsOnRobot::points_radii_t pointsAndRadii = std::vector<std::vector<std::pair<double, double>>>(),
                                int initModelModeInt=2);
 
     MobileManipulatorInterface(ros::NodeHandle& nodeHandle,
                                const std::string& taskFile, 
                                const std::string& libraryFolder, 
                                const std::string& urdfFile,
-                               PointsOnRobot::points_radii_t pointsAndRadii = std::vector<std::vector<std::pair<double, double>>>(),
                                int initModelModeInt=2);
 
     /*
@@ -231,7 +229,7 @@ class MobileManipulatorInterface final : public RobotInterface
     }
     */
 
-    void initializePointsOnRobotPtr(PointsOnRobot::points_radii_t& pointsAndRadii);
+    void initializePointsOnRobotPtr(std::string& collisionPointsName);
 
     void setMPCProblem(bool iterFlag=false);
 

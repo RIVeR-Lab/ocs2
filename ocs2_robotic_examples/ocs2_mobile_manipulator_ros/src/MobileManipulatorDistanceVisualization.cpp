@@ -54,7 +54,8 @@ int main(int argc, char** argv)
   // Initialize local parameters
   RobotModelType robotModelType;
   std::vector<std::string> removeJointNames, armJointFrameNames, armJointNames;
-  std::string worldFrameName, robotName, baseFrameName, armBaseFrame, eeFrame, baseStateMsg, armStateMsg, baseControlMsg, armControlMsg, occupancyDistanceMsg, octomapMsg;
+  std::string worldFrameName, robotName, baseFrameName, armBaseFrame, eeFrame, collisionConstraintPoints, collisionCheckPoints,
+              baseStateMsg, armStateMsg, baseControlMsg, armControlMsg, occupancyDistanceMsg, octomapMsg;
   std::vector<std::pair<size_t, size_t>> selfCollisionObjectPairs;
   std::vector<std::pair<std::string, std::string>> selfCollisionLinkPairs;
   double maxDistance;
@@ -75,6 +76,8 @@ int main(int argc, char** argv)
   loadData::loadPtreeValue<std::string>(pt, armControlMsg, "model_information.armControlMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, occupancyDistanceMsg, "model_information.occupancyDistanceMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, octomapMsg, "model_information.octomapMsg", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, collisionConstraintPoints, "model_information.collisionConstraintPoints", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, collisionCheckPoints, "model_information.collisionCheckPoints", printOutFlag_);
   loadData::loadStdVector<std::string>(taskFile, "model_information.armJointFrameNames", armJointFrameNames, printOutFlag_);
   loadData::loadStdVector<std::string>(taskFile, "model_information.armJointNames", armJointNames, printOutFlag_);
   loadData::loadStdVectorOfPair(taskFile, "selfCollision.collisionObjectPairs", selfCollisionObjectPairs, printOutFlag_);
@@ -137,11 +140,11 @@ int main(int argc, char** argv)
   //// NUA TODO: GET INFO FROM TASK FILE AND INIT IN MobileManipulatorInterface!
   // Get points on robot parameters
   PointsOnRobot::points_radii_t pointsAndRadii(8);
-  if (nodeHandle.hasParam("/collision_points")) 
+  if (nodeHandle.hasParam(collisionCheckPoints)) 
   {
     using pair_t = std::pair<double, double>;
     XmlRpc::XmlRpcValue collisionPoints;
-    nodeHandle.getParam("/collision_points", collisionPoints);
+    nodeHandle.getParam(collisionCheckPoints, collisionPoints);
 
     if (collisionPoints.getType() != XmlRpc::XmlRpcValue::TypeArray) 
     {

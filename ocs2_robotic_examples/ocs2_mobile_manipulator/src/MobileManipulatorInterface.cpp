@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.08.22
+// LAST UPDATE: 2023.08.23
 //
 // AUTHOR: Neset Unver Akmandor  (NUA)
 //
@@ -22,12 +22,10 @@ namespace mobile_manipulator {
 MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFile, 
                                                        const std::string& libraryFolder,
                                                        const std::string& urdfFile,
-                                                       PointsOnRobot::points_radii_t pointsAndRadii,
                                                        int initModelModeInt)
   : taskFile_(taskFile), 
     libraryFolder_(libraryFolder), 
-    urdfFile_(urdfFile), 
-    pointsAndRadii_(pointsAndRadii), 
+    urdfFile_(urdfFile),
     initModelModeInt_(initModelModeInt), 
     modelModeIntQuery_(initModelModeInt)
 {
@@ -197,13 +195,11 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
                                                        const std::string& taskFile, 
                                                        const std::string& libraryFolder, 
                                                        const std::string& urdfFile,
-                                                       PointsOnRobot::points_radii_t pointsAndRadii,
                                                        int initModelModeInt)
   : nodeHandle_(nodeHandle), 
     taskFile_(taskFile), 
     libraryFolder_(libraryFolder), 
-    urdfFile_(urdfFile), 
-    pointsAndRadii_(pointsAndRadii), 
+    urdfFile_(urdfFile),
     initModelModeInt_(initModelModeInt),
     modelModeIntQuery_(initModelModeInt)
 {
@@ -280,7 +276,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   loadData::loadStdVector<std::string>(taskFile_, "model_information.armJointNames", armJointNames, printOutFlag_);
 
   // Read the frame names
-  std::string robotName, baseFrame, armBaseFrame, eeFrame;
+  std::string robotName, baseFrame, armBaseFrame, eeFrame, collisionConstraintPoints, collisionCheckPoints;
   loadData::loadPtreeValue<std::string>(pt, robotName, "model_information.robotName", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, worldFrameName_, "model_information.worldFrame", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, baseFrame, "model_information.baseFrame", printOutFlag_);
@@ -292,6 +288,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   loadData::loadPtreeValue<std::string>(pt, armControlMsg_, "model_information.armControlMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, occupancyDistanceMsg_, "model_information.occupancyDistanceMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, octomapMsg_, "model_information.octomapMsg", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, collisionConstraintPoints, "model_information.collisionConstraintPoints", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, collisionCheckPoints, "model_information.collisionCheckPoints", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, logSavePathRel_, "model_information.logSavePathRel", printOutFlag_);
 
   if (printOutFlag_)
@@ -372,7 +370,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   rolloutSettings_ = rollout::loadSettings(taskFile_, "rollout", printOutFlag_);
 
   // Set PointsOnRobot
-  initializePointsOnRobotPtr(pointsAndRadii_);
+  initializePointsOnRobotPtr(collisionConstraintPoints);
 
   // Set ExtMapUtility
   emuPtr_.reset(new ExtMapUtility());
@@ -470,8 +468,59 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MobileManipulatorInterface::initializePointsOnRobotPtr(PointsOnRobot::points_radii_t& pointsAndRadii) 
+void MobileManipulatorInterface::initializePointsOnRobotPtr(std::string& collisionPointsName) 
 {
+  std::cout << "[MobileManipulatorInterface::initializePointsOnRobotPtr] START" << std::endl;
+  //PointsOnRobot::points_radii_t pointsAndRadii = std::vector<std::vector<std::pair<double, double>>>();
+
+  std::cout << "[MobileManipulatorInterface::initializePointsOnRobotPtr] collisionPointsName: " << collisionPointsName << std::endl;
+
+  // Get points on robot parameters
+  PointsOnRobot::points_radii_t pointsAndRadii(8);
+  if (nodeHandle_.hasParam(collisionPointsName)) 
+  {
+    using pair_t = std::pair<double, double>;
+    XmlRpc::XmlRpcValue collisionPoints;
+    nodeHandle_.getParam(collisionPointsName, collisionPoints);
+
+    if (collisionPoints.getType() != XmlRpc::XmlRpcValue::TypeArray) 
+    {
+      ROS_WARN("[MobileManipulatorNode::main] collision_points parameter is not of type array.");
+    }
+    
+    //// NUA TODO: Get the point and radii info from task file! Also seperate base and arm!
+    std::cout << "[MobileManipulatorNode::main] pointsAndRadii:" << std::endl;
+    for (int i = 0; i < collisionPoints.size(); i++) 
+    {
+      if (collisionPoints.getType() != XmlRpc::XmlRpcValue::TypeArray) 
+      {
+        ROS_WARN_STREAM("[MobileManipulatorNode::main] collision_points[" << i << "] parameter is not of type array.");
+      }
+
+      for (int j = 0; j < collisionPoints[i].size(); j++) 
+      {
+        if (collisionPoints[j].getType() != XmlRpc::XmlRpcValue::TypeArray) 
+        {
+          ROS_WARN_STREAM("[MobileManipulatorNode::main] collision_points[" << i << "][" << j << "] parameter is not of type array.");
+        }
+
+        if (collisionPoints[i][j].size() != 2) 
+        {
+          ROS_WARN_STREAM("[MobileManipulatorNode::main] collision_points[" << i << "][" << j << "] does not have 2 elements.");
+        }
+
+        double segmentId = collisionPoints[i][j][0];
+        double radius = collisionPoints[i][j][1];
+        pointsAndRadii[i].push_back(pair_t(segmentId, radius));
+        ROS_INFO_STREAM("[MobileManipulatorNode::main] segment=" << i << ". relative pos on segment:" << segmentId << ". radius:" << radius);
+      }
+    }
+  }
+  else
+  {
+    std::cout << "[MobileManipulatorNode::main] ERROR: collision_points is not defined!" << std::endl;
+  }
+
   pointsOnRobotPtr_.reset(new PointsOnRobot(pointsAndRadii));
   if (pointsOnRobotPtr_->getNumOfPoints() > 0) 
   {
@@ -488,6 +537,8 @@ void MobileManipulatorInterface::initializePointsOnRobotPtr(PointsOnRobot::point
   {
     pointsOnRobotPtr_ = nullptr;
   }
+
+  std::cout << "[MobileManipulatorInterface::initializePointsOnRobotPtr] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
