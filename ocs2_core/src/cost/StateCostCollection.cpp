@@ -158,6 +158,8 @@ ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximat
 {
   //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] START" << std::endl;
 
+  //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] terms_ size: " << terms_.size() << std::endl;
+
   const auto firstActive = std::find_if(terms_.begin(), terms_.end(), [time](const std::shared_ptr<StateCost>& costTerm) 
   { 
     return costTerm->isActive(time); 
@@ -169,8 +171,8 @@ ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximat
     return ScalarFunctionQuadraticApproximation::Zero(state.rows());
   }
 
-  //int ctr = 0;
-  //int ctr2 = 0;
+  int ctr = 0;
+  int ctr2 = 0;
   //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] START firstActive getQuadraticApproximation" << std::endl;
   // Initialize with first active term, accumulate potentially other active terms.
   auto cost = (*firstActive)->getQuadraticApproximation(time, state, fullState, targetTrajectories, preComp);
@@ -180,8 +182,10 @@ ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximat
 
   std::for_each(std::next(firstActive), terms_.end(), [&](const std::shared_ptr<StateCost>& costTerm) 
   {
+    //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] ctr2: " << ctr2 << std::endl;
     if (costTerm->isActive(time)) 
     {
+      //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] ctr: " << ctr << std::endl;
       //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] START getQuadraticApproximation" << std::endl;
       const auto costTermApproximation = costTerm->getQuadraticApproximation(time, state, fullState, targetTrajectories, preComp);
       //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] END getQuadraticApproximation" << std::endl;
@@ -192,9 +196,9 @@ ScalarFunctionQuadraticApproximation StateCostCollection::getQuadraticApproximat
 
       //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] " <<  ctr << " -> costTermApproximation.f: " << costTermApproximation.f << std::endl;
       //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] " <<  ctr << " -> cost.f: " << cost.f << std::endl;
-      //ctr++;
+      ctr++;
     }
-    //ctr2++;
+    ctr2++;
   });
   //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] ctr: " << ctr << std::endl;
   //std::cout << "[StateCostCollection::getQuadraticApproximation(5)] ctr2: " << ctr2 << std::endl;

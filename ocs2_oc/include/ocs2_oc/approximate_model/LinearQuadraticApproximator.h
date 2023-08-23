@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <ocs2_core/Types.h>
+#include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_core/model_data/Metrics.h>
 #include <ocs2_core/model_data/ModelData.h>
 #include <ocs2_core/model_data/Multiplier.h>

@@ -357,6 +357,8 @@ class MobileManipulatorInterface final : public RobotInterface
     std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_;
 
     double maxDistance_ = 10;
+    std::string occupancyDistanceMsg_;
+    std::string octomapMsg_;
     std::shared_ptr<ExtMapUtility> emuPtr_;
     PointsOnRobot::points_radii_t pointsAndRadii_;
 

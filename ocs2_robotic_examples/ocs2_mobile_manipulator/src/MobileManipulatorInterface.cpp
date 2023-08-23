@@ -290,6 +290,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   loadData::loadPtreeValue<std::string>(pt, armStateMsg_, "model_information.armStateMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, baseControlMsg_, "model_information.baseControlMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, armControlMsg_, "model_information.armControlMsg", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, occupancyDistanceMsg_, "model_information.occupancyDistanceMsg", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, octomapMsg_, "model_information.octomapMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, logSavePathRel_, "model_information.logSavePathRel", printOutFlag_);
 
   if (printOutFlag_)
@@ -320,6 +322,9 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     std::cout << "#### model_information.armStateMsg: " << armStateMsg_ << std::endl;
     std::cout << "#### model_information.baseControlMsg: " << baseControlMsg_ << std::endl;
     std::cout << "#### model_information.armControlMsg: " << armControlMsg_ << std::endl;
+    std::cout << "#### model_information.occupancyDistanceMsg: " << occupancyDistanceMsg_ << std::endl;
+    std::cout << "#### model_information.octomapMsg: " << octomapMsg_ << std::endl;
+    std::cout << "#### model_information.logSavePathRel: " << logSavePathRel_ << std::endl;
     std::cout << "#### =============================================================================" << std::endl;
   }
 
@@ -369,18 +374,12 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   // Set PointsOnRobot
   initializePointsOnRobotPtr(pointsAndRadii_);
 
-  /*
   // Set ExtMapUtility
   emuPtr_.reset(new ExtMapUtility());
-  
-  //// NUA TODO: Set these parameters in taskfile!
-  std::string pub_name_oct_dist_visu = "occ_dist";
-  std::string pub_name_oct_dist_array_visu = "occ_dist_array";
-
   emuPtr_->setWorldFrameName(worldFrameName_);
-  emuPtr_->setPubOccDistVisu(pub_name_oct_dist_visu);
-  emuPtr_->setPubOccDistArrayVisu(pub_name_oct_dist_array_visu);
-  */
+  emuPtr_->setPubOccDistArrayVisu(occupancyDistanceMsg_);
+  emuPtr_->setNodeHandle(nodeHandle_);
+  emuPtr_->subscribeOctMsg(octomapMsg_);
 
   // Create costs/constraints
   size_t modelModeInt;
@@ -397,9 +396,6 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   endEffectorIntermediateConstraintPtr_mode0_ = getEndEffectorConstraint("endEffector");
   endEffectorFinalConstraintPtr_mode0_ = getEndEffectorConstraint("finalEndEffector");
   //selfCollisionConstraintPtr_mode0_ = getSelfCollisionConstraint("selfCollision");
-  
-  //// NUA TODO: DEBUG AND TEST IS REQUIRED!
-  //initializePointsOnRobotPtr(pointsAndRadii_);
   //extCollisionConstraintPtr_mode0_= getExtCollisionConstraint("extCollision");
 
   dynamicsPtr_mode0_.reset(new MobileBaseDynamics(robotModelInfo_, 
@@ -418,9 +414,6 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   endEffectorIntermediateConstraintPtr_mode1_ = getEndEffectorConstraint("endEffector");
   endEffectorFinalConstraintPtr_mode1_ = getEndEffectorConstraint("finalEndEffector");
   selfCollisionConstraintPtr_mode1_ = getSelfCollisionConstraint(modelName);
-  
-  //// NUA TODO: DEBUG AND TEST IS REQUIRED!
-  //initializePointsOnRobotPtr(pointsAndRadii_);
   //extCollisionConstraintPtr_mode1_= getExtCollisionConstraint("extCollision");
   
   dynamicsPtr_mode1_.reset(new RobotArmDynamics(robotModelInfo_, 
@@ -439,10 +432,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   endEffectorIntermediateConstraintPtr_mode2_ = getEndEffectorConstraint("endEffector");
   endEffectorFinalConstraintPtr_mode2_ = getEndEffectorConstraint("finalEndEffector");
   selfCollisionConstraintPtr_mode2_ = getSelfCollisionConstraint(modelName);
-  
-  //// NUA TODO: DEBUG AND TEST IS REQUIRED!
-  //initializePointsOnRobotPtr(pointsAndRadii_);
-  //extCollisionConstraintPtr_mode2_ = getExtCollisionConstraint("extCollision");
+  extCollisionConstraintPtr_mode2_ = getExtCollisionConstraint("extCollision");
 
   dynamicsPtr_mode2_.reset(new MobileManipulatorDynamics(robotModelInfo_, 
                                                          "MobileManipulatorDynamics", 
@@ -694,7 +684,8 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
     mpcTimer8_.startTimer();
     if (activateExtCollision_) 
     {
-      //ocp_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode2_);
+      std::cout << "[MobileManipulatorInterface::setMPCProblem] BEFORE extCollisionConstraintPtr_mode2_" << std::endl;
+      ocp_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode2_);
     }
     mpcTimer8_.endTimer();
 

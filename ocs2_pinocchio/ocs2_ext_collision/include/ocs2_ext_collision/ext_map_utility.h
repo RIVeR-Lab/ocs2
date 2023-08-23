@@ -684,16 +684,17 @@ class ExtMapUtility
     // DESCRIPTION: TODO...
     void getPointOnLine(geometry_msgs::Point& origin, geometry_msgs::Point& end, double dist);
 
-    Eigen::Vector3d calculateInteriorPoint(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2, double d);
+    // DESCRIPTION: TODO...
+    Eigen::Vector3d calculateInteriorPoint(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2, double d) const;
 
     // DESCRIPTION: TODO...
     bool getNearestOccupancyDist(double x, 
                                  double y, 
                                  double z, 
-                                 double radii, 
+                                 double radius, 
                                  double max_dist, 
                                  geometry_msgs::Point& min_point, 
-                                 double& min_p_dist, 
+                                 double& min_dist, 
                                  bool normalize_flag=false) const;
 
     // DESCRIPTION: TODO...
@@ -711,7 +712,7 @@ class ExtMapUtility
                                  double max_dist, 
                                  std::vector<geometry_msgs::Point>& min_points, 
                                  std::vector<double>& min_distances, 
-                                 bool normalize_flag=false);
+                                 bool normalize_flag=false) const;
 
     // DESCRIPTION: TODO...
     //bool getNearestOccupancyDistSrv(mobiman_simulation::getNearestOccDist::Request &req, 

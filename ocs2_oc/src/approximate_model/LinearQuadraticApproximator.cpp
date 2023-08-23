@@ -446,6 +446,14 @@ ScalarFunctionQuadraticApproximation approximateCost(const OptimalControlProblem
 {
   //std::cout << "[LinearQuadraticApproximator::approximateCost(5)] START" << std::endl;
 
+  ocs2::benchmark::RepeatedTimer timer0;
+  ocs2::benchmark::RepeatedTimer timer1;
+  ocs2::benchmark::RepeatedTimer timer2;
+  ocs2::benchmark::RepeatedTimer timer3;
+  ocs2::benchmark::RepeatedTimer timer4;
+
+  //timer0.startTimer();
+
   //// NUA TODO: Absolutely no use! Remove targetTrajectoriesPtr from OCP and cost functions (getValue)!
   const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
   //TargetTrajectories targetTrajectories(0);
@@ -453,18 +461,23 @@ ScalarFunctionQuadraticApproximation approximateCost(const OptimalControlProblem
 
   //std::cout << "[LinearQuadraticApproximator::approximateCost(5)] START costPtr" << std::endl;
   // get the state-input cost approximations
+  //timer1.startTimer();
   auto cost = problem.costPtr->getQuadraticApproximation(time, state, input, targetTrajectories, preComputation);
+  //timer1.endTimer();
   //std::cout << "[LinearQuadraticApproximator::approximateCost(5)] END costPtr" << std::endl;
 
   //std::cout << "[LinearQuadraticApproximator::approximateCost(5)] START softConstraintPtr" << std::endl;
+  //timer2.startTimer();
   if (!problem.softConstraintPtr->empty()) 
   {
     cost += problem.softConstraintPtr->getQuadraticApproximation(time, state, input, targetTrajectories, preComputation);
   }
+  //timer2.endTimer();
   //std::cout << "[LinearQuadraticApproximator::approximateCost(5)] END softConstraintPtr" << std::endl;
 
   //std::cout << "[LinearQuadraticApproximator::approximateCost(5)] START stateCostPtr" << std::endl;
   // get the state only cost approximations
+  //timer3.startTimer();
   if (!problem.stateCostPtr->empty()) 
   {
     auto stateCost = problem.stateCostPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
@@ -472,9 +485,11 @@ ScalarFunctionQuadraticApproximation approximateCost(const OptimalControlProblem
     cost.dfdx += stateCost.dfdx;
     cost.dfdxx += stateCost.dfdxx;
   }
+  //timer3.endTimer();
   //std::cout << "[LinearQuadraticApproximator::approximateCost(5)] END stateCostPtr" << std::endl;
 
   //std::cout << "[LinearQuadraticApproximator::approximateCost(5)] START stateSoftConstraintPtr" << std::endl;
+  //timer4.startTimer();
   if (!problem.stateSoftConstraintPtr->empty()) 
   {
     auto stateCost = problem.stateSoftConstraintPtr->getQuadraticApproximation(time, state, fullState, targetTrajectories, preComputation);
@@ -484,9 +499,39 @@ ScalarFunctionQuadraticApproximation approximateCost(const OptimalControlProblem
 
     //std::cout << "[LinearQuadraticApproximator::approximateCost(5)] TOTAL cost.f: " << cost.f << std::endl;
   }
+  //timer4.endTimer();
   //std::cout << "[LinearQuadraticApproximator::approximateCost(5)] END stateSoftConstraintPtr" << std::endl;
 
-  //std::cout << "[LinearQuadraticApproximator::approximateCost(5)] END" << std::endl << std::endl;
+  //timer0.endTimer();
+
+  /*
+  std::cout << "### MPC_ROS Benchmarking timer0" << std::endl;
+  std::cout << "###   Maximum : " << timer0.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer0.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer0.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+
+  std::cout << "### MPC_ROS Benchmarking timer1" << std::endl;
+  std::cout << "###   Maximum : " << timer1.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer1.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer1.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+
+  std::cout << "### MPC_ROS Benchmarking timer2" << std::endl;
+  std::cout << "###   Maximum : " << timer2.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer2.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer2.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+
+  std::cout << "### MPC_ROS Benchmarking timer3" << std::endl;
+  std::cout << "###   Maximum : " << timer3.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer3.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer3.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+
+  std::cout << "### MPC_ROS Benchmarking timer4" << std::endl;
+  std::cout << "###   Maximum : " << timer4.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer4.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer4.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+  */
+
+  //std::cout << "[LinearQuadraticApproximator::approximateCost(5)] END" << std::endl;
   //std::cout << "-----------------------------------------" << std::endl << std::endl;
 
   return cost;
