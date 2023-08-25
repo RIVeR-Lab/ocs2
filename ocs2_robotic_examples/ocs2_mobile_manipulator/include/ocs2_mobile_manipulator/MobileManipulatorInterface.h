@@ -34,7 +34,8 @@
 //#include <ocs2_core/misc/LoadData.h>
 //#include <ocs2_core/misc/LoadStdVectorOfPair.h>
 
-#include "ocs2_msgs/setActionDRL.h"
+#include "ocs2_msgs/setDiscreteActionDRL.h"
+#include "ocs2_msgs/setContinuousActionDRL.h"
 
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
@@ -231,7 +232,7 @@ class MobileManipulatorInterface final : public RobotInterface
 
     void initializePointsOnRobotPtr(std::string& collisionPointsName);
 
-    void setMPCProblem(bool iterFlag=false);
+    void setMPCProblem();
 
     /*
     void setEsdfCachingServerPtr(std::shared_ptr<voxblox::EsdfCachingServer> newEsdfCachingServerPtr) 
@@ -253,8 +254,11 @@ class MobileManipulatorInterface final : public RobotInterface
 
     void getEEPose(vector_t& eePose);
 
-    bool setActionDRLSrv(ocs2_msgs::setActionDRL::Request &req, 
-                         ocs2_msgs::setActionDRL::Response &res);
+    bool setDiscreteActionDRLSrv(ocs2_msgs::setDiscreteActionDRL::Request &req, 
+                                 ocs2_msgs::setDiscreteActionDRL::Response &res);
+
+    bool setContinuousActionDRLSrv(ocs2_msgs::setContinuousActionDRL::Request &req, 
+                                   ocs2_msgs::setContinuousActionDRL::Response &res);
 
     void runMPC();
 
@@ -277,12 +281,15 @@ class MobileManipulatorInterface final : public RobotInterface
 
     void mapDRLAction(int action);
 
+    void mapDRLAction(std::vector<double>& action);
+
     struct mpcProblemSettings
     {
-      int modelMode;
-      std::vector<std::string> binarySettingNames = {"internalTargetCost",
-                                                     "selfCollisionConstraint",
-                                                     "externalCollisionConstraint"};
+      int modelMode = 2;
+      //std::vector<std::string> binarySettingNames = {"internalTargetCost",
+      //                                               "selfCollisionConstraint",
+      //                                               "externalCollisionConstraint"};
+      std::vector<std::string> binarySettingNames = {"selfCollisionConstraint"};
       std::vector<bool> binarySettingValues;
     };
 
@@ -298,6 +305,9 @@ class MobileManipulatorInterface final : public RobotInterface
     std::string robotModelName_ = "mobile_manipulator";
     std::string worldFrameName_ = "world";
     //std::string graspFrameName_ = "grasp";
+
+    std::string modelModeMsgName_ = "mobile_manipulator_model_mode";
+    std::string targetMsgName_ = "mobile_manipulator_mpc_target";
 
     std::vector<std::pair<size_t, size_t>> collisionObjectPairs_;
     std::vector<std::pair<std::string, std::string>> collisionLinkPairs_;
@@ -328,7 +338,9 @@ class MobileManipulatorInterface final : public RobotInterface
     bool activateExtCollision_;
     
     bool drlFlag_ = false;
-    int drlAction_;
+    int drlActionType_ = 1;
+    int drlActionDiscrete_;
+    std::vector<double> drlActionContinuous_;
     double drlActionTimeHorizon_;
     mpcProblemSettings mpcProblemSettings_;
 
@@ -433,6 +445,8 @@ class MobileManipulatorInterface final : public RobotInterface
 
     ros::Subscriber modelModeSubscriber_;
     ros::Subscriber targetTrajectoriesSubscriber_;
+
+    ros::ServiceClient setTargetDRLClient_;
 
     ros::ServiceServer setActionDRLService_;
 };

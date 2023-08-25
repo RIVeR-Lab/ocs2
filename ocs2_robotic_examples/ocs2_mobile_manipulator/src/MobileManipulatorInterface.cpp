@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.08.23
+// LAST UPDATE: 2023.08.24
 //
 // AUTHOR: Neset Unver Akmandor  (NUA)
 //
@@ -30,6 +30,10 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
     modelModeIntQuery_(initModelModeInt)
 {
   //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START" << std::endl;
+
+  /// NUA NOTE: DEPRICATED! NEED REVIEW AND UPDATE!
+  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START" << std::endl;
+  while(1);
 
   mpcTimer0_.reset();
   mpcTimer1_.reset();
@@ -288,6 +292,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   loadData::loadPtreeValue<std::string>(pt, armControlMsg_, "model_information.armControlMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, occupancyDistanceMsg_, "model_information.occupancyDistanceMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, octomapMsg_, "model_information.octomapMsg", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, modelModeMsgName_, "model_information.modelModeMsg", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, targetMsgName_, "model_information.targetMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, collisionConstraintPoints, "model_information.collisionConstraintPoints", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, collisionCheckPoints, "model_information.collisionCheckPoints", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, logSavePathRel_, "model_information.logSavePathRel", printOutFlag_);
@@ -322,6 +328,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     std::cout << "#### model_information.armControlMsg: " << armControlMsg_ << std::endl;
     std::cout << "#### model_information.occupancyDistanceMsg: " << occupancyDistanceMsg_ << std::endl;
     std::cout << "#### model_information.octomapMsg: " << octomapMsg_ << std::endl;
+    std::cout << "#### model_information.modelModeMsg: " << modelModeMsgName_ << std::endl;
+    std::cout << "#### model_information.targetMsg: " << targetMsgName_ << std::endl;
     std::cout << "#### model_information.logSavePathRel: " << logSavePathRel_ << std::endl;
     std::cout << "#### =============================================================================" << std::endl;
   }
@@ -346,6 +354,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     std::cerr << "\n #### =============================================================================\n";
   }
     loadData::loadPtreeValue(pt, drlFlag_, "model_settings.drlFlag", printOutFlag_);
+    loadData::loadPtreeValue(pt, drlActionType_, "model_settings.drlActionType", printOutFlag_);
     loadData::loadPtreeValue(pt, usePreComputation_, "model_settings.usePreComputation", printOutFlag_);
     loadData::loadPtreeValue(pt, recompileLibraries_, "model_settings.recompileLibraries", printOutFlag_);
     loadData::loadPtreeValue(pt, activateSelfCollision_, "selfCollision.activate", printOutFlag_);
@@ -544,7 +553,7 @@ void MobileManipulatorInterface::initializePointsOnRobotPtr(std::string& collisi
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
+void MobileManipulatorInterface::setMPCProblem()
 {
   std::cout << "[MobileManipulatorInterface::setMPCProblem] START" << std::endl;
 
@@ -586,21 +595,16 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
 
   mpcTimer1_.endTimer();
 
-  /*
-  int iter = mpcIter_;
-  if (iterFlag)
-  {
-    iter++;
-  }
-  */
-
   // Set MPC Problem Settings
   size_t modelModeInt = modelModeIntQuery_;
+  
+  /*
   if (drlFlag_)
   {
     std::cout << "[MobileManipulatorInterface::setMPCProblem] DRL IS ON" << std::endl;
     modelModeInt = mpcProblemSettings_.modelMode;
   }
+  */
 
   mpcTimer2_.startTimer();
   std::cout << "[MobileManipulatorInterface::setMPCProblem] modelModeInt: " << modelModeInt << std::endl;
@@ -650,14 +654,6 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
     mpcTimer9_.startTimer();
     std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr: MobileBaseDynamics" << std::endl;
     ocp_.dynamicsPtr = dynamicsPtr_mode0_;
-    //ocp_.dynamicsPtr.swap(dynamicsPtr_mode0_);
-    /*
-    ocp_.dynamicsPtr.reset(new MobileBaseDynamics(robotModelInfo_, 
-                                                      "MobileBaseDynamics", 
-                                                      libraryFolder_, 
-                                                      recompileLibraries_, 
-                                                      printOutFlag_));
-    */
     mpcTimer9_.endTimer();
   }
 
@@ -696,14 +692,6 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
     mpcTimer9_.startTimer();
     std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr: RobotArmDynamics" << std::endl;
     ocp_.dynamicsPtr = dynamicsPtr_mode1_;
-    //ocp_.dynamicsPtr.swap(dynamicsPtr_mode2_);
-    /*
-    ocp_.dynamicsPtr.reset(new RobotArmDynamics(robotModelInfo_, 
-                                                    "RobotArmDynamics", 
-                                                    libraryFolder_, 
-                                                    recompileLibraries_, 
-                                                    printOutFlag_));
-    */
     mpcTimer9_.endTimer();
   }
 
@@ -743,14 +731,6 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
     mpcTimer9_.startTimer();
     std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr: MobileManipulatorDynamics" << std::endl;
     ocp_.dynamicsPtr = dynamicsPtr_mode2_;
-    //ocp_.dynamicsPtr.swap(dynamicsPtr_mode2_);
-    /*
-    ocp_.dynamicsPtr.reset(new MobileManipulatorDynamics(robotModelInfo_, 
-                                                              "MobileManipulatorDynamics", 
-                                                              libraryFolder_, 
-                                                              recompileLibraries_, 
-                                                              printOutFlag_));
-    */
     mpcTimer9_.endTimer();
   }
 
@@ -842,32 +822,20 @@ void MobileManipulatorInterface::setMPCProblem(bool iterFlag)
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
 {
-  std::string model_mode_msg_name = "mobile_manipulator_model_mode";
-  std::string target_msg_name = "mobile_manipulator_mpc_target";
-
-  //double dt = 0.1;
-  /*
-  if (emuPtr_)
-  {
-    std::string oct_msg_name = "octomap_scan";
-    // Octomap Subscriber
-    emuPtr_->setNodeHandle(nodeHandle_);
-    emuPtr_->updateOct(oct_msg_name);
-  }
-  */
-
-  // NUA NOTE: Visualize somewhere else!
-  /*
-  if (pointsOnRobotPtr_)
-  {
-    pointsOnRobotPtr_->setNodeHandle(nodeHandle_);
-    pointsOnRobotPtr_->publishPointsOnRobotVisu(dt);
-  }
-  */
-
   if (drlFlag_)
   {
-    setActionDRLService_ = nodeHandle_.advertiseService("set_action_drl", &MobileManipulatorInterface::setActionDRLSrv, this);
+    if (drlActionType_ == 0)
+    {
+      std::cout << "[MobileManipulatorInterface::launchNodes] DISCRETE ACTION" << std::endl;
+      setActionDRLService_ = nodeHandle_.advertiseService("set_action_drl", &MobileManipulatorInterface::setDiscreteActionDRLSrv, this);
+    }
+    else
+    {
+      std::cout << "[MobileManipulatorInterface::launchNodes] CONTINUOUS ACTION" << std::endl;
+      setActionDRLService_ = nodeHandle_.advertiseService("set_action_drl", &MobileManipulatorInterface::setContinuousActionDRLSrv, this);
+    }
+
+    setTargetDRLClient_ = nodeHandle_.serviceClient<ocs2_msgs::setTask>("/set_target_drl");
   }
   else
   {
@@ -884,7 +852,7 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
       std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] modelModeIntQuery_: " << modelModeIntQuery_ << std::endl;
 
       //mpcTimer3_.startTimer();
-      //setMPCProblem(true);
+      //setMPCProblem();
       //mpcTimer3_.endTimer();
 
       //mpcProblemReadyFlag_ = true;
@@ -899,7 +867,7 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
       std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] END" << std::endl;
       std::cout << "" << std::endl;
     };
-    modelModeSubscriber_ = nodeHandle_.subscribe<std_msgs::UInt8>(model_mode_msg_name, 1, modelModeCallback);
+    modelModeSubscriber_ = nodeHandle_.subscribe<std_msgs::UInt8>(modelModeMsgName_, 1, modelModeCallback);
   }
 
   //modelModeSubscriber_ = nodeHandle_.subscribe(model_mode_msg_name, 5, &MobileManipulatorInterface::modelModeCallback, this);
@@ -930,7 +898,7 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
     //targetReadyFlag_ = true;
     //std::cout << "[MobileManipulatorInterface::targetTrajectoriesCallback] END" << std::endl;
   };
-  targetTrajectoriesSubscriber_ = nodeHandle_.subscribe<ocs2_msgs::mpc_target_trajectories>(target_msg_name, 5, targetTrajectoriesCallback);
+  targetTrajectoriesSubscriber_ = nodeHandle_.subscribe<ocs2_msgs::mpc_target_trajectories>(targetMsgName_, 5, targetTrajectoriesCallback);
 
   //spin();
 }
@@ -1006,22 +974,23 @@ void MobileManipulatorInterface::getGraspPose(vector_t& targetPose)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-bool MobileManipulatorInterface::setActionDRLSrv(ocs2_msgs::setActionDRL::Request &req, 
-                                                 ocs2_msgs::setActionDRL::Response &res)
+bool MobileManipulatorInterface::setDiscreteActionDRLSrv(ocs2_msgs::setDiscreteActionDRL::Request &req, 
+                                                         ocs2_msgs::setDiscreteActionDRL::Response &res)
 {
-  std::cout << "[MobileManipulatorInterface::setActionDRLSrv] START" << std::endl;
-  drlAction_ = req.action;
+  std::cout << "[MobileManipulatorInterface::setDiscreteActionDRLSrv] START" << std::endl;
+
+  drlActionDiscrete_ = req.action;
   drlActionTimeHorizon_ = req.time_horizon;
   res.success = true;
 
-  mapDRLAction(drlAction_);
+  mapDRLAction(drlActionDiscrete_);
 
   mpcTimer3_.startTimer();
-  setMPCProblem(true);
+  setMPCProblem();
   mpcTimer3_.endTimer();
 
   //mpcProblemReadyFlag_ = true;
-  std::cout << "[MobileManipulatorInterface::setActionDRLSrv] mrtShutDownFlag true"  << std::endl;
+  std::cout << "[MobileManipulatorInterface::setDiscreteActionDRLSrv] mrtShutDownFlag true"  << std::endl;
   mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "true", 1);
 
   std::cout << "\n### MPC_ROS Benchmarking mpcTimer3_";
@@ -1029,10 +998,49 @@ bool MobileManipulatorInterface::setActionDRLSrv(ocs2_msgs::setActionDRL::Reques
   std::cout << "\n###   Average : " << mpcTimer3_.getAverageInMilliseconds() << "[ms].";
   std::cout << "\n###   Latest  : " << mpcTimer3_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
 
-  std::cout << "[MobileManipulatorInterface::setActionDRLSrv] END" << std::endl;
+  std::cout << "[MobileManipulatorInterface::setDiscreteActionDRLSrv] END" << std::endl;
   std::cout << "" << std::endl;
 
-  std::cout << "[MobileManipulatorInterface::setActionDRLSrv] END" << std::endl;
+  std::cout << "[MobileManipulatorInterface::setDiscreteActionDRLSrv] DEBUG INF" << std::endl;
+  while(1);
+
+  std::cout << "[MobileManipulatorInterface::setDiscreteActionDRLSrv] END" << std::endl;
+  return res.success;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+bool MobileManipulatorInterface::setContinuousActionDRLSrv(ocs2_msgs::setContinuousActionDRL::Request &req, 
+                                                           ocs2_msgs::setContinuousActionDRL::Response &res)
+{
+  std::cout << "[MobileManipulatorInterface::setContinuousActionDRLSrv] START" << std::endl;
+  drlActionContinuous_ = req.action;
+  drlActionTimeHorizon_ = req.time_horizon;
+  res.success = true;
+
+  //mapDRLAction(drlAction_);
+
+  mpcTimer3_.startTimer();
+  setMPCProblem();
+  mpcTimer3_.endTimer();
+
+  //mpcProblemReadyFlag_ = true;
+  std::cout << "[MobileManipulatorInterface::setContinuousActionDRLSrv] mrtShutDownFlag true"  << std::endl;
+  //mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "true", 1);
+
+  std::cout << "\n### MPC_ROS Benchmarking mpcTimer3_";
+  std::cout << "\n###   Maximum : " << mpcTimer3_.getMaxIntervalInMilliseconds() << "[ms].";
+  std::cout << "\n###   Average : " << mpcTimer3_.getAverageInMilliseconds() << "[ms].";
+  std::cout << "\n###   Latest  : " << mpcTimer3_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+
+  std::cout << "[MobileManipulatorInterface::setContinuousActionDRLSrv] END" << std::endl;
+  std::cout << "" << std::endl;
+
+  std::cout << "[MobileManipulatorInterface::setContinuousActionDRLSrv] DEBUG INF" << std::endl;
+  while(1);
+
+  std::cout << "[MobileManipulatorInterface::setContinuousActionDRLSrv] END" << std::endl;
   return res.success;
 }
 
@@ -1834,6 +1842,8 @@ void MobileManipulatorInterface::mapDRLAction(int action)
 {
   std::cout << "[MobileManipulatorInterface::mapDRLAction] START" << std::endl;
 
+  /// NUA TODO: NEEDS DEBUGGING!
+
   // MPC Settings Variables -------
   int n_mode = 3;
   int n_bool_var = mpcProblemSettings_.binarySettingNames.size();
@@ -1861,6 +1871,33 @@ void MobileManipulatorInterface::mapDRLAction(int action)
   }
 
   std::cout << "[MobileManipulatorInterface::mapDRLAction] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorInterface::mapDRLAction(std::vector<double>& action)
+{
+  std::cout << "[MobileManipulatorInterface::mapDRLAction(vec)] START" << std::endl;
+
+  double modelModeProb = action[0];
+  double constraintProb = action[1];
+  
+  /*
+  setTask()
+
+  switch ()
+  {
+    case :
+      break;
+    
+    default:
+      break;
+    }
+    modelModeIntQuery_ = 
+  */
+
+  std::cout << "[MobileManipulatorInterface::mapDRLAction(vec)] END" << std::endl;
 }
 
 }  // namespace mobile_manipulator

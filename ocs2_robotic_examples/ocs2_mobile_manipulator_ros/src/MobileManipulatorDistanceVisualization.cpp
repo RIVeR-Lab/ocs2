@@ -219,6 +219,7 @@ int main(int argc, char** argv)
   // Visualization
   bool activateSelfCollision = true;
   bool activateExtCollision = true;
+  maxDistance = 100;
   std::cout << "[MobileManipulatorInterface::runMRT] BEFORE mobileManipulatorVisu_" << std::endl;
   MobileManipulatorVisualization mobileManipulatorVisu(nodeHandle, 
                                                        *pinocchioInterfacePtr,

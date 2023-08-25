@@ -73,6 +73,9 @@ class TargetTrajectoriesGazebo final
     void updateObservationAndTarget();
 
     // DESCRIPTION: TODO...
+    void updateGoal(bool autoFlag=false);
+
+    // DESCRIPTION: TODO...
     void updateTarget(bool autoFlag=false);
 
     // DESCRIPTION: TODO...
@@ -92,6 +95,8 @@ class TargetTrajectoriesGazebo final
 
     // DESCRIPTION: TODO...
     void initializeInteractiveMarkerModelMode();
+
+    void publishGoalVisu();
 
     // DESCRIPTION: TODO...
     void publishTargetVisu();
@@ -138,6 +143,9 @@ class TargetTrajectoriesGazebo final
     void tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg);
 
     // DESCRIPTION: TODO...
+    void updateGoal(const Eigen::Vector3d& goalPos, const Eigen::Quaterniond& goalOri);
+
+    // DESCRIPTION: TODO...
     void updateTargetInfo();
 
     // DESCRIPTION: TODO...
@@ -154,6 +162,9 @@ class TargetTrajectoriesGazebo final
 
     // DESCRIPTION: TODO...
     void updateDropPose(const Eigen::Vector3d& targetPos, const Eigen::Quaterniond& targetOri);
+
+    // DESCRIPTION: TODO...
+    void fillGoalVisu();
 
     // DESCRIPTION: TODO...
     void fillTargetVisu();
@@ -203,8 +214,11 @@ class TargetTrajectoriesGazebo final
     bool setSystemObservationSrv(ocs2_msgs::setSystemObservation::Request &req, 
                                  ocs2_msgs::setSystemObservation::Response &res);
 
+    // DESCRIPTION: TODO...
+    bool setTargetDRLSrv(ocs2_msgs::setTask::Request &req, 
+                         ocs2_msgs::setTask::Response &res);
+
     /// VARIABLES:
-    bool initTargetFlag_ = false;
     bool initCallbackFlag_ = false;
     bool initTFCallbackFlag_ = false;
     bool initMenuModelModeFlag_ = false;
@@ -234,9 +248,17 @@ class TargetTrajectoriesGazebo final
     std::string robotName_;
     geometry_msgs::Pose robotPose_;
 
+    Eigen::Vector3d goalPosition_;
+    Eigen::Quaterniond goalOrientation_;
+    visualization_msgs::MarkerArray goalMarkerArray_;
+    ros::Publisher goalMarkerArrayPublisher_;
+
+    bool targetReadyFlag_ = false;
     std::string currentTargetName_;
     Eigen::Vector3d currentTargetPosition_;
     Eigen::Quaterniond currentTargetOrientation_;
+    visualization_msgs::MarkerArray targetMarkerArray_;
+    ros::Publisher targetMarkerArrayPublisher_;
     
     bool graspReadyFlag_ = false;
     Eigen::Vector3d graspPositionOffset_;
@@ -253,9 +275,6 @@ class TargetTrajectoriesGazebo final
     std::vector<std::string> currentTargetNames_;
     std::vector<Eigen::Vector3d> currentTargetPositions_;
     std::vector<Eigen::Quaterniond> currentTargetOrientations_;
-
-    visualization_msgs::MarkerArray targetMarkerArray_;
-    ros::Publisher targetMarkerArrayPublisher_;
 
     GoalPoseToTargetTrajectories goalPoseToTargetTrajectories_;
 
@@ -285,11 +304,10 @@ class TargetTrajectoriesGazebo final
     ros::Subscriber gazeboModelStatesSubscriber_;
     ros::Subscriber tfSubscriber_;
 
-    //ros::ServiceClient setTaskModeClient_;
     ros::ServiceClient setTaskClient_;
-    //ros::ServiceServer setTaskModeService_;
     ros::ServiceServer setPickedFlagService_;
     ros::ServiceServer setSystemObservationService_;
+    ros::ServiceServer setActionDRLService_;
 
     bool policyReceivedFlag_ = false;
     mutable std::mutex latestObservationMutex_;

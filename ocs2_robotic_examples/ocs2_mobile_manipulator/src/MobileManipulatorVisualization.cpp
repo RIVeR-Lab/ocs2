@@ -696,7 +696,7 @@ void MobileManipulatorVisualization::updateExtCollisionDistances(bool normalize_
   timer3_.startTimer();
   pointsOnRobotPtr_->getPointsEigenToGeometryMsgsVec(positionPointsOnRobot, p0_vec_);
   std::vector<double> min_distances;
-  bool collision = emuPtr_->getNearestOccupancyDist(numPoints, positionPointsOnRobot, radii, maxDistance_, p1_vec_, min_distances, true);
+  bool collision = emuPtr_->getNearestOccupancyDist(numPoints, positionPointsOnRobot, radii, maxDistance_, p1_vec_, min_distances, normalize_flag);
   timer3_.endTimer();
 
   //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] collision: " << collision << std::endl;
