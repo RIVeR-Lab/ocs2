@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.08.24
+// LAST UPDATE: 2023.08.29
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -120,6 +120,8 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
   setPickedFlagService_ = nodeHandle.advertiseService("set_picked_flag", &TargetTrajectoriesGazebo::setPickedFlagSrv, this);
   setSystemObservationService_ = nodeHandle.advertiseService("set_system_observation", &TargetTrajectoriesGazebo::setSystemObservationSrv, this);
   setActionDRLService_ = nodeHandle.advertiseService("set_target_drl", &TargetTrajectoriesGazebo::setTargetDRLSrv, this);
+
+  while(!initTFCallbackFlag_){ros::spinOnce();}
 }
 
 TargetTrajectoriesGazebo::~TargetTrajectoriesGazebo()
@@ -533,12 +535,63 @@ void TargetTrajectoriesGazebo::tfCallback(const tf2_msgs::TFMessage::ConstPtr& m
   //std::cout << "[TargetTrajectoriesGazebo::gazeboModelStatesCallback] Incoming..." << std::endl;
 
   tf::StampedTransform tf_ee_wrt_world;
+  tf::StampedTransform tf_robot_wrt_world;
+  tf::StampedTransform tf_target_wrt_world;
+
+  geometry_msgs::Pose robotPose;
+  std::vector<std::string> currentTargetNames;
+  std::vector<Eigen::Vector3d> currentTargetPositions;
+  std::vector<Eigen::Quaterniond> currentTargetOrientations;
+
   try
   {
-    tflistenerPtr_->waitForTransform(worldFrameName_, eeFrame_, ros::Time(0), ros::Duration(1.0));
-    tflistenerPtr_->lookupTransform(worldFrameName_, eeFrame_, ros::Time(0), tf_ee_wrt_world);
+    if (tflistenerPtr_->waitForTransform(worldFrameName_, eeFrame_, ros::Time(0), ros::Duration(1.0)))
+    {
+      tflistenerPtr_->lookupTransform(worldFrameName_, eeFrame_, ros::Time(0), tf_ee_wrt_world);
+      tf_ee_wrt_world_ = tf_ee_wrt_world;
+    }
 
-    tf_ee_wrt_world_ = tf_ee_wrt_world;
+    if (tflistenerPtr_->waitForTransform(worldFrameName_, robotFrameName_, ros::Time(0), ros::Duration(1.0)))
+    {
+      tflistenerPtr_->lookupTransform(worldFrameName_, robotFrameName_, ros::Time(0), tf_robot_wrt_world);
+      //tf_robot_wrt_world_ = tf_robot_wrt_world;
+
+      robotPose.position.x = tf_robot_wrt_world.getOrigin().x();
+      robotPose.position.y = tf_robot_wrt_world.getOrigin().y();
+      robotPose.position.z = tf_robot_wrt_world.getOrigin().z();
+      robotPose.orientation.x = tf_robot_wrt_world.getRotation().x();
+      robotPose.orientation.y = tf_robot_wrt_world.getRotation().y();
+      robotPose.orientation.z = tf_robot_wrt_world.getRotation().z();
+      robotPose.orientation.w = tf_robot_wrt_world.getRotation().w();
+    }
+
+    for (size_t i = 0; i < targetNames_.size(); i++)
+    {
+      if(tflistenerPtr_->frameExists(targetNames_[i]))
+      {
+        tflistenerPtr_->waitForTransform(worldFrameName_, targetNames_[i], ros::Time(0), ros::Duration(1.0));
+        tflistenerPtr_->lookupTransform(worldFrameName_, targetNames_[i], ros::Time(0), tf_target_wrt_world);
+
+        currentTargetNames.push_back(targetNames_[i]);
+
+        Eigen::Vector3d pos;
+        pos << tf_target_wrt_world.getOrigin().x(), tf_target_wrt_world.getOrigin().y(), tf_target_wrt_world.getOrigin().z();
+        currentTargetPositions.push_back(pos);
+
+        Eigen::Quaterniond quat;
+        quat.x() = tf_target_wrt_world.getRotation().x();
+        quat.y() = tf_target_wrt_world.getRotation().y();
+        quat.z() = tf_target_wrt_world.getRotation().z();
+        quat.w() = tf_target_wrt_world.getRotation().w();
+        currentTargetOrientations.push_back(quat);
+      }
+    }
+    
+    robotPose_ = robotPose;
+    currentTargetNames_ = currentTargetNames;
+    currentTargetPositions_ = currentTargetPositions;
+    currentTargetOrientations_ = currentTargetOrientations;
+
     initTFCallbackFlag_ = true;
   }
   catch (tf::TransformException ex)
@@ -581,9 +634,6 @@ void TargetTrajectoriesGazebo::updateTargetInfo()
       quat.z() = ms.pose[i].orientation.z;
       quat.w() = ms.pose[i].orientation.w;
       currentTargetOrientations.push_back(quat);
-
-      std:: cout << "MAT: " << ms.name[i] << std::endl;
-      std::cout << quat.matrix() << std::endl;
     }
   }
 
@@ -608,7 +658,7 @@ void TargetTrajectoriesGazebo::updateGoal(bool autoFlag)
   if (taskMode_ == 1)
   {
     //std::cout << "[TargetTrajectoriesGazebo::updateGoal] taskMode_: 1" << std::endl;
-    updateTargetInfo();
+    //updateTargetInfo();
 
     geometry_msgs::Pose robotPose = robotPose_;
     std::vector<std::string> currentTargetNames = currentTargetNames_;
@@ -756,7 +806,7 @@ void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
   if (taskMode_ == 1)
   {
     //std::cout << "[TargetTrajectoriesGazebo::updateTarget] taskMode_: 1" << std::endl;
-    updateTargetInfo();
+    //updateTargetInfo();
 
     geometry_msgs::Pose robotPose = robotPose_;
     std::vector<std::string> currentTargetNames = currentTargetNames_;
@@ -899,15 +949,16 @@ void TargetTrajectoriesGazebo::updateGraspPose()
   tf::Transform transform_grasp_wrt_goal;
   tf::Transform transform_grasp_wrt_world;
 
+  //transform_goal_wrt_world.setIdentity();
   transform_goal_wrt_world.setOrigin(tf::Vector3(goalPosition.x(), goalPosition.y(), goalPosition.z()));
   transform_goal_wrt_world.setRotation(tf::Quaternion(goalOrientation.x(), goalOrientation.y(), goalOrientation.z(), goalOrientation.w()));
 
-  transform_grasp_wrt_goal.setIdentity();
+  //transform_grasp_wrt_goal.setIdentity();
   transform_grasp_wrt_goal.setOrigin(tf::Vector3(graspPositionOffset_.x(), graspPositionOffset_.y(), graspPositionOffset_.z()));
   Eigen::Quaterniond graspOri_wrt_goal(graspOrientationOffsetMatrix_);
   transform_grasp_wrt_goal.setRotation(tf::Quaternion(graspOri_wrt_goal.x(), graspOri_wrt_goal.y(), graspOri_wrt_goal.z(), graspOri_wrt_goal.w()));
   
-  transform_grasp_wrt_world = transform_goal_wrt_world;
+  transform_grasp_wrt_world = transform_goal_wrt_world * transform_grasp_wrt_goal;
 
   Eigen::Vector3d graspPos;
   graspPos.x() = transform_grasp_wrt_world.getOrigin().x();
@@ -915,23 +966,10 @@ void TargetTrajectoriesGazebo::updateGraspPose()
   graspPos.z() = transform_grasp_wrt_world.getOrigin().z();
 
   //Eigen::Matrix3d mat = goalOrientation.matrix() * dropOrientationOffsetMatrix_;
-  Eigen::Quaterniond graspOri(transform_grasp_wrt_world.getRotation().x(), 
+  Eigen::Quaterniond graspOri(transform_grasp_wrt_world.getRotation().w(), 
+                              transform_grasp_wrt_world.getRotation().x(), 
                               transform_grasp_wrt_world.getRotation().y(), 
-                              transform_grasp_wrt_world.getRotation().z(), 
-                              transform_grasp_wrt_world.getRotation().w());
-
-  /*
-  tf::Matrix3x3 rotationMatrix = transform_grasp_wrt_world.getBasis();
-
-    // Print the transformation matrix
-    std::cout << "Transformation Matrix:" << std::endl;
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
-            std::cout << rotationMatrix[i][j] << " ";
-        }
-        std::cout << transform_grasp_wrt_world.getOrigin()[i] << std::endl;
-    }
-  */
+                              transform_grasp_wrt_world.getRotation().z());
 
   // Alternative: Rotating the target orientation by rpy
   //Eigen::Vector3d rpy_rot(M_PI, 0, 0);
@@ -939,6 +977,7 @@ void TargetTrajectoriesGazebo::updateGraspPose()
 
   currentGraspPosition_ = graspPos;
   currentGraspOrientation_ = graspOri;
+
   //graspFrameReadyFlag_ = true;
 
   //std::cout << "[TargetTrajectoriesGazebo::updateGraspPose] END" << std::endl;
@@ -973,23 +1012,12 @@ void TargetTrajectoriesGazebo::updateDropPose()
   transform_goal_wrt_world.setOrigin(tf::Vector3(goalPosition.x(), goalPosition.y(), goalPosition.z()));
   transform_goal_wrt_world.setRotation(tf::Quaternion(goalOrientation.x(), goalOrientation.y(), goalOrientation.z(), goalOrientation.w()));
 
-  transform_drop_wrt_goal.setIdentity();
+  //transform_drop_wrt_goal.setIdentity();
   transform_drop_wrt_goal.setOrigin(tf::Vector3(dropPositionOffset_.x(), dropPositionOffset_.y(), dropPositionOffset_.z()));
   Eigen::Quaterniond dropOri_wrt_goal(dropOrientationOffsetMatrix_);
   transform_drop_wrt_goal.setRotation(tf::Quaternion(dropOri_wrt_goal.x(), dropOri_wrt_goal.y(), dropOri_wrt_goal.z(), dropOri_wrt_goal.w()));
 
-  tf::Matrix3x3 rotationMatrix = transform_drop_wrt_goal.getBasis();
-
-    // Print the transformation matrix
-    std::cout << "Transformation Matrix:" << std::endl;
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
-            std::cout << rotationMatrix[i][j] << " ";
-        }
-        std::cout << transform_drop_wrt_goal.getOrigin()[i] << std::endl;
-    }
-
-  transform_drop_wrt_world = transform_goal_wrt_world;
+  transform_drop_wrt_world = transform_goal_wrt_world * transform_drop_wrt_goal;
 
   Eigen::Vector3d dropPos;
   dropPos.x() = transform_drop_wrt_world.getOrigin().x();
@@ -997,10 +1025,10 @@ void TargetTrajectoriesGazebo::updateDropPose()
   dropPos.z() = transform_drop_wrt_world.getOrigin().z();
 
   //Eigen::Matrix3d mat = goalOrientation.matrix() * dropOrientationOffsetMatrix_;
-  Eigen::Quaterniond dropOri(transform_drop_wrt_world.getRotation().x(), 
+  Eigen::Quaterniond dropOri(transform_drop_wrt_world.getRotation().w(), 
+                             transform_drop_wrt_world.getRotation().x(), 
                              transform_drop_wrt_world.getRotation().y(), 
-                             transform_drop_wrt_world.getRotation().z(), 
-                             transform_drop_wrt_world.getRotation().w());
+                             transform_drop_wrt_world.getRotation().z());
 
   currentDropPosition_ = dropPos;
   currentDropOrientation_ = dropOri;

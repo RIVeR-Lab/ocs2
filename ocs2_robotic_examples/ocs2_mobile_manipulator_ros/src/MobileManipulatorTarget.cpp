@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
     gu.initializeInteractiveMarkerTarget();
     gu.initializeInteractiveMarkerAutoTarget();
     gu.initializeInteractiveMarkerModelMode();
-    gu.setTaskMode(1);
+    gu.setTaskMode(0);
   }
   
   gu.setTargetToEEPose();
