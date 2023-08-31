@@ -38,6 +38,7 @@
 #include "ocs2_ros_interfaces/mrt/DummyObserver.h"
 #include "ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h"
 #include "gazebo_ros_link_attacher/Attach.h"
+#include <math.h>
 
 namespace ocs2 {
 
@@ -103,6 +104,11 @@ class MRT_ROS_Gazebo_Loop
     void getInitTarget(vector_t& initTarget);
 
     void getCurrentState(vector_t& currentState);
+    // Filter
+    double prev_lin_x = 0.0;
+    double prev_ang_z = 0.0;
+    double ang_z_cutoff = 0.02;
+    double lin_x_cutoff = 0.02;
 
   private:
 

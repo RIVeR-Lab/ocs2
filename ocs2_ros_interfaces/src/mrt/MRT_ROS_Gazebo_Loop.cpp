@@ -1241,6 +1241,16 @@ void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy,
   {
     baseTwistMsg.linear.x = currentInput_[0];
     baseTwistMsg.angular.z = currentInput_[1];
+    // Cutoff Frequency
+    if(abs(abs(baseTwistMsg.linear.x) - abs(prev_lin_x)) > lin_x_cutoff) {
+      baseTwistMsg.linear.x = prev_lin_x+copysign(1, baseTwistMsg.linear.x-prev_lin_x)*lin_x_cutoff;
+    }
+    if(abs(abs(baseTwistMsg.angular.z) - abs(prev_ang_z)) > ang_z_cutoff) {
+      baseTwistMsg.angular.z = prev_ang_z+copysign(1, baseTwistMsg.angular.z-prev_ang_z)*ang_z_cutoff;
+    }
+    prev_lin_x = baseTwistMsg.linear.x;
+    prev_ang_z = baseTwistMsg.angular.z;
+    
     
     cmd.push_back(baseTwistMsg.linear.x);
     cmd.push_back(baseTwistMsg.angular.z);
