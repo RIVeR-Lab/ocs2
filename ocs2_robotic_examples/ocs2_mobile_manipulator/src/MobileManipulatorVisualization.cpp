@@ -16,6 +16,10 @@
 
 #include <ros/package.h>
 #include <tf/tf.h>
+#include <tf/transform_listener.h>
+#include <tf_conversions/tf_eigen.h>
+#include <tf/message_filter.h>
+#include <tf/transform_broadcaster.h>
 //#include <urdf/model.h>
 //#include <kdl_parser/kdl_parser.hpp>
 
@@ -63,78 +67,118 @@ void assignIncreasingId(It firstIt, It lastIt, int startId = 0)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+MobileManipulatorVisualization::MobileManipulatorVisualization(ros::NodeHandle& nodeHandle, 
+                                                               const PinocchioInterface& pinocchioInterface,
+                                                               const std::string& worldFrameName,
+                                                               const std::string& baseFrameName,
+                                                               const std::string& urdfFile,
+                                                               const std::string& jointStateMsgName,
+                                                               const RobotModelInfo& robotModelInfo,
+                                                               const bool& selfCollisionFlag,
+                                                               const bool& extCollisionFlag,
+                                                               const std::vector<std::string>& removeJointNames,
+                                                               std::vector<std::pair<size_t, size_t>>& collisionObjectPairs,
+                                                               std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
+                                                               std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
+                                                               std::shared_ptr<ExtMapUtility> emuPtr,
+                                                               double maxDistance)
+  : pinocchioInterface_(pinocchioInterface),
+    worldFrameName_(worldFrameName),
+    baseFrameName_(baseFrameName),
+    urdfFile_(urdfFile),
+    jointStateMsgName_(jointStateMsgName),
+    robotModelInfo_(robotModelInfo),
+    selfCollisionFlag_(selfCollisionFlag),
+    extCollisionFlag_(extCollisionFlag),
+    removeJointNames_(removeJointNames),
+    collisionObjectPairs_(collisionObjectPairs),
+    collisionLinkPairs_(collisionLinkPairs),
+    pointsOnRobotPtr_(pointsOnRobotPtr),
+    emuPtr_(emuPtr),
+    maxDistance_(maxDistance),
+    pinocchioInterfaceInternal_(pinocchioInterface),
+    distances_(pointsOnRobotPtr->getNumOfPoints()),
+    markerPublisher_(nodeHandle.advertise<visualization_msgs::MarkerArray>("distance_markers", 10, true))
+{
+  std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] START" << std::endl;
+  launchVisualizerNode(nodeHandle);
+  std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MobileManipulatorVisualization::launchVisualizerNode(ros::NodeHandle& nodeHandle) 
 {
-  /*
-  // load a kdl-tree from the urdf robot description and initialize the robot state publisher
-  const std::string urdfName = "robot_description";
-  urdf::Model model;
-  if (!model.initParam(urdfName)) 
-  {
-    ROS_ERROR("[MobileManipulatorVisualization::launchVisualizerNode] URDF model load was NOT successful");
-  }
+  std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] START" << std::endl;
 
-  KDL::Tree tree;
-  if (!kdl_parser::treeFromUrdfModel(model, tree)) 
-  {
-    ROS_ERROR("[MobileManipulatorVisualization::launchVisualizerNode] Failed to extract kdl tree from xml robot description");
-  }
+  // Subscribers
+  jointStatesSub_ = nodeHandle.subscribe(jointStateMsgName_, 5, &MobileManipulatorVisualization::jointStateCallback, this);
+  tfSub_ = nodeHandle.subscribe("/tf", 5, &MobileManipulatorVisualization::tfCallback, this);
 
-  robotStatePublisherPtr_.reset(new robot_state_publisher::RobotStatePublisher(tree));
-  robotStatePublisherPtr_->publishFixedTransforms(true);
-  */
-
+  // Publishers
   stateOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/mobile_manipulator/optimizedStateTrajectory", 1);
   stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/mobile_manipulator/optimizedPoseTrajectory", 1);
-  
-  // Get ROS parameter
-  //std::string urdfFile, taskFile;
-  //nodeHandle.getParam("/urdfFile", urdfFile);
-  //nodeHandle.getParam("/taskFile", taskFile);
-  
-  // read manipulator type
-  //RobotModelType modelType = loadRobotType(taskFile_, "model_information.robotModelType");
-  
-  // read the joints to make fixed
-  //loadData::loadStdVector<std::string>(taskFile_, "model_information.removeJoints", removeJointNames_, false);
 
-  // create pinocchio interface
+  // Create pinocchio interface
   pinocchioInterfaceInternal_ = mobile_manipulator::createPinocchioInterface(urdfFile_, robotModelInfo_.robotModelType, removeJointNames_);
-
-  // read if self-collision checking active
-  //boost::property_tree::ptree pt;
-  //boost::property_tree::read_info(taskFile_, pt);
-  //bool activateSelfCollision = true;
-  //loadData::loadPtreeValue(pt, activateSelfCollision, "selfCollision.activate", true);
 
   // activate markers for self-collision visualization
   if (selfCollisionFlag_) 
   {
-    /*
-    std::string prefix = "selfCollision";
-    std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
-    std::vector<std::pair<std::string, std::string>> collisionLinkPairs;
-    scalar_t mu = 1e-2;
-    scalar_t delta = 1e-3;
-    scalar_t minimumDistance = 0.0;
-
-    //std::cerr << "\n #### SelfCollision Settings: ";
-    //std::cerr << "\n #### =============================================================================\n";
-    //loadData::loadPtreeValue(pt, mu, prefix + ".mu", true);
-    //loadData::loadPtreeValue(pt, delta, prefix + ".delta", true);
-    //loadData::loadPtreeValue(pt, minimumDistance, prefix + ".minimumDistance", true);
-    //loadData::loadStdVectorOfPair(taskFile_, prefix + ".collisionObjectPairs", collisionObjectPairs, true);
-    //loadData::loadStdVectorOfPair(taskFile_, prefix + ".collisionLinkPairs", collisionLinkPairs, true);
-    //std::cerr << " #### =============================================================================\n";
-    */
-
     PinocchioGeometryInterface geometryInterface(pinocchioInterfaceInternal_, collisionLinkPairs_, collisionObjectPairs_);
     
     const size_t numCollisionPairs = geometryInterface.getNumCollisionPairs();
 
-    // set geometry visualization markers
-    geometryVisualization_.reset(new GeometryInterfaceVisualization(std::move(pinocchioInterfaceInternal_), geometryInterface, nodeHandle));
+    // Set geometry visualization markers
+    visualizationInterfacePtr_.reset(new GeometryInterfaceVisualization(std::move(pinocchioInterfaceInternal_), geometryInterface, nodeHandle));
   }
+
+  std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] Waiting for initTFTransformFlag_ and initJointStateFlag_..." << std::endl;
+  while(!initTFTransformFlag_ || !initJointStateFlag_){ros::spinOnce();}
+
+  std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg)
+{
+  //std::cerr << "[MobileManipulatorVisualization::tfCallback] START " << std::endl;
+
+  try
+  {
+    tfListener_.waitForTransform(worldFrameName_, baseFrameName_, ros::Time::now(), ros::Duration(1.0));
+    tfListener_.lookupTransform(worldFrameName_, baseFrameName_, ros::Time(0), tf_robot_wrt_world_);
+
+    /*
+    std::cout << "[MobileManipulatorVisualization::tfCallback] worldFrameName_: " << worldFrameName_ << std::endl;
+    std::cout << "[MobileManipulatorVisualization::tfCallback] baseFrameName_: " << baseFrameName_ << std::endl;
+
+    std::cout << "[MobileManipulatorVisualization::tfCallback] pos x: " << tf_robot_wrt_world_.getOrigin().x() << std::endl;
+    std::cout << "[MobileManipulatorVisualization::tfCallback] pos y: " << tf_robot_wrt_world_.getOrigin().y() << std::endl;
+    std::cout << "[MobileManipulatorVisualization::tfCallback] pos z: " << tf_robot_wrt_world_.getOrigin().z() << std::endl;
+    */
+   
+    initTFTransformFlag_ = true;
+  }
+  catch (tf::TransformException ex)
+  {
+    ROS_INFO("[MobileManipulatorVisualization::tfCallback] ERROR: Couldn't get transform!");
+    ROS_ERROR("%s", ex.what());
+  }
+
+  //std::cerr << "[MobileManipulatorVisualization::tfCallback] END " << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
+{
+  jointStateMsg_ = *msg;
+  initJointStateFlag_ = true;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -157,63 +201,60 @@ void MobileManipulatorVisualization::update(const SystemObservation& observation
   const ros::Time timeStamp = ros::Time::now();
   publishOptimizedTrajectory(timeStamp, policy, observation.full_state);
   
-  if (geometryVisualization_ != nullptr) 
+  /*
+  if (visualizationInterfacePtr_ != nullptr) 
   {
-    //publishDistances(observation.state, observation.full_state, robotModelInfo_);
+    publishSelfCollisionDistances(observation.state, observation.full_state, robotModelInfo_);
   }
+  */
 
   //std::cout << "[MobileManipulatorVisualization::update] END" << std::endl;
 }
 
-void MobileManipulatorVisualization::publishDistances(const ocs2::vector_t& state, const ocs2::vector_t& fullState, const RobotModelInfo& modelInfo) 
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::publishSelfCollisionDistances() 
 {
-  std::cout << "[GeometryInterfaceVisualization::publishDistances] START" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances] START" << std::endl;
 
-  //std::string prefix = "selfCollision";
-  //std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
-  //std::vector<std::pair<std::string, std::string>> collisionLinkPairs;
-
-  //loadData::loadStdVectorOfPair(taskFile_, prefix + ".collisionObjectPairs", collisionObjectPairs, true);
-  //loadData::loadStdVectorOfPair(taskFile_, prefix + ".collisionLinkPairs", collisionLinkPairs, true);
-
-  //PinocchioInterface pinocchioInterface(mobile_manipulator::createPinocchioInterface(urdfFile_, robotModelInfo_.robotModelType, removeJointNames_));
-  //PinocchioGeometryInterface geometryInterface(pinocchioInterface, collisionLinkPairs_, collisionObjectPairs_);
-
-  std::string pinocchioWorldFrame_ = "world";
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
 
-  ocs2::mobile_manipulator::MobileManipulatorPinocchioMapping pinocchioMapping(modelInfo);
-  const vector_t q = pinocchioMapping.getPinocchioJointPosition(state, fullState);
+  RobotModelInfo robotModelInfo = robotModelInfo_;
 
+  timer6_.startTimer();
+  
+  timer7_.startTimer();
+  ocs2::mobile_manipulator::MobileManipulatorPinocchioMapping pinocchioMapping(robotModelInfo);
+  const vector_t q = pinocchioMapping.getPinocchioJointPosition(state_, fullState_);
   pinocchio::forwardKinematics(model, data, q);
-  const auto results = geometryVisualization_->getGeometryInterface().computeDistances(pinocchioInterface_);
-
+  const auto results = visualizationInterfacePtr_->getGeometryInterface().computeDistances(pinocchioInterface_);
+  timer7_.endTimer();
+  
+  timer8_.startTimer();
   visualization_msgs::MarkerArray markerArray;
-
   constexpr size_t numMarkersPerResult = 5;
 
   visualization_msgs::Marker markerTemplate;
   markerTemplate.color = ros_msg_helpers::getColor({0, 1, 0}, 1);
-  markerTemplate.header.frame_id = pinocchioWorldFrame_;
+  markerTemplate.header.frame_id = worldFrameName_;
   markerTemplate.header.stamp = ros::Time::now();
   markerTemplate.pose.orientation = ros_msg_helpers::getOrientationMsg({1, 0, 0, 0});
   markerArray.markers.resize(results.size() * numMarkersPerResult, markerTemplate);
 
-  //std::cout << "[GeometryInterfaceVisualization::publishDistances] results.size(): " << results.size() << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances] results.size(): " << results.size() << std::endl;
 
   for (size_t i = 0; i < results.size(); ++i) 
   {
     // I apologize for the magic numbers, it's mostly just visualization numbers(so 0.02 scale corresponds rougly to 0.02 cm)
 
-    /*
     for (size_t j = 0; j < numMarkersPerResult; ++j) 
     {
-      markerArray.markers[numMarkersPerResult * i + j].ns = std::to_string(model.collisionPairs[i].first) +
+      markerArray.markers[numMarkersPerResult * i + j].ns = std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].first) +
                                                             " - " +
-                                                            std::to_string(geometryVisualization_->getGeometryInterface().getGeometryModel().collisionPairs[i].second);
+                                                            std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].second);
     }
-    */
 
     // The actual distance line, also denoting direction of the distance
     markerArray.markers[numMarkersPerResult * i].type = visualization_msgs::Marker::ARROW;
@@ -239,12 +280,12 @@ void MobileManipulatorVisualization::publishDistances(const ocs2::vector_t& stat
     markerArray.markers[numMarkersPerResult * i + 2].scale.z = 0.02;
     markerArray.markers[numMarkersPerResult * i + 2].pose.position = ros_msg_helpers::getPointMsg(results[i].nearest_points[0]);
     markerArray.markers[numMarkersPerResult * i + 2].pose.position.z += 0.015;
-    //markerArray.markers[numMarkersPerResult * i + 2].text = "obj " + std::to_string(geometryVisualization_->getGeometryInterface().getGeometryModel().collisionPairs[i].first);
+    markerArray.markers[numMarkersPerResult * i + 2].text = "obj " + std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].first);
     markerArray.markers[numMarkersPerResult * i + 3].id = numMarkersPerResult * i + 3;
     markerArray.markers[numMarkersPerResult * i + 3].type = visualization_msgs::Marker::TEXT_VIEW_FACING;
     markerArray.markers[numMarkersPerResult * i + 3].pose.position = ros_msg_helpers::getPointMsg(results[i].nearest_points[1]);
     markerArray.markers[numMarkersPerResult * i + 3].pose.position.z += 0.015;
-    //markerArray.markers[numMarkersPerResult * i + 3].text = "obj " + std::to_string(geometryVisualization_->getGeometryInterface().getGeometryModel().collisionPairs[i].second);
+    markerArray.markers[numMarkersPerResult * i + 3].text = "obj " + std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].second);
     markerArray.markers[numMarkersPerResult * i + 3].scale.z = 0.02;
 
     // Text above the arrow, denoting the distance
@@ -252,15 +293,496 @@ void MobileManipulatorVisualization::publishDistances(const ocs2::vector_t& stat
     markerArray.markers[numMarkersPerResult * i + 4].type = visualization_msgs::Marker::TEXT_VIEW_FACING;
     markerArray.markers[numMarkersPerResult * i + 4].pose.position = ros_msg_helpers::getPointMsg((results[i].nearest_points[0] + results[i].nearest_points[1]) / 2.0);
     markerArray.markers[numMarkersPerResult * i + 4].pose.position.z += 0.015;
-    //markerArray.markers[numMarkersPerResult * i + 4].text = "dist " + std::to_string(geometryVisualization_->getGeometryInterface().getGeometryModel().collisionPairs[i].first) + " - " +
-    //                                                                                 std::to_string(geometryVisualization_->getGeometryInterface().getGeometryModel().collisionPairs[i].second) + 
-    //                                                                                 ": " + std::to_string(results[i].min_distance);
+    markerArray.markers[numMarkersPerResult * i + 4].text = "dist " + std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].first) + " - " +
+                                                                                     std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].second) + 
+                                                                                     ": " + std::to_string(results[i].min_distance);
+    markerArray.markers[numMarkersPerResult * i + 4].scale.z = 0.02;
+  }
+  timer8_.endTimer();
+
+  timer9_.startTimer();
+  markerPublisher_.publish(markerArray);
+  timer9_.endTimer();
+
+  timer6_.endTimer();
+
+  /*
+  std::cout << "### MPC_ROS Benchmarking timer6_ TOTAL:" << std::endl;
+  std::cout << "###   Maximum : " << timer6_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer6_.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer6_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+
+  std::cout << "### MPC_ROS Benchmarking timer7_ computeDistances:" << std::endl;
+  std::cout << "###   Maximum : " << timer7_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer7_.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer7_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+
+  std::cout << "### MPC_ROS Benchmarking timer8_ fill marker:" << std::endl;
+  std::cout << "###   Maximum : " << timer8_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer8_.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer8_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+
+  std::cout << "### MPC_ROS Benchmarking timer9_ markerPublisher_:" << std::endl;
+  std::cout << "###   Maximum : " << timer9_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer9_.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer9_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+  */
+
+  //std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::publishSelfCollisionDistances(const ocs2::vector_t& state, const ocs2::vector_t& fullState, const RobotModelInfo& modelInfo) 
+{
+  //std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances(3)] START" << std::endl;
+
+  const auto& model = pinocchioInterface_.getModel();
+  auto& data = pinocchioInterface_.getData();
+
+  ocs2::mobile_manipulator::MobileManipulatorPinocchioMapping pinocchioMapping(modelInfo);
+  const vector_t q = pinocchioMapping.getPinocchioJointPosition(state, fullState);
+
+  pinocchio::forwardKinematics(model, data, q);
+  const auto results = visualizationInterfacePtr_->getGeometryInterface().computeDistances(pinocchioInterface_);
+
+  visualization_msgs::MarkerArray markerArray;
+
+  constexpr size_t numMarkersPerResult = 5;
+
+  visualization_msgs::Marker markerTemplate;
+  markerTemplate.color = ros_msg_helpers::getColor({0, 1, 0}, 1);
+  markerTemplate.header.frame_id = worldFrameName_;
+  markerTemplate.header.stamp = ros::Time::now();
+  markerTemplate.pose.orientation = ros_msg_helpers::getOrientationMsg({1, 0, 0, 0});
+  markerArray.markers.resize(results.size() * numMarkersPerResult, markerTemplate);
+
+  //std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances(3)] results.size(): " << results.size() << std::endl;
+
+  for (size_t i = 0; i < results.size(); ++i) 
+  {
+    // I apologize for the magic numbers, it's mostly just visualization numbers(so 0.02 scale corresponds rougly to 0.02 cm)
+
+    for (size_t j = 0; j < numMarkersPerResult; ++j) 
+    {
+      markerArray.markers[numMarkersPerResult * i + j].ns = std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].first) +
+                                                            " - " +
+                                                            std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].second);
+    }
+
+    // The actual distance line, also denoting direction of the distance
+    markerArray.markers[numMarkersPerResult * i].type = visualization_msgs::Marker::ARROW;
+    markerArray.markers[numMarkersPerResult * i].points.push_back(ros_msg_helpers::getPointMsg(results[i].nearest_points[0]));
+    markerArray.markers[numMarkersPerResult * i].points.push_back(ros_msg_helpers::getPointMsg(results[i].nearest_points[1]));
+    markerArray.markers[numMarkersPerResult * i].id = numMarkersPerResult * i;
+    markerArray.markers[numMarkersPerResult * i].scale.x = 0.01;
+    markerArray.markers[numMarkersPerResult * i].scale.y = 0.02;
+    markerArray.markers[numMarkersPerResult * i].scale.z = 0.04;
+
+    // Dots at the end of the arrow, denoting the close locations on the body
+    markerArray.markers[numMarkersPerResult * i + 1].type = visualization_msgs::Marker::SPHERE_LIST;
+    markerArray.markers[numMarkersPerResult * i + 1].points.push_back(ros_msg_helpers::getPointMsg(results[i].nearest_points[0]));
+    markerArray.markers[numMarkersPerResult * i + 1].points.push_back(ros_msg_helpers::getPointMsg(results[i].nearest_points[1]));
+    markerArray.markers[numMarkersPerResult * i + 1].scale.x = 0.02;
+    markerArray.markers[numMarkersPerResult * i + 1].scale.y = 0.02;
+    markerArray.markers[numMarkersPerResult * i + 1].scale.z = 0.02;
+    markerArray.markers[numMarkersPerResult * i + 1].id = numMarkersPerResult * i + 1;
+
+    // Text denoting the object number in the geometry model, raised above the spheres
+    markerArray.markers[numMarkersPerResult * i + 2].id = numMarkersPerResult * i + 2;
+    markerArray.markers[numMarkersPerResult * i + 2].type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    markerArray.markers[numMarkersPerResult * i + 2].scale.z = 0.02;
+    markerArray.markers[numMarkersPerResult * i + 2].pose.position = ros_msg_helpers::getPointMsg(results[i].nearest_points[0]);
+    markerArray.markers[numMarkersPerResult * i + 2].pose.position.z += 0.015;
+    markerArray.markers[numMarkersPerResult * i + 2].text = "obj " + std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].first);
+    markerArray.markers[numMarkersPerResult * i + 3].id = numMarkersPerResult * i + 3;
+    markerArray.markers[numMarkersPerResult * i + 3].type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    markerArray.markers[numMarkersPerResult * i + 3].pose.position = ros_msg_helpers::getPointMsg(results[i].nearest_points[1]);
+    markerArray.markers[numMarkersPerResult * i + 3].pose.position.z += 0.015;
+    markerArray.markers[numMarkersPerResult * i + 3].text = "obj " + std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].second);
+    markerArray.markers[numMarkersPerResult * i + 3].scale.z = 0.02;
+
+    // Text above the arrow, denoting the distance
+    markerArray.markers[numMarkersPerResult * i + 4].id = numMarkersPerResult * i + 4;
+    markerArray.markers[numMarkersPerResult * i + 4].type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    markerArray.markers[numMarkersPerResult * i + 4].pose.position = ros_msg_helpers::getPointMsg((results[i].nearest_points[0] + results[i].nearest_points[1]) / 2.0);
+    markerArray.markers[numMarkersPerResult * i + 4].pose.position.z += 0.015;
+    markerArray.markers[numMarkersPerResult * i + 4].text = "dist " + std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].first) + " - " +
+                                                                                     std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].second) + 
+                                                                                     ": " + std::to_string(results[i].min_distance);
     markerArray.markers[numMarkersPerResult * i + 4].scale.z = 0.02;
   }
 
   markerPublisher_.publish(markerArray);
 
-  std::cout << "[GeometryInterfaceVisualization::publishDistances] END" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances(3)] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::getPoint(std::string& baseFrameName, std::string& pointFrameName, geometry_msgs::Point p)
+{
+  //std::cerr << "[MobileManipulatorVisualization::getPoint] START " << std::endl;
+
+  tf::StampedTransform tf_point_wrt_base;
+  try
+  {
+    tfListener_.waitForTransform(baseFrameName, pointFrameName, ros::Time::now(), ros::Duration(1.0));
+    tfListener_.lookupTransform(baseFrameName, pointFrameName, ros::Time(0), tf_point_wrt_base);
+  }
+  catch (tf::TransformException ex)
+  {
+    ROS_INFO("[MobileManipulatorVisualization::getPoint] ERROR: Couldn't get transform!");
+    ROS_ERROR("%s", ex.what());
+  }
+
+  //std::cerr << "[MobileManipulatorVisualization::getPoint] END " << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::updateStateIndexMap()
+{
+  //std::cout << "[MobileManipulatorVisualization::updateStateIndexMap] START" << std::endl;
+  
+  auto jointNames = robotModelInfo_.robotArm.jointNames;
+  int n_joints = jointNames.size();
+  stateIndexMap_.clear();
+
+  boost::shared_ptr<sensor_msgs::JointState const> jointStatePtrMsg = ros::topic::waitForMessage<sensor_msgs::JointState>(jointStateMsgName_);
+
+  /*
+  std::cout << "[MobileManipulatorVisualization::updateStateIndexMap] jointStatePtrMsg->name.size(): " << jointStatePtrMsg->name.size() << std::endl; 
+  for (size_t i = 0; i < jointStatePtrMsg->name.size(); i++)
+  {
+    std::cout << jointStatePtrMsg->name[i] << std::endl;
+  }
+  */
+
+  for (size_t i = 0; i < n_joints; i++)
+  {
+    auto it = find(jointStatePtrMsg->name.begin(), jointStatePtrMsg->name.end(), jointNames[i]);
+
+    // If element was found
+    if (it != jointStatePtrMsg->name.end()) 
+    {
+        // calculating the index
+        int index = it - jointStatePtrMsg->name.begin();
+        stateIndexMap_.push_back(index);
+    }
+    else
+    {
+      throw std::runtime_error("[MobileManipulatorVisualization::updateStateIndexMap] Error: Joint " + jointNames[i] + " not found!");
+    }
+  }
+
+  std::cout << "[MobileManipulatorVisualization::updateStateIndexMap] stateIndexMap_ size: " << stateIndexMap_.size() << std::endl;
+  for (int i = 0; i < stateIndexMap_.size(); ++i)
+  {
+    std::cout << i << " -> " << stateIndexMap_[i] << std::endl;
+  }
+
+  //std::cout << "[MobileManipulatorVisualization::updateStateIndexMap] DEBUG INF" << std::endl;
+  //while(1);
+
+  //std::cout << "[MobileManipulatorVisualization::updateStateIndexMap] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::updateModelState()
+{
+  //std::cout << "[MobileManipulatorVisualization::updateModelState] START " << std::endl;
+
+  RobotModelInfo robotModelInfo = robotModelInfo_;
+
+  auto stateDimBase = getStateDimBase(robotModelInfo);
+  auto stateDim = getStateDim(robotModelInfo);
+  auto modeStateDim = getModeStateDim(robotModelInfo);
+
+  fullState_.resize(stateDim);
+  state_.resize(modeStateDim);
+
+  //std::cout << "[MobileManipulatorVisualization::updateModelState] stateDimBase: " << stateDimBase << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::updateModelState] stateDim: " << stateDim << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::updateModelState] modeStateDim: " << modeStateDim << std::endl;
+
+  switch (robotModelInfo.robotModelType)
+  {
+    case RobotModelType::MobileBase:
+    {
+      //std::cout << "[MobileManipulatorVisualization::updateModelState] RobotModelType::MobileBase" << std::endl;
+      // Set state
+      state_[0] = statePositionBase_[0];
+      state_[1] = statePositionBase_[1];
+      state_[2] = statePositionBase_[2];
+
+      // Set full state
+      fullState_ = state_;
+      break;
+    }
+
+    case RobotModelType::RobotArm:
+    { 
+      //std::cout << "[MobileManipulatorVisualization::updateModelState] RobotModelType::RobotArm" << std::endl;
+      // Set state and input
+      for (size_t i = 0; i < statePositionArm_.size(); i++)
+      {
+        state_[i] = statePositionArm_[i];
+      }
+
+      // Set full state
+      fullState_ = state_;
+      break;
+    }
+
+    case RobotModelType::MobileManipulator:
+    {
+      //std::cout << "[MobileManipulatorVisualization::updateModelState] RobotModelType::MobileManipulator" << std::endl;
+      switch (robotModelInfo.modelMode)
+      {
+        case ModelMode::BaseMotion:
+        {
+          //std::cout << "[MobileManipulatorVisualization::updateModelState] ModelMode::BaseMotion" << std::endl;
+          // Set state
+          state_[0] = statePositionBase_[0];
+          state_[1] = statePositionBase_[1];
+          state_[2] = statePositionBase_[2];
+
+          // Set full state
+          fullState_[0] = statePositionBase_[0];
+          fullState_[1] = statePositionBase_[1];
+          fullState_[2] = statePositionBase_[2];
+
+          for (size_t i = 0; i < statePositionArm_.size(); i++)
+          {
+            fullState_[stateDimBase + i] = statePositionArm_[i];
+          }
+          break;
+        }
+
+        case ModelMode::ArmMotion:
+        {
+          //std::cout << "[MobileManipulatorVisualization::updateModelState] ModelMode::ArmMotion" << std::endl;
+          // Set full state base
+          fullState_[0] = statePositionBase_[0];
+          fullState_[1] = statePositionBase_[1];
+          fullState_[2] = statePositionBase_[2];
+
+          for (size_t i = 0; i < statePositionArm_.size(); i++)
+          {
+            // Set state
+            state_[i] = statePositionArm_[i];
+
+            // Set full state arm
+            fullState_[stateDimBase + i] = statePositionArm_[i];
+          }
+          break;
+        }
+
+        case ModelMode::WholeBodyMotion:
+        {
+          //std::cout << "[MobileManipulatorVisualization::updateModelState] ModelMode::WholeBodyMotion" << std::endl;
+          // Set state
+          state_[0] = statePositionBase_[0];
+          state_[1] = statePositionBase_[1];
+          state_[2] = statePositionBase_[2];
+
+          for (size_t i = 0; i < statePositionArm_.size(); i++)
+          {
+            state_[stateDimBase + i] = statePositionArm_[i];
+          }
+
+          // Set full state
+          fullState_ = state_;
+          break;
+        }
+
+        default:
+          std::cout << "[MobileManipulatorVisualization::updateModelState] ERROR: Invalid model mode!";
+          break;
+      }
+      break;
+    }
+
+    default:
+    {
+      std::cout << "[MobileManipulatorVisualization::updateModelState] ERROR: Invalid robot model type!";
+      break;
+    }
+  }
+
+  //std::cout << "[MobileManipulatorVisualization::updateModelState] END " << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::updateState()
+{
+  //std::cout << "[MobileManipulatorVisualization::updateState] START " << std::endl;
+
+  statePositionBase_.clear();
+  statePositionArm_.clear();
+
+  tf::StampedTransform tf_robot_wrt_world = tf_robot_wrt_world_;
+  sensor_msgs::JointState jointStateMsg = jointStateMsg_;
+
+  // Set mobile base state
+  tf::Matrix3x3 matrix_robot_wrt_world;
+  statePositionBase_.push_back(tf_robot_wrt_world.getOrigin().x());
+  statePositionBase_.push_back(tf_robot_wrt_world.getOrigin().y());
+  matrix_robot_wrt_world = tf::Matrix3x3(tf_robot_wrt_world.getRotation());
+  double roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world;
+  matrix_robot_wrt_world.getRPY(roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world);
+  statePositionBase_.push_back(yaw_robot_wrt_world);
+
+  for (int i = 0; i < stateIndexMap_.size(); ++i)
+  {
+    statePositionArm_.push_back(jointStateMsg.position[stateIndexMap_[i]]);
+  }
+
+  /*
+  std::cout << "[MobileManipulatorVisualization::updateState] statePositionBase_ size: " << statePositionBase_.size() << std::endl;
+  for (size_t i = 0; i < statePositionBase_.size(); i++)
+  {
+    std::cout << i << " -> " << statePositionBase_[i] << std::endl;
+  }
+  
+  std::cout << "[MobileManipulatorVisualization::updateState] statePositionArm_ size: " << statePositionArm_.size() << std::endl;
+  for (size_t i = 0; i < statePositionArm_.size(); i++)
+  {
+    std::cout << i << " -> " << statePositionArm_[i] << std::endl;
+  }
+  */
+
+  updateModelState();
+
+  //std::cout << "[MobileManipulatorVisualization::updateState] END " << std::endl << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::updateExtCollisionDistances(bool normalize_flag)
+{
+  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START" << std::endl;
+
+  timer0_.startTimer();
+
+  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START updateState" << std::endl;
+  //timer1_.startTimer();
+  //updateState();
+  //timer1_.endTimer();
+
+  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START getPointsPositionCppAd" << std::endl;
+  int numPoints = pointsOnRobotPtr_->getNumOfPoints();
+  timer2_.startTimer();
+  Eigen::VectorXd positionPointsOnRobot = pointsOnRobotPtr_->getPointsPositionCppAd(state_, fullState_);
+  timer2_.endTimer();
+  Eigen::VectorXd radii = pointsOnRobotPtr_->getRadii();
+
+  assert(positionPointsOnRobot.size() % 3 == 0);
+  
+  double distance;
+  p0_vec_.clear();
+  p1_vec_.clear();
+
+  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START getNearestOccupancyDist" << std::endl;
+  timer3_.startTimer();
+  pointsOnRobotPtr_->getPointsEigenToGeometryMsgsVec(positionPointsOnRobot, p0_vec_);
+  std::vector<double> min_distances;
+  bool collision = emuPtr_->getNearestOccupancyDist(numPoints, positionPointsOnRobot, radii, maxDistance_, p1_vec_, min_distances, normalize_flag);
+  timer3_.endTimer();
+
+  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] collision: " << collision << std::endl;
+
+  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START fillOccDistanceArrayVisu" << std::endl;
+  timer4_.startTimer();
+  emuPtr_->fillOccDistanceArrayVisu(p0_vec_, p1_vec_);
+  timer4_.endTimer();
+
+  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] BEFORE publishOccDistanceArrayVisu" << std::endl;
+  timer5_.startTimer();
+  pointsOnRobotPtr_->publishPointsOnRobotVisu();
+  emuPtr_->publishOccDistanceArrayVisu();
+  timer5_.endTimer();
+  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] AFTER publishOccDistanceArrayVisu" << std::endl;
+  
+  timer0_.endTimer();
+
+  /*
+  std::cout << "### MPC_ROS Benchmarking timer0_ TOTAL:" << std::endl;
+  std::cout << "###   Maximum : " << timer0_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer0_.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer0_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+
+  std::cout << "### MPC_ROS Benchmarking timer2_ getPointsPositionCppAd:" << std::endl;
+  std::cout << "###   Maximum : " << timer2_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer2_.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer2_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+
+  std::cout << "### MPC_ROS Benchmarking timer3_ getNearestOccupancyDist:" << std::endl;
+  std::cout << "###   Maximum : " << timer3_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer3_.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer3_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+
+  std::cout << "### MPC_ROS Benchmarking timer4_ fillOccDistanceArrayVisu:" << std::endl;
+  std::cout << "###   Maximum : " << timer4_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer4_.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer4_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+
+  std::cout << "### MPC_ROS Benchmarking timer5_ publishOccDistanceArrayVisu:" << std::endl;
+  std::cout << "###   Maximum : " << timer5_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer5_.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer5_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+  */
+
+  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] DEBUG INF" << std::endl;
+  //while(1);
+
+  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] END" << std::endl << std::endl;;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::updateOctCallback(const ros::TimerEvent& event)
+{
+  //std::cout << "[MobileManipulatorVisualization::octUpdateCallback] START" << std::endl;
+
+  emuPtr_->updateOct();
+
+  //std::cout << "[MobileManipulatorVisualization::octUpdateCallback] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::distanceVisualizationCallback(const ros::TimerEvent& event)
+{
+  //std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] START" << std::endl;
+
+  timer1_.startTimer();
+  updateState();
+  timer1_.endTimer();
+
+  updateExtCollisionDistances(false);
+
+  publishSelfCollisionDistances();
+
+  /*
+  std::cout << "### MPC_ROS Benchmarking timer1_ updateState:" << std::endl;
+  std::cout << "###   Maximum : " << timer1_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer1_.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer1_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+  */
+
+  //std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------

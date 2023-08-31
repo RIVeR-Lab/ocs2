@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.21
+// LAST UPDATE: 2023.08.24
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -51,58 +51,11 @@ int main(int argc, char** argv)
   std::cout << "[MobileManipulatorNode::main] Loading task file: " << taskFile << std::endl;
   std::cout << "[MobileManipulatorNode::main] Loading library folder: " << libFolder << std::endl;
   std::cout << "[MobileManipulatorNode::main] Loading urdf file: " << urdfFile << std::endl;
-  
-  //// NUA TODO: GET INFO FROM TASK FILE AND INIT IN MobileManipulatorInterface!
-  // Get points on robot parameters
-  PointsOnRobot::points_radii_t pointsAndRadii(8);
-  if (nh_interface.hasParam("/collision_points")) 
-  {
-    using pair_t = std::pair<double, double>;
-    XmlRpc::XmlRpcValue collisionPoints;
-    nh_interface.getParam("/collision_points", collisionPoints);
-
-    if (collisionPoints.getType() != XmlRpc::XmlRpcValue::TypeArray) 
-    {
-      ROS_WARN("[MobileManipulatorNode::main] collision_points parameter is not of type array.");
-    }
-    
-    //// NUA TODO: Get the point and radii info from task file! Also seperate base and arm!
-    std::cout << "[MobileManipulatorNode::main] pointsAndRadii:" << std::endl;
-    for (int i = 0; i < collisionPoints.size(); i++) 
-    {
-      if (collisionPoints.getType() != XmlRpc::XmlRpcValue::TypeArray) 
-      {
-        ROS_WARN_STREAM("[MobileManipulatorNode::main] collision_points[" << i << "] parameter is not of type array.");
-      }
-
-      for (int j = 0; j < collisionPoints[i].size(); j++) 
-      {
-        if (collisionPoints[j].getType() != XmlRpc::XmlRpcValue::TypeArray) 
-        {
-          ROS_WARN_STREAM("[MobileManipulatorNode::main] collision_points[" << i << "][" << j << "] parameter is not of type array.");
-        }
-
-        if (collisionPoints[i][j].size() != 2) 
-        {
-          ROS_WARN_STREAM("[MobileManipulatorNode::main] collision_points[" << i << "][" << j << "] does not have 2 elements.");
-        }
-
-        double segmentId = collisionPoints[i][j][0];
-        double radius = collisionPoints[i][j][1];
-        pointsAndRadii[i].push_back(pair_t(segmentId, radius));
-        ROS_INFO_STREAM("[MobileManipulatorNode::main] segment=" << i << ". relative pos on segment:" << segmentId << ". radius:" << radius);
-      }
-    }
-  }
-  else
-  {
-    std::cout << "[MobileManipulatorNode::main] ERROR: collision_points is not defined!" << std::endl;
-  }
 
   // Robot interface
   int initModelModeInt = 2;
   std::cout << "[MobileManipulatorNode::main] START interface" << std::endl;
-  MobileManipulatorInterface m4_interface(nh_interface, taskFile, libFolder, urdfFile, pointsAndRadii, initModelModeInt);
+  MobileManipulatorInterface m4_interface(nh_interface, taskFile, libFolder, urdfFile, initModelModeInt);
 
   double mpc_dt = 0.01;
   double mrt_dt = 0.01;

@@ -79,6 +79,8 @@ ScalarFunctionQuadraticApproximation StateInputCostCollection::getQuadraticAppro
 {
   //std::cout << "[StateInputCostCollection::getQuadraticApproximation] START" << std::endl;
 
+  //std::cout << "[StateInputCostCollection::getQuadraticApproximation] terms_ size: " << terms_.size() << std::endl;
+
   const auto firstActive = std::find_if(terms_.begin(), 
                                         terms_.end(),
                                         [time](const std::shared_ptr<StateInputCost>& costTerm) 
@@ -107,7 +109,7 @@ ScalarFunctionQuadraticApproximation StateInputCostCollection::getQuadraticAppro
     }
   });
 
-  //std::cout << "[StateInputCostCollection::getQuadraticApproximation] START" << std::endl;
+  //std::cout << "[StateInputCostCollection::getQuadraticApproximation] END" << std::endl;
 
   return cost;
 }

@@ -548,6 +548,7 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
         // Update observers for visualization
         for (auto& observer : observers_) 
         {
+          //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] OBSERVING..." << std::endl;
           observer->update(currentObservation, currentPolicy, mrt_.getCommand());
         }
 

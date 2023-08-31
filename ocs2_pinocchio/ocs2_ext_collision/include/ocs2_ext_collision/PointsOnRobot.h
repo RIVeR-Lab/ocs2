@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.04.12
+// LAST UPDATE: 2023.08.21
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -63,6 +63,9 @@ class PointsOnRobot
     Eigen::MatrixXd getPointsJacobianCppAd(const Eigen::VectorXd& state) const;
 
     // DESCRIPTION: TODO...
+    void getPointsEigenToGeometryMsgsVec(Eigen::VectorXd& pointsEigen, std::vector<geometry_msgs::Point>& pointsVec);
+
+    // DESCRIPTION: TODO...
     ocs2::RobotModelInfo getRobotModelInfo() const;
 
     // DESCRIPTION: TODO...
@@ -84,14 +87,18 @@ class PointsOnRobot
     void setNodeHandle(ros::NodeHandle& nh);
 
     // DESCRIPTION: TODO...
+    void setPointsOnRobotVisu();
+
+    // DESCRIPTION: TODO...
+    void setTimerPointsOnRobotVisu(double dt);
+
+    // DESCRIPTION: TODO...
     void fillPointsOnRobotVisu() const;
 
     // DESCRIPTION: TODO...
     void publishPointsOnRobotVisu();
 
     void publishPointsOnRobotVisu(const ros::TimerEvent& e);
-
-    void publishPointsOnRobotVisu(double dt);
 
     // DESCRIPTION: TODO...
     Eigen::Quaternion<ocs2::scalar_t> EulerToQuaternion(const ocs2::scalar_t& yaw, const ocs2::scalar_t& pitch, const ocs2::scalar_t& roll) const;

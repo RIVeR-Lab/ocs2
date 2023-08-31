@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.08.11
+// LAST UPDATE: 2023.08.29
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -37,7 +37,6 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
   graspPositionOffset_.x() = 0;
   graspPositionOffset_.y() = 0.2;
   graspPositionOffset_.z() = 0;
-
   graspOrientationOffsetMatrix_ <<  1.0, 0.0, 0.0,
                                     0.0, 0.0, -1.0,
                                     0.0, 1.0, 0.0;
@@ -45,7 +44,10 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
   dropPositionOffset_.x() = 0;
   dropPositionOffset_.y() = 0.2;
   dropPositionOffset_.z() = 1.0;
-  dropOrientationOffsetMatrix_ = graspOrientationOffsetMatrix_;
+  dropOrientationOffsetMatrix_ << 1.0, 0.0, 0.0,
+                                  0.0, 0.0, -1.0,
+                                  0.0, 1.0, 0.0;
+  //dropOrientationOffsetMatrix_ = graspOrientationOffsetMatrix_;
 
   std::cout << "[TargetTrajectoriesGazebo::statusModelModeMPCCallback] targetNames_: " << std::endl;
   for (size_t i = 0; i < targetNames_.size(); i++)
@@ -62,9 +64,6 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
 
   // Create an interactive marker for auto target
   menuHandlerAutoTarget_.insert("Auto target", boost::bind(&TargetTrajectoriesGazebo::processFeedbackAutoTarget, this, _1));
-
-  // Create an interactive marker for auto target
-  //menuHandlerDropTarget_.insert("Drop target", boost::bind(&TargetTrajectoriesGazebo::processFeedbackDropTarget, this, _1));
 
   /// Subscribers
   auto observationCallback = [this](const ocs2_msgs::mpc_observation::ConstPtr& msg) 
@@ -109,7 +108,8 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
   /// Publishers
   targetTrajectoriesPublisherPtr_.reset(new TargetTrajectoriesRosPublisher(nodeHandle, topicPrefix));
   modelModePublisher_ = nodeHandle.advertise<std_msgs::UInt8>(topicPrefix + "_model_mode", 1, false);
-  targetMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(topicPrefix + "_goal", 10);
+  goalMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(topicPrefix + "_goal", 10);
+  targetMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(topicPrefix + "_target", 10);
 
   /// Clients
   //setTaskModeClient_ = nodeHandle.serviceClient<ocs2_msgs::setInt>("/set_task_mode");
@@ -119,6 +119,9 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
   //setTaskModeService_ = nodeHandle.advertiseService("set_task_mode", &TargetTrajectoriesGazebo::setTaskModeSrv, this);
   setPickedFlagService_ = nodeHandle.advertiseService("set_picked_flag", &TargetTrajectoriesGazebo::setPickedFlagSrv, this);
   setSystemObservationService_ = nodeHandle.advertiseService("set_system_observation", &TargetTrajectoriesGazebo::setSystemObservationSrv, this);
+  setActionDRLService_ = nodeHandle.advertiseService("set_target_drl", &TargetTrajectoriesGazebo::setTargetDRLSrv, this);
+
+  while(!initTFCallbackFlag_){ros::spinOnce();}
 }
 
 TargetTrajectoriesGazebo::~TargetTrajectoriesGazebo()
@@ -160,7 +163,6 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(const TargetTrajectoriesGazeb
 
   tflistenerPtr_ = ttg.tflistenerPtr_;
 
-  //h_first_entry_ = ttg.h_first_entry_;
   h_mode_last_ = ttg.h_mode_last_;
 
   menuHandlerTarget_ = ttg.menuHandlerTarget_;
@@ -200,7 +202,6 @@ TargetTrajectoriesGazebo& TargetTrajectoriesGazebo::operator=(const TargetTrajec
 
   tflistenerPtr_ = ttg.tflistenerPtr_;
 
-  //h_first_entry_ = ttg.h_first_entry_;
   h_mode_last_ = ttg.h_mode_last_;
 
   menuHandlerTarget_ = ttg.menuHandlerTarget_;
@@ -218,7 +219,22 @@ TargetTrajectoriesGazebo& TargetTrajectoriesGazebo::operator=(const TargetTrajec
 //-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::setTaskMode(int taskMode)
 {
+  //std::cout << "[TargetTrajectoriesGazebo::setTaskMode] START" << std::endl;
   taskMode_ = taskMode;
+
+  if (taskMode == 1)
+  {
+    pickedFlag_ = false;
+  }
+  else if (taskMode == 2)
+  {
+    pickedFlag_ = true;
+  }
+
+  //std::cout << "[TargetTrajectoriesGazebo::setTaskMode] taskMode: " << taskMode << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::setTaskMode] pickedFlag_: " << pickedFlag_ << std::endl;
+
+  //std::cout << "[TargetTrajectoriesGazebo::setTaskMode] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -519,19 +535,70 @@ void TargetTrajectoriesGazebo::tfCallback(const tf2_msgs::TFMessage::ConstPtr& m
   //std::cout << "[TargetTrajectoriesGazebo::gazeboModelStatesCallback] Incoming..." << std::endl;
 
   tf::StampedTransform tf_ee_wrt_world;
+  tf::StampedTransform tf_robot_wrt_world;
+  tf::StampedTransform tf_target_wrt_world;
+
+  geometry_msgs::Pose robotPose;
+  std::vector<std::string> currentTargetNames;
+  std::vector<Eigen::Vector3d> currentTargetPositions;
+  std::vector<Eigen::Quaterniond> currentTargetOrientations;
+
   try
   {
-    tflistenerPtr_->waitForTransform(worldFrameName_, eeFrame_, ros::Time(0), ros::Duration(1.0));
-    tflistenerPtr_->lookupTransform(worldFrameName_, eeFrame_, ros::Time(0), tf_ee_wrt_world);
+    if (tflistenerPtr_->waitForTransform(worldFrameName_, eeFrame_, ros::Time(0), ros::Duration(1.0)))
+    {
+      tflistenerPtr_->lookupTransform(worldFrameName_, eeFrame_, ros::Time(0), tf_ee_wrt_world);
+      tf_ee_wrt_world_ = tf_ee_wrt_world;
+    }
+
+    if (tflistenerPtr_->waitForTransform(worldFrameName_, robotFrameName_, ros::Time(0), ros::Duration(1.0)))
+    {
+      tflistenerPtr_->lookupTransform(worldFrameName_, robotFrameName_, ros::Time(0), tf_robot_wrt_world);
+      //tf_robot_wrt_world_ = tf_robot_wrt_world;
+
+      robotPose.position.x = tf_robot_wrt_world.getOrigin().x();
+      robotPose.position.y = tf_robot_wrt_world.getOrigin().y();
+      robotPose.position.z = tf_robot_wrt_world.getOrigin().z();
+      robotPose.orientation.x = tf_robot_wrt_world.getRotation().x();
+      robotPose.orientation.y = tf_robot_wrt_world.getRotation().y();
+      robotPose.orientation.z = tf_robot_wrt_world.getRotation().z();
+      robotPose.orientation.w = tf_robot_wrt_world.getRotation().w();
+    }
+
+    for (size_t i = 0; i < targetNames_.size(); i++)
+    {
+      if(tflistenerPtr_->frameExists(targetNames_[i]))
+      {
+        tflistenerPtr_->waitForTransform(worldFrameName_, targetNames_[i], ros::Time(0), ros::Duration(1.0));
+        tflistenerPtr_->lookupTransform(worldFrameName_, targetNames_[i], ros::Time(0), tf_target_wrt_world);
+
+        currentTargetNames.push_back(targetNames_[i]);
+
+        Eigen::Vector3d pos;
+        pos << tf_target_wrt_world.getOrigin().x(), tf_target_wrt_world.getOrigin().y(), tf_target_wrt_world.getOrigin().z();
+        currentTargetPositions.push_back(pos);
+
+        Eigen::Quaterniond quat;
+        quat.x() = tf_target_wrt_world.getRotation().x();
+        quat.y() = tf_target_wrt_world.getRotation().y();
+        quat.z() = tf_target_wrt_world.getRotation().z();
+        quat.w() = tf_target_wrt_world.getRotation().w();
+        currentTargetOrientations.push_back(quat);
+      }
+    }
+    
+    robotPose_ = robotPose;
+    currentTargetNames_ = currentTargetNames;
+    currentTargetPositions_ = currentTargetPositions;
+    currentTargetOrientations_ = currentTargetOrientations;
+
+    initTFCallbackFlag_ = true;
   }
   catch (tf::TransformException ex)
   {
     ROS_INFO("[TargetTrajectoriesGazebo::getEEPose] ERROR: Couldn't get transform!");
     ROS_ERROR("%s", ex.what());
   }
-
-  tf_ee_wrt_world_ = tf_ee_wrt_world;
-  initTFCallbackFlag_ = true;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -579,6 +646,154 @@ void TargetTrajectoriesGazebo::updateTargetInfo()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::updateGoal(bool autoFlag)
+{
+  //std::cout << "[TargetTrajectoriesGazebo::updateGoal] START" << std::endl;
+
+  Eigen::Vector3d goalPos;
+  Eigen::Quaterniond goalOri;
+
+  //std::cout << "[TargetTrajectoriesGazebo::updateGoal] taskMode_: " << taskMode_ << std::endl;
+
+  if (taskMode_ == 1)
+  {
+    //std::cout << "[TargetTrajectoriesGazebo::updateGoal] taskMode_: 1" << std::endl;
+    //updateTargetInfo();
+
+    geometry_msgs::Pose robotPose = robotPose_;
+    std::vector<std::string> currentTargetNames = currentTargetNames_;
+    std::vector<Eigen::Vector3d> targetPositions = currentTargetPositions_;
+    std::vector<Eigen::Quaterniond> targetOrientations = currentTargetOrientations_;
+
+    if (currentTargetNames_.size() > 0)
+    {
+      int idx = isIn(currentTargetNames, currentTargetName_);
+
+      //std::cout << "[TargetTrajectoriesGazebo::updateGoal] currentTargetName_: " << currentTargetName_ << std::endl;
+      //std::cout << "[TargetTrajectoriesGazebo::updateGoal] idx: " << idx << std::endl;
+
+      if (idx >= 0)
+      {
+        //std::cout << "[TargetTrajectoriesGazebo::updateGoal] REGULAR" << std::endl;
+
+        goalPos = targetPositions[idx];
+        goalOri = targetOrientations[idx];
+      }
+      else
+      {
+        //std::cout << "[TargetTrajectoriesGazebo::updateGoal] SWITCH" << std::endl;
+
+        //std::cout << "[TargetTrajectoriesGazebo::updateGoal] idx: " << idx << std::endl;
+        //std::cout << "[TargetTrajectoriesGazebo::updateGoal] currentTargetName_: " << currentTargetName_ << std::endl;
+        /*
+        std::cout << "[TargetTrajectoriesGazebo::updateGoal] currentTargetNames: " << std::endl;
+        for (size_t i = 0; i < currentTargetNames.size(); i++)
+        {
+          std::cout << currentTargetNames[i] << std::endl;
+        }
+        */
+
+        std::pair<double, int> closest_p;
+        closest_p = findClosestDistance(targetPositions, robotPose);
+
+        currentTargetName_ = currentTargetNames_[closest_p.second];
+        goalPos = targetPositions[closest_p.second];
+        goalOri = targetOrientations[closest_p.second];
+
+        //std::cout << "[TargetTrajectoriesGazebo::updateGoal] closest_p.second: " << closest_p.second << std::endl;
+        //std::cout << "[TargetTrajectoriesGazebo::updateGoal] currentTargetName_: " << currentTargetName_ << std::endl;
+      }
+
+      goalPosition_ = goalPos;
+      goalOrientation_ = goalOri;
+
+      if (autoFlag)
+      {
+        //std::cout << "[TargetTrajectoriesGazebo::updateGoal] AUTO" << std::endl;
+        updateGraspPose();
+      }
+      else
+      {
+        //std::cout << "[TargetTrajectoriesGazebo::updateGoal] MANUAL" << std::endl;
+        updateGraspPose(goalPosition_, goalOrientation_);
+      }
+
+      graspReadyFlag_ = true;
+
+      //publishTargetVisu();
+      //publishGraspFrame();
+    }
+  }
+  else if (taskMode_ == 2)
+  {
+    gazebo_msgs::ModelStates ms = modelStatesMsg_;
+
+    for (size_t i = 0; i < ms.name.size(); i++)
+    {
+      if (ms.name[i] == dropTargetName_)
+      {
+        goalPos.x() = ms.pose[i].position.x;
+        goalPos.y() = ms.pose[i].position.y;
+        goalPos.z() = ms.pose[i].position.z;
+
+        goalOri.x() = ms.pose[i].orientation.x;
+        goalOri.y() = ms.pose[i].orientation.y;
+        goalOri.z() = ms.pose[i].orientation.z;
+        goalOri.w() = ms.pose[i].orientation.w;
+
+        //std::cout << "[TargetTrajectoriesGazebo::updateGoal] targetPos.x(): " << targetPos.x() << std::endl;
+        //std::cout << "[TargetTrajectoriesGazebo::updateGoal] targetPos.y(): " << targetPos.y() << std::endl;
+        //std::cout << "[TargetTrajectoriesGazebo::updateGoal] targetPos.z(): " << targetPos.z() << std::endl;
+
+        break;
+      }
+    }
+
+    goalPosition_ = goalPos;
+    goalOrientation_ = goalOri;
+
+    if (autoFlag)
+    {
+      updateDropPose();
+    }
+    else
+    {
+      updateDropPose(goalPosition_, goalOrientation_);
+    }
+
+    dropReadyFlag_ = true;
+    
+    //publishTargetVisu();
+    //publishDropFrame();
+  }
+
+  fillGoalVisu();
+
+  //std::cout << "[TargetTrajectoriesGazebo::updateGoal] DEBUG INF" << std::endl;
+  //while(1);
+
+  //std::cout << "[TargetTrajectoriesGazebo::updateGoal] END" << std::endl << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::updateGoal(const Eigen::Vector3d& goalPos, const Eigen::Quaterniond& goalOri)
+{
+  //std::cout << "[TargetTrajectoriesGazebo::updateGoal(2)] START" << std::endl;
+
+  goalPosition_ = goalPos;
+  goalOrientation_ = goalOri;
+
+  fillGoalVisu();
+  //publishTargetVisu();
+  
+  //std::cout << "[TargetTrajectoriesGazebo::updateGoal(2)] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
 {
   //std::cout << "[TargetTrajectoriesGazebo::updateTarget] START" << std::endl;
@@ -591,7 +806,7 @@ void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
   if (taskMode_ == 1)
   {
     //std::cout << "[TargetTrajectoriesGazebo::updateTarget] taskMode_: 1" << std::endl;
-    updateTargetInfo();
+    //updateTargetInfo();
 
     geometry_msgs::Pose robotPose = robotPose_;
     std::vector<std::string> currentTargetNames = currentTargetNames_;
@@ -616,15 +831,13 @@ void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
       {
         //std::cout << "[TargetTrajectoriesGazebo::updateTarget] SWITCH" << std::endl;
 
-        /*
-        std::cout << "[TargetTrajectoriesGazebo::updateTarget] idx: " << idx << std::endl;
-        std::cout << "[TargetTrajectoriesGazebo::updateTarget] currentTargetName_: " << currentTargetName_ << std::endl;
-        std::cout << "[TargetTrajectoriesGazebo::updateTarget] currentTargetNames: " << std::endl;
+        //std::cout << "[TargetTrajectoriesGazebo::updateTarget] idx: " << idx << std::endl;
+        //std::cout << "[TargetTrajectoriesGazebo::updateTarget] currentTargetName_: " << currentTargetName_ << std::endl;
+        //std::cout << "[TargetTrajectoriesGazebo::updateTarget] currentTargetNames: " << std::endl;
         for (size_t i = 0; i < currentTargetNames.size(); i++)
         {
           std::cout << currentTargetNames[i] << std::endl;
         }
-        */
 
         std::pair<double, int> closest_p;
         closest_p = findClosestDistance(targetPositions, robotPose);
@@ -642,10 +855,12 @@ void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
 
       if (autoFlag)
       {
+        //std::cout << "[TargetTrajectoriesGazebo::updateTarget] AUTO" << std::endl;
         updateGraspPose();
       }
       else
       {
+        //std::cout << "[TargetTrajectoriesGazebo::updateTarget] MANUAL" << std::endl;
         updateGraspPose(currentTargetPosition_, currentTargetOrientation_);
       }
 
@@ -712,7 +927,7 @@ void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
 //-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::updateTarget(const Eigen::Vector3d& targetPos, const Eigen::Quaterniond& targetOri)
 {
-  //std::cout << "[TargetTrajectoriesGazebo::updateTarget(2)] START" << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::updateTarget(2)] START" << std::endl;
 
   currentTargetPosition_ = targetPos;
   currentTargetOrientation_ = targetOri;
@@ -720,37 +935,41 @@ void TargetTrajectoriesGazebo::updateTarget(const Eigen::Vector3d& targetPos, co
   fillTargetVisu();
   //publishTargetVisu();
   
-  //std::cout << "[TargetTrajectoriesGazebo::updateTarget(2)] END" << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::updateTarget(2)] END" << std::endl;
 }
 
 void TargetTrajectoriesGazebo::updateGraspPose()
 {
   //std::cout << "[TargetTrajectoriesGazebo::updateGraspPose] START" << std::endl;
 
+  Eigen::Vector3d goalPosition = goalPosition_;
+  Eigen::Quaterniond goalOrientation = goalOrientation_;
+
+  tf::Transform transform_goal_wrt_world;
+  tf::Transform transform_grasp_wrt_goal;
+  tf::Transform transform_grasp_wrt_world;
+
+  //transform_goal_wrt_world.setIdentity();
+  transform_goal_wrt_world.setOrigin(tf::Vector3(goalPosition.x(), goalPosition.y(), goalPosition.z()));
+  transform_goal_wrt_world.setRotation(tf::Quaternion(goalOrientation.x(), goalOrientation.y(), goalOrientation.z(), goalOrientation.w()));
+
+  //transform_grasp_wrt_goal.setIdentity();
+  transform_grasp_wrt_goal.setOrigin(tf::Vector3(graspPositionOffset_.x(), graspPositionOffset_.y(), graspPositionOffset_.z()));
+  Eigen::Quaterniond graspOri_wrt_goal(graspOrientationOffsetMatrix_);
+  transform_grasp_wrt_goal.setRotation(tf::Quaternion(graspOri_wrt_goal.x(), graspOri_wrt_goal.y(), graspOri_wrt_goal.z(), graspOri_wrt_goal.w()));
+  
+  transform_grasp_wrt_world = transform_goal_wrt_world * transform_grasp_wrt_goal;
+
   Eigen::Vector3d graspPos;
+  graspPos.x() = transform_grasp_wrt_world.getOrigin().x();
+  graspPos.y() = transform_grasp_wrt_world.getOrigin().y();
+  graspPos.z() = transform_grasp_wrt_world.getOrigin().z();
 
-  geometry_msgs::Pose graspPos_wrt_world;
-  geometry_msgs::Pose graspPos_wrt_target;
-  graspPos_wrt_target.position.x = graspPositionOffset_.x();
-  graspPos_wrt_target.position.y = graspPositionOffset_.y();
-  graspPos_wrt_target.position.z = graspPositionOffset_.z();
-  graspPos_wrt_target.orientation.x = 0;
-  graspPos_wrt_target.orientation.y = 0;
-  graspPos_wrt_target.orientation.z = 0;
-  graspPos_wrt_target.orientation.w = 1;
-
-  //std::cout << "[TargetTrajectoriesGazebo::updateGraspPose] currentTargetName_: " << currentTargetName_ << std::endl;
-
-  transformPose(currentTargetName_, worldFrameName_, graspPos_wrt_target, graspPos_wrt_world);
-
-  graspPos.x() = graspPos_wrt_world.position.x;
-  graspPos.y() = graspPos_wrt_world.position.y;
-  graspPos.z() = graspPos_wrt_world.position.z;
-
-  Eigen::Quaterniond currentTargetOrientation = currentTargetOrientation_;
-
-  Eigen::Matrix3d mat = currentTargetOrientation.matrix() * graspOrientationOffsetMatrix_;
-  Eigen::Quaterniond graspOri(mat);
+  //Eigen::Matrix3d mat = goalOrientation.matrix() * dropOrientationOffsetMatrix_;
+  Eigen::Quaterniond graspOri(transform_grasp_wrt_world.getRotation().w(), 
+                              transform_grasp_wrt_world.getRotation().x(), 
+                              transform_grasp_wrt_world.getRotation().y(), 
+                              transform_grasp_wrt_world.getRotation().z());
 
   // Alternative: Rotating the target orientation by rpy
   //Eigen::Vector3d rpy_rot(M_PI, 0, 0);
@@ -758,6 +977,7 @@ void TargetTrajectoriesGazebo::updateGraspPose()
 
   currentGraspPosition_ = graspPos;
   currentGraspOrientation_ = graspOri;
+
   //graspFrameReadyFlag_ = true;
 
   //std::cout << "[TargetTrajectoriesGazebo::updateGraspPose] END" << std::endl;
@@ -782,46 +1002,36 @@ void TargetTrajectoriesGazebo::updateDropPose()
 {
   //std::cout << "[TargetTrajectoriesGazebo::updateDropPose] START" << std::endl;
 
+  Eigen::Vector3d goalPosition = goalPosition_;
+  Eigen::Quaterniond goalOrientation = goalOrientation_;
+
+  tf::Transform transform_goal_wrt_world;
+  tf::Transform transform_drop_wrt_goal;
+  tf::Transform transform_drop_wrt_world;
+
+  transform_goal_wrt_world.setOrigin(tf::Vector3(goalPosition.x(), goalPosition.y(), goalPosition.z()));
+  transform_goal_wrt_world.setRotation(tf::Quaternion(goalOrientation.x(), goalOrientation.y(), goalOrientation.z(), goalOrientation.w()));
+
+  //transform_drop_wrt_goal.setIdentity();
+  transform_drop_wrt_goal.setOrigin(tf::Vector3(dropPositionOffset_.x(), dropPositionOffset_.y(), dropPositionOffset_.z()));
+  Eigen::Quaterniond dropOri_wrt_goal(dropOrientationOffsetMatrix_);
+  transform_drop_wrt_goal.setRotation(tf::Quaternion(dropOri_wrt_goal.x(), dropOri_wrt_goal.y(), dropOri_wrt_goal.z(), dropOri_wrt_goal.w()));
+
+  transform_drop_wrt_world = transform_goal_wrt_world * transform_drop_wrt_goal;
+
   Eigen::Vector3d dropPos;
+  dropPos.x() = transform_drop_wrt_world.getOrigin().x();
+  dropPos.y() = transform_drop_wrt_world.getOrigin().y();
+  dropPos.z() = transform_drop_wrt_world.getOrigin().z();
 
-  geometry_msgs::Pose dropPos_wrt_world;
-  geometry_msgs::Pose dropPos_wrt_target;
-  dropPos_wrt_target.position.x = dropPositionOffset_.x();
-  dropPos_wrt_target.position.y = dropPositionOffset_.y();
-  dropPos_wrt_target.position.z = dropPositionOffset_.z();
-  dropPos_wrt_target.orientation.x = 0;
-  dropPos_wrt_target.orientation.y = 0;
-  dropPos_wrt_target.orientation.z = 0;
-  dropPos_wrt_target.orientation.w = 1;
-
-  //std::cout << "[TargetTrajectoriesGazebo::updateDropPose] dropPositionOffset_.x(): " << dropPositionOffset_.x() << std::endl;
-  //std::cout << "[TargetTrajectoriesGazebo::updateDropPose] dropPositionOffset_.y(): " << dropPositionOffset_.y() << std::endl;
-  //std::cout << "[TargetTrajectoriesGazebo::updateDropPose] dropPositionOffset_.z(): " << dropPositionOffset_.z() << std::endl;
-
-  //std::cout << "[TargetTrajectoriesGazebo::updateDropPose] currentTargetName_: " << currentTargetName_ << std::endl;
-
-  transformPose(dropTargetName_, worldFrameName_, dropPos_wrt_target, dropPos_wrt_world);
-
-  dropPos.x() = dropPos_wrt_world.position.x;
-  dropPos.y() = dropPos_wrt_world.position.y;
-  dropPos.z() = dropPos_wrt_world.position.z;
-
-  Eigen::Quaterniond currentTargetOrientation = currentTargetOrientation_;
-
-  Eigen::Matrix3d mat = currentTargetOrientation.matrix() * dropOrientationOffsetMatrix_;
-  Eigen::Quaterniond dropOri(mat);
-
-  // Alternative: Rotating the target orientation by rpy
-  //Eigen::Vector3d rpy_rot(M_PI, 0, 0);
-  //rotateQuaternion(currentTargetOrientation, rpy_rot, graspOri);
-
-  //std::cout << "[TargetTrajectoriesGazebo::updateDropPose] dropPos.x(): " << dropPos.x() << std::endl;
-  //std::cout << "[TargetTrajectoriesGazebo::updateDropPose] dropPos.y(): " << dropPos.y() << std::endl;
-  //std::cout << "[TargetTrajectoriesGazebo::updateDropPose] dropPos.z(): " << dropPos.z() << std::endl;
+  //Eigen::Matrix3d mat = goalOrientation.matrix() * dropOrientationOffsetMatrix_;
+  Eigen::Quaterniond dropOri(transform_drop_wrt_world.getRotation().w(), 
+                             transform_drop_wrt_world.getRotation().x(), 
+                             transform_drop_wrt_world.getRotation().y(), 
+                             transform_drop_wrt_world.getRotation().z());
 
   currentDropPosition_ = dropPos;
   currentDropOrientation_ = dropOri;
-  //dropFrameReadyFlag_ = true;
 
   //std::cout << "[TargetTrajectoriesGazebo::updateDropPose] END" << std::endl;
 }
@@ -894,6 +1104,78 @@ void TargetTrajectoriesGazebo::updateEEPose(Eigen::Vector3d& eePos, Eigen::Quate
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::fillGoalVisu()
+{
+  //std::cout << "[TargetTrajectoriesGazebo::fillGoalVisu] START" << std::endl;
+
+  goalMarkerArray_.markers.clear();
+
+  /// NUA TODO: User should able to add more goal!
+  int n_goal = 1;
+
+  for(int i = 0; i < n_goal; i++)
+  {
+    Eigen::Vector3d goalPosition = goalPosition_;
+    Eigen::Quaterniond goalOrientation = goalOrientation_;
+    geometry_msgs::Point goal_point;
+    geometry_msgs::Point grasp_or_drop_point;
+    goal_point.x = goalPosition.x();
+    goal_point.y = goalPosition.y();
+    goal_point.z = goalPosition.z();
+    grasp_or_drop_point = goal_point;
+
+    if (taskMode_ == 1)
+    {
+      Eigen::Vector3d currentGraspPosition = currentGraspPosition_;
+      grasp_or_drop_point.x = currentGraspPosition.x();
+      grasp_or_drop_point.y = currentGraspPosition.y();
+      grasp_or_drop_point.z = currentGraspPosition.z();
+    }
+    else if (taskMode_ == 2)
+    {
+      Eigen::Vector3d currentDropPosition = currentDropPosition_;
+      grasp_or_drop_point.x = currentDropPosition.x();
+      grasp_or_drop_point.y = currentDropPosition.y();
+      grasp_or_drop_point.z = currentDropPosition.z();
+
+      goal_point.z = grasp_or_drop_point.z;
+    }
+
+    //std::cout << "[TargetTrajectoriesGazebo::fillGoalVisu] grasp_or_drop_point: " << std::endl;
+    //print(grasp_or_drop_point);
+
+    //std::cout << "[TargetTrajectoriesGazebo::fillGoalVisu] goal_point: " << std::endl;
+    //print(goal_point);
+
+    visualization_msgs::Marker goal_visu;
+    goal_visu.ns = "goal_" + std::to_string(i+1);
+    goal_visu.id = i+1;
+    goal_visu.action = visualization_msgs::Marker::ADD;
+    goal_visu.type = visualization_msgs::Marker::ARROW;
+    goal_visu.points.push_back(grasp_or_drop_point);
+    goal_visu.points.push_back(goal_point);
+    goal_visu.pose.orientation.x = 0;
+    goal_visu.pose.orientation.y = 0;
+    goal_visu.pose.orientation.z = 0;
+    goal_visu.pose.orientation.w = 1;
+    goal_visu.scale.x = 0.04;
+    goal_visu.scale.y = 0.08;
+    goal_visu.scale.z = 0.08;
+    goal_visu.color.r = 0.5;
+    goal_visu.color.g = 0.0;
+    goal_visu.color.b = 0.5;
+    goal_visu.color.a = 0.5;
+    goal_visu.header.frame_id = worldFrameName_;
+
+    goalMarkerArray_.markers.push_back(goal_visu);
+  }
+
+  //std::cout << "[TargetTrajectoriesGazebo::fillGoalVisu] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::fillTargetVisu()
 {
   //std::cout << "[TargetTrajectoriesGazebo::fillTargetVisu] START" << std::endl;
@@ -907,13 +1189,14 @@ void TargetTrajectoriesGazebo::fillTargetVisu()
   {
     Eigen::Vector3d currentTargetPosition = currentTargetPosition_;
     Eigen::Quaterniond currentTargetOrientation = currentTargetOrientation_;
-    geometry_msgs::Point target_point;
-    geometry_msgs::Point grasp_or_drop_point;
-    target_point.x = currentTargetPosition.x();
-    target_point.y = currentTargetPosition.y();
-    target_point.z = currentTargetPosition.z();
-    grasp_or_drop_point = target_point;
+    //geometry_msgs::Point target_point;
+    //geometry_msgs::Point grasp_or_drop_point;
+    //target_point.x = currentTargetPosition.x();
+    //target_point.y = currentTargetPosition.y();
+    //target_point.z = currentTargetPosition.z();
+    //grasp_or_drop_point = target_point;
 
+    /*
     if (taskMode_ == 1)
     {
       Eigen::Vector3d currentGraspPosition = currentGraspPosition_;
@@ -930,6 +1213,7 @@ void TargetTrajectoriesGazebo::fillTargetVisu()
 
       target_point.z = grasp_or_drop_point.z;
     }
+    */
 
     //std::cout << "[TargetTrajectoriesGazebo::fillTargetVisu] grasp_or_drop_point: " << std::endl;
     //print(grasp_or_drop_point);
@@ -938,22 +1222,26 @@ void TargetTrajectoriesGazebo::fillTargetVisu()
     //print(target_point);
 
     visualization_msgs::Marker target_visu;
-    target_visu.ns = "target_visu_" + std::to_string(i+1);
+    target_visu.ns = "target_" + std::to_string(i+1);
     target_visu.id = i+1;
     target_visu.action = visualization_msgs::Marker::ADD;
-    target_visu.type = visualization_msgs::Marker::ARROW;
-    target_visu.points.push_back(grasp_or_drop_point);
-    target_visu.points.push_back(target_point);
-    target_visu.pose.orientation.x = 0;
-    target_visu.pose.orientation.y = 0;
-    target_visu.pose.orientation.z = 0;
-    target_visu.pose.orientation.w = 1;
-    target_visu.scale.x = 0.04;
-    target_visu.scale.y = 0.08;
-    target_visu.scale.z = 0.08;
-    target_visu.color.r = 0.5;
-    target_visu.color.g = 0.0;
-    target_visu.color.b = 0.5;
+    target_visu.type = visualization_msgs::Marker::CYLINDER;
+    //target_visu.type = visualization_msgs::Marker::ARROW;
+    //target_visu.points.push_back(grasp_or_drop_point);
+    //target_visu.points.push_back(target_point);
+    target_visu.pose.position.x = currentTargetPosition.x();
+    target_visu.pose.position.y = currentTargetPosition.y();
+    target_visu.pose.position.z = currentTargetPosition.z();
+    target_visu.pose.orientation.x = currentTargetOrientation.x();
+    target_visu.pose.orientation.y = currentTargetOrientation.y();
+    target_visu.pose.orientation.z = currentTargetOrientation.z();
+    target_visu.pose.orientation.w = currentTargetOrientation.w();
+    target_visu.scale.x = 0.05;
+    target_visu.scale.y = 0.05;
+    target_visu.scale.z = 0.1;
+    target_visu.color.r = 0.8;
+    target_visu.color.g = 0.8;
+    target_visu.color.b = 0.0;
     target_visu.color.a = 0.5;
     target_visu.header.frame_id = worldFrameName_;
 
@@ -961,6 +1249,34 @@ void TargetTrajectoriesGazebo::fillTargetVisu()
   }
 
   //std::cout << "[TargetTrajectoriesGazebo::fillTargetVisu] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::publishGoalVisu()
+{
+  //std::cout << "[TargetTrajectoriesGazebo::publishGoalVisu] START" << std::endl;
+
+  /// NUA TODO: User should able to add more target!
+  visualization_msgs::MarkerArray goalMarkerArray = goalMarkerArray_;
+  int target_size = goalMarkerArray.markers.size();
+
+  if (target_size > 0)
+  {
+    for(int i = 0; i < target_size; i++)
+    {
+      goalMarkerArray.markers[i].header.seq++;
+      goalMarkerArray.markers[i].header.stamp = ros::Time::now();
+    }
+    goalMarkerArrayPublisher_.publish(goalMarkerArray);
+  }
+  //else
+  //{
+  //  std::cout << "[TargetTrajectoriesGazebo::publishGoalVisu] NO GOAL!" << std::endl;
+  //}
+
+  //std::cout << "[TargetTrajectoriesGazebo::publishGoalVisu] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -983,6 +1299,10 @@ void TargetTrajectoriesGazebo::publishTargetVisu()
     }
     targetMarkerArrayPublisher_.publish(targetMarkerArray);
   }
+  //else
+  //{
+  //  std::cout << "[TargetTrajectoriesGazebo::publishTargetVisu] NO TARGET!" << std::endl;
+  //}
 
   //std::cout << "[TargetTrajectoriesGazebo::publishTargetVisu] END" << std::endl;
 }
@@ -996,6 +1316,8 @@ void TargetTrajectoriesGazebo::publishGraspFrame()
 
   if (graspReadyFlag_ && taskMode_ == 1 && !pickedFlag_)
   {
+    //std::cout << "[TargetTrajectoriesGazebo::publishGraspFrame] START" << std::endl;
+
     Eigen::Vector3d currentGraspPosition = currentGraspPosition_;
     Eigen::Quaterniond currentGraspOrientation = currentGraspOrientation_;
 
@@ -1005,6 +1327,8 @@ void TargetTrajectoriesGazebo::publishGraspFrame()
     tf_virtual.setRotation(tf::Quaternion(currentGraspOrientation.x(), currentGraspOrientation.y(), currentGraspOrientation.z(), currentGraspOrientation.w()));
 
     tf_br.sendTransform(tf::StampedTransform(tf_virtual, ros::Time::now(), worldFrameName_, graspFrameName_));
+
+    //std::cout << "[TargetTrajectoriesGazebo::publishGraspFrame] END" << std::endl;
   }
 
   //std::cout << "[TargetTrajectoriesGazebo::publishGraspFrame] END" << std::endl;
@@ -1043,19 +1367,22 @@ void TargetTrajectoriesGazebo::publishTargetTrajectories()
   //while(!policyReceivedFlag_){ros::spinOnce();}
   //policyReceivedFlag_ = false;
 
-  // Get the latest observation
-  SystemObservation observation;
+  if (targetReadyFlag_)
   {
-    std::lock_guard<std::mutex> lock(latestObservationMutex_);
-    observation = latestObservation_;
+    // Get the latest observation
+    SystemObservation observation;
+    {
+      std::lock_guard<std::mutex> lock(latestObservationMutex_);
+      observation = latestObservation_;
+    }
+
+    // Get target trajectories
+    auto targetTrajectories = goalPoseToTargetTrajectories_(currentTargetPosition_, currentTargetOrientation_, observation);
+    targetTrajectories.taskMode = taskMode_;
+
+    // Publish target trajectories
+    targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
   }
-
-  // Get target trajectories
-  auto targetTrajectories = goalPoseToTargetTrajectories_(currentTargetPosition_, currentTargetOrientation_, observation);
-  targetTrajectories.taskMode = taskMode_;
-
-  // Publish target trajectories
-  targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
 
   //std::cout << "[TargetTrajectoriesGazebo::publishTargetTrajectories] END" << std::endl;
 }
@@ -1446,9 +1773,10 @@ void TargetTrajectoriesGazebo::processFeedbackTarget(const visualization_msgs::I
   //}
 
   // Update target
+  updateGoal(position, orientation);
   updateTarget(position, orientation);
 
-  publishTargetTrajectories();
+  //publishTargetTrajectories();
 
   // Get target trajectories
   //auto targetTrajectories = goalPoseToTargetTrajectories_(position, orientation, observation);
@@ -1469,7 +1797,7 @@ void TargetTrajectoriesGazebo::processFeedbackTarget(const visualization_msgs::I
   bool taskModeSuccess = setTask(taskMode_, target);
   std::cout << "[TargetTrajectoriesGazebo::processFeedbackTarget] taskModeSuccess: " << taskModeSuccess << std::endl;
 
-  initTargetFlag_ = true;
+  targetReadyFlag_ = true;
 
   //ros::Duration(5.0).sleep();
 
@@ -1502,7 +1830,7 @@ void TargetTrajectoriesGazebo::processFeedbackAutoTarget(const visualization_msg
   }
 
   // Update target
-  updateTarget(true);
+  updateGoal(true);
 
   std::cout << "[TargetTrajectoriesGazebo::processFeedbackAutoTarget] taskMode_: " << taskMode_ << std::endl;
 
@@ -1520,7 +1848,9 @@ void TargetTrajectoriesGazebo::processFeedbackAutoTarget(const visualization_msg
     orientation = currentDropOrientation_;
   }
 
-  publishTargetTrajectories(position, orientation);
+  updateTarget(position, orientation);
+
+  //publishTargetTrajectories(position, orientation);
 
   // Get the latest observation
   //SystemObservation observation;
@@ -1548,7 +1878,7 @@ void TargetTrajectoriesGazebo::processFeedbackAutoTarget(const visualization_msg
   bool taskModeSuccess = setTask(taskMode_, target);
   std::cout << "[TargetTrajectoriesGazebo::processFeedbackTarget] taskModeSuccess: " << taskModeSuccess << std::endl;
 
-  initTargetFlag_ = true;
+  targetReadyFlag_ = true;
 
   //std::cout << "[TargetTrajectoriesGazebo::processFeedbackAutoTarget] END" << std::endl;
 }
@@ -1634,32 +1964,6 @@ void TargetTrajectoriesGazebo::processFeedbackModelMode(const visualization_msgs
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-/*
-bool TargetTrajectoriesGazebo::setTaskModeSrv(ocs2_msgs::setInt::Request &req, 
-                                              ocs2_msgs::setInt::Response &res)
-{
-  std::cout << "[TargetTrajectoriesGazebo::setTaskModeSrv] START" << std::endl;
-  taskMode_ = req.val;
-  res.success = true;
-
-  if (taskMode_ == 1)
-  {
-    dropFrameReadyFlag_ = false;
-  }
-  else if (taskMode_ == 2)
-  {
-    graspFrameReadyFlag_ = false;
-  }
-
-  std::cout << "[TargetTrajectoriesGazebo::setTaskModeSrv] taskMode_: " << taskMode_ << std::endl;
-  std::cout << "[TargetTrajectoriesGazebo::setTaskModeSrv] END" << std::endl;
-  return res.success;
-}
-*/
-
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
 bool TargetTrajectoriesGazebo::setPickedFlagSrv(ocs2_msgs::setBool::Request &req, 
                                                 ocs2_msgs::setBool::Response &res)
 {
@@ -1676,7 +1980,7 @@ bool TargetTrajectoriesGazebo::setPickedFlagSrv(ocs2_msgs::setBool::Request &req
     taskMode_ = 1;
   }
 
-  updateTarget(true);
+  updateGoal(true);
 
   std::cout << "[TargetTrajectoriesGazebo::setPickedFlagSrv] pickedFlag_: " << pickedFlag_ << std::endl;
   std::cout << "[TargetTrajectoriesGazebo::setPickedFlagSrv] END" << std::endl;
@@ -1702,29 +2006,17 @@ bool TargetTrajectoriesGazebo::setSystemObservationSrv(ocs2_msgs::setSystemObser
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-/*
-bool TargetTrajectoriesGazebo::setTaskMode(int val)
+bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req, 
+                                               ocs2_msgs::setTask::Response &res)
 {
-  std::cout << "[TargetTrajectoriesGazebo::setTaskMode] START" << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] START" << std::endl;
 
-  bool success = false;
-  ocs2_msgs::setInt srv;
-  srv.request.val = val;
-  if (setTaskModeClient_.call(srv))
-  {
-    success = srv.response.success;
-  }
-  else
-  {
-    ROS_ERROR("[TargetTrajectoriesGazebo::setTaskMode] ERROR: Failed to call service!");
-    success = false;
-  }
-
-  std::cout << "[TargetTrajectoriesGazebo::setTaskMode] END" << std::endl;
+  geometry_msgs::Pose targetPose = req.targetPose;
+  res.success = true;
   
-  return success;
+  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] END" << std::endl;
+  return res.success;
 }
-*/
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------

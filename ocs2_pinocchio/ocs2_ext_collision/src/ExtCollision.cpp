@@ -54,6 +54,9 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
   //std::cout << "[ExtCollision::getValue] START" << std::endl;
   //std::cout << "[ExtCollision::getValue] state size: " << state.size() << std::endl;
   //std::cout << "[ExtCollision::getValue] maxDistance_: " << maxDistance_ << std::endl;
+
+  std::cout << "[ExtCollision::getValue] DEBUG INF" << std::endl;
+  while(1);
   
   vector_t violations;
 
@@ -72,11 +75,11 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
     
     assert(positionPointsOnRobot.size() % 3 == 0);
     
-    float distance;
+    double distance;
     Eigen::Vector3f gradientVoxblox;
 
-    vector<geometry_msgs::Point> p0_vec;
-    vector<geometry_msgs::Point> p1_vec;
+    p0_vec_.clear();
+    p1_vec_.clear();
 
     for (int i = 0; i < numPoints; i++)
     {
@@ -86,17 +89,40 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
       p0.x = position(0);
       p0.y = position(1);
       p0.z = position(2);
-      p0_vec.push_back(p0);
 
       geometry_msgs::Point p1;
-      distance = emuPtr_->getNearestOccupancyDist2(position(0), position(1), position(2), p1, maxDistance_, false);
-      p1_vec.push_back(p1);
-      //std::cout << "[ExtCollision::getValue] " << i << ": (" << position(0) << ", " << position(1) << ", " << position(2) << ") -> " << distance << std::endl << std::endl;
+      bool success = emuPtr_->getNearestOccupancyDist(position(0), 
+                                                     position(1), 
+                                                     position(2), 
+                                                     radii(i),
+                                                     maxDistance_,
+                                                     p1, 
+                                                     distance,
+                                                     false);
+      if(success)
+      {
+        p0_vec_.push_back(p0);
+        p1_vec_.push_back(p1);
 
-      distances_[i] = distance - radii(i);
+        distances_[i] = distance - radii(i);
+
+        if (normalize_flag_)
+        {
+          distances_[i] /= maxDistance_ - radii(i);
+        }
+      }
+      else
+      {
+        distances_[i] = maxDistance_;
+
+        if (normalize_flag_)
+        {
+          distances_[i] = 1;
+        }
+      }
     }
 
-    emuPtr_->fillOccDistanceArrayVisu(p0_vec, p1_vec);
+    //emuPtr_->fillOccDistanceArrayVisu(p0_vec_, p1_vec_);
 
     violations = distances_;
 

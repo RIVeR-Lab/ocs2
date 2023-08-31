@@ -150,16 +150,21 @@ GaussNewtonDDP::GaussNewtonDDP(ddp::Settings ddpSettings,
 /******************************************************************************************************/
 GaussNewtonDDP::~GaussNewtonDDP() 
 {
+  std::cerr << getBenchmarkingInfo() << std::endl;
+
+  /*
   if (ddpSettings_.displayInfo_ || ddpSettings_.displayShortSummary_) 
   {
     std::cerr << getBenchmarkingInfo() << std::endl;
   }
+  */
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::string GaussNewtonDDP::getBenchmarkingInfo() const {
+std::string GaussNewtonDDP::getBenchmarkingInfo() const 
+{
   const auto initializationTotal = initializationTimer_.getTotalInMilliseconds();
   const auto linearQuadraticApproximationTotal = linearQuadraticApproximationTimer_.getTotalInMilliseconds();
   const auto backwardPassTotal = backwardPassTimer_.getTotalInMilliseconds();
@@ -171,7 +176,8 @@ std::string GaussNewtonDDP::getBenchmarkingInfo() const {
                               searchStrategyTotal + dualSolutionTotal;
 
   std::stringstream infoStream;
-  if (benchmarkTotal > 0.0) {
+  if (benchmarkTotal > 0.0) 
+  {
     infoStream << "\n########################################################################\n";
     infoStream << "The benchmarking is computed over " << totalNumIterations_ << " iterations. \n";
     infoStream << "DDP Benchmarking\t   :\tAverage time [ms]   (% of total runtime)\n";
@@ -1578,7 +1584,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const
   initializeConstraintPenalties();  // initialize penalty coefficients
 
   // display
-  if (ddpSettings_.displayInfo_) 
+  if (ddpSettings_.displayInfo_)
   {
     std::cerr << "\n###################";
     std::cerr << "\n#### Initial Rollout";

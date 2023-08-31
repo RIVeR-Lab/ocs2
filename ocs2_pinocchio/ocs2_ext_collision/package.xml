@@ -36,6 +36,7 @@
   <depend>pcl_msgs</depend>
   <depend>pcl_conversions</depend>
   <depend>pcl_ros</depend>
+  <depend>robot_collision_checking</depend>
   <!--depend>ocs2_self_collision</depend-->
   <!--depend>voxblox</depend>
   <depend>voxblox_ros</depend-->

@@ -28,7 +28,8 @@ add_service_files(
     setBool.srv
     setInt.srv
     setTask.srv
-    setActionDRL.srv
+    setDiscreteActionDRL.srv
+    setContinuousActionDRL.srv
     setSystemObservation.srv
 )
 

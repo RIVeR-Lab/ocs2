@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.05.02
+// LAST UPDATE: 2023.08.22
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -225,6 +225,9 @@ std::pair<vector_t, matrix_t> ExtCollisionCppAd::getLinearApproximation(const Pi
   auto n_points_param = distances.size() * numberOfParamsPerResult_;
   auto stateDim = fullState.size();
 
+  //std::cout << "[ExtCollisionCppAd::getLinearApproximation(3)] n_points_param: " << n_points_param << std::endl;
+  //std::cout << "[ExtCollisionCppAd::getLinearApproximation(3)] stateDim: " << stateDim << std::endl;
+
   vector_t pointsInWorldFrame(n_points_param);
   for (size_t i = 0; i < distances.size(); ++i) 
   {
@@ -287,13 +290,13 @@ void ExtCollisionCppAd::updateDistances(const vector_t& state, bool normalize_fl
   
   assert(positionPointsOnRobot.size() % 3 == 0);
   
-  float distance;
+  double distance;
 
   //vector<geometry_msgs::Point> p0_vec;
   //vector<geometry_msgs::Point> p1_vec;
 
-  p0_vec_.clear();
-  p1_vec_.clear();
+  //p0_vec_.clear();
+  //p1_vec_.clear();
 
   for (int i = 0; i < numPoints; i++)
   {
@@ -303,26 +306,41 @@ void ExtCollisionCppAd::updateDistances(const vector_t& state, bool normalize_fl
     p0.x = position(0);
     p0.y = position(1);
     p0.z = position(2);
-    p0_vec_.push_back(p0);
 
     geometry_msgs::Point p1;
-    distance = emuPtr_->getNearestOccupancyDist2(position(0), 
-                                                 position(1), 
-                                                 position(2), 
-                                                 p1, 
-                                                 maxDistance_,
-                                                 false);
-    p1_vec_.push_back(p1);
-
-    distances_[i] = distance - radii(i);
-
-    if (normalize_flag)
+    
+    bool success = emuPtr_->getNearestOccupancyDist(position(0), 
+                                                    position(1), 
+                                                    position(2), 
+                                                    radii(i),
+                                                    maxDistance_,
+                                                    p1, 
+                                                    distance,
+                                                    false);
+    if(success)
     {
-      distances_[i] /= maxDistance_ - radii(i);
+      //p0_vec_.push_back(p0);
+      //p1_vec_.push_back(p1);
+
+      distances_[i] = distance - radii(i);
+
+      if (normalize_flag)
+      {
+        distances_[i] /= maxDistance_ - radii(i);
+      }
+    }
+    else
+    {
+      distances_[i] = maxDistance_;
+
+      if (normalize_flag)
+      {
+        distances_[i] = 1;
+      }
     }
   }
 
-  emuPtr_->fillOccDistanceArrayVisu(p0_vec_, p1_vec_);
+  //emuPtr_->fillOccDistanceArrayVisu(p0_vec_, p1_vec_);
 
   std::cout << "[ExtCollisionCppAd::updateDistances(1)] END" << std::endl;
 }
@@ -340,12 +358,31 @@ void ExtCollisionCppAd::updateDistances(const vector_t& state, const vector_t& f
 
   assert(positionPointsOnRobot.size() % 3 == 0);
   
-  float distance;
+  double distance;
   p0_vec_.clear();
   p1_vec_.clear();
 
   timer1_.startTimer();
+  pointsOnRobotPtr_->getPointsEigenToGeometryMsgsVec(positionPointsOnRobot, p0_vec_);
+  timer1_.endTimer();
+
+  timer2_.startTimer();
+  std::vector<double> min_distances;
+  bool collision = emuPtr_->getNearestOccupancyDist(numPoints,
+                                                    positionPointsOnRobot,
+                                                    radii, 
+                                                    maxDistance_,
+                                                    p1_vec_, 
+                                                    min_distances,
+                                                    normalize_flag);
+
+  for (size_t i = 0; i < min_distances.size(); i++)
+  {
+    distances_[i] = min_distances[i];
+  }
+
   //std::cout << "[ExtCollisionCppAd::updateDistances(2)] numPoints: " << numPoints << std::endl;
+  /*
   for (int i = 0; i < numPoints; i++)
   {
     Eigen::Ref<Eigen::Matrix<scalar_t, 3, 1>> position = positionPointsOnRobot.segment<3>(i * 3);
@@ -356,28 +393,28 @@ void ExtCollisionCppAd::updateDistances(const vector_t& state, const vector_t& f
     p0.x = position(0);
     p0.y = position(1);
     p0.z = position(2);
-    p0_vec_.push_back(p0);
 
     geometry_msgs::Point p1;
-    distance = emuPtr_->getNearestOccupancyDist2(position(0), position(1), position(2), p1, maxDistance_, false);
-    p1_vec_.push_back(p1);
+    bool collision = emuPtr_->getNearestOccupancyDist(position(0), 
+                                                      position(1), 
+                                                      position(2),
+                                                      radii(i), 
+                                                      maxDistance_,
+                                                      p1, 
+                                                      distance,
+                                                      false);
+    distances_[i] = distance;
 
-    distances_[i] = distance - radii(i);
-
-    if (normalize_flag)
-    {
-      distances_[i] /= maxDistance_ - radii(i);
-    }
-
-    //std::cout << "distance: " << distance << std::endl;
+    std::cout << "distance: " << distance << std::endl;
     //std::cout << "radii: " << radii(i) << std::endl;
     //std::cout << "distances_: " << distances_[i] << std::endl;
   }
-  timer1_.endTimer();
-
-  timer2_.startTimer();
-  emuPtr_->fillOccDistanceArrayVisu(p0_vec_, p1_vec_);
+  */
   timer2_.endTimer();
+
+  //timer2_.startTimer();
+  //emuPtr_->fillOccDistanceArrayVisu(p0_vec_, p1_vec_);
+  //timer2_.endTimer();
 
   /*
   std::cout << "[ExtCollisionCppAd::updateDistances(2)] distances_ size: " << distances_.size() << std::endl;
