@@ -28,6 +28,7 @@
   <depend>geometry_msgs</depend>
   <depend>interactive_markers</depend>
   <depend>gazebo_ros_link_attacher</depend>
+  <depend>kinova_msgs</depend>
   <!--depend>ocs2_ext_collision</depend-->
   <!--depend>ocs2_mobile_manipulator</depend-->
   <!--depend>voxblox</depend>

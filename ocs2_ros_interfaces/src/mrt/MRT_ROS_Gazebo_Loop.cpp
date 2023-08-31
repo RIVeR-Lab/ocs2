@@ -90,6 +90,7 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   // Publishers
   baseTwistPub_ = nh.advertise<geometry_msgs::Twist>(baseControlMsg, 1);
   armJointTrajectoryPub_ = nh.advertise<trajectory_msgs::JointTrajectory>(armControlMsg, 1);
+  armJointVelocityPub_ = nh.advertise<kinova_msgs::JointVelocity>("/arm_controller/velocity", 1);
 
   /// Clients
   attachClient_ = nh.serviceClient<gazebo_ros_link_attacher::Attach>("/link_attacher_node/attach");
@@ -1234,13 +1235,23 @@ void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy,
 
   geometry_msgs::Twist baseTwistMsg;
   trajectory_msgs::JointTrajectory armJointTrajectoryMsg;
-
+  kinova_msgs::JointVelocity armJointVelocityMsg;
   // Set mobile base command
   if (mrt_.getRobotModelInfo().modelMode == ModelMode::BaseMotion || 
       mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
   {
     baseTwistMsg.linear.x = currentInput_[0];
     baseTwistMsg.angular.z = currentInput_[1];
+    // Cutoff Frequency
+    if(abs(abs(baseTwistMsg.linear.x) - abs(prev_lin_x)) > lin_x_cutoff) {
+      baseTwistMsg.linear.x = prev_lin_x+copysign(1, baseTwistMsg.linear.x-prev_lin_x)*lin_x_cutoff;
+    }
+    if(abs(abs(baseTwistMsg.angular.z) - abs(prev_ang_z)) > ang_z_cutoff) {
+      baseTwistMsg.angular.z = prev_ang_z+copysign(1, baseTwistMsg.angular.z-prev_ang_z)*ang_z_cutoff;
+    }
+    prev_lin_x = baseTwistMsg.linear.x;
+    prev_ang_z = baseTwistMsg.angular.z;
+    
     
     cmd.push_back(baseTwistMsg.linear.x);
     cmd.push_back(baseTwistMsg.angular.z);
@@ -1287,8 +1298,16 @@ void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy,
   if (mrt_.getRobotModelInfo().modelMode == ModelMode::ArmMotion || 
       mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
   {
+    armJointVelocityMsg.joint1 = currentInput_[2] * (180.0/M_PIf32);
+    armJointVelocityMsg.joint2 = currentInput_[3] * (180.0/M_PIf32);
+    armJointVelocityMsg.joint3 = currentInput_[4] * (180.0/M_PIf32);
+    armJointVelocityMsg.joint4 = currentInput_[5] * (180.0/M_PIf32);
+    armJointVelocityMsg.joint5 = currentInput_[6] * (180.0/M_PIf32);
+    armJointVelocityMsg.joint6 = currentInput_[7] * (180.0/M_PIf32);
     //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] ARM PUB" << std::endl;
     armJointTrajectoryPub_.publish(armJointTrajectoryMsg);
+    armJointVelocityPub_.publish(armJointVelocityMsg);
+
   }
 
   dataStatePosition_.push_back(state_pos);

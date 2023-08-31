@@ -16,6 +16,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   geometry_msgs
   interactive_markers
   gazebo_ros_link_attacher
+  kinova_msgs
   #voxblox
   #voxblox_ros
   #ocs2_ext_collision
