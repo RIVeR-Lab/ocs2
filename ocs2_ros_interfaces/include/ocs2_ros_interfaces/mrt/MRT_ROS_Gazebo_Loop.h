@@ -38,7 +38,6 @@
 #include "ocs2_ros_interfaces/mrt/DummyObserver.h"
 #include "ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h"
 #include "gazebo_ros_link_attacher/Attach.h"
-#include <math.h>
 
 namespace ocs2 {
 
@@ -76,7 +75,11 @@ class MRT_ROS_Gazebo_Loop
      */
     virtual ~MRT_ROS_Gazebo_Loop() = default;
 
+    /** NUA TODO: Add description */
     void setStateIndexMap(std::vector<int>& stateIndexMap);
+
+    /** NUA TODO: Add description */
+    void setTargetReceivedFlag(bool targetReceivedFlag);
 
     /** NUA TODO: Add description */
     bool isArmStateInitialized();

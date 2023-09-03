@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.08.11
+// LAST UPDATE: 2023.08.31
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -177,6 +177,7 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
   
   //currentTarget_ = initTarget;
   taskEndFlag_ = true;
+  shutDownFlag_ = false;
 
   std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting for the state to be initialized..." << std::endl;
   while(!isStateInitialized()){ros::spinOnce();}
@@ -187,70 +188,83 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
   setSystemObservation(initObservation);
 
   std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting for the target to be received..." << std::endl;
-  while(!targetReceivedFlag_){ros::spinOnce();}
+  while(!targetReceivedFlag_ && !shutDownFlag_)
+  {
+    mrtShutDownFlag_ = getenv("mrtShutDownFlag");
+    if (mrtShutDownFlag_ == "true")
+    {
+      shutDownFlag_ = true;
+    }
+    ros::spinOnce();
+  }
   vector_t currentTarget = currentTarget_;
   //currentTarget_ = initTarget;
 
-  std::cout << "[MRT_ROS_Gazebo_Loop::run] BEFORE initTarget size: " << initTarget.size() << std::endl;
-  for (size_t i = 0; i < initTarget.size(); i++)
+  std::cout << "[MRT_ROS_Gazebo_Loop::run] mrtShutDownFlag_: " << mrtShutDownFlag_ << std::endl;
+
+  if (!shutDownFlag_)
   {
-    std::cout << i << " -> " << initTarget[i] << std::endl;
-  }
-  std::cout << "------------" << std::endl;
-
-  std::cout << "[MRT_ROS_Gazebo_Loop::run] BEFORE currentTarget size: " << currentTarget.size() << std::endl;
-  for (size_t i = 0; i < currentTarget.size(); i++)
-  {
-    std::cout << i << " -> " << currentTarget[i] << std::endl;
-  }
-  std::cout << "------------" << std::endl;
-
-  std::cout << "[MRT_ROS_Gazebo_Loop::run] BEFORE initObservation.input size: " << initObservation.input.size() << std::endl;
-  for (size_t i = 0; i < initObservation.input.size(); i++)
-  {
-    std::cout << i << " -> " << initObservation.input[i] << std::endl;
-  }
-  std::cout << "------------" << std::endl;
-
-  const TargetTrajectories initTargetTrajectories({0}, {currentTarget}, {initObservation.input});
-
-  // Reset MPC node
-  mrt_.resetMpcNode(initTargetTrajectories);
-
-  // Wait for the initial state and policy
-  while ( (!isStateInitialized() || !mrt_.initialPolicyReceived()) && ros::ok() && ros::master::check() ) 
-  {
-    //std::cout << "[MRT_ROS_Gazebo_Loop::run] START INIT WHILE" << std::endl;
-    mrt_.spinMRT();
-
-    // Get initial observation
-    initObservation = getCurrentObservation(true);
-
-    /*std::cout << "[MRT_ROS_Gazebo_Loop::run] initObservation: " << initObservation.state.size() << std::endl;
-    for (size_t i = 0; i < initObservation.state.size(); i++)
+    std::cout << "[MRT_ROS_Gazebo_Loop::run] BEFORE initTarget size: " << initTarget.size() << std::endl;
+    for (size_t i = 0; i < initTarget.size(); i++)
     {
-      std::cout << i << " -> " << initObservation.state[i] << std::endl;
+      std::cout << i << " -> " << initTarget[i] << std::endl;
     }
-    */
+    std::cout << "------------" << std::endl;
 
-    //std::cout << "[MRT_ROS_Gazebo_Loop::run] BEFORE setCurrentObservation" << std::endl;
-    mrt_.setCurrentObservation(initObservation);
-    //std::cout << "[MRT_ROS_Gazebo_Loop::run] AFTER setCurrentObservation" << std::endl;
+    std::cout << "[MRT_ROS_Gazebo_Loop::run] BEFORE currentTarget size: " << currentTarget.size() << std::endl;
+    for (size_t i = 0; i < currentTarget.size(); i++)
+    {
+      std::cout << i << " -> " << currentTarget[i] << std::endl;
+    }
+    std::cout << "------------" << std::endl;
 
-    ros::Rate(mrtDesiredFrequency_).sleep();
+    std::cout << "[MRT_ROS_Gazebo_Loop::run] BEFORE initObservation.input size: " << initObservation.input.size() << std::endl;
+    for (size_t i = 0; i < initObservation.input.size(); i++)
+    {
+      std::cout << i << " -> " << initObservation.input[i] << std::endl;
+    }
+    std::cout << "------------" << std::endl;
 
-    ros::spinOnce();
-    //std::cout << "[MRT_ROS_Gazebo_Loop::run] END INIT WHILE" << std::endl;
+    const TargetTrajectories initTargetTrajectories({0}, {currentTarget}, {initObservation.input});
+
+    // Reset MPC node
+    mrt_.resetMpcNode(initTargetTrajectories);
+
+    // Wait for the initial state and policy
+    while ( (!isStateInitialized() || !mrt_.initialPolicyReceived()) && ros::ok() && ros::master::check() ) 
+    {
+      //std::cout << "[MRT_ROS_Gazebo_Loop::run] START INIT WHILE" << std::endl;
+      mrt_.spinMRT();
+
+      // Get initial observation
+      initObservation = getCurrentObservation(true);
+
+      /*std::cout << "[MRT_ROS_Gazebo_Loop::run] initObservation: " << initObservation.state.size() << std::endl;
+      for (size_t i = 0; i < initObservation.state.size(); i++)
+      {
+        std::cout << i << " -> " << initObservation.state[i] << std::endl;
+      }
+      */
+
+      //std::cout << "[MRT_ROS_Gazebo_Loop::run] BEFORE setCurrentObservation" << std::endl;
+      mrt_.setCurrentObservation(initObservation);
+      //std::cout << "[MRT_ROS_Gazebo_Loop::run] AFTER setCurrentObservation" << std::endl;
+
+      ros::Rate(mrtDesiredFrequency_).sleep();
+
+      ros::spinOnce();
+      //std::cout << "[MRT_ROS_Gazebo_Loop::run] END INIT WHILE" << std::endl;
+    }
+    ROS_INFO_STREAM("[MRT_ROS_Gazebo_Loop::run] Initial policy has been received.");
+
+    currentInput_ = initObservation.input;
+
+    //std::cout << "[MRT_ROS_Gazebo_Loop::run] BEFORE mrtLoop" << std::endl;
+    mrtLoop();
+    //std::cout << "[MRT_ROS_Gazebo_Loop::run] AFTER mrtLoop" << std::endl;
   }
-  ROS_INFO_STREAM("[MRT_ROS_Gazebo_Loop::run] Initial policy has been received.");
 
-  currentInput_ = initObservation.input;
-
-  //std::cout << "[MRT_ROS_Gazebo_Loop::run] BEFORE mrtLoop" << std::endl;
-  mrtLoop();
-  //std::cout << "[MRT_ROS_Gazebo_Loop::run] AFTER mrtLoop" << std::endl;
-
-  //std::cout << "[MRT_ROS_Gazebo_Loop::run] END" << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::run] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -593,6 +607,14 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
 void MRT_ROS_Gazebo_Loop::setStateIndexMap(std::vector<int>& stateIndexMap)
 {
   stateIndexMap_ = stateIndexMap;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::setTargetReceivedFlag(bool targetReceivedFlag)
+{
+  targetReceivedFlag_ = targetReceivedFlag;
 }
 
 //-------------------------------------------------------------------------------------------------------

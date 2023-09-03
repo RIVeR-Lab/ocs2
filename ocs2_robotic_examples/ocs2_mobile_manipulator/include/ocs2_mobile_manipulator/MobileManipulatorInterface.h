@@ -279,9 +279,11 @@ class MobileManipulatorInterface final : public RobotInterface
 
     std::unique_ptr<StateCost> getExtCollisionConstraint(const std::string& prefix);
 
-    void mapDRLAction(int action);
+    bool setTargetDRL(double x, double y, double z, double roll, double pitch, double yaw);
 
-    void mapDRLAction(std::vector<double>& action);
+    void mapDiscreteActionDRL(int action);
+
+    void mapContinuousActionDRL(std::vector<double>& action);
 
     struct mpcProblemSettings
     {
@@ -321,7 +323,7 @@ class MobileManipulatorInterface final : public RobotInterface
     int mpcIter_ = 0; 
     int mrtIter_ = 0; 
 
-    bool targetReadyFlag_ = false;
+    bool targetReceivedFlag_ = false;
     bool mpcProblemReadyFlag_ = false;
     bool mpcExitFlag_ = true;
     bool mrtExitFlag_ = true;

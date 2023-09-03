@@ -448,7 +448,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
                                                          printOutFlag_));
   
   // Visualization
-  std::cout << "[MobileManipulatorInterface::runMRT] BEFORE mobileManipulatorVisu_" << std::endl;
+  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface(6)] BEFORE mobileManipulatorVisu_" << std::endl;
   mobileManipulatorVisu_.reset(new ocs2::mobile_manipulator::MobileManipulatorVisualization(nodeHandle_, 
                                                                                             *pinocchioInterfacePtr_,
                                                                                             worldFrameName_,
@@ -464,7 +464,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
                                                                                             pointsOnRobotPtr_,
                                                                                             emuPtr_,
                                                                                             maxDistance_));
-  std::cout << "[MobileManipulatorInterface::runMRT] AFTER mobileManipulatorVisu_" << std::endl;
+  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface(6)] AFTER mobileManipulatorVisu_" << std::endl;
 
   launchNodes(nodeHandle_);
 
@@ -983,7 +983,7 @@ bool MobileManipulatorInterface::setDiscreteActionDRLSrv(ocs2_msgs::setDiscreteA
   drlActionTimeHorizon_ = req.time_horizon;
   res.success = true;
 
-  mapDRLAction(drlActionDiscrete_);
+  mapDiscreteActionDRL(drlActionDiscrete_);
 
   mpcTimer3_.startTimer();
   setMPCProblem();
@@ -1019,7 +1019,7 @@ bool MobileManipulatorInterface::setContinuousActionDRLSrv(ocs2_msgs::setContinu
   drlActionTimeHorizon_ = req.time_horizon;
   res.success = true;
 
-  //mapDRLAction(drlAction_);
+  mapContinuousActionDRL(drlActionContinuous_);
 
   mpcTimer3_.startTimer();
   setMPCProblem();
@@ -1027,18 +1027,20 @@ bool MobileManipulatorInterface::setContinuousActionDRLSrv(ocs2_msgs::setContinu
 
   //mpcProblemReadyFlag_ = true;
   std::cout << "[MobileManipulatorInterface::setContinuousActionDRLSrv] mrtShutDownFlag true"  << std::endl;
-  //mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "true", 1);
+  mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "true", 1);
 
   std::cout << "\n### MPC_ROS Benchmarking mpcTimer3_";
   std::cout << "\n###   Maximum : " << mpcTimer3_.getMaxIntervalInMilliseconds() << "[ms].";
   std::cout << "\n###   Average : " << mpcTimer3_.getAverageInMilliseconds() << "[ms].";
   std::cout << "\n###   Latest  : " << mpcTimer3_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
 
-  std::cout << "[MobileManipulatorInterface::setContinuousActionDRLSrv] END" << std::endl;
-  std::cout << "" << std::endl;
 
-  std::cout << "[MobileManipulatorInterface::setContinuousActionDRLSrv] DEBUG INF" << std::endl;
-  while(1);
+  targetReceivedFlag_ = true;
+  //std::cout << "[MobileManipulatorInterface::setContinuousActionDRLSrv] END" << std::endl;
+  //std::cout << "" << std::endl;
+  
+  //std::cout << "[MobileManipulatorInterface::setContinuousActionDRLSrv] DEBUG INF" << std::endl;
+  //while(1);
 
   std::cout << "[MobileManipulatorInterface::setContinuousActionDRLSrv] END" << std::endl;
   return res.success;
@@ -1325,6 +1327,7 @@ void MobileManipulatorInterface::runMRT()
     //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE subscribeObservers" << std::endl;
     mobileManipulatorVisu_->updateModelMode(getModelModeInt(robotModelInfo));
     mrt_loop.subscribeObservers({mobileManipulatorVisu_});
+    mrt_loop.setTargetReceivedFlag(targetReceivedFlag_);
     //std::cout << "[MobileManipulatorInterface::runMRT] AFTER subscribeObservers" << std::endl;
 
     // initial command
@@ -1379,14 +1382,6 @@ void MobileManipulatorInterface::runMRT()
     mrt_loop.run(currentTarget);
     mrtExitFlag_ = true;
     setenv("mpcShutDownFlag", "true", 1);
-
-    /*
-    if (mrtIter_ > 0)
-    {
-      std::cout << "[MobileManipulatorInterface::runMRT] DEBUG INF" << std::endl;
-      while(1);
-    }
-    */
 
     if (false)
     {
@@ -1838,9 +1833,46 @@ std::unique_ptr<StateCost> MobileManipulatorInterface::getExtCollisionConstraint
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MobileManipulatorInterface::mapDRLAction(int action)
+bool MobileManipulatorInterface::setTargetDRL(double x, double y, double z, double roll, double pitch, double yaw)
 {
-  std::cout << "[MobileManipulatorInterface::mapDRLAction] START" << std::endl;
+  std::cout << "[MobileManipulatorInterface::setTargetDRL] START" << std::endl;
+
+  bool success = false;
+  ocs2_msgs::setTask srv;
+  srv.request.targetPose.position.x = x;
+  srv.request.targetPose.position.y = y;
+  srv.request.targetPose.position.z = z;
+
+  // Convert RPY to Quaternion
+  tf2::Quaternion quat;
+  quat.setRPY(roll, pitch, yaw);
+
+  srv.request.targetPose.orientation.x = quat.x();
+  srv.request.targetPose.orientation.y = quat.y();
+  srv.request.targetPose.orientation.z = quat.z();
+  srv.request.targetPose.orientation.w = quat.w();
+
+  if (setTargetDRLClient_.call(srv))
+  {
+    success = srv.response.success;
+  }
+  else
+  {
+    ROS_ERROR("[MobileManipulatorInterface::setTargetDRL] ERROR: Failed to call service!");
+    success = false;
+  }
+
+  std::cout << "[MobileManipulatorInterface::setTargetDRL] END" << std::endl;
+  
+  return success;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorInterface::mapDiscreteActionDRL(int action)
+{
+  std::cout << "[MobileManipulatorInterface::mapDiscreteActionDRL] START" << std::endl;
 
   /// NUA TODO: NEEDS DEBUGGING!
 
@@ -1867,37 +1899,50 @@ void MobileManipulatorInterface::mapDRLAction(int action)
   {
     tmp_name = mpcProblemSettings_.binarySettingNames[i];
     tmp_val = mpcProblemSettings_.binarySettingValues[i];
-    std::cout << "[MobileManipulatorInterface::mapDRLAction] " << tmp_name << ": " << tmp_val << std::endl;
+    std::cout << "[MobileManipulatorInterface::mapDiscreteActionDRL] " << tmp_name << ": " << tmp_val << std::endl;
   }
 
-  std::cout << "[MobileManipulatorInterface::mapDRLAction] END" << std::endl;
+  std::cout << "[MobileManipulatorInterface::mapDiscreteActionDRL] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MobileManipulatorInterface::mapDRLAction(std::vector<double>& action)
+void MobileManipulatorInterface::mapContinuousActionDRL(std::vector<double>& action)
 {
-  std::cout << "[MobileManipulatorInterface::mapDRLAction(vec)] START" << std::endl;
+  std::cout << "[MobileManipulatorInterface::mapContinuousActionDRL] START" << std::endl;
 
   double modelModeProb = action[0];
   double constraintProb = action[1];
   
-  /*
-  setTask()
-
-  switch ()
+  // Set Model Mode
+  if (modelModeProb <= 0.3)
   {
-    case :
-      break;
-    
-    default:
-      break;
-    }
-    modelModeIntQuery_ = 
-  */
+    modelModeIntQuery_ = 0;
+  }
+  else if (modelModeProb > 0.6)
+  {
+    modelModeIntQuery_ = 2;
+  }
+  else
+  {
+    modelModeIntQuery_ = 1;
+  }
 
-  std::cout << "[MobileManipulatorInterface::mapDRLAction(vec)] END" << std::endl;
+  // Set Constraint Flags
+  if (constraintProb <= 0.5)
+  {
+    activateSelfCollision_ = false;
+  }
+  else
+  {
+    activateSelfCollision_ = true;
+  }
+
+  // Set Target
+  setTargetDRL(action[2], action[3], action[4], action[5], action[6], action[7]);
+
+  std::cout << "[MobileManipulatorInterface::mapContinuousActionDRL] END" << std::endl;
 }
 
 }  // namespace mobile_manipulator

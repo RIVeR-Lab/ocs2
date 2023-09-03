@@ -307,7 +307,7 @@ class TargetTrajectoriesGazebo final
     ros::ServiceClient setTaskClient_;
     ros::ServiceServer setPickedFlagService_;
     ros::ServiceServer setSystemObservationService_;
-    ros::ServiceServer setActionDRLService_;
+    ros::ServiceServer setTargetDRLService_;
 
     bool policyReceivedFlag_ = false;
     mutable std::mutex latestObservationMutex_;
