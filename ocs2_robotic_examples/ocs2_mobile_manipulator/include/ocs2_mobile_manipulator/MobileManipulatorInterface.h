@@ -285,6 +285,10 @@ class MobileManipulatorInterface final : public RobotInterface
 
     void mapContinuousActionDRL(std::vector<double>& action);
 
+    bool setMRTReady();
+
+    bool setDRLActionResult(int drlActionResult);
+
     struct mpcProblemSettings
     {
       int modelMode = 2;
@@ -316,6 +320,12 @@ class MobileManipulatorInterface final : public RobotInterface
 
     size_t initModelModeInt_ = 2;
     size_t modelModeIntQuery_ = 2;
+
+    // 0: Go
+    // 1: Go & Pick
+    // 2: Go & Drop
+    //// NUA NOTE: For now it is fixed to 1 for drl!
+    int taskMode_ = 1;
 
     double err_threshold_pos_ = 0.02;
     double err_threshold_ori_ = 0.05;
@@ -449,6 +459,8 @@ class MobileManipulatorInterface final : public RobotInterface
     ros::Subscriber targetTrajectoriesSubscriber_;
 
     ros::ServiceClient setTargetDRLClient_;
+    ros::ServiceClient setDRLActionResultClient_;
+    ros::ServiceClient setMRTReadyClient_;
 
     ros::ServiceServer setActionDRLService_;
 };

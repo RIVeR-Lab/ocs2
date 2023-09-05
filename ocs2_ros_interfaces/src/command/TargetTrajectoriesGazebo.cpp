@@ -2034,7 +2034,7 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
   target.orientation.y = targetPose.orientation.y;
   target.orientation.z = targetPose.orientation.z;
   target.orientation.w = targetPose.orientation.w;
-  bool taskModeSuccess = setTask(taskMode_, target);
+  //bool taskModeSuccess = setTask(taskMode_, target);
   
   std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] END" << std::endl;
   return res.success;

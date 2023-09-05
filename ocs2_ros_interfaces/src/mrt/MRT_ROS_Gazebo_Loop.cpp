@@ -178,6 +178,7 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
   //currentTarget_ = initTarget;
   taskEndFlag_ = true;
   shutDownFlag_ = false;
+  currentTarget_ = initTarget;
 
   std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting for the state to be initialized..." << std::endl;
   while(!isStateInitialized()){ros::spinOnce();}
@@ -420,6 +421,7 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
   PrimalSolution currentPolicy;
 
   shutDownFlag_ = false;
+  drlActionResult_ = 0;
 
   // Update the policy
   mrt_.updatePolicy();
@@ -570,7 +572,17 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
         // Publish the control command 
         publishCommand(currentPolicy, currentObservation, currentStateVelocityBase);
 
-        writeData();
+        //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] OUT time_: " << time_ << std::endl;
+        if (drlFlag_ && time_ > drlActionTimeHorizon_)
+        {
+          shutDownFlag_ = true;
+          drlActionResult_ = 1;
+          //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] IN time_: " << time_ << std::endl;
+        }
+        else
+        {
+          writeData();
+        }
 
         time_ += dt_;
 
@@ -604,6 +616,14 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+int MRT_ROS_Gazebo_Loop::getDRLActionResult()
+{
+  return drlActionResult_;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MRT_ROS_Gazebo_Loop::setStateIndexMap(std::vector<int>& stateIndexMap)
 {
   stateIndexMap_ = stateIndexMap;
@@ -615,6 +635,30 @@ void MRT_ROS_Gazebo_Loop::setStateIndexMap(std::vector<int>& stateIndexMap)
 void MRT_ROS_Gazebo_Loop::setTargetReceivedFlag(bool targetReceivedFlag)
 {
   targetReceivedFlag_ = targetReceivedFlag;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::setTaskMode(int taskMode)
+{
+  taskMode_ = taskMode;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::setDRLFlag(bool drlFlag)
+{
+  drlFlag_ = drlFlag;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::setDRLActionTimeHorizon(double drlActionTimeHorizon)
+{
+  drlActionTimeHorizon_ = drlActionTimeHorizon;
 }
 
 //-------------------------------------------------------------------------------------------------------

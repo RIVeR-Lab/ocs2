@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.08.03
+// LAST UPDATE: 2023.09.04
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -76,10 +76,22 @@ class MRT_ROS_Gazebo_Loop
     virtual ~MRT_ROS_Gazebo_Loop() = default;
 
     /** NUA TODO: Add description */
+    int getDRLActionResult();
+
+    /** NUA TODO: Add description */
     void setStateIndexMap(std::vector<int>& stateIndexMap);
 
     /** NUA TODO: Add description */
     void setTargetReceivedFlag(bool targetReceivedFlag);
+
+    /** NUA TODO: Add description */
+    void setTaskMode(int taskMode);
+
+    /** NUA TODO: Add description */
+    void setDRLFlag(bool drlFlag);
+
+    /** NUA TODO: Add description */
+    void setDRLActionTimeHorizon(double drlActionTimeHorizon);
 
     /** NUA TODO: Add description */
     bool isArmStateInitialized();
@@ -216,7 +228,7 @@ class MRT_ROS_Gazebo_Loop
 
     MRT_ROS_Interface& mrt_;
     scalar_t dt_;
-    scalar_t time_;
+    scalar_t time_ = 0.0;
 
     std::string currentTargetName_;
     std::string currentTargetAttachLinkName_;
@@ -254,6 +266,13 @@ class MRT_ROS_Gazebo_Loop
     // 1: Go & Pick
     // 2: Go & Drop
     int taskMode_ = 0;
+
+    bool drlFlag_ = false;
+    double drlActionTimeHorizon_;
+
+    // 0: Failure
+    // 1: Success
+    int drlActionResult_ = 0;
 
     bool pickedFlag_ = false;
     bool taskEndFlag_ = true;
