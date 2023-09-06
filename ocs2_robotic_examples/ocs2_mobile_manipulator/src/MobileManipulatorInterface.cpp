@@ -1332,8 +1332,12 @@ void MobileManipulatorInterface::runMRT()
     if (drlFlag_)
     {
       std::cout << "[MobileManipulatorInterface::runMRT] Waiting for targetReceivedFlag_..." << std::endl;
-      setMRTReady();
-      while(!targetReceivedFlag_){spinOnce();}
+      //setMRTReady();
+      while(!targetReceivedFlag_)
+      {
+        setMRTReady();
+        spinOnce();
+      }
       mrt_loop.setDRLFlag(drlFlag_);
       mrt_loop.setTargetReceivedFlag(targetReceivedFlag_);
       mrt_loop.setTaskMode(taskMode_);
@@ -1968,8 +1972,7 @@ void MobileManipulatorInterface::mapContinuousActionDRL(std::vector<double>& act
 //-------------------------------------------------------------------------------------------------------
 bool MobileManipulatorInterface::setMRTReady()
 {
-  std::cout << "[MobileManipulatorInterface::setMRTReady] START" << std::endl;
-
+  //std::cout << "[MobileManipulatorInterface::setMRTReady] START" << std::endl;
   bool success = false;
   ocs2_msgs::setBool srv;
   srv.request.val = true;
@@ -1986,7 +1989,7 @@ bool MobileManipulatorInterface::setMRTReady()
     success = false;
   }
 
-  std::cout << "[MobileManipulatorInterface::setMRTReady] END" << std::endl;
+  //std::cout << "[MobileManipulatorInterface::setMRTReady] END" << std::endl;
   
   return success;
 }
