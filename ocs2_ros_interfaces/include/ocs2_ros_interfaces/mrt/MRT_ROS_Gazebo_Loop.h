@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.09.04
+// LAST UPDATE: 2023.09.07
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -19,6 +19,7 @@
 
 #include <ros/package.h>
 #include <tf/transform_listener.h>
+#include <visualization_msgs/MarkerArray.h>
 #include <nav_msgs/Odometry.h>
 #include <gazebo_msgs/LinkStates.h>
 #include <sensor_msgs/JointState.h>
@@ -67,7 +68,8 @@ class MRT_ROS_Gazebo_Loop
                         double err_threshold_pos_,
                         double err_threshold_ori_,
                         scalar_t mrtDesiredFrequency,
-                        scalar_t mpcDesiredFrequency = -1,
+                        scalar_t mpcDesiredFrequency=-1,
+                        bool drlFlag=false,
                         std::string logSavePath="");
 
     /**
@@ -143,6 +145,15 @@ class MRT_ROS_Gazebo_Loop
     void odometryCallback(const nav_msgs::Odometry::ConstPtr& msg);
 
     /** NUA TODO: Add description */
+    void selfCollisionDistanceCallback(const visualization_msgs::MarkerArray::ConstPtr& msg);
+
+    /** NUA TODO: Add description */
+    void extCollisionDistanceCallback(const visualization_msgs::MarkerArray::ConstPtr& msg);
+
+    /** NUA TODO: Add description */
+    void pointsOnRobotCallback(const visualization_msgs::MarkerArray::ConstPtr& msg);
+
+    /** NUA TODO: Add description */
     void linkStateCallback(const gazebo_msgs::LinkStates::ConstPtr& msg);
 
     /** NUA TODO: Add description */
@@ -182,6 +193,12 @@ class MRT_ROS_Gazebo_Loop
     void publishCommand(const PrimalSolution& currentPolicy, 
                         const SystemObservation& currentObservation,
                         std::vector<double>& currentStateVelocityBase);
+
+    /** NUA TODO: Add description */
+    bool checkCollision();
+
+    /** NUA TODO: Add description */
+    bool checkRollover();
 
     /** NUA TODO: Add description */
     const std::string getDateTime();
@@ -270,9 +287,11 @@ class MRT_ROS_Gazebo_Loop
     bool drlFlag_ = false;
     double drlActionTimeHorizon_;
 
-    // 0: Failure
-    // 1: Success
-    int drlActionResult_ = 0;
+    // -1: MPC/MRT Failure
+    // 0: Success
+    // 1: Collision
+    // 2: Rollover
+    int drlActionResult_ = -1;
 
     bool pickedFlag_ = false;
     bool taskEndFlag_ = true;
@@ -284,6 +303,26 @@ class MRT_ROS_Gazebo_Loop
     ros::Subscriber odometrySub_;
     ros::Subscriber linkStateSub_;
     ros::Subscriber jointStateSub_;
+
+    /// NUA TODO: Set these in config!
+    bool initFlagSelfCollision_ = false;
+    bool initFlagExtCollision_ = false;
+    bool initFlagPointsOnRobot_ = false;
+    std::string selfCollisionDistanceMsgName_ = "/distance_markers";
+    std::string extCollisionDistanceMsgName_ = "/occupancy_distances";
+    std::string pointsOnRobotMsgName_ = "/points_on_robot";
+    int selfColDistance_n_coeff_ = 5;
+    double selfCollisionRangeMin_ = 0.05;
+    double extCollisionRangeMin_ = 0.25;
+    double rolloverRollThreshold_ = 0.2;
+    double rolloverPitchThreshold_ = 0.2;
+    visualization_msgs::MarkerArray selfCollisionDistanceMsg_;
+    visualization_msgs::MarkerArray extCollisionDistanceMsg_;
+    visualization_msgs::MarkerArray pointsOnRobotMsg_;
+    ros::Subscriber selfCollisionDistanceSub_;
+    ros::Subscriber extCollisionDistanceSub_;
+    ros::Subscriber pointsOnRobotSub_;
+    
     ros::Subscriber jointTrajectoryControllerStateSub_;
     ros::Subscriber targetTrajectoriesSubscriber_;
 

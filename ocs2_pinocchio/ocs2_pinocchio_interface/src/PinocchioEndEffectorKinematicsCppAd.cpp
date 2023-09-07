@@ -830,7 +830,7 @@ ad_vector_t PinocchioEndEffectorKinematicsCppAd::getOrientationErrorCppAd(Pinocc
       
       ad_quaternion_t eeReferenceOrientation;
       eeReferenceOrientation.coeffs() = pp.segment<4>(i*4);
-      Eigen::Matrix<ad_scalar_t, 3, 1> eeRefEulerZYX = getEulerAnglesZyxFromQuaternion(eeOrientation);
+      Eigen::Matrix<ad_scalar_t, 3, 1> eeRefEulerZYX = getEulerAnglesZyxFromQuaternion(eeReferenceOrientation);
 
       auto yawDiff = eeEulerZYX - eeRefEulerZYX;
       //auto yawDiff = eeEulerZYX;

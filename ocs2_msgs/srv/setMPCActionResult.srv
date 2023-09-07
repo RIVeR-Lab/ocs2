@@ -1,0 +1,16 @@
+## Request
+
+# -1: MPC/MRT Failure
+# 0: Success
+# 1: Collision
+# 2: Rollover
+int8 action_result
+
+# 0: baseMotion
+# 1: armMotion
+# 2: wholeBodyMotion
+int8 model_mode
+
+---
+## Response
+bool success

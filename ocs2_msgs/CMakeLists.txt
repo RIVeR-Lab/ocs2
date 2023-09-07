@@ -31,6 +31,7 @@ add_service_files(
     setDiscreteActionDRL.srv
     setContinuousActionDRL.srv
     setSystemObservation.srv
+    setMPCActionResult.srv
 )
 
 generate_messages(

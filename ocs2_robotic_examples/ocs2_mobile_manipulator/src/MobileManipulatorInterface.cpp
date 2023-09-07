@@ -837,7 +837,7 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
 
     setTargetDRLClient_ = nodeHandle_.serviceClient<ocs2_msgs::setTask>("/set_target_drl");
     setMRTReadyClient_ = nodeHandle_.serviceClient<ocs2_msgs::setBool>("/set_mrt_ready");
-    setDRLActionResultClient_ = nodeHandle_.serviceClient<ocs2_msgs::setInt>("/set_drl_action_result");
+    setMPCActionResultClient_ = nodeHandle_.serviceClient<ocs2_msgs::setMPCActionResult>("/set_mpc_action_result");
   }
   else
   {
@@ -1319,6 +1319,7 @@ void MobileManipulatorInterface::runMRT()
                                  err_threshold_ori_,
                                  mpcSettings_.mrtDesiredFrequency_, 
                                  mpcSettings_.mpcDesiredFrequency_,
+                                 drlFlag_,
                                  logSavePathRel_);
 
     //mrtTimer6_.endTimer();
@@ -1338,7 +1339,7 @@ void MobileManipulatorInterface::runMRT()
         setMRTReady();
         spinOnce();
       }
-      mrt_loop.setDRLFlag(drlFlag_);
+      //mrt_loop.setDRLFlag(drlFlag_);
       mrt_loop.setTargetReceivedFlag(targetReceivedFlag_);
       mrt_loop.setTaskMode(taskMode_);
       mrt_loop.setDRLActionTimeHorizon(drlActionTimeHorizon_);
@@ -1400,7 +1401,7 @@ void MobileManipulatorInterface::runMRT()
 
     if (drlFlag_)
     {
-      setDRLActionResult(mrt_loop.getDRLActionResult());
+      setMPCActionResult(mrt_loop.getDRLActionResult());
     }
 
     /*
@@ -1997,25 +1998,26 @@ bool MobileManipulatorInterface::setMRTReady()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-bool MobileManipulatorInterface::setDRLActionResult(int drlActionResult)
+bool MobileManipulatorInterface::setMPCActionResult(int drlActionResult)
 {
-  std::cout << "[MobileManipulatorInterface::setDRLActionResult] START" << std::endl;
+  std::cout << "[MobileManipulatorInterface::setMPCActionResult] START" << std::endl;
 
   bool success = false;
-  ocs2_msgs::setInt srv;
-  srv.request.val = drlActionResult;
+  ocs2_msgs::setMPCActionResult srv;
+  srv.request.action_result = drlActionResult;
+  srv.request.model_mode = getModelModeInt(robotModelInfo_);
 
-  if (setDRLActionResultClient_.call(srv))
+  if (setMPCActionResultClient_.call(srv))
   {
     success = srv.response.success;
   }
   else
   {
-    ROS_ERROR("[MobileManipulatorInterface::setDRLActionResult] ERROR: Failed to call service!");
+    ROS_ERROR("[MobileManipulatorInterface::setMPCActionResult] ERROR: Failed to call service!");
     success = false;
   }
 
-  std::cout << "[MobileManipulatorInterface::setDRLActionResult] END" << std::endl;
+  std::cout << "[MobileManipulatorInterface::setMPCActionResult] END" << std::endl;
   
   return success;
 }

@@ -36,6 +36,7 @@
 
 #include "ocs2_msgs/setDiscreteActionDRL.h"
 #include "ocs2_msgs/setContinuousActionDRL.h"
+#include "ocs2_msgs/setMPCActionResult.h"
 
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
@@ -287,7 +288,7 @@ class MobileManipulatorInterface final : public RobotInterface
 
     bool setMRTReady();
 
-    bool setDRLActionResult(int drlActionResult);
+    bool setMPCActionResult(int drlActionResult);
 
     struct mpcProblemSettings
     {
@@ -459,7 +460,7 @@ class MobileManipulatorInterface final : public RobotInterface
     ros::Subscriber targetTrajectoriesSubscriber_;
 
     ros::ServiceClient setTargetDRLClient_;
-    ros::ServiceClient setDRLActionResultClient_;
+    ros::ServiceClient setMPCActionResultClient_;
     ros::ServiceClient setMRTReadyClient_;
 
     ros::ServiceServer setActionDRLService_;
