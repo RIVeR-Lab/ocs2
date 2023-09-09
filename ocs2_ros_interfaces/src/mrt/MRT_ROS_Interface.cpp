@@ -176,6 +176,7 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
 
   const size_t N = msg.timeTrajectory.size();
 
+  /*
   if (N == 0) 
   {
     throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] ERROR: Controller message is empty!");
@@ -190,57 +191,61 @@ void MRT_ROS_Interface::readPolicyMsg(const ocs2_msgs::mpc_flattened_controller&
   {
     throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] ERROR: Data has the wrong length!");
   }
+  */
 
-  primalSolution.clear();
-
-  primalSolution.modeSchedule_ = ros_msg_conversions::readModeScheduleMsg(msg.modeSchedule);
-
-  size_array_t stateDim(N);
-  size_array_t inputDim(N);
-  primalSolution.timeTrajectory_.reserve(N);
-  primalSolution.stateTrajectory_.reserve(N);
-  primalSolution.inputTrajectory_.reserve(N);
-  
-  for (size_t i = 0; i < N; i++) 
+  if (N > 0 && (msg.stateTrajectory.size() == N && msg.inputTrajectory.size() == N) && msg.data.size() == N)
   {
-    stateDim[i] = msg.stateTrajectory[i].value.size();
-    inputDim[i] = msg.inputTrajectory[i].value.size();
-    primalSolution.timeTrajectory_.emplace_back(msg.timeTrajectory[i]);
-    primalSolution.stateTrajectory_.emplace_back(Eigen::Map<const Eigen::VectorXf>(msg.stateTrajectory[i].value.data(), stateDim[i]).cast<scalar_t>());
-    primalSolution.inputTrajectory_.emplace_back(Eigen::Map<const Eigen::VectorXf>(msg.inputTrajectory[i].value.data(), inputDim[i]).cast<scalar_t>());
-  }
+    primalSolution.clear();
 
-  primalSolution.postEventIndices_.reserve(msg.postEventIndices.size());
-  for (auto ind : msg.postEventIndices) 
-  {
-    primalSolution.postEventIndices_.emplace_back(static_cast<size_t>(ind));
-  }
+    primalSolution.modeSchedule_ = ros_msg_conversions::readModeScheduleMsg(msg.modeSchedule);
 
-  std::vector<std::vector<float> const*> controllerDataPtrArray(N, nullptr);
-  for (int i = 0; i < N; i++) 
-  {
-    controllerDataPtrArray[i] = &(msg.data[i].data);
-  }
-
-  // Instantiate the correct controller
-  switch (msg.controllerType) 
-  {
-    case ocs2_msgs::mpc_flattened_controller::CONTROLLER_FEEDFORWARD: 
-    {
-      auto controller = FeedforwardController::unFlatten(primalSolution.timeTrajectory_, controllerDataPtrArray);
-      primalSolution.controllerPtr_.reset(new FeedforwardController(std::move(controller)));
-      break;
-    }
+    size_array_t stateDim(N);
+    size_array_t inputDim(N);
+    primalSolution.timeTrajectory_.reserve(N);
+    primalSolution.stateTrajectory_.reserve(N);
+    primalSolution.inputTrajectory_.reserve(N);
     
-    case ocs2_msgs::mpc_flattened_controller::CONTROLLER_LINEAR: 
+    for (size_t i = 0; i < N; i++) 
     {
-      auto controller = LinearController::unFlatten(stateDim, inputDim, primalSolution.timeTrajectory_, controllerDataPtrArray);
-      primalSolution.controllerPtr_.reset(new LinearController(std::move(controller)));
-      break;
+      stateDim[i] = msg.stateTrajectory[i].value.size();
+      inputDim[i] = msg.inputTrajectory[i].value.size();
+      primalSolution.timeTrajectory_.emplace_back(msg.timeTrajectory[i]);
+      primalSolution.stateTrajectory_.emplace_back(Eigen::Map<const Eigen::VectorXf>(msg.stateTrajectory[i].value.data(), stateDim[i]).cast<scalar_t>());
+      primalSolution.inputTrajectory_.emplace_back(Eigen::Map<const Eigen::VectorXf>(msg.inputTrajectory[i].value.data(), inputDim[i]).cast<scalar_t>());
     }
 
-    default:
-      throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] ERROR: Unknown controllerType!");
+    primalSolution.postEventIndices_.reserve(msg.postEventIndices.size());
+    for (auto ind : msg.postEventIndices) 
+    {
+      primalSolution.postEventIndices_.emplace_back(static_cast<size_t>(ind));
+    }
+
+    std::vector<std::vector<float> const*> controllerDataPtrArray(N, nullptr);
+    for (int i = 0; i < N; i++) 
+    {
+      controllerDataPtrArray[i] = &(msg.data[i].data);
+    }
+
+    // Instantiate the correct controller
+    switch (msg.controllerType) 
+    {
+      case ocs2_msgs::mpc_flattened_controller::CONTROLLER_FEEDFORWARD: 
+      {
+        auto controller = FeedforwardController::unFlatten(primalSolution.timeTrajectory_, controllerDataPtrArray);
+        primalSolution.controllerPtr_.reset(new FeedforwardController(std::move(controller)));
+        break;
+      }
+      
+      case ocs2_msgs::mpc_flattened_controller::CONTROLLER_LINEAR: 
+      {
+        auto controller = LinearController::unFlatten(stateDim, inputDim, primalSolution.timeTrajectory_, controllerDataPtrArray);
+        primalSolution.controllerPtr_.reset(new LinearController(std::move(controller)));
+        break;
+      }
+
+      default:
+        throw std::runtime_error("[MRT_ROS_Interface::readPolicyMsg] ERROR: Unknown controllerType!");
+    }
   }
 }
 

@@ -481,6 +481,8 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
 
     while (!shutDownFlag_ && !mrt_.initialPolicyReceived() && ros::ok() && ros::master::check()) 
     {
+      std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START initialPolicyReceived initPolicyCtr: " << initPolicyCtr << std::endl;
+
       if (initPolicyCtr > initPolicyCtrMax_)
       {
         std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] THATS ENOUGH WAITING FOR THE POLICY!" << std::endl;
@@ -508,7 +510,7 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
 
       //shutDownFlag_ = mrt_.getShutDownFlag();
 
-      //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] END spinMRT" << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] END spinMRT" << std::endl;
 
       initPolicyCtr++;
     }
