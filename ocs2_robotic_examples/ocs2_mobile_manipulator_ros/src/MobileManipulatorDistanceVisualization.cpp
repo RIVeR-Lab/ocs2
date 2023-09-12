@@ -243,7 +243,7 @@ int main(int argc, char** argv)
   bool activateExtCollision = true;
 
   /// NUA TODO: READ FROM CONFIG!
-  maxDistance = 100;
+  maxDistance = 5;
 
   std::cout << "[MobileManipulatorInterface::runMRT] BEFORE mobileManipulatorVisu_" << std::endl;
   MobileManipulatorVisualization mobileManipulatorVisu(nodeHandle, 

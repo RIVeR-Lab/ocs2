@@ -1937,10 +1937,18 @@ void MobileManipulatorInterface::mapContinuousActionDRL(std::vector<double>& act
 
   double modelModeProb = action[0];
   double constraintProb = action[1];
+  double target_x = action[2];
+  double target_y = action[3];
+  double target_z = action[4];
+  double target_roll = action[5];
+  double target_pitch = action[6];
+  double target_yaw = action[7];
   
   // Set Model Mode
   if (modelModeProb <= 0.3)
   {
+    target_roll = 0.0;
+    target_pitch = 0.0;
     modelModeIntQuery_ = 0;
   }
   else if (modelModeProb > 0.6)
@@ -1963,7 +1971,7 @@ void MobileManipulatorInterface::mapContinuousActionDRL(std::vector<double>& act
   }
 
   // Set Target
-  setTargetDRL(action[2], action[3], action[4], action[5], action[6], action[7]);
+  setTargetDRL(target_x, target_y, target_z, target_roll, target_pitch, target_yaw);
 
   std::cout << "[MobileManipulatorInterface::mapContinuousActionDRL] END" << std::endl;
 }
