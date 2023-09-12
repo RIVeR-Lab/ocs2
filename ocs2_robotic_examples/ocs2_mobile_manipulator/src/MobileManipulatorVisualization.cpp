@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.08.18
+// LAST UPDATE: 2023.09.11
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -103,6 +103,14 @@ MobileManipulatorVisualization::MobileManipulatorVisualization(ros::NodeHandle& 
   std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] START" << std::endl;
   launchVisualizerNode(nodeHandle);
   std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::setObjOctomapNames(std::vector<std::string>& objOctomapNames)
+{
+  objOctomapNames_ = objOctomapNames;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -691,6 +699,8 @@ void MobileManipulatorVisualization::updateExtCollisionDistances(bool normalize_
   double distance;
   p0_vec_.clear();
   p1_vec_.clear();
+  p0_vec2_.clear();
+  p1_vec2_.clear();
 
   //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START getNearestOccupancyDist" << std::endl;
   timer3_.startTimer();
@@ -706,13 +716,41 @@ void MobileManipulatorVisualization::updateExtCollisionDistances(bool normalize_
   emuPtr_->fillOccDistanceArrayVisu(p0_vec_, p1_vec_);
   timer4_.endTimer();
 
-  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] BEFORE publishOccDistanceArrayVisu" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START publishOccDistanceArrayVisu" << std::endl;
   timer5_.startTimer();
   pointsOnRobotPtr_->publishPointsOnRobotVisu();
   emuPtr_->publishOccDistanceArrayVisu();
   timer5_.endTimer();
   //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] AFTER publishOccDistanceArrayVisu" << std::endl;
   
+  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START getNearestOccupancyDist 2" << std::endl;
+  timer10_.startTimer();
+  for (size_t i = 0; i < objOctomapNames_.size(); i++)
+  {
+    Eigen::Ref<Eigen::Matrix<ocs2::scalar_t, 3, 1>> base_position = positionPointsOnRobot.segment<3>(0);
+    geometry_msgs::Point p0;
+    p0.x = base_position(0);
+    p0.y = base_position(1);
+    p0.z = base_position(2);
+    p0_vec2_.push_back(p0);
+    
+    geometry_msgs::Point p1;
+    double min_dist;
+    bool collision = emuPtr_->getNearestOccupancyDist(objOctomapNames_[i], base_position, radii[0], maxDistance_, p1, min_dist, normalize_flag);
+    p1_vec2_.push_back(p1);
+  }
+  timer10_.endTimer();
+
+  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] BEFORE fillOccDistanceArrayVisu2" << std::endl;
+  timer11_.startTimer();
+  emuPtr_->fillOccDistanceArrayVisu2(p0_vec2_, p1_vec2_);
+  timer11_.endTimer();
+
+  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] BEFORE publishOccDistanceArrayVisu2" << std::endl;
+  timer12_.startTimer();
+  emuPtr_->publishOccDistanceArrayVisu2();
+  timer12_.endTimer();
+
   timer0_.endTimer();
 
   /*
@@ -740,6 +778,21 @@ void MobileManipulatorVisualization::updateExtCollisionDistances(bool normalize_
   std::cout << "###   Maximum : " << timer5_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
   std::cout << "###   Average : " << timer5_.getAverageInMilliseconds() << "[ms]" << std::endl;
   std::cout << "###   Latest  : " << timer5_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+
+  std::cout << "### MPC_ROS Benchmarking timer10_ publishOccDistanceArrayVisu:" << std::endl;
+  std::cout << "###   Maximum : " << timer10_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer10_.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer10_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+
+  std::cout << "### MPC_ROS Benchmarking timer11_ publishOccDistanceArrayVisu:" << std::endl;
+  std::cout << "###   Maximum : " << timer11_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer11_.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer11_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
+
+  std::cout << "### MPC_ROS Benchmarking timer12_ publishOccDistanceArrayVisu:" << std::endl;
+  std::cout << "###   Maximum : " << timer12_.getMaxIntervalInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Average : " << timer12_.getAverageInMilliseconds() << "[ms]" << std::endl;
+  std::cout << "###   Latest  : " << timer12_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
   */
 
   //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] DEBUG INF" << std::endl;
@@ -771,6 +824,7 @@ void MobileManipulatorVisualization::distanceVisualizationCallback(const ros::Ti
   updateState();
   timer1_.endTimer();
 
+  //std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] BEFORE updateExtCollisionDistances" << std::endl;
   updateExtCollisionDistances(false);
 
   publishSelfCollisionDistances();

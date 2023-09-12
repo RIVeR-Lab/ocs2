@@ -92,6 +92,12 @@ int main(int argc, char** argv)
   std::cout << "[MobileManipulatorDistanceVisualization::main] baseFrame: " << baseFrameName << std::endl;
   std::cout << "[MobileManipulatorDistanceVisualization::main] armBaseFrame: " << armBaseFrame << std::endl;
   std::cout << "[MobileManipulatorDistanceVisualization::main] eeFrame: " << eeFrame << std::endl;
+  std::cout << "[MobileManipulatorDistanceVisualization::main] baseStateMsg: " << baseStateMsg << std::endl;
+  std::cout << "[MobileManipulatorDistanceVisualization::main] armStateMsg: " << armStateMsg << std::endl;
+  std::cout << "[MobileManipulatorDistanceVisualization::main] baseControlMsg: " << baseControlMsg << std::endl;
+  std::cout << "[MobileManipulatorDistanceVisualization::main] armControlMsg: " << armControlMsg << std::endl;
+  std::cout << "[MobileManipulatorDistanceVisualization::main] occupancyDistanceMsg: " << occupancyDistanceMsg << std::endl;
+  std::cout << "[MobileManipulatorDistanceVisualization::main] octomapMsg: " << octomapMsg << std::endl;
   std::cout << "[MobileManipulatorDistanceVisualization::main] removeJoints: " << std::endl;
   for (const auto& name : removeJointNames) 
   {
@@ -211,15 +217,34 @@ int main(int argc, char** argv)
   emuPtr.reset(new ExtMapUtility());
   emuPtr->setWorldFrameName(worldFrameName);
   emuPtr->setPubOccDistArrayVisu(occupancyDistanceMsg);
+  emuPtr->setPubOccDistArrayVisu2(occupancyDistanceMsg + "2");
   emuPtr->setNodeHandle(nodeHandle);
   emuPtr->subscribeOctMsg(octomapMsg);
+
+  /// NUA TODO: GENERALIZE AND READ FROM CONFIG!
+  std::vector<std::string> obj_octomap_names = {"oct_conveyor", 
+                                                "oct_normal_pkg",
+                                                "oct_long_pkg",
+                                                "oct_longwide_pkg",
+                                                "oct_red_cube",
+                                                "oct_green_cube",
+                                                "oct_blue_cube",
+                                                "oct_bin"};
+
+  for (size_t i = 0; i < obj_octomap_names.size(); i++)
+  {
+    emuPtr->subscribeObjectsOctMsg(obj_octomap_names[i]);
+  }
 
   //distances_.resize(pointsOnRobotPtr_->getNumOfPoints());
 
   // Visualization
   bool activateSelfCollision = true;
   bool activateExtCollision = true;
+
+  /// NUA TODO: READ FROM CONFIG!
   maxDistance = 100;
+
   std::cout << "[MobileManipulatorInterface::runMRT] BEFORE mobileManipulatorVisu_" << std::endl;
   MobileManipulatorVisualization mobileManipulatorVisu(nodeHandle, 
                                                        *pinocchioInterfacePtr,
@@ -236,8 +261,9 @@ int main(int argc, char** argv)
                                                        pointsOnRobotPtr,
                                                        emuPtr,
                                                        maxDistance);
-  std::cout << "[MobileManipulatorInterface::runMRT] AFTER mobileManipulatorVisu_" << std::endl;
+  std::cout << "[MobileManipulatorInterface::runMRT] AFTER mobileManipulatorVisu_" << std::endl; 
 
+  mobileManipulatorVisu.setObjOctomapNames(obj_octomap_names);
   mobileManipulatorVisu.updateStateIndexMap();
 
   //double emu_dt = 0.01;

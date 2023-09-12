@@ -393,6 +393,9 @@ class ExtMapUtility
     void setPubOccDistArrayVisu(string pub_name_occ_dist_array_visu);
 
     // DESCRIPTION: TODO...
+    void setPubOccDistArrayVisu2(string pub_name_occ_dist_array_visu2);
+
+    // DESCRIPTION: TODO...
     void createTimerPubOctDistVisu(ros::Duration dt);
 
     // DESCRIPTION: TODO...
@@ -461,6 +464,9 @@ class ExtMapUtility
 
     // DESCRIPTION: TODO...
     void fillOccDistanceArrayVisu(vector<geometry_msgs::Point>& p0_vec, vector<geometry_msgs::Point>& p1_vec) const;
+
+    // DESCRIPTION: TODO...
+    void fillOccDistanceArrayVisu2(vector<geometry_msgs::Point>& p0_vec2, vector<geometry_msgs::Point>& p1_vec2) const;
 
     // DESCRIPTION: TODO...
     void fillDebugArrayVisu(vector<tf::Vector3>& v);
@@ -601,6 +607,9 @@ class ExtMapUtility
     void subscribeOctMsg(string oct_msg_name);
 
     // DESCRIPTION: TODO...
+    void subscribeObjectsOctMsg(string obj_oct_msg_name);
+
+    // DESCRIPTION: TODO...
     void pointcloud2ToOctPc2(const sensor_msgs::PointCloud2& cloud, octomap::Pointcloud& octomapCloud);
 
     // DESCRIPTION: TODO...
@@ -637,6 +646,12 @@ class ExtMapUtility
     void publishOccDistanceArrayVisu(vector<geometry_msgs::Point> p0_vec, vector<geometry_msgs::Point> p1_vec);
 
     // DESCRIPTION: TODO...
+    void publishOccDistanceArrayVisu2();
+
+    // DESCRIPTION: TODO...
+    void publishOccDistanceArrayVisu2(vector<geometry_msgs::Point> p0_vec2, vector<geometry_msgs::Point> p1_vec2);
+
+    // DESCRIPTION: TODO...
     void publishDebugArrayVisu();
 
     // DESCRIPTION: TODO...
@@ -665,6 +680,36 @@ class ExtMapUtility
 
     // DESCRIPTION: TODO...
     void octMsgCallback(const octomap_msgs::Octomap::ConstPtr& msg);
+
+    // DESCRIPTION: TODO...
+    void conveyorOctMsgCallback(const octomap_msgs::Octomap::ConstPtr& msg);
+
+    // DESCRIPTION: TODO...
+    void normalPkgOctMsgCallback(const octomap_msgs::Octomap::ConstPtr& msg);
+
+    // DESCRIPTION: TODO...
+    void longPkgOctMsgCallback(const octomap_msgs::Octomap::ConstPtr& msg);
+
+    // DESCRIPTION: TODO...
+    void longwidePkgOctMsgCallback(const octomap_msgs::Octomap::ConstPtr& msg);
+
+    // DESCRIPTION: TODO...
+    void redCubeOctMsgCallback(const octomap_msgs::Octomap::ConstPtr& msg);
+
+    // DESCRIPTION: TODO...
+    void greenCubeOctMsgCallback(const octomap_msgs::Octomap::ConstPtr& msg);
+
+    // DESCRIPTION: TODO...
+    void blueCubeOctMsgCallback(const octomap_msgs::Octomap::ConstPtr& msg);
+
+    // DESCRIPTION: TODO...
+    void actor0OctMsgCallback(const octomap_msgs::Octomap::ConstPtr& msg);
+
+    // DESCRIPTION: TODO...
+    void actor1OctMsgCallback(const octomap_msgs::Octomap::ConstPtr& msg);
+
+    // DESCRIPTION: TODO...
+    void binOctMsgCallback(const octomap_msgs::Octomap::ConstPtr& msg);
 
     // DESCRIPTION: TODO...
     void gazeboModelCallback(const gazebo_msgs::ModelStates::ConstPtr& msg);
@@ -713,6 +758,15 @@ class ExtMapUtility
                                  std::vector<geometry_msgs::Point>& min_points, 
                                  std::vector<double>& min_distances, 
                                  bool normalize_flag=false) const;
+
+    // DESCRIPTION: TODO...
+    bool getNearestOccupancyDist(std::string octMsgName,
+                                 Eigen::Ref<Eigen::Matrix<ocs2::scalar_t, 3, 1>>& position,
+                                 double radius, 
+                                 double max_dist, 
+                                 geometry_msgs::Point& min_point, 
+                                 double min_dist, 
+                                 bool normalize_flag) const;
 
     // DESCRIPTION: TODO...
     //bool getNearestOccupancyDistSrv(mobiman_simulation::getNearestOccDist::Request &req, 
@@ -841,12 +895,35 @@ class ExtMapUtility
 
     mutable visualization_msgs::Marker occ_distance_visu_;
     mutable visualization_msgs::MarkerArray occ_distance_array_visu_;
+    mutable visualization_msgs::MarkerArray occ_distance_array_visu2_;
 
     ros::Subscriber sub_oct_msg_;
 
     ros::Publisher pub_pc2_msg_scan_;
 
     // NUA TODO: Find a way to generalize!
+    octomap_msgs::Octomap oct_msg_conveyor_;
+    octomap_msgs::Octomap oct_msg_normal_pkg_;
+    octomap_msgs::Octomap oct_msg_long_pkg_;
+    octomap_msgs::Octomap oct_msg_longwide_pkg_;
+    octomap_msgs::Octomap oct_msg_red_cube_;
+    octomap_msgs::Octomap oct_msg_green_cube_;
+    octomap_msgs::Octomap oct_msg_blue_cube_;
+    octomap_msgs::Octomap oct_msg_actor0_;
+    octomap_msgs::Octomap oct_msg_actor1_;
+    octomap_msgs::Octomap oct_msg_bin_;
+
+    ros::Subscriber sub_oct_msg_conveyor_;
+    ros::Subscriber sub_oct_msg_normal_pkg_;
+    ros::Subscriber sub_oct_msg_long_pkg_;
+    ros::Subscriber sub_oct_msg_longwide_pkg_;
+    ros::Subscriber sub_oct_msg_red_cube_;
+    ros::Subscriber sub_oct_msg_green_cube_;
+    ros::Subscriber sub_oct_msg_blue_cube_;
+    ros::Subscriber sub_oct_msg_actor0_;
+    ros::Subscriber sub_oct_msg_actor1_;
+    ros::Subscriber sub_oct_msg_bin_;
+
     ros::Publisher pub_pc2_msg_gz_pkg_ign_conveyor_;
     ros::Publisher pub_pc2_msg_gz_pkg_ign_red_cube_;
     ros::Publisher pub_pc2_msg_gz_pkg_ign_green_cube_;
@@ -857,6 +934,7 @@ class ExtMapUtility
 
     ros::Publisher pub_occ_distance_visu_;
     ros::Publisher pub_occ_distance_array_visu_;
+    ros::Publisher pub_occ_distance_array_visu2_;
 
     ros::Timer timer_pub_oct_dist_visu_;
 

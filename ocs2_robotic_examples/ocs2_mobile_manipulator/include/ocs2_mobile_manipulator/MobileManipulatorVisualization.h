@@ -51,6 +51,8 @@ class MobileManipulatorVisualization final : public DummyObserver
 
     ~MobileManipulatorVisualization() override = default;
 
+    void setObjOctomapNames(std::vector<std::string>& objOctomapNames);
+
     void updateModelMode(size_t modelModeInt);
 
     void update(const SystemObservation& observation, const PrimalSolution& policy, const CommandData& command) override;
@@ -101,6 +103,8 @@ class MobileManipulatorVisualization final : public DummyObserver
     Eigen::Matrix<scalar_t, -1, 1> distances_;
     vector<geometry_msgs::Point> p0_vec_;
     vector<geometry_msgs::Point> p1_vec_;
+    vector<geometry_msgs::Point> p0_vec2_;
+    vector<geometry_msgs::Point> p1_vec2_;
     std::vector<std::string> removeJointNames_;
     std::vector<std::pair<size_t, size_t>> collisionObjectPairs_;
     std::vector<std::pair<std::string, std::string>> collisionLinkPairs_;
@@ -110,6 +114,8 @@ class MobileManipulatorVisualization final : public DummyObserver
     vector_t state_;
     vector_t fullState_;
     std::vector<geometry_msgs::Point> jointPos_;
+
+    std::vector<std::string> objOctomapNames_;
 
     bool printOutFlag_ = false;
     bool initTFTransformFlag_ = false;
@@ -142,6 +148,9 @@ class MobileManipulatorVisualization final : public DummyObserver
     ocs2::benchmark::RepeatedTimer timer7_;
     ocs2::benchmark::RepeatedTimer timer8_;
     ocs2::benchmark::RepeatedTimer timer9_;
+    ocs2::benchmark::RepeatedTimer timer10_;
+    ocs2::benchmark::RepeatedTimer timer11_;
+    ocs2::benchmark::RepeatedTimer timer12_;
 
     ros::Subscriber jointStatesSub_;
     ros::Subscriber tfSub_;
