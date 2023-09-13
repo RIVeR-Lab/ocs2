@@ -274,6 +274,7 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
       //std::cout << "[MRT_ROS_Gazebo_Loop::run] END INIT WHILE" << std::endl;
     }
     ROS_INFO_STREAM("[MRT_ROS_Gazebo_Loop::run] Initial policy has been received.");
+    std::cout << "[MRT_ROS_Gazebo_Loop::run] modelMode: " << getModelModeString(robotModelInfo_) << std::endl;
 
     currentInput_ = initObservation.input;
 

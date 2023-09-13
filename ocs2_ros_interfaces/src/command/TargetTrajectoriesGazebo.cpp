@@ -1189,7 +1189,7 @@ void TargetTrajectoriesGazebo::fillTargetVisu()
   /// NUA TODO: User should able to add more target!
   int target_size = 1;
 
-  for(int i = 0; i < target_size; i++)
+  for(int i = 0; i < 3; i++)
   {
     Eigen::Vector3d currentTargetPosition = currentTargetPosition_;
     Eigen::Quaterniond currentTargetOrientation = currentTargetOrientation_;
@@ -1240,12 +1240,41 @@ void TargetTrajectoriesGazebo::fillTargetVisu()
     target_visu.pose.orientation.y = currentTargetOrientation.y();
     target_visu.pose.orientation.z = currentTargetOrientation.z();
     target_visu.pose.orientation.w = currentTargetOrientation.w();
-    target_visu.scale.x = 0.05;
-    target_visu.scale.y = 0.05;
-    target_visu.scale.z = 0.1;
-    target_visu.color.r = 0.8;
-    target_visu.color.g = 0.0;
-    target_visu.color.b = 0.0;
+    //target_visu.scale.x = 0.05;
+    //target_visu.scale.y = 0.05;
+    //target_visu.scale.z = 0.1;
+    
+    if (i == 0)
+    {
+      target_visu.scale.x = 0.2;
+      target_visu.scale.y = 0.02;
+      target_visu.scale.z = 0.02;
+
+      target_visu.color.r = 0.8;
+      target_visu.color.g = 0.0;
+      target_visu.color.b = 0.0;
+    }
+    if (i == 1)
+    {
+      target_visu.scale.x = 0.02;
+      target_visu.scale.y = 0.2;
+      target_visu.scale.z = 0.02;
+
+      target_visu.color.r = 0.0;
+      target_visu.color.g = 0.8;
+      target_visu.color.b = 0.0;
+    }
+    if (i == 2)
+    {
+      target_visu.scale.x = 0.02;
+      target_visu.scale.y = 0.02;
+      target_visu.scale.z = 0.2;
+
+      target_visu.color.r = 0.0;
+      target_visu.color.g = 0.0;
+      target_visu.color.b = 0.8;
+    }
+    
     target_visu.color.a = 0.5;
     target_visu.header.frame_id = worldFrameName_;
 
