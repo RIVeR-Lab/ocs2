@@ -1,6 +1,8 @@
 # Request
 float64[] action
 float32 time_horizon
+bool last_step_flag
+float32 last_step_distance_threshold
 ---
 # Response
 bool success

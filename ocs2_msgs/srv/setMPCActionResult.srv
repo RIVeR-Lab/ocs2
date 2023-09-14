@@ -1,9 +1,11 @@
 ## Request
 
-# -1: MPC/MRT Failure
-# 0: Success
+# 0: MPC/MRT Failure
 # 1: Collision
 # 2: Rollover
+# 3: Goal reached
+# 4: Target reached
+# 5: Time-horizon reached
 int8 action_result
 
 # 0: baseMotion

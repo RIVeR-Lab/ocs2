@@ -96,6 +96,12 @@ class MRT_ROS_Gazebo_Loop
     void setDRLActionTimeHorizon(double drlActionTimeHorizon);
 
     /** NUA TODO: Add description */
+    void setDRLActionLastStepFlag(double drlActionLastStepFlag);
+
+    /** NUA TODO: Add description */
+    void setDRLActionLastStepDistanceThreshold(double drlActionLastStepDistanceThreshold);
+
+    /** NUA TODO: Add description */
     bool isArmStateInitialized();
 
     /** NUA TODO: Add description */
@@ -136,7 +142,7 @@ class MRT_ROS_Gazebo_Loop
     void mrtLoop();
 
     /** NUA TODO: Add description */
-    void updateStateIndexMap(std::string& armStateMsg, bool updateStateIndexMapFlag);
+    void updateStateIndexMap(bool updateStateIndexMapFlag);
 
     /** NUA TODO: Add description */
     void tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg);
@@ -152,6 +158,9 @@ class MRT_ROS_Gazebo_Loop
 
     /** NUA TODO: Add description */
     void pointsOnRobotCallback(const visualization_msgs::MarkerArray::ConstPtr& msg);
+
+    /** NUA TODO: Add description */
+    void goalCallback(const visualization_msgs::MarkerArray::ConstPtr& msg);
 
     /** NUA TODO: Add description */
     void linkStateCallback(const gazebo_msgs::LinkStates::ConstPtr& msg);
@@ -195,10 +204,22 @@ class MRT_ROS_Gazebo_Loop
                         std::vector<double>& currentStateVelocityBase);
 
     /** NUA TODO: Add description */
+    bool checkPickDrop();
+
+    /** NUA TODO: Add description */
     bool checkCollision();
 
     /** NUA TODO: Add description */
     bool checkRollover();
+
+    /** NUA TODO: Add description */
+    bool checkGoal();
+
+    /** NUA TODO: Add description */
+    bool checkTarget();
+
+    /** NUA TODO: Add description */
+    int checkTaskStatus();
 
     /** NUA TODO: Add description */
     const std::string getDateTime();
@@ -224,7 +245,7 @@ class MRT_ROS_Gazebo_Loop
 
     bool dataCollectionFlag_ = true;
 
-    double initPolicyCtrMax_ = 1000;
+    double initPolicyCtrMax_ = 2000;
 
     double err_threshold_pos_;
     double err_threshold_ori_;
@@ -286,12 +307,16 @@ class MRT_ROS_Gazebo_Loop
 
     bool drlFlag_ = false;
     double drlActionTimeHorizon_;
+    bool drlActionLastStepFlag_;
+    double drlActionLastStepDistanceThreshold_;
 
-    // -1: MPC/MRT Failure
-    // 0: Success
+    // 0: MPC/MRT Failure
     // 1: Collision
     // 2: Rollover
-    int drlActionResult_ = -1;
+    // 3: Goal reached
+    // 4: Target reached
+    // 5: Time-horizon reached
+    int drlActionResult_ = 0;
 
     bool pickedFlag_ = false;
     bool taskEndFlag_ = true;
@@ -308,9 +333,11 @@ class MRT_ROS_Gazebo_Loop
     bool initFlagSelfCollision_ = false;
     bool initFlagExtCollision_ = false;
     bool initFlagPointsOnRobot_ = false;
+    bool initFlagGoal_ = false;
     std::string selfCollisionDistanceMsgName_ = "/distance_markers";
     std::string extCollisionDistanceMsgName_ = "/occupancy_distances";
     std::string pointsOnRobotMsgName_ = "/points_on_robot";
+    std::string goalMsgName_ = "/mobile_manipulator_mpc_goal";
     int selfColDistance_n_coeff_ = 5;
     double selfCollisionRangeMin_ = 0.05;
     double extCollisionRangeMin_ = 0.25;
@@ -319,9 +346,11 @@ class MRT_ROS_Gazebo_Loop
     visualization_msgs::MarkerArray selfCollisionDistanceMsg_;
     visualization_msgs::MarkerArray extCollisionDistanceMsg_;
     visualization_msgs::MarkerArray pointsOnRobotMsg_;
+    visualization_msgs::MarkerArray goalMsg_;
     ros::Subscriber selfCollisionDistanceSub_;
     ros::Subscriber extCollisionDistanceSub_;
     ros::Subscriber pointsOnRobotSub_;
+    ros::Subscriber goalSub_;
     
     ros::Subscriber jointTrajectoryControllerStateSub_;
     ros::Subscriber targetTrajectoriesSubscriber_;

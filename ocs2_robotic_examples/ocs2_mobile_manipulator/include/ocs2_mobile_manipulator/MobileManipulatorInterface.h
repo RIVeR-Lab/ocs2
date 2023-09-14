@@ -355,6 +355,8 @@ class MobileManipulatorInterface final : public RobotInterface
     int drlActionDiscrete_;
     std::vector<double> drlActionContinuous_;
     double drlActionTimeHorizon_;
+    bool drlActionLastStepFlag_;
+    double drlActionLastStepDistanceThreshold_;
     mpcProblemSettings mpcProblemSettings_;
 
     ddp::Settings ddpSettings_;

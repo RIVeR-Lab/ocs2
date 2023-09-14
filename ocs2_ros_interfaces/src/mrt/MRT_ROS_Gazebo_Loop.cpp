@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.09.07
+// LAST UPDATE: 2023.09.13
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -64,10 +64,6 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   }
 
   dataCollectionFlag_ = (dataPathReL_ == "") ? false : true;
-
-  timer2_.startTimer();
-  updateStateIndexMap(armStateMsg, updateIndexMapFlag_);
-  timer2_.endTimer();
   
   // Subscribers
   //// NUA TODO: Consider localization error
@@ -89,9 +85,11 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
 
   if (drlFlag_)
   {
+    std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting to subscribe selfCollisionDistanceMsgName_, extCollisionDistanceMsgName_, pointsOnRobotMsgName_, goalMsgName_..." << std::endl;
     selfCollisionDistanceSub_ = nh.subscribe(selfCollisionDistanceMsgName_, 5, &MRT_ROS_Gazebo_Loop::selfCollisionDistanceCallback, this);
     extCollisionDistanceSub_ = nh.subscribe(extCollisionDistanceMsgName_, 5, &MRT_ROS_Gazebo_Loop::extCollisionDistanceCallback, this);
     pointsOnRobotSub_ = nh.subscribe(pointsOnRobotMsgName_, 5, &MRT_ROS_Gazebo_Loop::pointsOnRobotCallback, this);
+    goalSub_ = nh.subscribe(goalMsgName_, 5, &MRT_ROS_Gazebo_Loop::goalCallback, this);
   }
 
   currentTarget_.resize(7);
@@ -121,6 +119,13 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   {
     ROS_WARN_STREAM("[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] Warning: MPC loop is not realtime! For realtime setting, set mpcDesiredFrequency to any negative number.");
   }
+
+  std::cout << "[MRT_ROS_Gazebo_Loop::updateStateIndexMap] Waiting to subscribe armStateMsg..." << std::endl;
+  //boost::shared_ptr<sensor_msgs::JointState const> jointStatePtrMsg = ros::topic::waitForMessage<sensor_msgs::JointState>(armStateMsg);
+  while(!initFlagArmState_){ros::spinOnce();}
+  timer2_.startTimer();
+  updateStateIndexMap(updateIndexMapFlag_);
+  timer2_.endTimer();
 
   timer1_.endTimer();
 
@@ -194,8 +199,8 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
   
   if (drlFlag_)
   {
-    std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting for the initFlagSelfCollision_, initFlagExtCollision_, initFlagPointsOnRobot_ to be initialized..." << std::endl;
-    while(!initFlagSelfCollision_ && !initFlagExtCollision_ && !initFlagPointsOnRobot_){ros::spinOnce();}
+    std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting for the initFlagSelfCollision_, initFlagExtCollision_, initFlagPointsOnRobot_, initFlagGoal_ to be initialized..." << std::endl;
+    while(!initFlagSelfCollision_ && !initFlagExtCollision_ && !initFlagPointsOnRobot_ && !initFlagGoal_){ros::spinOnce();}
   }
 
   //ROS_INFO_STREAM("[MRT_ROS_Gazebo_Loop::run] BEFORE getCurrentObservation");
@@ -439,7 +444,7 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
   PrimalSolution currentPolicy;
 
   shutDownFlag_ = false;
-  drlActionResult_ = -1;
+  drlActionResult_ = 0;
 
   // Update the policy
   mrt_.updatePolicy();
@@ -448,17 +453,6 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
 
   while (!shutDownFlag_ && ros::ok() && ros::master::check()) 
   {
-    //mrtExitFlag_ = false;
-    //publishMRTExitFlag();
-    
-    //setenv("mrtExitFlag", "false", 1);
-    //std::cout << "[GLOBAL ENVIRONMENT] MRT_FLAG: " << getenv("mpcProblemReadyFlag") << std::endl;
-    //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] shutDownFlag: " << shutDownFlag_ << std::endl;
-
-    //robotModelInfo_ = mrt_.getRobotModelInfo();
-    //std::cout << "---------------" << std::endl;
-    //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START while" << std::endl;
-
     mrt_.reset();
     int initPolicyCtr = 0;
 
@@ -472,14 +466,12 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
     mrt_.setCurrentObservation(currentObservation);
 
     mrtShutDownFlag_ = getenv("mrtShutDownFlag");
-    //std::cout << "[MPC_ROS_Interface::spin] mrtShutDownFlag_: " << mrtShutDownFlag_ << std::endl;
-
     if (mrtShutDownFlag_ == "true")
     {
-      //std::cout << "[MRT_ROS_Gazebo_Loop::spin] CMOOOOOOOOOOOOOOOOOON: " << std::endl;
       shutDownFlag_ = true;
     }
 
+    // Get Initial Policy
     while (!shutDownFlag_ && !mrt_.initialPolicyReceived() && ros::ok() && ros::master::check()) 
     {
       //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START initialPolicyReceived initPolicyCtr: " << initPolicyCtr << std::endl;
@@ -489,140 +481,68 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
         std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] THATS ENOUGH WAITING FOR THE POLICY!" << std::endl;
         shutDownFlag_ = true;
       }
-
-      //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START spinMRT" << std::endl;
-      mrt_.spinMRT();
-
-      // Get current observation
-      currentObservation = getCurrentObservation(false);
-      currentStateVelocityBase = stateVelocityBase_;
-
-      // Set current observation
-      mrt_.setCurrentObservation(currentObservation);
-
-      mrtShutDownFlag_ = getenv("mrtShutDownFlag");
-      //std::cout << "[MPC_ROS_Interface::spin] mrtShutDownFlag_: " << mrtShutDownFlag_ << std::endl;
-
-      if (mrtShutDownFlag_ == "true")
+      else
       {
-        //std::cout << "[MRT_ROS_Gazebo_Loop::spin] CMOOOOOOOOOOOOOOOOOON: " << std::endl;
-        shutDownFlag_ = true;
-      }
+        //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START spinMRT" << std::endl;
+        mrt_.spinMRT();
 
-      //shutDownFlag_ = mrt_.getShutDownFlag();
+        // Get current observation
+        currentObservation = getCurrentObservation(false);
+        currentStateVelocityBase = stateVelocityBase_;
 
-      //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] END spinMRT" << std::endl;
+        // Set current observation
+        mrt_.setCurrentObservation(currentObservation);
 
-      initPolicyCtr++;
-    }
-
-    mrt_.updatePolicy();
-
-    int taskMode = taskMode_;
-    //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] taskMode: " << taskMode << std::endl;
-
-    if (isPickDropPoseReached(taskMode))
-    {
-      std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START PICK/DROP" << std::endl;
-      
-      gazebo_ros_link_attacher::Attach srv;
-      srv.request.model_name_1 = robotModelInfo_.robotName;
-      srv.request.link_name_1 = robotModelInfo_.robotArm.jointFrameNames.back();
-      srv.request.model_name_2 = currentTargetName_;
-      srv.request.link_name_2 = currentTargetAttachLinkName_;
-
-      //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] taskMode: " << taskMode << std::endl;
-      if (taskMode == 1)
-      {
-        if (attachClient_.call(srv))
+        mrtShutDownFlag_ = getenv("mrtShutDownFlag");
+        if (mrtShutDownFlag_ == "true")
         {
-          std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] response: " << srv.response.ok << std::endl;
-          taskMode = 2;
-          pickedFlag_ = true;
-          taskEndFlag_ = true;
-          bool taskModeSuccess = setPickedFlag(pickedFlag_);
-          std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] taskModeSuccess: " << taskModeSuccess << std::endl;
-          ros::spinOnce();
+          shutDownFlag_ = true;
         }
-        else
-        {
-          ROS_ERROR("[MRT_ROS_Gazebo_Loop::mrtLoop] ERROR: Failed to call service!");
-        }
-      }
-      else if (taskMode == 2)
-      {
-        std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] DROP" << std::endl;
-        if (detachClient_.call(srv))
-        {
-          std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] response: " << srv.response.ok << std::endl;
-          taskMode = 1;
-          pickedFlag_ = false;
-          taskEndFlag_ = true;
-          bool taskModeSuccess = setPickedFlag(pickedFlag_);
-          std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] taskModeSuccess: " << taskModeSuccess << std::endl;
-          ros::spinOnce();
-        }
-        else
-        {
-          ROS_ERROR("[MRT_ROS_Gazebo_Loop::mrtLoop] ERROR: Failed to call service!");
-        }
-      }
-
-      //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] END PICK/DROP" << std::endl;
-    }
-    else
-    {
-      if (!shutDownFlag_)
-      {
-        //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START updatePolicy" << std::endl;
-        // Update the policy if a new one was received
-        mrt_.updatePolicy();
-        currentPolicy = mrt_.getPolicy();
-        currentInput_ = currentPolicy.getDesiredInput(time_);
-
-        //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START observer" << std::endl;
-        // Update observers for visualization
-        for (auto& observer : observers_) 
-        {
-          //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] OBSERVING..." << std::endl;
-          observer->update(currentObservation, currentPolicy, mrt_.getCommand());
-        }
-
-        //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START publishCommand" << std::endl;
-        // Publish the control command 
-        publishCommand(currentPolicy, currentObservation, currentStateVelocityBase);
-
-        if (drlFlag_)
-        {
-          //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] BEFORE checkCollision" << std::endl;
-          checkCollision();
-
-          //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] BEFORE checkRollover" << std::endl;
-          checkRollover();
-
-          //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] OUT time_: " << time_ << std::endl;
-          if (time_ > drlActionTimeHorizon_)
-          {
-            shutDownFlag_ = true;
-            drlActionResult_ = 0;
-            //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] IN time_: " << time_ << std::endl;
-          }
-        }
-        
-        writeData();
-
-        time_ += dt_;
 
         //shutDownFlag_ = mrt_.getShutDownFlag();
 
-        ros::spinOnce();
-        simRate.sleep();
+        //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] END spinMRT" << std::endl;
+
+        initPolicyCtr++;
       }
+    }
+
+    // Send the trajectory command to the robot
+    if (!shutDownFlag_)
+    {
+      //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START updatePolicy" << std::endl;
+      // Update the policy if a new one was received
+      mrt_.updatePolicy();
+      currentPolicy = mrt_.getPolicy();
+      currentInput_ = currentPolicy.getDesiredInput(time_);
+
+      //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START observer" << std::endl;
+      // Update observers for visualization
+      for (auto& observer : observers_) 
+      {
+        //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] OBSERVING..." << std::endl;
+        observer->update(currentObservation, currentPolicy, mrt_.getCommand());
+      }
+
+      //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START publishCommand" << std::endl;
+      // Publish the control command 
+      publishCommand(currentPolicy, currentObservation, currentStateVelocityBase);
+
+      std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] BEFORE checkTaskStatus" << std::endl;
+      int ts = checkTaskStatus();
+      std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] AFTER checkTaskStatus ts: " << ts << std::endl;
+      
+      writeData();
+
+      time_ += dt_;
+
+      //shutDownFlag_ = mrt_.getShutDownFlag();
+
+      ros::spinOnce();
+      simRate.sleep();
     }
     
     mrtShutDownFlag_ = getenv("mrtShutDownFlag");
-    //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] mrtShutDownFlag_: " << mrtShutDownFlag_ << std::endl;
-
     if (mrtShutDownFlag_ == "true")
     {
       shutDownFlag_ = true;
@@ -691,7 +611,23 @@ void MRT_ROS_Gazebo_Loop::setDRLActionTimeHorizon(double drlActionTimeHorizon)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MRT_ROS_Gazebo_Loop::updateStateIndexMap(std::string& armStateMsg, bool updateStateIndexMapFlag)
+void MRT_ROS_Gazebo_Loop::setDRLActionLastStepFlag(double drlActionLastStepFlag)
+{
+  drlActionLastStepFlag_ = drlActionLastStepFlag;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::setDRLActionLastStepDistanceThreshold(double drlActionLastStepDistanceThreshold)
+{
+  drlActionLastStepDistanceThreshold_ = drlActionLastStepDistanceThreshold;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::updateStateIndexMap(bool updateStateIndexMapFlag)
 {
   //std::cout << "[MRT_ROS_Gazebo_Loop::updateStateIndexMap] START" << std::endl;
   
@@ -702,9 +638,12 @@ void MRT_ROS_Gazebo_Loop::updateStateIndexMap(std::string& armStateMsg, bool upd
 
   if (updateStateIndexMapFlag)
   {
+    sensor_msgs::JointState jointStateMsg = jointStateMsg_;
     //boost::shared_ptr<control_msgs::JointTrajectoryControllerState const> jointTrajectoryControllerStatePtrMsg = ros::topic::waitForMessage<control_msgs::JointTrajectoryControllerState>(armStateMsg);
     //if (n_joints != jointTrajectoryControllerStatePtrMsg->joint_names.size())
-    boost::shared_ptr<sensor_msgs::JointState const> jointStatePtrMsg = ros::topic::waitForMessage<sensor_msgs::JointState>(armStateMsg);
+    
+    //std::cout << "[MRT_ROS_Gazebo_Loop::updateStateIndexMap] Waiting to subscribe armStateMsg..." << std::endl;
+    //boost::shared_ptr<sensor_msgs::JointState const> jointStatePtrMsg = ros::topic::waitForMessage<sensor_msgs::JointState>(armStateMsg);
 
     /*
     std::cout << "[MRT_ROS_Gazebo_Loop::updateStateIndexMap] jointStatePtrMsg->name.size(): " << jointStatePtrMsg->name.size() << std::endl; 
@@ -716,13 +655,13 @@ void MRT_ROS_Gazebo_Loop::updateStateIndexMap(std::string& armStateMsg, bool upd
 
     for (size_t i = 0; i < n_joints; i++)
     {
-      auto it = find(jointStatePtrMsg->name.begin(), jointStatePtrMsg->name.end(), jointNames[i]);
+      auto it = find(jointStateMsg.name.begin(), jointStateMsg.name.end(), jointNames[i]);
   
       // If element was found
-      if (it != jointStatePtrMsg->name.end()) 
+      if (it != jointStateMsg.name.end()) 
       {
           // calculating the index
-          int index = it - jointStatePtrMsg->name.begin();
+          int index = it - jointStateMsg.name.begin();
           stateIndexMap_.push_back(index);
       }
       else
@@ -813,6 +752,15 @@ void MRT_ROS_Gazebo_Loop::pointsOnRobotCallback(const visualization_msgs::Marker
 {
   pointsOnRobotMsg_ = *msg;
   initFlagPointsOnRobot_  = true;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::goalCallback(const visualization_msgs::MarkerArray::ConstPtr& msg)
+{
+  goalMsg_ = *msg;
+  initFlagGoal_  = true;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1443,6 +1391,69 @@ void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy,
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+bool MRT_ROS_Gazebo_Loop::checkPickDrop()
+{
+  int taskMode = taskMode_;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] taskMode: " << taskMode << std::endl;
+
+  if (isPickDropPoseReached(taskMode))
+  {
+    std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START PICK/DROP" << std::endl;
+    
+    gazebo_ros_link_attacher::Attach srv;
+    srv.request.model_name_1 = robotModelInfo_.robotName;
+    srv.request.link_name_1 = robotModelInfo_.robotArm.jointFrameNames.back();
+    srv.request.model_name_2 = currentTargetName_;
+    srv.request.link_name_2 = currentTargetAttachLinkName_;
+
+    //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] taskMode: " << taskMode << std::endl;
+    if (taskMode == 1)
+    {
+      if (attachClient_.call(srv))
+      {
+        std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] response: " << srv.response.ok << std::endl;
+        taskMode = 2;
+        pickedFlag_ = true;
+        taskEndFlag_ = true;
+        bool taskModeSuccess = setPickedFlag(pickedFlag_);
+        std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] taskModeSuccess: " << taskModeSuccess << std::endl;
+        ros::spinOnce();
+      }
+      else
+      {
+        ROS_ERROR("[MRT_ROS_Gazebo_Loop::mrtLoop] ERROR: Failed to call service!");
+      }
+    }
+    else if (taskMode == 2)
+    {
+      std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] DROP" << std::endl;
+      if (detachClient_.call(srv))
+      {
+        std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] response: " << srv.response.ok << std::endl;
+        taskMode = 1;
+        pickedFlag_ = false;
+        taskEndFlag_ = true;
+        bool taskModeSuccess = setPickedFlag(pickedFlag_);
+        std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] taskModeSuccess: " << taskModeSuccess << std::endl;
+        ros::spinOnce();
+      }
+      else
+      {
+        ROS_ERROR("[MRT_ROS_Gazebo_Loop::mrtLoop] ERROR: Failed to call service!");
+      }
+    }
+
+    //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] END PICK/DROP" << std::endl;
+    return true;
+  }
+
+  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] END PICK/DROP" << std::endl;
+  return false;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 bool MRT_ROS_Gazebo_Loop::checkCollision()
 {
   //std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] START" << std::endl << std::endl;
@@ -1563,6 +1574,169 @@ bool MRT_ROS_Gazebo_Loop::checkRollover()
   }
 
   return false;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+bool MRT_ROS_Gazebo_Loop::checkGoal()
+{
+  visualization_msgs::MarkerArray goalMsg = goalMsg_;
+  tf::StampedTransform tf_ee_wrt_world = tf_ee_wrt_world_;
+
+  vector_t dist_pos(3);
+  dist_pos << abs(tf_ee_wrt_world.getOrigin().x() - goalMsg.markers[0].pose.position.x), 
+              abs(tf_ee_wrt_world.getOrigin().y() - goalMsg.markers[0].pose.position.y), 
+              abs(tf_ee_wrt_world.getOrigin().z() - goalMsg.markers[0].pose.position.z);
+  double err_pos = dist_pos.norm();
+
+  Eigen::Quaterniond quat_ee(tf_ee_wrt_world.getRotation().w(), 
+                             tf_ee_wrt_world.getRotation().x(), 
+                             tf_ee_wrt_world.getRotation().y(), 
+                             tf_ee_wrt_world.getRotation().z());
+  
+  Eigen::Quaterniond quat_goal(goalMsg.markers[0].pose.orientation.w, 
+                               goalMsg.markers[0].pose.orientation.x, 
+                               goalMsg.markers[0].pose.orientation.y, 
+                               goalMsg.markers[0].pose.orientation.z);
+
+  vector_t dist_quat = quaternionDistance(quat_ee, quat_goal);
+  double err_ori = dist_quat.norm();
+
+  if ((err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_))
+  {
+    drlActionResult_ = 3;
+    shutDownFlag_ = true;
+    return true;
+  }
+
+  return false;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+bool MRT_ROS_Gazebo_Loop::checkTarget()
+{
+  vector_t currentTarget = currentTarget_;
+  tf::StampedTransform tf_ee_wrt_world = tf_ee_wrt_world_;
+
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] currentTarget(0): " << currentTarget(0) << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] currentTarget(1): " << currentTarget(1) << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] currentTarget(2): " << currentTarget(2) << std::endl;
+
+  int modelModeInt = getModelModeInt(robotModelInfo_);
+
+  vector_t dist_pos(3);
+  dist_pos << abs(tf_ee_wrt_world.getOrigin().x() - currentTarget(0)), 
+              abs(tf_ee_wrt_world.getOrigin().y() - currentTarget(1)), 
+              abs(tf_ee_wrt_world.getOrigin().z() - currentTarget(2));
+
+  double err_pos;
+  if (modelModeInt == 0)
+  {
+    err_pos = sqrt(pow(dist_pos(0), 2) + pow(dist_pos(1), 2));
+  }
+  else
+  {
+    err_pos = dist_pos.norm();
+  }
+
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_pos x: " << dist_pos[0] << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_pos y: " << dist_pos[1] << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_pos z: " << dist_pos[2] << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_pos: " << err_pos << std::endl;
+
+  Eigen::Quaterniond quat_ee(tf_ee_wrt_world.getRotation().w(), tf_ee_wrt_world.getRotation().x(), tf_ee_wrt_world.getRotation().y(), tf_ee_wrt_world.getRotation().z());
+  Eigen::Quaterniond quat_target(currentTarget(6), currentTarget(3), currentTarget(4), currentTarget(5));
+
+  double err_ori;
+  if (modelModeInt == 0)
+  {
+    auto rotMat_ee = quaternionToRotationMatrix(quat_ee);
+    auto eulerZYX_ee = rotationMatrixToEulerAngles(rotMat_ee);
+
+    auto rotMat_target = quaternionToRotationMatrix(quat_target);
+    auto eulerZYX_target = rotationMatrixToEulerAngles(rotMat_target);
+
+    err_ori = abs(eulerZYX_ee(0) - eulerZYX_target(0));
+  }
+  else
+  {
+    vector_t dist_quat = quaternionDistance(quat_ee, quat_target);
+    err_ori = dist_quat.norm();
+  }
+
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_quat r: " << dist_quat[0] << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_quat p: " << dist_quat[1] << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_quat y: " << dist_quat[2] << std::endl;
+  
+  std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] modelModeInt: " << modelModeInt << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_ori: " << err_ori << std::endl << std::endl;
+
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END" << std::endl << std::endl;
+
+  if ((err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_))
+  {
+    drlActionResult_ = 4;
+    shutDownFlag_ = true;
+    return true;
+  }
+
+  return false;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+int MRT_ROS_Gazebo_Loop::checkTaskStatus()
+{
+  // -1: Continue
+  // 0: MPC/MRT Failure
+  // 1: Collision
+  // 2: Rollover
+  // 3: Goal reached
+  // 4: Target reached
+  // 5: Time-horizon reached
+
+  if (drlFlag_)
+  {
+    if (checkCollision())
+    {
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] checkTaskStatus: COLLISION!" << std::endl;
+      return 1;
+    }
+    else if (checkRollover())
+    {
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] checkTaskStatus: ROLLOVER!" << std::endl;
+      return 2;
+    }
+    else if (checkGoal())
+    {
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] checkTaskStatus: REACHED GOAL!" << std::endl;
+      return 3;
+    }
+    else if (checkTarget())
+    {
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] checkTaskStatus: REACHED TARGET!" << std::endl;
+      return 4;
+    }
+    else if (time_ > drlActionTimeHorizon_)
+    {
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] checkTaskStatus: END OF ACTION HORIZON!" << std::endl;
+      shutDownFlag_ = true;
+      drlActionResult_ = 5;
+      return 5;
+    }
+  }
+  else
+  {
+    if (checkPickDrop())
+    {
+      return 3;
+    }
+  }
+  return -1;
 }
 
 //-------------------------------------------------------------------------------------------------------

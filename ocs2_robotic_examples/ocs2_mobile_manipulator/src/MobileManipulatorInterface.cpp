@@ -1016,6 +1016,8 @@ bool MobileManipulatorInterface::setContinuousActionDRLSrv(ocs2_msgs::setContinu
   std::cout << "[MobileManipulatorInterface::setContinuousActionDRLSrv] START" << std::endl;
   drlActionContinuous_ = req.action;
   drlActionTimeHorizon_ = req.time_horizon;
+  drlActionLastStepFlag_ = req.last_step_flag;
+  drlActionLastStepDistanceThreshold_ = req.last_step_distance_threshold;
   res.success = true;
 
   mapContinuousActionDRL(drlActionContinuous_);
@@ -1343,6 +1345,8 @@ void MobileManipulatorInterface::runMRT()
       mrt_loop.setTargetReceivedFlag(targetReceivedFlag_);
       mrt_loop.setTaskMode(taskMode_);
       mrt_loop.setDRLActionTimeHorizon(drlActionTimeHorizon_);
+      mrt_loop.setDRLActionLastStepFlag(drlActionLastStepFlag_);
+      mrt_loop.setDRLActionLastStepDistanceThreshold(drlActionLastStepDistanceThreshold_);
       targetReceivedFlag_ = false;
     }
 
