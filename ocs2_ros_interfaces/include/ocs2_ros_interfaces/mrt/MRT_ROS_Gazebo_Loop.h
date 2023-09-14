@@ -337,7 +337,7 @@ class MRT_ROS_Gazebo_Loop
     std::string selfCollisionDistanceMsgName_ = "/distance_markers";
     std::string extCollisionDistanceMsgName_ = "/occupancy_distances";
     std::string pointsOnRobotMsgName_ = "/points_on_robot";
-    std::string goalMsgName_ = "/mobile_manipulator_mpc_goal";
+    std::string goalMsgName_ = "/mobile_manipulator_goal";
     int selfColDistance_n_coeff_ = 5;
     double selfCollisionRangeMin_ = 0.05;
     double extCollisionRangeMin_ = 0.25;

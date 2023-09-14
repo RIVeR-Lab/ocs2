@@ -328,7 +328,7 @@ class MobileManipulatorInterface final : public RobotInterface
     //// NUA NOTE: For now it is fixed to 1 for drl!
     int taskMode_ = 1;
 
-    double err_threshold_pos_ = 0.02;
+    double err_threshold_pos_ = 0.1;
     double err_threshold_ori_ = 0.05;
 
     int mpcIter_ = 0; 

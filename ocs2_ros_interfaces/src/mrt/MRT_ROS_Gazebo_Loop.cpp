@@ -200,7 +200,7 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
   if (drlFlag_)
   {
     std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting for the initFlagSelfCollision_, initFlagExtCollision_, initFlagPointsOnRobot_, initFlagGoal_ to be initialized..." << std::endl;
-    while(!initFlagSelfCollision_ && !initFlagExtCollision_ && !initFlagPointsOnRobot_ && !initFlagGoal_){ros::spinOnce();}
+    while(!initFlagSelfCollision_ || !initFlagExtCollision_ || !initFlagPointsOnRobot_ || !initFlagGoal_){ros::spinOnce();}
   }
 
   //ROS_INFO_STREAM("[MRT_ROS_Gazebo_Loop::run] BEFORE getCurrentObservation");
@@ -528,9 +528,7 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
       // Publish the control command 
       publishCommand(currentPolicy, currentObservation, currentStateVelocityBase);
 
-      std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] BEFORE checkTaskStatus" << std::endl;
       int ts = checkTaskStatus();
-      std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] AFTER checkTaskStatus ts: " << ts << std::endl;
       
       writeData();
 
@@ -1581,6 +1579,8 @@ bool MRT_ROS_Gazebo_Loop::checkRollover()
 //-------------------------------------------------------------------------------------------------------
 bool MRT_ROS_Gazebo_Loop::checkGoal()
 {
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkGoal] START" << std::endl;
+
   visualization_msgs::MarkerArray goalMsg = goalMsg_;
   tf::StampedTransform tf_ee_wrt_world = tf_ee_wrt_world_;
 
@@ -1607,8 +1607,12 @@ bool MRT_ROS_Gazebo_Loop::checkGoal()
   {
     drlActionResult_ = 3;
     shutDownFlag_ = true;
+
+    //std::cout << "[MRT_ROS_Gazebo_Loop::checkGoal] END true" << std::endl;
     return true;
   }
+
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkGoal] END false" << std::endl;
 
   return false;
 }
@@ -1618,6 +1622,8 @@ bool MRT_ROS_Gazebo_Loop::checkGoal()
 //-------------------------------------------------------------------------------------------------------
 bool MRT_ROS_Gazebo_Loop::checkTarget()
 {
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] START" << std::endl;
+
   vector_t currentTarget = currentTarget_;
   tf::StampedTransform tf_ee_wrt_world = tf_ee_wrt_world_;
 
@@ -1671,8 +1677,23 @@ bool MRT_ROS_Gazebo_Loop::checkTarget()
   //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_quat p: " << dist_quat[1] << std::endl;
   //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_quat y: " << dist_quat[2] << std::endl;
   
-  std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] modelModeInt: " << modelModeInt << std::endl;
-  std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_ori: " << err_ori << std::endl << std::endl;
+  if (modelModeInt != 0 && err_ori > 1.0)
+  {
+    std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] modelModeInt: " << modelModeInt << std::endl;
+    std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_ori: " << err_ori << std::endl << std::endl;
+
+    std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] DEBUG INF" << std::endl;
+    while(1);
+  }
+  else if (modelModeInt == 0 && err_ori > 2*M_PI)
+  {
+    std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] modelModeInt: " << modelModeInt << std::endl;
+    std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_ori: " << err_ori << std::endl << std::endl;
+
+    std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] DEBUG INF" << std::endl;
+    while(1);
+  }
+  
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END" << std::endl << std::endl;
 
@@ -1680,9 +1701,11 @@ bool MRT_ROS_Gazebo_Loop::checkTarget()
   {
     drlActionResult_ = 4;
     shutDownFlag_ = true;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END true" << std::endl;
     return true;
   }
 
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END false" << std::endl;
   return false;
 }
 
