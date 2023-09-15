@@ -1513,7 +1513,7 @@ bool MRT_ROS_Gazebo_Loop::checkCollision()
     {
       drlActionResult_ = 1;
       shutDownFlag_ = true;
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] SELF COLLISION!" << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] SELF COLLISION! dist: " << dist << std::endl;
       return true;
     }
   }
@@ -1538,7 +1538,7 @@ bool MRT_ROS_Gazebo_Loop::checkCollision()
     {
       drlActionResult_ = 1;
       shutDownFlag_ = true;
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] EXT COLLISION!" << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] EXT COLLISION! dist: " << dist << std::endl;
       return true;
     }
   }
@@ -1551,7 +1551,7 @@ bool MRT_ROS_Gazebo_Loop::checkCollision()
     {
       drlActionResult_ = 1;
       shutDownFlag_ = true;
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] GROUND COLLISION!" << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] GROUND COLLISION!" << pointsOnRobotMsg.markers[i].pose.position.z << std::endl;
       return true;
     }
   }
@@ -1793,6 +1793,8 @@ bool MRT_ROS_Gazebo_Loop::checkTarget()
 //-------------------------------------------------------------------------------------------------------
 int MRT_ROS_Gazebo_Loop::checkTaskStatus()
 {
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] START" << std::endl;
+
   // -1: Continue
   // 0: MPC/MRT Failure
   // 1: Collision
@@ -1801,31 +1803,34 @@ int MRT_ROS_Gazebo_Loop::checkTaskStatus()
   // 4: Target reached
   // 5: Time-horizon reached
 
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] drlActionTimeHorizon_:" << drlActionTimeHorizon_ << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] time_:" << time_ << std::endl;
+
   if (drlFlag_)
   {
     if (checkCollision())
     {
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] checkTaskStatus: COLLISION!" << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] checkTaskStatus: COLLISION!" << std::endl;
       return 1;
     }
     else if (checkRollover())
     {
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] checkTaskStatus: ROLLOVER!" << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] checkTaskStatus: ROLLOVER!" << std::endl;
       return 2;
     }
     else if (checkGoal())
     {
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] checkTaskStatus: REACHED GOAL!" << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] checkTaskStatus: REACHED GOAL!" << std::endl;
       return 3;
     }
     else if (checkTarget())
     {
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] checkTaskStatus: REACHED TARGET!" << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] checkTaskStatus: REACHED TARGET!" << std::endl;
       return 4;
     }
     else if (time_ > drlActionTimeHorizon_)
     {
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] checkTaskStatus: END OF ACTION HORIZON!" << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] checkTaskStatus: END OF ACTION HORIZON!" << std::endl;
       shutDownFlag_ = true;
       drlActionResult_ = 5;
       return 5;
