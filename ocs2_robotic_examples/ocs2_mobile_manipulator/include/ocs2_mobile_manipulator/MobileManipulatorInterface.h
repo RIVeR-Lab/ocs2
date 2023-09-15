@@ -329,7 +329,8 @@ class MobileManipulatorInterface final : public RobotInterface
     int taskMode_ = 1;
 
     double err_threshold_pos_ = 0.1;
-    double err_threshold_ori_ = 0.05;
+    double err_threshold_ori_yaw_ = 0.1;
+    double err_threshold_ori_quat_ = 0.05;
 
     int mpcIter_ = 0; 
     int mrtIter_ = 0; 

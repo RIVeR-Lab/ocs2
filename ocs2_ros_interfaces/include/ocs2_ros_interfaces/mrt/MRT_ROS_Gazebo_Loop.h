@@ -19,6 +19,8 @@
 
 #include <ros/package.h>
 #include <tf/transform_listener.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <nav_msgs/Odometry.h>
 #include <gazebo_msgs/LinkStates.h>
@@ -66,7 +68,8 @@ class MRT_ROS_Gazebo_Loop
                         std::string baseControlMsg,
                         std::string armControlMsg,
                         double err_threshold_pos_,
-                        double err_threshold_ori_,
+                        double err_threshold_ori_yaw,
+                        double err_threshold_ori_quat,
                         scalar_t mrtDesiredFrequency,
                         scalar_t mpcDesiredFrequency=-1,
                         bool drlFlag=false,
@@ -178,6 +181,9 @@ class MRT_ROS_Gazebo_Loop
     SystemObservation getCurrentObservation(bool initFlag=false);
 
     /** NUA TODO: Add description */
+    double getYawDifference(geometry_msgs::Quaternion& quat1, geometry_msgs::Quaternion& quat2);
+
+    /** NUA TODO: Add description */
     bool isPickDropPoseReached(int taskMode);
 
     /** NUA TODO: Add description */
@@ -248,7 +254,8 @@ class MRT_ROS_Gazebo_Loop
     double initPolicyCtrMax_ = 2000;
 
     double err_threshold_pos_;
-    double err_threshold_ori_;
+    double err_threshold_ori_yaw_;
+    double err_threshold_ori_quat_;
 
     RobotModelInfo robotModelInfo_;
 

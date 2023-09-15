@@ -22,7 +22,8 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                                          std::string baseControlMsg,
                                          std::string armControlMsg,
                                          double err_threshold_pos,
-                                         double err_threshold_ori,
+                                         double err_threshold_ori_yaw,
+                                         double err_threshold_ori_quat,
                                          scalar_t mrtDesiredFrequency,
                                          scalar_t mpcDesiredFrequency,
                                          bool drlFlag,
@@ -30,7 +31,8 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   : mrt_(mrt), 
     worldFrameName_(worldFrameName),
     err_threshold_pos_(err_threshold_pos),
-    err_threshold_ori_(err_threshold_ori),
+    err_threshold_ori_quat_(err_threshold_ori_yaw),
+    err_threshold_ori_yaw_(err_threshold_ori_quat),
     mrtDesiredFrequency_(mrtDesiredFrequency), 
     mpcDesiredFrequency_(mpcDesiredFrequency),
     drlFlag_(drlFlag),
@@ -1067,6 +1069,35 @@ SystemObservation MRT_ROS_Gazebo_Loop::getCurrentObservation(bool initFlag)
 
   return currentObservation;
 }
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+double MRT_ROS_Gazebo_Loop::getYawDifference(geometry_msgs::Quaternion& quat1, geometry_msgs::Quaternion& quat2) 
+{
+  tf::Quaternion tf_quat1, tf_quat2;
+  tf::quaternionMsgToTF(quat1, tf_quat1);
+  tf::quaternionMsgToTF(quat2, tf_quat2);
+
+  double yaw1 = tf::getYaw(tf_quat1);
+  double yaw2 = tf::getYaw(tf_quat2);
+
+  double yaw_diff = yaw2 - yaw1;
+
+  // Normalize yaw difference to be within range of -pi to pi
+  while (yaw_diff > M_PI) 
+  {
+      yaw_diff -= 2 * M_PI;
+  }
+
+  while (yaw_diff < -M_PI) 
+  {
+      yaw_diff += 2 * M_PI;
+  }
+
+  return yaw_diff;
+}
+
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -1112,7 +1143,7 @@ bool MRT_ROS_Gazebo_Loop::isPickDropPoseReached(int taskMode)
 
     //std::cout << "[MRT_ROS_Gazebo_Loop::isPickDropPoseReached] END" << std::endl << std::endl;
 
-    return (err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_);
+    return (err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_quat_);
   }
 
   return false;
@@ -1603,7 +1634,7 @@ bool MRT_ROS_Gazebo_Loop::checkGoal()
   vector_t dist_quat = quaternionDistance(quat_ee, quat_goal);
   double err_ori = dist_quat.norm();
 
-  if ((err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_))
+  if ((err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_quat_))
   {
     drlActionResult_ = 3;
     shutDownFlag_ = true;
@@ -1659,26 +1690,79 @@ bool MRT_ROS_Gazebo_Loop::checkTarget()
   double err_ori;
   if (modelModeInt == 0)
   {
-    auto rotMat_ee = quaternionToRotationMatrix(quat_ee);
-    auto eulerZYX_ee = rotationMatrixToEulerAngles(rotMat_ee);
+    geometry_msgs::Quaternion quat_msg_ee;
+    quat_msg_ee.x = quat_ee.x();
+    quat_msg_ee.y = quat_ee.y();
+    quat_msg_ee.z = quat_ee.z();
+    quat_msg_ee.w = quat_ee.w();
 
-    auto rotMat_target = quaternionToRotationMatrix(quat_target);
-    auto eulerZYX_target = rotationMatrixToEulerAngles(rotMat_target);
+    geometry_msgs::Quaternion quat_msg_target;
+    quat_msg_target.x = quat_target.x();
+    quat_msg_target.y = quat_target.y();
+    quat_msg_target.z = quat_target.z();
+    quat_msg_target.w = quat_target.w();
 
-    err_ori = abs(eulerZYX_ee(0) - eulerZYX_target(0));
+    err_ori = abs(getYawDifference(quat_msg_ee, quat_msg_target)) / M_PI;
+
+    if ((err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_yaw_))
+    {
+      drlActionResult_ = 4;
+      shutDownFlag_ = true;
+      //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END true" << std::endl;
+      return true;
+    }
   }
   else
   {
     vector_t dist_quat = quaternionDistance(quat_ee, quat_target);
     err_ori = dist_quat.norm();
+
+    if ((err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_quat_))
+    {
+      drlActionResult_ = 4;
+      shutDownFlag_ = true;
+      //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END true" << std::endl;
+      return true;
+    }
+
+    /*
+    if (err_ori > 0.5)
+    { 
+      geometry_msgs::Quaternion quat_msg_ee;
+      quat_msg_ee.x = quat_ee.x();
+      quat_msg_ee.y = quat_ee.y();
+      quat_msg_ee.z = quat_ee.z();
+      quat_msg_ee.w = quat_ee.w();
+
+      geometry_msgs::Quaternion quat_msg_target;
+      quat_msg_target.x = quat_target.x();
+      quat_msg_target.y = quat_target.y();
+      quat_msg_target.z = quat_target.z();
+      quat_msg_target.w = quat_target.w();
+
+      double yaw_diff = abs(getYawDifference(quat_msg_ee, quat_msg_target)) / M_PI;
+
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] yaw_diff: " << yaw_diff << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_quat r: " << dist_quat[0] << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_quat p: " << dist_quat[1] << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_quat y: " << dist_quat[2] << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_ori: " << err_ori << std::endl;
+
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] DEBUG INF" << std::endl;
+      while(1);
+    }
+    */
   }
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_quat r: " << dist_quat[0] << std::endl;
   //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_quat p: " << dist_quat[1] << std::endl;
   //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_quat y: " << dist_quat[2] << std::endl;
   
-  if (modelModeInt != 0 && err_ori > 1.0)
+  /*
+  if (modelModeInt != 0 && err_ori > 0.5)
   {
+    abs(getYawDifference(quat_msg_ee, quat_msg_target)) / M_PI;
+
     std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] modelModeInt: " << modelModeInt << std::endl;
     std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_ori: " << err_ori << std::endl << std::endl;
 
@@ -1693,17 +1777,12 @@ bool MRT_ROS_Gazebo_Loop::checkTarget()
     std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] DEBUG INF" << std::endl;
     while(1);
   }
+  */
   
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END" << std::endl << std::endl;
 
-  if ((err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_))
-  {
-    drlActionResult_ = 4;
-    shutDownFlag_ = true;
-    //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END true" << std::endl;
-    return true;
-  }
+  
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END false" << std::endl;
   return false;
