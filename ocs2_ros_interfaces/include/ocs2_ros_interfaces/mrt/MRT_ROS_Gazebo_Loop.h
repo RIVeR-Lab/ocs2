@@ -347,7 +347,7 @@ class MRT_ROS_Gazebo_Loop
     std::string goalMsgName_ = "/mobile_manipulator_goal";
     int selfColDistance_n_coeff_ = 5;
     double selfCollisionRangeMin_ = 0.05;
-    double extCollisionRangeMin_ = 0.25;
+    double extCollisionRangeMin_ = 0.05;
     double rolloverRollThreshold_ = 0.2;
     double rolloverPitchThreshold_ = 0.2;
     visualization_msgs::MarkerArray selfCollisionDistanceMsg_;
