@@ -290,10 +290,14 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   loadData::loadPtreeValue<std::string>(pt, armStateMsg_, "model_information.armStateMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, baseControlMsg_, "model_information.baseControlMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, armControlMsg_, "model_information.armControlMsg", printOutFlag_);
-  loadData::loadPtreeValue<std::string>(pt, occupancyDistanceMsg_, "model_information.occupancyDistanceMsg", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, selfCollisionMsg_, "model_information.selfCollisionMsg", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, occupancyDistanceBaseMsg_, "model_information.occupancyDistanceBaseMsg", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, occupancyDistanceArmMsg_, "model_information.occupancyDistanceArmMsg", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, pointsOnRobotMsgName_, "model_information.pointsOnRobotMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, octomapMsg_, "model_information.octomapMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, modelModeMsgName_, "model_information.modelModeMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, targetMsgName_, "model_information.targetMsg", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, goalMsgName_, "model_information.goalMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, collisionConstraintPoints, "model_information.collisionConstraintPoints", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, collisionCheckPoints, "model_information.collisionCheckPoints", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, logSavePathRel_, "model_information.logSavePathRel", printOutFlag_);
@@ -326,10 +330,14 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     std::cout << "#### model_information.armStateMsg: " << armStateMsg_ << std::endl;
     std::cout << "#### model_information.baseControlMsg: " << baseControlMsg_ << std::endl;
     std::cout << "#### model_information.armControlMsg: " << armControlMsg_ << std::endl;
-    std::cout << "#### model_information.occupancyDistanceMsg: " << occupancyDistanceMsg_ << std::endl;
+    std::cout << "#### model_information.selfCollisionMsg: " << selfCollisionMsg_ << std::endl;
+    std::cout << "#### model_information.occupancyDistanceBaseMsg: " << occupancyDistanceBaseMsg_ << std::endl;
+    std::cout << "#### model_information.occupancyDistanceArmMsg: " << occupancyDistanceArmMsg_ << std::endl;
+    std::cout << "#### model_information.pointsOnRobotMsg: " << pointsOnRobotMsgName_ << std::endl;
     std::cout << "#### model_information.octomapMsg: " << octomapMsg_ << std::endl;
     std::cout << "#### model_information.modelModeMsg: " << modelModeMsgName_ << std::endl;
     std::cout << "#### model_information.targetMsg: " << targetMsgName_ << std::endl;
+    std::cout << "#### model_information.goalMsg: " << goalMsgName_ << std::endl;
     std::cout << "#### model_information.logSavePathRel: " << logSavePathRel_ << std::endl;
     std::cout << "#### =============================================================================" << std::endl;
   }
@@ -384,7 +392,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   // Set ExtMapUtility
   emuPtr_.reset(new ExtMapUtility());
   emuPtr_->setWorldFrameName(worldFrameName_);
-  emuPtr_->setPubOccDistArrayVisu(occupancyDistanceMsg_);
+  //emuPtr_->setPubOccDistArrayVisu(occupancyDistanceArmMsg_);
   emuPtr_->setNodeHandle(nodeHandle_);
   emuPtr_->subscribeOctMsg(octomapMsg_);
 
@@ -461,6 +469,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
                                                                                             removeJointNames,
                                                                                             collisionObjectPairs_,
                                                                                             collisionLinkPairs_,
+                                                                                            selfCollisionMsg_,
                                                                                             pointsOnRobotPtr_,
                                                                                             emuPtr_,
                                                                                             maxDistance_));
@@ -533,11 +542,12 @@ void MobileManipulatorInterface::initializePointsOnRobotPtr(std::string& collisi
   pointsOnRobotPtr_.reset(new PointsOnRobot(pointsAndRadii));
   if (pointsOnRobotPtr_->getNumOfPoints() > 0) 
   {
+    std::cout << "[MobileManipulatorNode::main] BEFORE initialize pointsOnRobotMsgName_: " << pointsOnRobotMsgName_ << std::endl;
     pointsOnRobotPtr_->initialize(*pinocchioInterfacePtr_,
                                   MobileManipulatorPinocchioMapping(robotModelInfo_),
                                   MobileManipulatorPinocchioMappingCppAd(robotModelInfo_),
                                   robotModelInfo_,
-                                  "points_on_robot",
+                                  pointsOnRobotMsgName_,
                                   libraryFolder_,
                                   recompileLibraries_,
                                   false);
@@ -1312,11 +1322,16 @@ void MobileManipulatorInterface::runMRT()
     MRT_ROS_Gazebo_Loop mrt_loop(nodeHandle_, 
                                  mrt, 
                                  worldFrameName_,
-                                 "mobile_manipulator_mpc_target",
+                                 targetMsgName_,
+                                 goalMsgName_,
                                  baseStateMsg_,
                                  armStateMsg_,
                                  baseControlMsg_,
                                  armControlMsg_,
+                                 selfCollisionMsg_,
+                                 occupancyDistanceBaseMsg_,
+                                 occupancyDistanceArmMsg_,
+                                 pointsOnRobotMsgName_,
                                  err_threshold_pos_,
                                  err_threshold_ori_yaw_,
                                  err_threshold_ori_quat_,

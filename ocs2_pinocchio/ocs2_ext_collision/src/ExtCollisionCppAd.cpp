@@ -308,16 +308,17 @@ void ExtCollisionCppAd::updateDistances(const vector_t& state, bool normalize_fl
     p0.z = position(2);
 
     geometry_msgs::Point p1;
-    
-    bool success = emuPtr_->getNearestOccupancyDist(position(0), 
-                                                    position(1), 
-                                                    position(2), 
-                                                    radii(i),
-                                                    maxDistance_,
-                                                    p1, 
-                                                    distance,
-                                                    false);
-    if(success)
+    bool col_status;
+    emuPtr_->getNearestOccupancyDist(position(0), 
+                                     position(1), 
+                                     position(2), 
+                                     radii(i),
+                                     maxDistance_,
+                                     p1, 
+                                     distance,
+                                     col_status,
+                                     false);
+    if(col_status)
     {
       //p0_vec_.push_back(p0);
       //p1_vec_.push_back(p1);
@@ -367,14 +368,16 @@ void ExtCollisionCppAd::updateDistances(const vector_t& state, const vector_t& f
   timer1_.endTimer();
 
   timer2_.startTimer();
+  std::vector<bool> col_status;
   std::vector<double> min_distances;
-  bool collision = emuPtr_->getNearestOccupancyDist(numPoints,
-                                                    positionPointsOnRobot,
-                                                    radii, 
-                                                    maxDistance_,
-                                                    p1_vec_, 
-                                                    min_distances,
-                                                    normalize_flag);
+  emuPtr_->getNearestOccupancyDist(numPoints,
+                                   positionPointsOnRobot,
+                                   radii, 
+                                   maxDistance_,
+                                   p1_vec_, 
+                                   min_distances,
+                                   col_status,
+                                   normalize_flag);
 
   for (size_t i = 0; i < min_distances.size(); i++)
   {

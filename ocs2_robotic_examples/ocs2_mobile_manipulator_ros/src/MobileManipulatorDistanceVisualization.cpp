@@ -55,7 +55,7 @@ int main(int argc, char** argv)
   RobotModelType robotModelType;
   std::vector<std::string> removeJointNames, armJointFrameNames, armJointNames;
   std::string worldFrameName, robotName, baseFrameName, armBaseFrame, eeFrame, collisionConstraintPoints, collisionCheckPoints,
-              baseStateMsg, armStateMsg, baseControlMsg, armControlMsg, occupancyDistanceMsg, octomapMsg;
+              baseStateMsg, armStateMsg, baseControlMsg, armControlMsg, selfCollisionMsg, occupancyDistanceBaseMsg, occupancyDistanceArmMsg, octomapMsg;
   std::vector<std::pair<size_t, size_t>> selfCollisionObjectPairs;
   std::vector<std::pair<std::string, std::string>> selfCollisionLinkPairs;
   double maxDistance;
@@ -74,7 +74,9 @@ int main(int argc, char** argv)
   loadData::loadPtreeValue<std::string>(pt, armStateMsg, "model_information.armStateMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, baseControlMsg, "model_information.baseControlMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, armControlMsg, "model_information.armControlMsg", printOutFlag_);
-  loadData::loadPtreeValue<std::string>(pt, occupancyDistanceMsg, "model_information.occupancyDistanceMsg", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, selfCollisionMsg, "model_information.selfCollisionMsg", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, occupancyDistanceBaseMsg, "model_information.occupancyDistanceBaseMsg", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, occupancyDistanceArmMsg, "model_information.occupancyDistanceArmMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, octomapMsg, "model_information.octomapMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, collisionConstraintPoints, "model_information.collisionConstraintPoints", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, collisionCheckPoints, "model_information.collisionCheckPoints", printOutFlag_);
@@ -96,7 +98,9 @@ int main(int argc, char** argv)
   std::cout << "[MobileManipulatorDistanceVisualization::main] armStateMsg: " << armStateMsg << std::endl;
   std::cout << "[MobileManipulatorDistanceVisualization::main] baseControlMsg: " << baseControlMsg << std::endl;
   std::cout << "[MobileManipulatorDistanceVisualization::main] armControlMsg: " << armControlMsg << std::endl;
-  std::cout << "[MobileManipulatorDistanceVisualization::main] occupancyDistanceMsg: " << occupancyDistanceMsg << std::endl;
+  std::cout << "[MobileManipulatorDistanceVisualization::main] selfCollisionMsg: " << selfCollisionMsg << std::endl;
+  std::cout << "[MobileManipulatorDistanceVisualization::main] occupancyDistanceBaseMsg: " << occupancyDistanceBaseMsg << std::endl;
+  std::cout << "[MobileManipulatorDistanceVisualization::main] occupancyDistanceArmMsg: " << occupancyDistanceArmMsg << std::endl;
   std::cout << "[MobileManipulatorDistanceVisualization::main] octomapMsg: " << octomapMsg << std::endl;
   std::cout << "[MobileManipulatorDistanceVisualization::main] removeJoints: " << std::endl;
   for (const auto& name : removeJointNames) 
@@ -216,8 +220,10 @@ int main(int argc, char** argv)
   std::shared_ptr<ExtMapUtility> emuPtr;
   emuPtr.reset(new ExtMapUtility());
   emuPtr->setWorldFrameName(worldFrameName);
-  emuPtr->setPubOccDistArrayVisu(occupancyDistanceMsg);
-  emuPtr->setPubOccDistArrayVisu2(occupancyDistanceMsg + "2");
+  emuPtr->setPubCollisionInfoBase(occupancyDistanceBaseMsg);
+  emuPtr->setPubCollisionInfoArm(occupancyDistanceArmMsg);
+  emuPtr->setPubOccDistArrayVisu(occupancyDistanceArmMsg + "_visu");
+  emuPtr->setPubOccDistArrayVisu2(occupancyDistanceBaseMsg + "_visu");
   emuPtr->setNodeHandle(nodeHandle);
   emuPtr->subscribeOctMsg(octomapMsg);
 
@@ -258,6 +264,7 @@ int main(int argc, char** argv)
                                                        removeJointNames,
                                                        selfCollisionObjectPairs,
                                                        selfCollisionLinkPairs,
+                                                       selfCollisionMsg,
                                                        pointsOnRobotPtr,
                                                        emuPtr,
                                                        maxDistance);

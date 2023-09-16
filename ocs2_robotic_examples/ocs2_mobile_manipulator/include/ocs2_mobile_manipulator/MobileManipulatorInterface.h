@@ -314,7 +314,8 @@ class MobileManipulatorInterface final : public RobotInterface
     //std::string graspFrameName_ = "grasp";
 
     std::string modelModeMsgName_ = "mobile_manipulator_model_mode";
-    std::string targetMsgName_ = "mobile_manipulator_mpc_target";
+    std::string targetMsgName_;
+    std::string goalMsgName_;
 
     std::vector<std::pair<size_t, size_t>> collisionObjectPairs_;
     std::vector<std::pair<std::string, std::string>> collisionLinkPairs_;
@@ -383,7 +384,10 @@ class MobileManipulatorInterface final : public RobotInterface
     std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_;
 
     double maxDistance_ = 10;
-    std::string occupancyDistanceMsg_;
+    std::string selfCollisionMsg_;
+    std::string occupancyDistanceBaseMsg_;
+    std::string occupancyDistanceArmMsg_;
+    std::string pointsOnRobotMsgName_;
     std::string octomapMsg_;
     std::shared_ptr<ExtMapUtility> emuPtr_;
     PointsOnRobot::points_radii_t pointsAndRadii_;

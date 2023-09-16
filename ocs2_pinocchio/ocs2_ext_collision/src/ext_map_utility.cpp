@@ -105,8 +105,8 @@ ExtMapUtility::ExtMapUtility(NodeHandle& nh,
   pub_pc2_msg_gz_pkg_man_longwide_pkg_ = nh_.advertise<sensor_msgs::PointCloud2>("pc2_scan_longwide_pkg", 10);
 
   pub_occ_distance_visu_ = nh_.advertise<visualization_msgs::Marker>("occupancy_distance", 10);
-  pub_occ_distance_array_visu_ = nh_.advertise<visualization_msgs::MarkerArray>("occupancy_distance_array", 100);
-  pub_occ_distance_array_visu2_ = nh_.advertise<visualization_msgs::MarkerArray>("occupancy_distance_array2", 10);
+  pub_occ_distance_array_visu_ = nh_.advertise<visualization_msgs::MarkerArray>("occupancy_distance_array_visu", 100);
+  pub_occ_distance_array_visu2_ = nh_.advertise<visualization_msgs::MarkerArray>("occupancy_distance_array_visu", 10);
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1095,9 +1095,25 @@ void ExtMapUtility::setPubOccDistVisu(string pub_name_occ_dist_visu)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+void ExtMapUtility::setPubCollisionInfoBase(string pub_name_collision_info_base)
+{
+  pub_collision_info_base_ = nh_.advertise<ocs2_msgs::collision_info>(pub_name_collision_info_base, 10);
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void ExtMapUtility::setPubCollisionInfoArm(string pub_name_collision_info_arm)
+{
+  pub_collision_info_arm_ = nh_.advertise<ocs2_msgs::collision_info>(pub_name_collision_info_arm, 10);
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void ExtMapUtility::setPubOccDistArrayVisu(string pub_name_occ_dist_array_visu)
 {
-  pub_occ_distance_array_visu_ = nh_.advertise<visualization_msgs::MarkerArray>(pub_name_occ_dist_array_visu, 100);
+  pub_occ_distance_array_visu_ = nh_.advertise<visualization_msgs::MarkerArray>(pub_name_occ_dist_array_visu, 10);
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1452,6 +1468,50 @@ void ExtMapUtility::fillPCMsgFromOctByResolutionScale()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+void ExtMapUtility::fillCollisionInfoBase(vector<bool>& col_status,
+                                          vector<double>& dist, 
+                                          vector<geometry_msgs::Point>& p0_vec, 
+                                          vector<geometry_msgs::Point>& p1_vec,
+                                          vector<double>& dist_threshold) const
+{
+  vector<uint8_t> cs;
+  for (size_t i = 0; i < col_status.size(); i++)
+  {
+    cs.push_back((uint8_t) col_status[i]);
+  }
+
+  collision_info_base_.status = cs;
+  collision_info_base_.distance = dist;
+  collision_info_base_.p0 = p0_vec;
+  collision_info_base_.p1 = p1_vec;
+  collision_info_base_.dist_threshold = dist_threshold;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void ExtMapUtility::fillCollisionInfoArm(vector<bool>& col_status,
+                                         vector<double>& dist, 
+                                         vector<geometry_msgs::Point>& p0_vec, 
+                                         vector<geometry_msgs::Point>& p1_vec,
+                                         vector<double>& dist_threshold) const
+{
+  vector<uint8_t> cs;
+  for (size_t i = 0; i < col_status.size(); i++)
+  {
+    cs.push_back((uint8_t) col_status[i]);
+  }
+
+  collision_info_arm_.status = cs;
+  collision_info_arm_.distance = dist;
+  collision_info_arm_.p0 = p0_vec;
+  collision_info_arm_.p1 = p1_vec;
+  collision_info_arm_.dist_threshold = dist_threshold;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void ExtMapUtility::fillOccDistanceVisu(geometry_msgs::Point& p0, geometry_msgs::Point& p1) const
 {
   occ_distance_visu_.ns = "occupancy_distance";
@@ -1479,7 +1539,7 @@ void ExtMapUtility::fillOccDistanceVisu(geometry_msgs::Point& p0, geometry_msgs:
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void ExtMapUtility::fillOccDistanceArrayVisu(vector<geometry_msgs::Point>& p0_vec, vector<geometry_msgs::Point>& p1_vec) const
+void ExtMapUtility::fillOccDistanceArrayVisu(vector<geometry_msgs::Point>& p0_vec, vector<geometry_msgs::Point>& p1_vec, vector<double>& dist) const
 {
   visualization_msgs::MarkerArray occ_distance_array_visu;
   for (size_t i = 0; i < p0_vec.size(); i++)
@@ -1490,9 +1550,9 @@ void ExtMapUtility::fillOccDistanceArrayVisu(vector<geometry_msgs::Point>& p0_ve
     occ_distance_visu.type = visualization_msgs::Marker::ARROW;
     occ_distance_visu.action = visualization_msgs::Marker::ADD;
     occ_distance_visu.pose.orientation.w = 1.0;
-    occ_distance_visu.scale.x = 0.03;
-    occ_distance_visu.scale.y = 0.05;
-    occ_distance_visu.scale.z = 0.05;
+    occ_distance_visu.scale.x = 0.01;
+    occ_distance_visu.scale.y = 0.02;
+    occ_distance_visu.scale.z = 0.02;
     occ_distance_visu.color.r = 1.0;
     occ_distance_visu.color.g = 0.0;
     occ_distance_visu.color.b = 1.0;
@@ -1508,13 +1568,40 @@ void ExtMapUtility::fillOccDistanceArrayVisu(vector<geometry_msgs::Point>& p0_ve
 
     occ_distance_array_visu.markers.push_back(occ_distance_visu);
   }
+
+  int offset = p0_vec.size();
+
+  for (size_t i = 0; i < p0_vec.size(); i++)
+  {
+    visualization_msgs::Marker occ_distance_visu;
+    occ_distance_visu.id = offset + i;
+    occ_distance_visu.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    occ_distance_visu.pose.position.x = 0.5 * (p0_vec[i].x + p1_vec[i].x);
+    occ_distance_visu.pose.position.y = 0.5 * (p0_vec[i].y + p1_vec[i].y);
+    occ_distance_visu.pose.position.z = 0.5 * (p0_vec[i].z + p1_vec[i].z);
+    occ_distance_visu.pose.position.z += 0.015;
+    occ_distance_visu.text = std::to_string(i) + ": " + std::to_string(dist[i]);
+    occ_distance_visu.scale.z = 0.03;
+
+    occ_distance_visu.color.r = 1.0;
+    occ_distance_visu.color.g = 0.0;
+    occ_distance_visu.color.b = 1.0;
+    occ_distance_visu.color.a = 1.0;
+
+    occ_distance_visu.header.frame_id = world_frame_name;
+    //occ_distance_visu.header.seq++;
+    occ_distance_visu.header.stamp = ros::Time::now();
+
+    occ_distance_array_visu.markers.push_back(occ_distance_visu);
+  }
+
   occ_distance_array_visu_ = occ_distance_array_visu;
 }
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void ExtMapUtility::fillOccDistanceArrayVisu2(vector<geometry_msgs::Point>& p0_vec2, vector<geometry_msgs::Point>& p1_vec2) const
+void ExtMapUtility::fillOccDistanceArrayVisu2(vector<geometry_msgs::Point>& p0_vec2, vector<geometry_msgs::Point>& p1_vec2, vector<double>& dist) const
 {
   visualization_msgs::MarkerArray occ_distance_array_visu2;
   for (size_t i = 0; i < p0_vec2.size(); i++)
@@ -1525,9 +1612,9 @@ void ExtMapUtility::fillOccDistanceArrayVisu2(vector<geometry_msgs::Point>& p0_v
     occ_distance_visu.type = visualization_msgs::Marker::ARROW;
     occ_distance_visu.action = visualization_msgs::Marker::ADD;
     occ_distance_visu.pose.orientation.w = 1.0;
-    occ_distance_visu.scale.x = 0.03;
-    occ_distance_visu.scale.y = 0.05;
-    occ_distance_visu.scale.z = 0.05;
+    occ_distance_visu.scale.x = 0.01;
+    occ_distance_visu.scale.y = 0.02;
+    occ_distance_visu.scale.z = 0.02;
     occ_distance_visu.color.r = 1.0;
     occ_distance_visu.color.g = 0.0;
     occ_distance_visu.color.b = 1.0;
@@ -1543,6 +1630,33 @@ void ExtMapUtility::fillOccDistanceArrayVisu2(vector<geometry_msgs::Point>& p0_v
 
     occ_distance_array_visu2.markers.push_back(occ_distance_visu);
   }
+
+  int offset = p0_vec2.size();
+
+  for (size_t i = 0; i < p0_vec2.size(); i++)
+  {
+    visualization_msgs::Marker occ_distance_visu;
+    occ_distance_visu.id = offset + i;
+    occ_distance_visu.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    occ_distance_visu.pose.position.x = 0.5 * (p0_vec2[i].x + p1_vec2[i].x);
+    occ_distance_visu.pose.position.y = 0.5 * (p0_vec2[i].y + p1_vec2[i].y);
+    occ_distance_visu.pose.position.z = 0.5 * (p0_vec2[i].z + p1_vec2[i].z);
+    occ_distance_visu.pose.position.z += 0.015;
+    occ_distance_visu.text = std::to_string(i) + ": " + std::to_string(dist[i]);
+    occ_distance_visu.scale.z = 0.03;
+
+    occ_distance_visu.color.r = 1.0;
+    occ_distance_visu.color.g = 0.0;
+    occ_distance_visu.color.b = 1.0;
+    occ_distance_visu.color.a = 1.0;
+
+    occ_distance_visu.header.frame_id = world_frame_name;
+    //occ_distance_visu.header.seq++;
+    occ_distance_visu.header.stamp = ros::Time::now();
+
+    occ_distance_array_visu2.markers.push_back(occ_distance_visu);
+  }
+  
   occ_distance_array_visu2_ = occ_distance_array_visu2;
 }
 
@@ -2573,6 +2687,48 @@ void ExtMapUtility::publishPC2MsgGzPkgMan(int index_pkg_man)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+void ExtMapUtility::publishCollisionInfoBase()
+{
+  pub_collision_info_base_.publish(collision_info_base_);
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void ExtMapUtility::publishCollisionInfoBase(vector<bool>& col_status, 
+                                             vector<double>& dist, 
+                                             vector<geometry_msgs::Point>& p0_vec, 
+                                             vector<geometry_msgs::Point>& p1_vec,
+                                             vector<double>& dist_threshold)
+{
+  fillCollisionInfoBase(col_status, dist, p0_vec, p1_vec, dist_threshold);
+  pub_collision_info_base_.publish(collision_info_base_);
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void ExtMapUtility::publishCollisionInfoArm()
+{
+  pub_collision_info_arm_.publish(collision_info_arm_);
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void ExtMapUtility::publishCollisionInfoArm(vector<bool>& col_status, 
+                                            vector<double>& dist, 
+                                            vector<geometry_msgs::Point>& p0_vec, 
+                                            vector<geometry_msgs::Point>& p1_vec,
+                                            vector<double>& dist_threshold)
+{
+  fillCollisionInfoArm(col_status, dist, p0_vec, p1_vec, dist_threshold);
+  pub_collision_info_arm_.publish(collision_info_arm_);
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void ExtMapUtility::publishOccDistanceVisu()
 {
   visualization_msgs::Marker occ_distance_visu = occ_distance_visu_;
@@ -2618,18 +2774,18 @@ void ExtMapUtility::publishOccDistanceArrayVisu2()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void ExtMapUtility::publishOccDistanceArrayVisu(vector<geometry_msgs::Point> p0_vec, vector<geometry_msgs::Point> p1_vec)
+void ExtMapUtility::publishOccDistanceArrayVisu(vector<geometry_msgs::Point>& p0_vec, vector<geometry_msgs::Point>& p1_vec, vector<double>& dist)
 {
-  fillOccDistanceArrayVisu(p0_vec, p1_vec);
+  fillOccDistanceArrayVisu(p0_vec, p1_vec, dist);
   pub_occ_distance_array_visu_.publish(occ_distance_array_visu_);
 }
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void ExtMapUtility::publishOccDistanceArrayVisu2(vector<geometry_msgs::Point> p0_vec2, vector<geometry_msgs::Point> p1_vec2)
+void ExtMapUtility::publishOccDistanceArrayVisu2(vector<geometry_msgs::Point>& p0_vec2, vector<geometry_msgs::Point>& p1_vec2, vector<double>& dist)
 {
-  fillOccDistanceArrayVisu2(p0_vec2, p1_vec2);
+  fillOccDistanceArrayVisu2(p0_vec2, p1_vec2, dist);
   pub_occ_distance_array_visu2_.publish(occ_distance_array_visu2_);
 }
 
@@ -3177,18 +3333,19 @@ Eigen::Vector3d ExtMapUtility::calculateInteriorPoint(const Eigen::Vector3d& p1,
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-bool ExtMapUtility::getNearestOccupancyDist(double x, 
+void ExtMapUtility::getNearestOccupancyDist(double x, 
                                             double y, 
                                             double z, 
                                             double radius, 
                                             double max_dist, 
                                             geometry_msgs::Point& min_p, 
                                             double& min_dist, 
+                                            bool& col_status,
                                             bool normalize_flag) const
 {
   //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] START" << std::endl;
 
-  bool collisionFlag = false;
+  col_status = false;
 
   Eigen::Affine3d world_transform_eigen, query_tranform_eigen;
   world_transform_eigen.setIdentity();
@@ -3257,7 +3414,7 @@ bool ExtMapUtility::getNearestOccupancyDist(double x,
   if (min_dist < 0)
   {
     min_dist = 0;
-    collisionFlag = true;
+    col_status = true;
   }
   else if (min_dist > max_dist)
   {
@@ -3294,25 +3451,23 @@ bool ExtMapUtility::getNearestOccupancyDist(double x,
   //while(1);
 
   //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] END" << std::endl << std::endl;
-
-  return collisionFlag;
 }
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-bool ExtMapUtility::getNearestOccupancyDist(std::vector<geometry_msgs::Point>& query_points, 
+void ExtMapUtility::getNearestOccupancyDist(std::vector<geometry_msgs::Point>& query_points, 
                                             Eigen::VectorXd& radii, 
                                             double max_dist, 
                                             std::vector<geometry_msgs::Point>& min_points, 
                                             std::vector<double>& min_distances, 
+                                            std::vector<bool>& col_status,
                                             bool normalize_flag) const
 {
   //std::cout << "[ExtMapUtility::getNearestOccupancyDist(6)] START" << std::endl;
 
   min_points.clear();
   min_distances.clear();
-  bool collisionFlag = false;
 
   Eigen::Affine3d world_transform_eigen, query_tranform_eigen;
   world_transform_eigen.setIdentity();
@@ -3384,10 +3539,12 @@ bool ExtMapUtility::getNearestOccupancyDist(std::vector<geometry_msgs::Point>& q
     if (min_dist < 0)
     {
       min_dist = 0;
-      collisionFlag = true;
+      col_status.push_back(true);
     }
     else if (min_dist > max_dist)
     {
+      col_status.push_back(false);
+
       Eigen::Vector3d int_p = calculateInteriorPoint(Eigen::Vector3d(query_points[i].x, query_points[i].y, query_points[i].z), 
                                                      Eigen::Vector3d(min_p.x, min_p.y, min_p.z), 
                                                      max_dist);
@@ -3397,6 +3554,10 @@ bool ExtMapUtility::getNearestOccupancyDist(std::vector<geometry_msgs::Point>& q
       min_p.z = int_p.z();
 
       min_dist = max_dist;
+    }
+    else
+    {
+      col_status.push_back(false);
     }
 
     if (normalize_flag)
@@ -3425,26 +3586,24 @@ bool ExtMapUtility::getNearestOccupancyDist(std::vector<geometry_msgs::Point>& q
   //while(1);
 
   //std::cout << "[ExtMapUtility::getNearestOccupancyDist(6)] END" << std::endl << std::endl;
-
-  return collisionFlag;
 }
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-bool ExtMapUtility::getNearestOccupancyDist(int numPoints,
+void ExtMapUtility::getNearestOccupancyDist(int numPoints,
                                             Eigen::VectorXd& positionPointsOnRobot, 
                                             Eigen::VectorXd& radii, 
                                             double max_dist, 
                                             std::vector<geometry_msgs::Point>& min_points, 
                                             std::vector<double>& min_distances, 
+                                            std::vector<bool>& col_status,
                                             bool normalize_flag) const
 {
   //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7)] START" << std::endl;
 
   min_points.clear();
   min_distances.clear();
-  bool collisionFlag = false;
 
   Eigen::Affine3d world_transform_eigen, query_tranform_eigen;
   world_transform_eigen.setIdentity();
@@ -3519,10 +3678,11 @@ bool ExtMapUtility::getNearestOccupancyDist(int numPoints,
     if (min_dist < 0)
     {
       min_dist = 0;
-      collisionFlag = true;
+      col_status.push_back(true);
     }
     else if (min_dist > max_dist)
     {
+      col_status.push_back(false);
       Eigen::Vector3d int_p = calculateInteriorPoint(Eigen::Vector3d(position(0), position(1), position(2)), 
                                                      Eigen::Vector3d(min_p.x, min_p.y, min_p.z), 
                                                      max_dist);
@@ -3532,6 +3692,10 @@ bool ExtMapUtility::getNearestOccupancyDist(int numPoints,
       min_p.z = int_p.z();
 
       min_dist = max_dist;
+    }
+    else
+    {
+      col_status.push_back(false);
     }
 
     if (normalize_flag)
@@ -3560,24 +3724,23 @@ bool ExtMapUtility::getNearestOccupancyDist(int numPoints,
   //while(1);
 
   //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7)] END" << std::endl << std::endl;
-
-  return collisionFlag;
 }
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-bool ExtMapUtility::getNearestOccupancyDist(std::string octMsgName,
-                                            Eigen::Ref<Eigen::Matrix<ocs2::scalar_t, 3, 1>>& position,
+void ExtMapUtility::getNearestOccupancyDist(std::string octMsgName,
+                                            Eigen::VectorXd& position,
                                             double radius, 
                                             double max_dist, 
                                             geometry_msgs::Point& min_point, 
-                                            double min_dist, 
+                                            double& min_dist, 
+                                            bool& col_status,
                                             bool normalize_flag) const
 {
   //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] START" << std::endl;
 
-  bool collisionFlag = false;
+  col_status = false;
 
   Eigen::Affine3d world_transform_eigen, query_tranform_eigen;
   world_transform_eigen.setIdentity();
@@ -3697,11 +3860,12 @@ bool ExtMapUtility::getNearestOccupancyDist(std::string octMsgName,
   std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] position(2): " << position(2) << std::endl;
   */
 
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] 1) min_dist: " << min_dist << std::endl;
   
   if (min_dist < 0)
   {
     min_dist = 0;
-    collisionFlag = true;
+    col_status = true;
   }
   else if (min_dist > max_dist)
   {
@@ -3715,6 +3879,8 @@ bool ExtMapUtility::getNearestOccupancyDist(std::string octMsgName,
 
     min_dist = max_dist;
   }
+
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] 2) min_dist: " << min_dist << std::endl;
 
   if (normalize_flag)
   {
@@ -3732,14 +3898,12 @@ bool ExtMapUtility::getNearestOccupancyDist(std::string octMsgName,
   std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] position(2): " << position(2) << std::endl << std::endl;
   */
 
-  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] AFTER min_dist: " << min_dist << std::endl << std::endl;
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] 3) min_dist: " << min_dist << std::endl;
 
   //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] DEBUG INF" << std::endl << std::endl;
   //while(1);
 
   //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] END" << std::endl << std::endl;
-
-  return collisionFlag;
 }
 
 /*

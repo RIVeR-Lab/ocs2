@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.08.21
+// LAST UPDATE: 2023.09.16
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -45,6 +45,7 @@ class MobileManipulatorVisualization final : public DummyObserver
                                    const std::vector<std::string>& removeJointNames,
                                    std::vector<std::pair<size_t, size_t>>& collisionObjectPairs,
                                    std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
+                                   const std::string& selfCollisionMsg,
                                    std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
                                    std::shared_ptr<ExtMapUtility> emuPtr,
                                    double maxDistance);
@@ -82,6 +83,13 @@ class MobileManipulatorVisualization final : public DummyObserver
 
     void jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 
+    // DESCRIPTION: TODO...
+    void fillSelfCollisionInfo(vector<bool>& col_status,
+                               vector<double>& dist, 
+                               vector<geometry_msgs::Point>& p0_vec, 
+                               vector<geometry_msgs::Point>& p1_vec,
+                               vector<double>& dist_threshold) const;
+
     //void publishObservation(const ros::Time& timeStamp, const SystemObservation& observation);
     
     void publishTargetTrajectories(const ros::Time& timeStamp, const TargetTrajectories& targetTrajectories);
@@ -89,6 +97,16 @@ class MobileManipulatorVisualization final : public DummyObserver
     void publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy);
 
     void publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy, vector_t fullState);
+
+    // DESCRIPTION: TODO...
+    void publishSelfCollisionInfo();
+
+    // DESCRIPTION: TODO...
+    void publishSelfCollisionInfo(vector<bool>& col_status, 
+                                  vector<double>& dist, 
+                                  vector<geometry_msgs::Point>& p0_vec, 
+                                  vector<geometry_msgs::Point>& p1_vec,
+                                  vector<double>& dist_threshold);
 
     tf::TransformListener tfListener_;
     tf::TransformBroadcaster tfBroadcaster_;
@@ -100,11 +118,18 @@ class MobileManipulatorVisualization final : public DummyObserver
     RobotModelInfo robotModelInfo_;
 
     double maxDistance_;
-    Eigen::Matrix<scalar_t, -1, 1> distances_;
+    double radius_base_ = 0.35;
+    vector<bool> col_status_base_;
+    vector<bool> col_status_arm_;
+    vector<double> col_dist_thresh_base_;
+    vector<double> col_dist_thresh_arm_;
+    //Eigen::Matrix<scalar_t, -1, 1> distances_;
     vector<geometry_msgs::Point> p0_vec_;
     vector<geometry_msgs::Point> p1_vec_;
     vector<geometry_msgs::Point> p0_vec2_;
     vector<geometry_msgs::Point> p1_vec2_;
+    vector<double> dist_;
+    vector<double> dist2_;
     std::vector<std::string> removeJointNames_;
     std::vector<std::pair<size_t, size_t>> collisionObjectPairs_;
     std::vector<std::pair<std::string, std::string>> collisionLinkPairs_;
@@ -135,6 +160,15 @@ class MobileManipulatorVisualization final : public DummyObserver
     tf::StampedTransform tf_robot_wrt_world_;
     sensor_msgs::JointState jointStateMsg_;
 
+    double selfCollisionRangeMin_ = 0.05;
+    vector<bool> self_col_status_;
+    vector<double> self_col_dist_;
+    vector<geometry_msgs::Point> self_p0_;
+    vector<geometry_msgs::Point> self_p1_;
+    vector<double> self_col_dist_thresh_;
+    std::string selfCollisionMsg_;
+    mutable ocs2_msgs::collision_info selfCollisionInfo_;
+
     //std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
     
     ocs2::benchmark::RepeatedTimer timer0_;
@@ -155,6 +189,7 @@ class MobileManipulatorVisualization final : public DummyObserver
     ros::Subscriber jointStatesSub_;
     ros::Subscriber tfSub_;
 
+    ros::Publisher pubSelfCollisionInfo_;
     ros::Publisher markerPublisher_;
     ros::Publisher stateOptimizedPublisher_;
     ros::Publisher stateOptimizedPosePublisher_;

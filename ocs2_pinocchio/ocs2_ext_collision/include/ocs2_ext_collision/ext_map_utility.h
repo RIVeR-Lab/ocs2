@@ -1,7 +1,7 @@
 #ifndef EXT_MAP_UTILITY_H
 #define EXT_MAP_UTILITY_H
 
-// LAST UPDATE: 2023.08.18
+// LAST UPDATE: 2023.09.16
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -34,6 +34,7 @@
 //#include <cv_bridge/cv_bridge.h>
 //#include <voxblox_ros/esdf_server.h>
 
+#include <ocs2_msgs/collision_info.h>
 #include <ocs2_core/automatic_differentiation/CppAdInterface.h>
 #include <robot_collision_checking/fcl_interface.h>
 
@@ -390,6 +391,12 @@ class ExtMapUtility
     void setPubOccDistVisu(string pub_name_occ_dist_visu);
 
     // DESCRIPTION: TODO...
+    void setPubCollisionInfoBase(string pub_name_collision_info_base);
+
+    // DESCRIPTION: TODO...
+    void setPubCollisionInfoArm(string pub_name_collision_info_arm);
+
+    // DESCRIPTION: TODO...
     void setPubOccDistArrayVisu(string pub_name_occ_dist_array_visu);
 
     // DESCRIPTION: TODO...
@@ -460,13 +467,26 @@ class ExtMapUtility
     void fillPCMsgFromOctByResolutionScale();
 
     // DESCRIPTION: TODO...
+    void fillCollisionInfoBase(vector<bool>& status,
+                               vector<double>& dist, 
+                               vector<geometry_msgs::Point>& p0_vec, 
+                               vector<geometry_msgs::Point>& p1_vec,
+                               vector<double>& dist_threshold) const;
+
+    // DESCRIPTION: TODO...
+    void fillCollisionInfoArm(vector<bool>& status,
+                              vector<double>& dist, 
+                              vector<geometry_msgs::Point>& p0_vec, 
+                              vector<geometry_msgs::Point>& p1_vec,
+                              vector<double>& dist_threshold) const;
+    // DESCRIPTION: TODO...
     void fillOccDistanceVisu(geometry_msgs::Point& p0, geometry_msgs::Point& p1) const;
 
     // DESCRIPTION: TODO...
-    void fillOccDistanceArrayVisu(vector<geometry_msgs::Point>& p0_vec, vector<geometry_msgs::Point>& p1_vec) const;
+    void fillOccDistanceArrayVisu(vector<geometry_msgs::Point>& p0_vec, vector<geometry_msgs::Point>& p1_vec, vector<double>& dist) const;
 
     // DESCRIPTION: TODO...
-    void fillOccDistanceArrayVisu2(vector<geometry_msgs::Point>& p0_vec2, vector<geometry_msgs::Point>& p1_vec2) const;
+    void fillOccDistanceArrayVisu2(vector<geometry_msgs::Point>& p0_vec2, vector<geometry_msgs::Point>& p1_vec2, vector<double>& dist) const;
 
     // DESCRIPTION: TODO...
     void fillDebugArrayVisu(vector<tf::Vector3>& v);
@@ -631,6 +651,26 @@ class ExtMapUtility
     void publishPC2MsgGzPkgMan(int index_pkg_man);
 
     // DESCRIPTION: TODO...
+    void publishCollisionInfoBase();
+
+    // DESCRIPTION: TODO...
+    void publishCollisionInfoBase(vector<bool>& col_status, 
+                                  vector<double>& dist, 
+                                  vector<geometry_msgs::Point>& p0_vec, 
+                                  vector<geometry_msgs::Point>& p1_vec,
+                                  vector<double>& dist_threshold);
+    
+    // DESCRIPTION: TODO...
+    void publishCollisionInfoArm();
+
+    // DESCRIPTION: TODO...
+    void publishCollisionInfoArm(vector<bool>& col_status, 
+                                 vector<double>& dist, 
+                                 vector<geometry_msgs::Point>& p0_vec, 
+                                 vector<geometry_msgs::Point>& p1_vec,
+                                 vector<double>& dist_threshold);
+
+    // DESCRIPTION: TODO...
     void publishOccDistanceVisu();
 
     // DESCRIPTION: TODO...
@@ -643,13 +683,13 @@ class ExtMapUtility
     void publishOccDistanceArrayVisu();
 
     // DESCRIPTION: TODO...
-    void publishOccDistanceArrayVisu(vector<geometry_msgs::Point> p0_vec, vector<geometry_msgs::Point> p1_vec);
+    void publishOccDistanceArrayVisu(vector<geometry_msgs::Point>& p0_vec, vector<geometry_msgs::Point>& p1_vec, vector<double>& dist);
 
     // DESCRIPTION: TODO...
     void publishOccDistanceArrayVisu2();
 
     // DESCRIPTION: TODO...
-    void publishOccDistanceArrayVisu2(vector<geometry_msgs::Point> p0_vec2, vector<geometry_msgs::Point> p1_vec2);
+    void publishOccDistanceArrayVisu2(vector<geometry_msgs::Point>& p0_vec2, vector<geometry_msgs::Point>& p1_vec2, vector<double>& dist);
 
     // DESCRIPTION: TODO...
     void publishDebugArrayVisu();
@@ -733,39 +773,43 @@ class ExtMapUtility
     Eigen::Vector3d calculateInteriorPoint(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2, double d) const;
 
     // DESCRIPTION: TODO...
-    bool getNearestOccupancyDist(double x, 
+    void getNearestOccupancyDist(double x, 
                                  double y, 
                                  double z, 
                                  double radius, 
                                  double max_dist, 
                                  geometry_msgs::Point& min_point, 
                                  double& min_dist, 
+                                 bool& col_status,
                                  bool normalize_flag=false) const;
 
     // DESCRIPTION: TODO...
-    bool getNearestOccupancyDist(std::vector<geometry_msgs::Point>& query_points, 
+    void getNearestOccupancyDist(std::vector<geometry_msgs::Point>& query_points, 
                                  Eigen::VectorXd& radii, 
                                  double max_dist, 
                                  std::vector<geometry_msgs::Point>& min_points, 
                                  std::vector<double>& min_distances, 
+                                 std::vector<bool>& col_status, 
                                  bool normalize_flag=false) const;
 
     // DESCRIPTION: TODO...
-    bool getNearestOccupancyDist(int numPoints,
+    void getNearestOccupancyDist(int numPoints,
                                  Eigen::VectorXd& positionPointsOnRobot, 
                                  Eigen::VectorXd& radii, 
                                  double max_dist, 
                                  std::vector<geometry_msgs::Point>& min_points, 
                                  std::vector<double>& min_distances, 
+                                 std::vector<bool>& col_status, 
                                  bool normalize_flag=false) const;
 
     // DESCRIPTION: TODO...
-    bool getNearestOccupancyDist(std::string octMsgName,
-                                 Eigen::Ref<Eigen::Matrix<ocs2::scalar_t, 3, 1>>& position,
+    void getNearestOccupancyDist(std::string octMsgName,
+                                 Eigen::VectorXd& position,
                                  double radius, 
                                  double max_dist, 
                                  geometry_msgs::Point& min_point, 
-                                 double min_dist, 
+                                 double& min_dist,
+                                 bool& col_status, 
                                  bool normalize_flag) const;
 
     // DESCRIPTION: TODO...
@@ -893,6 +937,9 @@ class ExtMapUtility
     mutable std::shared_ptr<fcl::CollisionGeometryd> queryFCLCollisionGeometryPtr_;
     //mutable FCLCollisionObjectPtr queryFCLCollisionObjectPtr_;
 
+    mutable ocs2_msgs::collision_info collision_info_base_;
+    mutable ocs2_msgs::collision_info collision_info_arm_;
+
     mutable visualization_msgs::Marker occ_distance_visu_;
     mutable visualization_msgs::MarkerArray occ_distance_array_visu_;
     mutable visualization_msgs::MarkerArray occ_distance_array_visu2_;
@@ -933,6 +980,8 @@ class ExtMapUtility
     ros::Publisher pub_pc2_msg_gz_pkg_man_longwide_pkg_;
 
     ros::Publisher pub_occ_distance_visu_;
+    ros::Publisher pub_collision_info_base_;
+    ros::Publisher pub_collision_info_arm_;
     ros::Publisher pub_occ_distance_array_visu_;
     ros::Publisher pub_occ_distance_array_visu2_;
 

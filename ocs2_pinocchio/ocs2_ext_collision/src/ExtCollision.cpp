@@ -91,15 +91,17 @@ vector_t ExtCollision::getValue(PinocchioInterface& pinocchioInterface,
       p0.z = position(2);
 
       geometry_msgs::Point p1;
-      bool success = emuPtr_->getNearestOccupancyDist(position(0), 
-                                                     position(1), 
-                                                     position(2), 
-                                                     radii(i),
-                                                     maxDistance_,
-                                                     p1, 
-                                                     distance,
-                                                     false);
-      if(success)
+      bool col_status;
+      emuPtr_->getNearestOccupancyDist(position(0), 
+                                       position(1), 
+                                       position(2), 
+                                       radii(i),
+                                       maxDistance_,
+                                       p1, 
+                                       distance,
+                                       col_status,
+                                       false);
+      if(col_status)
       {
         p0_vec_.push_back(p0);
         p1_vec_.push_back(p1);

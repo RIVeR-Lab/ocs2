@@ -79,6 +79,7 @@ MobileManipulatorVisualization::MobileManipulatorVisualization(ros::NodeHandle& 
                                                                const std::vector<std::string>& removeJointNames,
                                                                std::vector<std::pair<size_t, size_t>>& collisionObjectPairs,
                                                                std::vector<std::pair<std::string, std::string>>& collisionLinkPairs,
+                                                               const std::string& selfCollisionMsg,
                                                                std::shared_ptr<PointsOnRobot> pointsOnRobotPtr,
                                                                std::shared_ptr<ExtMapUtility> emuPtr,
                                                                double maxDistance)
@@ -93,12 +94,12 @@ MobileManipulatorVisualization::MobileManipulatorVisualization(ros::NodeHandle& 
     removeJointNames_(removeJointNames),
     collisionObjectPairs_(collisionObjectPairs),
     collisionLinkPairs_(collisionLinkPairs),
+    selfCollisionMsg_(selfCollisionMsg),
     pointsOnRobotPtr_(pointsOnRobotPtr),
     emuPtr_(emuPtr),
     maxDistance_(maxDistance),
-    pinocchioInterfaceInternal_(pinocchioInterface),
-    distances_(pointsOnRobotPtr->getNumOfPoints()),
-    markerPublisher_(nodeHandle.advertise<visualization_msgs::MarkerArray>("distance_markers", 10, true))
+    pinocchioInterfaceInternal_(pinocchioInterface)
+    //distances_(pointsOnRobotPtr->getNumOfPoints())
 {
   std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] START" << std::endl;
   launchVisualizerNode(nodeHandle);
@@ -127,6 +128,9 @@ void MobileManipulatorVisualization::launchVisualizerNode(ros::NodeHandle& nodeH
   // Publishers
   stateOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/mobile_manipulator/optimizedStateTrajectory", 1);
   stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/mobile_manipulator/optimizedPoseTrajectory", 1);
+
+  pubSelfCollisionInfo_ = nodeHandle.advertise<ocs2_msgs::collision_info>(selfCollisionMsg_, 10, true);
+  markerPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(selfCollisionMsg_ + "_visu", 10, true);
 
   // Create pinocchio interface
   pinocchioInterfaceInternal_ = mobile_manipulator::createPinocchioInterface(urdfFile_, robotModelInfo_.robotModelType, removeJointNames_);
@@ -251,6 +255,12 @@ void MobileManipulatorVisualization::publishSelfCollisionDistances()
   markerTemplate.pose.orientation = ros_msg_helpers::getOrientationMsg({1, 0, 0, 0});
   markerArray.markers.resize(results.size() * numMarkersPerResult, markerTemplate);
 
+  self_col_status_.clear();
+  self_col_dist_.clear();
+  self_p0_.clear();
+  self_p1_.clear();
+  self_col_dist_thresh_.clear();
+
   //std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances] results.size(): " << results.size() << std::endl;
 
   for (size_t i = 0; i < results.size(); ++i) 
@@ -264,10 +274,27 @@ void MobileManipulatorVisualization::publishSelfCollisionDistances()
                                                             std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].second);
     }
 
+    geometry_msgs::Point p0 = ros_msg_helpers::getPointMsg(results[i].nearest_points[0]);
+    geometry_msgs::Point p1 = ros_msg_helpers::getPointMsg(results[i].nearest_points[1]);
+    
+    self_p0_.push_back(p0);
+    self_p1_.push_back(p1);
+    self_col_dist_.push_back(results[i].min_distance);
+    self_col_dist_thresh_.push_back(selfCollisionRangeMin_);
+
+    if (results[i].min_distance < selfCollisionRangeMin_)
+    {
+      self_col_status_.push_back(true);
+    }
+    else
+    {
+      self_col_status_.push_back(false);
+    }
+
     // The actual distance line, also denoting direction of the distance
     markerArray.markers[numMarkersPerResult * i].type = visualization_msgs::Marker::ARROW;
-    markerArray.markers[numMarkersPerResult * i].points.push_back(ros_msg_helpers::getPointMsg(results[i].nearest_points[0]));
-    markerArray.markers[numMarkersPerResult * i].points.push_back(ros_msg_helpers::getPointMsg(results[i].nearest_points[1]));
+    markerArray.markers[numMarkersPerResult * i].points.push_back(p0);
+    markerArray.markers[numMarkersPerResult * i].points.push_back(p1);
     markerArray.markers[numMarkersPerResult * i].id = numMarkersPerResult * i;
     markerArray.markers[numMarkersPerResult * i].scale.x = 0.01;
     markerArray.markers[numMarkersPerResult * i].scale.y = 0.02;
@@ -275,8 +302,8 @@ void MobileManipulatorVisualization::publishSelfCollisionDistances()
 
     // Dots at the end of the arrow, denoting the close locations on the body
     markerArray.markers[numMarkersPerResult * i + 1].type = visualization_msgs::Marker::SPHERE_LIST;
-    markerArray.markers[numMarkersPerResult * i + 1].points.push_back(ros_msg_helpers::getPointMsg(results[i].nearest_points[0]));
-    markerArray.markers[numMarkersPerResult * i + 1].points.push_back(ros_msg_helpers::getPointMsg(results[i].nearest_points[1]));
+    markerArray.markers[numMarkersPerResult * i + 1].points.push_back(p0);
+    markerArray.markers[numMarkersPerResult * i + 1].points.push_back(p1);
     markerArray.markers[numMarkersPerResult * i + 1].scale.x = 0.02;
     markerArray.markers[numMarkersPerResult * i + 1].scale.y = 0.02;
     markerArray.markers[numMarkersPerResult * i + 1].scale.z = 0.02;
@@ -286,12 +313,12 @@ void MobileManipulatorVisualization::publishSelfCollisionDistances()
     markerArray.markers[numMarkersPerResult * i + 2].id = numMarkersPerResult * i + 2;
     markerArray.markers[numMarkersPerResult * i + 2].type = visualization_msgs::Marker::TEXT_VIEW_FACING;
     markerArray.markers[numMarkersPerResult * i + 2].scale.z = 0.02;
-    markerArray.markers[numMarkersPerResult * i + 2].pose.position = ros_msg_helpers::getPointMsg(results[i].nearest_points[0]);
+    markerArray.markers[numMarkersPerResult * i + 2].pose.position = p0;
     markerArray.markers[numMarkersPerResult * i + 2].pose.position.z += 0.015;
     markerArray.markers[numMarkersPerResult * i + 2].text = "obj " + std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].first);
     markerArray.markers[numMarkersPerResult * i + 3].id = numMarkersPerResult * i + 3;
     markerArray.markers[numMarkersPerResult * i + 3].type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-    markerArray.markers[numMarkersPerResult * i + 3].pose.position = ros_msg_helpers::getPointMsg(results[i].nearest_points[1]);
+    markerArray.markers[numMarkersPerResult * i + 3].pose.position = p1;
     markerArray.markers[numMarkersPerResult * i + 3].pose.position.z += 0.015;
     markerArray.markers[numMarkersPerResult * i + 3].text = "obj " + std::to_string(visualizationInterfacePtr_->getGeometryInterface().getGeometryModel().collisionPairs[i].second);
     markerArray.markers[numMarkersPerResult * i + 3].scale.z = 0.02;
@@ -311,6 +338,8 @@ void MobileManipulatorVisualization::publishSelfCollisionDistances()
   timer9_.startTimer();
   markerPublisher_.publish(markerArray);
   timer9_.endTimer();
+
+  publishSelfCollisionInfo(self_col_status_, self_col_dist_, self_p0_, self_p1_, self_col_dist_thresh_);
 
   timer6_.endTimer();
 
@@ -682,11 +711,6 @@ void MobileManipulatorVisualization::updateExtCollisionDistances(bool normalize_
 
   timer0_.startTimer();
 
-  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START updateState" << std::endl;
-  //timer1_.startTimer();
-  //updateState();
-  //timer1_.endTimer();
-
   //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START getPointsPositionCppAd" << std::endl;
   int numPoints = pointsOnRobotPtr_->getNumOfPoints();
   timer2_.startTimer();
@@ -696,58 +720,81 @@ void MobileManipulatorVisualization::updateExtCollisionDistances(bool normalize_
 
   assert(positionPointsOnRobot.size() % 3 == 0);
   
+  col_status_base_.clear();
+  col_status_arm_.clear();
   double distance;
   p0_vec_.clear();
   p1_vec_.clear();
   p0_vec2_.clear();
   p1_vec2_.clear();
+  dist_.clear();
+  dist2_.clear();
+  col_dist_thresh_base_.clear();
+  col_dist_thresh_arm_.clear();
+
+  for (size_t i = 0; i < radii.size(); i++)
+  {
+    col_dist_thresh_arm_.push_back(radii[i]);
+  }
+  
 
   //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START getNearestOccupancyDist" << std::endl;
   timer3_.startTimer();
   pointsOnRobotPtr_->getPointsEigenToGeometryMsgsVec(positionPointsOnRobot, p0_vec_);
-  std::vector<double> min_distances;
-  bool collision = emuPtr_->getNearestOccupancyDist(numPoints, positionPointsOnRobot, radii, maxDistance_, p1_vec_, min_distances, normalize_flag);
+  emuPtr_->getNearestOccupancyDist(numPoints, positionPointsOnRobot, radii, maxDistance_, p1_vec_, dist_, col_status_arm_, normalize_flag);
   timer3_.endTimer();
 
   //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] collision: " << collision << std::endl;
 
   //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START fillOccDistanceArrayVisu" << std::endl;
   timer4_.startTimer();
-  emuPtr_->fillOccDistanceArrayVisu(p0_vec_, p1_vec_);
+  emuPtr_->fillCollisionInfoArm(col_status_arm_, dist_, p0_vec_, p1_vec_, col_dist_thresh_arm_);
+  emuPtr_->fillOccDistanceArrayVisu(p0_vec_, p1_vec_, dist_);
   timer4_.endTimer();
 
   //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START publishOccDistanceArrayVisu" << std::endl;
   timer5_.startTimer();
   pointsOnRobotPtr_->publishPointsOnRobotVisu();
+  emuPtr_->publishCollisionInfoArm();
   emuPtr_->publishOccDistanceArrayVisu();
   timer5_.endTimer();
   //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] AFTER publishOccDistanceArrayVisu" << std::endl;
   
   //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START getNearestOccupancyDist 2" << std::endl;
   timer10_.startTimer();
+  tf::StampedTransform tf_robot_wrt_world = tf_robot_wrt_world_;
+  Eigen::VectorXd base_position(3);
+  base_position << tf_robot_wrt_world.getOrigin().x(), tf_robot_wrt_world.getOrigin().y(), tf_robot_wrt_world.getOrigin().z();
+  geometry_msgs::Point p0;
+  p0.x = base_position[0];
+  p0.y = base_position[1];
+  p0.z = base_position[2];
+    
   for (size_t i = 0; i < objOctomapNames_.size(); i++)
   {
-    Eigen::Ref<Eigen::Matrix<ocs2::scalar_t, 3, 1>> base_position = positionPointsOnRobot.segment<3>(0);
-    geometry_msgs::Point p0;
-    p0.x = base_position(0);
-    p0.y = base_position(1);
-    p0.z = base_position(2);
     p0_vec2_.push_back(p0);
-    
+
+    bool cs;
     geometry_msgs::Point p1;
     double min_dist;
-    bool collision = emuPtr_->getNearestOccupancyDist(objOctomapNames_[i], base_position, radii[0], maxDistance_, p1, min_dist, normalize_flag);
+    emuPtr_->getNearestOccupancyDist(objOctomapNames_[i], base_position, radius_base_, maxDistance_, p1, min_dist, cs, normalize_flag);
+    col_status_base_.push_back(cs);
     p1_vec2_.push_back(p1);
+    dist2_.push_back(min_dist);
+    col_dist_thresh_base_.push_back(radius_base_);
+    //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] min_dist: " << min_dist << std::endl;
   }
   timer10_.endTimer();
 
   //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] BEFORE fillOccDistanceArrayVisu2" << std::endl;
   timer11_.startTimer();
-  emuPtr_->fillOccDistanceArrayVisu2(p0_vec2_, p1_vec2_);
+  emuPtr_->fillCollisionInfoBase(col_status_base_, dist2_, p0_vec2_, p1_vec2_, col_dist_thresh_base_);
+  emuPtr_->fillOccDistanceArrayVisu2(p0_vec2_, p1_vec2_, dist2_);
   timer11_.endTimer();
 
   //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] BEFORE publishOccDistanceArrayVisu2" << std::endl;
   timer12_.startTimer();
+  emuPtr_->publishCollisionInfoBase();
   emuPtr_->publishOccDistanceArrayVisu2();
   timer12_.endTimer();
 
@@ -873,6 +920,28 @@ void MobileManipulatorVisualization::publishObservation(const ros::Time& timeSta
   robotStatePublisherPtr_ -> publishTransforms(jointPositions, timeStamp);
 }
 */
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::fillSelfCollisionInfo(vector<bool>& col_status,
+                                                           vector<double>& dist, 
+                                                           vector<geometry_msgs::Point>& p0_vec, 
+                                                           vector<geometry_msgs::Point>& p1_vec,
+                                                           vector<double>& dist_threshold) const
+{
+  vector<uint8_t> cs;
+  for (size_t i = 0; i < col_status.size(); i++)
+  {
+    cs.push_back((uint8_t) col_status[i]);
+  }
+
+  selfCollisionInfo_.status = cs;
+  selfCollisionInfo_.distance = dist;
+  selfCollisionInfo_.p0 = p0_vec;
+  selfCollisionInfo_.p1 = p1_vec;
+  selfCollisionInfo_.dist_threshold = dist_threshold;
+}
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -1032,6 +1101,27 @@ void MobileManipulatorVisualization::publishOptimizedTrajectory(const ros::Time&
   stateOptimizedPosePublisher_.publish(poseArray);
 
   //std::cout << "[MobileManipulatorVisualization::publishOptimizedTrajectory(3)] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::publishSelfCollisionInfo()
+{
+  pubSelfCollisionInfo_.publish(selfCollisionInfo_);
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::publishSelfCollisionInfo(vector<bool>& col_status, 
+                                                              vector<double>& dist, 
+                                                              vector<geometry_msgs::Point>& p0_vec, 
+                                                              vector<geometry_msgs::Point>& p1_vec,
+                                                              vector<double>& dist_threshold)
+{
+  fillSelfCollisionInfo(col_status, dist, p0_vec, p1_vec, dist_threshold);
+  pubSelfCollisionInfo_.publish(selfCollisionInfo_);
 }
 
 }  // namespace mobile_manipulator

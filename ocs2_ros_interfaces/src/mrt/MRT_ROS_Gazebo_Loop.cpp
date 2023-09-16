@@ -15,12 +15,17 @@ namespace ocs2 {
 
 MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                                          MRT_ROS_Interface& mrt,
-                                         std::string worldFrameName,
-                                         std::string targetMsg,
-                                         std::string baseStateMsg,
-                                         std::string armStateMsg,
-                                         std::string baseControlMsg,
-                                         std::string armControlMsg,
+                                         std::string& worldFrameName,
+                                         std::string& targetMsgName,
+                                         std::string& goalMsgName,
+                                         std::string& baseStateMsg,
+                                         std::string& armStateMsg,
+                                         std::string& baseControlMsg,
+                                         std::string& armControlMsg,
+                                         std::string& selfCollisionInfoMsgName,
+                                         std::string& extCollisionInfoBaseMsgName,
+                                         std::string& extCollisionInfoArmMsgName,
+                                         std::string& pointsOnRobotMsgName,
                                          double err_threshold_pos,
                                          double err_threshold_ori_yaw,
                                          double err_threshold_ori_quat,
@@ -30,6 +35,12 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                                          std::string logSavePathRel)
   : mrt_(mrt), 
     worldFrameName_(worldFrameName),
+    targetMsgName_(targetMsgName),
+    goalMsgName_(goalMsgName),
+    selfCollisionInfoMsgName_(selfCollisionInfoMsgName),
+    extCollisionInfoBaseMsgName_(extCollisionInfoBaseMsgName),
+    extCollisionInfoArmMsgName_(extCollisionInfoArmMsgName),
+    pointsOnRobotMsgName_(pointsOnRobotMsgName),
     err_threshold_pos_(err_threshold_pos),
     err_threshold_ori_quat_(err_threshold_ori_yaw),
     err_threshold_ori_yaw_(err_threshold_ori_quat),
@@ -85,14 +96,12 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   jointStateSub_ = nh.subscribe(armStateMsg, 5, &MRT_ROS_Gazebo_Loop::jointStateCallback, this);
   //jointTrajectoryControllerStateSub_ = nh.subscribe(armStateMsg, 5, &MRT_ROS_Gazebo_Loop::jointTrajectoryControllerStateCallback, this);
 
-  if (drlFlag_)
-  {
-    std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting to subscribe selfCollisionDistanceMsgName_, extCollisionDistanceMsgName_, pointsOnRobotMsgName_, goalMsgName_..." << std::endl;
-    selfCollisionDistanceSub_ = nh.subscribe(selfCollisionDistanceMsgName_, 5, &MRT_ROS_Gazebo_Loop::selfCollisionDistanceCallback, this);
-    extCollisionDistanceSub_ = nh.subscribe(extCollisionDistanceMsgName_, 5, &MRT_ROS_Gazebo_Loop::extCollisionDistanceCallback, this);
-    pointsOnRobotSub_ = nh.subscribe(pointsOnRobotMsgName_, 5, &MRT_ROS_Gazebo_Loop::pointsOnRobotCallback, this);
-    goalSub_ = nh.subscribe(goalMsgName_, 5, &MRT_ROS_Gazebo_Loop::goalCallback, this);
-  }
+  std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting to subscribe selfCollisionInfoMsgName_, extCollisionDistanceBaseMsgName_, extCollisionDistanceArmMsgName_, pointsOnRobotMsgName_, goalMsgName_..." << std::endl;
+  selfCollisionInfoSub_ = nh.subscribe(selfCollisionInfoMsgName_, 5, &MRT_ROS_Gazebo_Loop::selfCollisionInfoCallback, this);
+  extCollisionInfoBaseSub_ = nh.subscribe(extCollisionInfoBaseMsgName_, 5, &MRT_ROS_Gazebo_Loop::extCollisionInfoBaseCallback, this);
+  extCollisionInfoArmSub_ = nh.subscribe(extCollisionInfoArmMsgName_, 5, &MRT_ROS_Gazebo_Loop::extCollisionInfoArmCallback, this);
+  pointsOnRobotSub_ = nh.subscribe(pointsOnRobotMsgName_, 5, &MRT_ROS_Gazebo_Loop::pointsOnRobotCallback, this);
+  goalSub_ = nh.subscribe(goalMsgName_, 5, &MRT_ROS_Gazebo_Loop::goalCallback, this);
 
   currentTarget_.resize(7);
 
@@ -202,7 +211,7 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
   if (drlFlag_)
   {
     std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting for the initFlagSelfCollision_, initFlagExtCollision_, initFlagPointsOnRobot_, initFlagGoal_ to be initialized..." << std::endl;
-    while(!initFlagSelfCollision_ || !initFlagExtCollision_ || !initFlagPointsOnRobot_ || !initFlagGoal_){ros::spinOnce();}
+    while(!initFlagSelfCollision_ || !initFlagExtCollisionBase_ || !initFlagExtCollisionArm_ || !initFlagPointsOnRobot_ || !initFlagGoal_){ros::spinOnce();}
   }
 
   //ROS_INFO_STREAM("[MRT_ROS_Gazebo_Loop::run] BEFORE getCurrentObservation");
@@ -530,7 +539,7 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
       // Publish the control command 
       publishCommand(currentPolicy, currentObservation, currentStateVelocityBase);
 
-      int ts = checkTaskStatus();
+      int ts = checkTaskStatus(drlFlag_);
       
       writeData();
 
@@ -566,6 +575,46 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
 int MRT_ROS_Gazebo_Loop::getDRLActionResult()
 {
   return drlActionResult_;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::setSelfCollisionInfoMsgName(std::string& selfCollisionInfoMsgName)
+{
+  selfCollisionInfoMsgName_ = selfCollisionInfoMsgName;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::setExtCollisionInfoBaseMsgName(std::string& extCollisionInfoBaseMsgName)
+{
+  extCollisionInfoBaseMsgName_ = extCollisionInfoBaseMsgName;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::setExtCollisionInfoArmMsgName(std::string& extCollisionInfoArmMsgName)
+{
+  extCollisionInfoArmMsgName_ = extCollisionInfoArmMsgName;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::setPointsOnRobotMsgName(std::string& pointsOnRobotMsgName)
+{
+  pointsOnRobotMsgName_ = pointsOnRobotMsgName;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::setGoalMsgName(std::string& goalMsgName)
+{
+  goalMsgName_ = goalMsgName;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -730,19 +779,28 @@ void MRT_ROS_Gazebo_Loop::odometryCallback(const nav_msgs::Odometry::ConstPtr& m
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MRT_ROS_Gazebo_Loop::selfCollisionDistanceCallback(const visualization_msgs::MarkerArray::ConstPtr& msg)
+void MRT_ROS_Gazebo_Loop::selfCollisionInfoCallback(const ocs2_msgs::collision_info::ConstPtr& msg)
 {
-  selfCollisionDistanceMsg_ = *msg;
+  selfCollisionInfoMsg_ = *msg;
   initFlagSelfCollision_  = true;
 }
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MRT_ROS_Gazebo_Loop::extCollisionDistanceCallback(const visualization_msgs::MarkerArray::ConstPtr& msg)
+void MRT_ROS_Gazebo_Loop::extCollisionInfoBaseCallback(const ocs2_msgs::collision_info::ConstPtr& msg)
 {
-  extCollisionDistanceMsg_ = *msg;
-  initFlagExtCollision_  = true;
+  extCollisionInfoBaseMsg_ = *msg;
+  initFlagExtCollisionBase_  = true;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::extCollisionInfoArmCallback(const ocs2_msgs::collision_info::ConstPtr& msg)
+{
+  extCollisionInfoArmMsg_ = *msg;
+  initFlagExtCollisionArm_  = true;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1483,20 +1541,27 @@ bool MRT_ROS_Gazebo_Loop::checkPickDrop()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-bool MRT_ROS_Gazebo_Loop::checkCollision()
+bool MRT_ROS_Gazebo_Loop::checkCollision(bool enableShutDownFlag)
 {
-  //std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] START" << std::endl << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] START" << std::endl;
 
-  visualization_msgs::MarkerArray selfCollisionDistanceMsg = selfCollisionDistanceMsg_;
-  visualization_msgs::MarkerArray extCollisionDistanceMsg = extCollisionDistanceMsg_;
+  ocs2_msgs::collision_info selfCollisionInfoMsg = selfCollisionInfoMsg_;
+  ocs2_msgs::collision_info extCollisionInfoBaseMsg = extCollisionInfoBaseMsg_;
+  ocs2_msgs::collision_info extCollisionInfoArmMsg = extCollisionInfoArmMsg_;
   visualization_msgs::MarkerArray pointsOnRobotMsg = pointsOnRobotMsg_;
   
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] selfCollisionDistanceMsg size: " << selfCollisionDistanceMsg.markers.size() << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] extCollisionDistanceBaseMsg size: " << extCollisionDistanceBaseMsg.markers.size() << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] extCollisionDistanceArmMsg size: " << extCollisionDistanceArmMsg.markers.size() << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] pointsOnRobotMsg size: " << pointsOnRobotMsg.markers.size() << std::endl;
+
   //std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] BEFORE self" << std::endl;
   // Check self collision
-  int n_selfColDist = selfCollisionDistanceMsg.markers.size() / selfColDistance_n_coeff_;
-  std::vector<double> selfCollisionDistances;
-  for (size_t i = 0; i < n_selfColDist; i++)
+  //int n_selfColDist = selfCollisionDistanceMsg.markers.size() / selfColDistance_n_coeff_;
+  //std::vector<double> selfCollisionDistances;
+  for (size_t i = 0; i < selfCollisionInfoMsg.distance.size(); i++)
   {
+    /*
     Eigen::VectorXd p1(3);
     Eigen::VectorXd p2(3);
 
@@ -1508,37 +1573,69 @@ bool MRT_ROS_Gazebo_Loop::checkCollision()
           selfCollisionDistanceMsg.markers[i*selfColDistance_n_coeff_].points[1].z;
 
     double dist = (p1 - p2).norm();
-
-    if (dist < selfCollisionRangeMin_)
+    */
+    //if (selfCollisionInfoMsg.distance[i] < selfCollisionRangeMin_)
+    if (selfCollisionInfoMsg.status[i])
     {
       drlActionResult_ = 1;
-      shutDownFlag_ = true;
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] SELF COLLISION! dist: " << dist << std::endl;
+      shutDownFlag_ = enableShutDownFlag;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] SELF COLLISION! dist: " << selfCollisionInfoMsg.distance[i] << std::endl;
       return true;
     }
   }
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] BEFORE external" << std::endl;
-  // Check external collision
-  for (size_t i = 0; i < extCollisionDistanceMsg.markers.size(); i++)
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] BEFORE external base" << std::endl;
+  // Check external collision base
+  for (size_t i = 0; i < extCollisionInfoBaseMsg.distance.size(); i++)
   {
+    /*
+    Eigen::VectorXd p0(3);
     Eigen::VectorXd p1(3);
-    Eigen::VectorXd p2(3);
 
-    p1 << extCollisionDistanceMsg.markers[i].points[0].x, 
-          extCollisionDistanceMsg.markers[i].points[0].y,
-          extCollisionDistanceMsg.markers[i].points[0].z;
-    p2 << extCollisionDistanceMsg.markers[i].points[1].x, 
-          extCollisionDistanceMsg.markers[i].points[1].y,
-          extCollisionDistanceMsg.markers[i].points[1].z;
+    p0 << extCollisionInfoBaseMsg.p0[i].x, 
+          extCollisionInfoBaseMsg.p0[i].y,
+          extCollisionInfoBaseMsg.p0[i].z;
+    p1 << extCollisionInfoBaseMsg.p1[i].x, 
+          extCollisionInfoBaseMsg.p1[i].y,
+          extCollisionInfoBaseMsg.p1[i].z;
 
-    double dist = (p1 - p2).norm();
+    double dist = (p0 - p1).norm();
+    */
 
-    if (dist < extCollisionRangeMin_)
+    //if (extCollisionInfoBaseMsg.distance[i] < extCollisionRangeBaseMin_)
+    if (extCollisionInfoBaseMsg.status[i])
     {
       drlActionResult_ = 1;
-      shutDownFlag_ = true;
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] EXT COLLISION! dist: " << dist << std::endl;
+      shutDownFlag_ = enableShutDownFlag;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] EXT COLLISION BASE! dist: " << extCollisionInfoBaseMsg.distance[i] << std::endl;
+      return true;
+    }
+  }
+
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] BEFORE external arm" << std::endl;
+  // Check external collision arm
+  for (size_t i = 0; i < extCollisionInfoArmMsg.distance.size(); i++)
+  {
+    /*
+    Eigen::VectorXd p0(3);
+    Eigen::VectorXd p1(3);
+
+    p0 << extCollisionInfoArmMsg.p0[i].x, 
+          extCollisionInfoArmMsg.p0[i].y,
+          extCollisionInfoArmMsg.p0[i].z;
+    p1 << extCollisionInfoArmMsg.p1[i].x, 
+          extCollisionInfoArmMsg.p1[i].y,
+          extCollisionInfoArmMsg.p1[i].z;
+
+    double dist = (p0 - p1).norm();
+    */
+
+    //if (extCollisionInfoArmMsg.distance[i] < extCollisionRangeArmMin_)
+    if (extCollisionInfoArmMsg.status[i])
+    {
+      drlActionResult_ = 1;
+      shutDownFlag_ = enableShutDownFlag;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] EXT COLLISION ARM! dist: " << extCollisionInfoArmMsg.distance[i] << std::endl;
       return true;
     }
   }
@@ -1547,16 +1644,16 @@ bool MRT_ROS_Gazebo_Loop::checkCollision()
   // Check ground collision
   for (size_t i = 1; i < pointsOnRobotMsg.markers.size(); i++)
   {
-    if (pointsOnRobotMsg.markers[i].pose.position.z < extCollisionRangeMin_)
+    if (pointsOnRobotMsg.markers[i].pose.position.z < extCollisionRangeBaseMin_)
     {
       drlActionResult_ = 1;
-      shutDownFlag_ = true;
+      shutDownFlag_ = enableShutDownFlag;
       std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] GROUND COLLISION!" << pointsOnRobotMsg.markers[i].pose.position.z << std::endl;
       return true;
     }
   }
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] END" << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] END" << std::endl << std::endl;
 
   return false;
 }
@@ -1564,7 +1661,7 @@ bool MRT_ROS_Gazebo_Loop::checkCollision()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-bool MRT_ROS_Gazebo_Loop::checkRollover()
+bool MRT_ROS_Gazebo_Loop::checkRollover(bool enableShutDownFlag)
 {
   tf::StampedTransform tf_robot_wrt_world = tf_robot_wrt_world_;
   geometry_msgs::Pose robotBasePoseMsg = robotBasePoseMsg_;
@@ -1589,7 +1686,7 @@ bool MRT_ROS_Gazebo_Loop::checkRollover()
   if (roll_robot_wrt_world > rolloverRollThreshold_)
   {
     drlActionResult_ = 2;
-    shutDownFlag_ = true;
+    shutDownFlag_ = enableShutDownFlag;
     std::cout << "[MRT_ROS_Gazebo_Loop::checkRollover] ROLL ROLLOVER!" << std::endl;
     return true;
   }
@@ -1597,7 +1694,7 @@ bool MRT_ROS_Gazebo_Loop::checkRollover()
   if (pitch_robot_wrt_world > rolloverPitchThreshold_)
   {
     drlActionResult_ = 2;
-    shutDownFlag_ = true;
+    shutDownFlag_ = enableShutDownFlag;
     std::cout << "[MRT_ROS_Gazebo_Loop::checkRollover] PITCH ROLLOVER!" << std::endl;
     return true;
   }
@@ -1608,7 +1705,7 @@ bool MRT_ROS_Gazebo_Loop::checkRollover()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-bool MRT_ROS_Gazebo_Loop::checkGoal()
+bool MRT_ROS_Gazebo_Loop::checkGoal(bool enableShutDownFlag)
 {
   //std::cout << "[MRT_ROS_Gazebo_Loop::checkGoal] START" << std::endl;
 
@@ -1637,7 +1734,7 @@ bool MRT_ROS_Gazebo_Loop::checkGoal()
   if ((err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_quat_))
   {
     drlActionResult_ = 3;
-    shutDownFlag_ = true;
+    shutDownFlag_ = enableShutDownFlag;
 
     //std::cout << "[MRT_ROS_Gazebo_Loop::checkGoal] END true" << std::endl;
     return true;
@@ -1651,7 +1748,7 @@ bool MRT_ROS_Gazebo_Loop::checkGoal()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-bool MRT_ROS_Gazebo_Loop::checkTarget()
+bool MRT_ROS_Gazebo_Loop::checkTarget(bool enableShutDownFlag)
 {
   //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] START" << std::endl;
 
@@ -1707,7 +1804,7 @@ bool MRT_ROS_Gazebo_Loop::checkTarget()
     if ((err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_yaw_))
     {
       drlActionResult_ = 4;
-      shutDownFlag_ = true;
+      shutDownFlag_ = enableShutDownFlag;
       //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END true" << std::endl;
       return true;
     }
@@ -1720,7 +1817,7 @@ bool MRT_ROS_Gazebo_Loop::checkTarget()
     if ((err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_quat_))
     {
       drlActionResult_ = 4;
-      shutDownFlag_ = true;
+      shutDownFlag_ = enableShutDownFlag;
       //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END true" << std::endl;
       return true;
     }
@@ -1791,7 +1888,7 @@ bool MRT_ROS_Gazebo_Loop::checkTarget()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-int MRT_ROS_Gazebo_Loop::checkTaskStatus()
+int MRT_ROS_Gazebo_Loop::checkTaskStatus(bool enableShutDownFlag)
 {
   //std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] START" << std::endl;
 
@@ -1808,22 +1905,22 @@ int MRT_ROS_Gazebo_Loop::checkTaskStatus()
 
   if (drlFlag_)
   {
-    if (checkCollision())
+    if (checkCollision(enableShutDownFlag))
     {
       std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] checkTaskStatus: COLLISION!" << std::endl;
       return 1;
     }
-    else if (checkRollover())
+    else if (checkRollover(enableShutDownFlag))
     {
       std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] checkTaskStatus: ROLLOVER!" << std::endl;
       return 2;
     }
-    else if (checkGoal())
+    else if (checkGoal(enableShutDownFlag))
     {
       std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] checkTaskStatus: REACHED GOAL!" << std::endl;
       return 3;
     }
-    else if (checkTarget())
+    else if (checkTarget(enableShutDownFlag))
     {
       std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] checkTaskStatus: REACHED TARGET!" << std::endl;
       return 4;
@@ -1831,13 +1928,16 @@ int MRT_ROS_Gazebo_Loop::checkTaskStatus()
     else if (time_ > drlActionTimeHorizon_)
     {
       std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] checkTaskStatus: END OF ACTION HORIZON!" << std::endl;
-      shutDownFlag_ = true;
+      shutDownFlag_ = enableShutDownFlag;
       drlActionResult_ = 5;
       return 5;
     }
   }
   else
   {
+    //std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] time_:" << time_ << std::endl;
+    checkCollision();
+
     if (checkPickDrop())
     {
       return 3;

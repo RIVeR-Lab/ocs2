@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.09.07
+// LAST UPDATE: 2023.09.15
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -32,6 +32,7 @@
 #include <std_msgs/Float64.h>
 #include <kinova_msgs/JointVelocity.h>
 
+#include "ocs2_msgs/collision_info.h"
 #include "ocs2_msgs/setBool.h"
 #include "ocs2_msgs/setInt.h"
 #include "ocs2_msgs/setTask.h"
@@ -61,13 +62,18 @@ class MRT_ROS_Gazebo_Loop
      */
     MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                         MRT_ROS_Interface& mrt,
-                        std::string worldFrameName,
-                        std::string targetMsg,
-                        std::string baseStateMsg,
-                        std::string armStateMsg,
-                        std::string baseControlMsg,
-                        std::string armControlMsg,
-                        double err_threshold_pos_,
+                        std::string& worldFrameName,
+                        std::string& targetMsgName,
+                        std::string& goalMsgName,
+                        std::string& baseStateMsg,
+                        std::string& armStateMsg,
+                        std::string& baseControlMsg,
+                        std::string& armControlMsg,
+                        std::string& selfCollisionInfoMsgName,
+                        std::string& extCollisionInfoBaseMsgName,
+                        std::string& extCollisionInfoArmMsgName,
+                        std::string& pointsOnRobotMsgName,
+                        double err_threshold_pos,
                         double err_threshold_ori_yaw,
                         double err_threshold_ori_quat,
                         scalar_t mrtDesiredFrequency,
@@ -82,6 +88,21 @@ class MRT_ROS_Gazebo_Loop
 
     /** NUA TODO: Add description */
     int getDRLActionResult();
+
+    /** NUA TODO: Add description */
+    void setSelfCollisionInfoMsgName(std::string& selfCollisionInfoMsgName);
+
+    /** NUA TODO: Add description */
+    void setExtCollisionInfoBaseMsgName(std::string& extCollisionInfoBaseMsgName);
+
+    /** NUA TODO: Add description */
+    void setExtCollisionInfoArmMsgName(std::string& extCollisionInfoArmMsgName);
+
+    /** NUA TODO: Add description */
+    void setPointsOnRobotMsgName(std::string& pointsOnRobotMsgName);
+
+    /** NUA TODO: Add description */
+    void setGoalMsgName(std::string& goalMsgName);
 
     /** NUA TODO: Add description */
     void setStateIndexMap(std::vector<int>& stateIndexMap);
@@ -154,10 +175,13 @@ class MRT_ROS_Gazebo_Loop
     void odometryCallback(const nav_msgs::Odometry::ConstPtr& msg);
 
     /** NUA TODO: Add description */
-    void selfCollisionDistanceCallback(const visualization_msgs::MarkerArray::ConstPtr& msg);
+    void selfCollisionInfoCallback(const ocs2_msgs::collision_info::ConstPtr& msg);
 
     /** NUA TODO: Add description */
-    void extCollisionDistanceCallback(const visualization_msgs::MarkerArray::ConstPtr& msg);
+    void extCollisionInfoBaseCallback(const ocs2_msgs::collision_info::ConstPtr& msg);
+
+    /** NUA TODO: Add description */
+    void extCollisionInfoArmCallback(const ocs2_msgs::collision_info::ConstPtr& msg);
 
     /** NUA TODO: Add description */
     void pointsOnRobotCallback(const visualization_msgs::MarkerArray::ConstPtr& msg);
@@ -213,19 +237,19 @@ class MRT_ROS_Gazebo_Loop
     bool checkPickDrop();
 
     /** NUA TODO: Add description */
-    bool checkCollision();
+    bool checkCollision(bool enableShutDownFlag=false);
 
     /** NUA TODO: Add description */
-    bool checkRollover();
+    bool checkRollover(bool enableShutDownFlag=false);
 
     /** NUA TODO: Add description */
-    bool checkGoal();
+    bool checkGoal(bool enableShutDownFlag=false);
 
     /** NUA TODO: Add description */
-    bool checkTarget();
+    bool checkTarget(bool enableShutDownFlag=false);
 
     /** NUA TODO: Add description */
-    int checkTaskStatus();
+    int checkTaskStatus(bool enableShutDownFlag=false);
 
     /** NUA TODO: Add description */
     const std::string getDateTime();
@@ -338,24 +362,31 @@ class MRT_ROS_Gazebo_Loop
 
     /// NUA TODO: Set these in config!
     bool initFlagSelfCollision_ = false;
-    bool initFlagExtCollision_ = false;
+    bool initFlagExtCollisionBase_ = false;
+    bool initFlagExtCollisionArm_ = false;
     bool initFlagPointsOnRobot_ = false;
     bool initFlagGoal_ = false;
-    std::string selfCollisionDistanceMsgName_ = "/distance_markers";
-    std::string extCollisionDistanceMsgName_ = "/occupancy_distances";
-    std::string pointsOnRobotMsgName_ = "/points_on_robot";
-    std::string goalMsgName_ = "/mobile_manipulator_goal";
+    std::string selfCollisionInfoMsgName_;
+    std::string extCollisionInfoBaseMsgName_;
+    std::string extCollisionInfoArmMsgName_;
+    std::string pointsOnRobotMsgName_;
+    std::string targetMsgName_;
+    std::string goalMsgName_;
     int selfColDistance_n_coeff_ = 5;
+    //int extColDistance_n_coeff_ = 2;
     double selfCollisionRangeMin_ = 0.05;
-    double extCollisionRangeMin_ = 0.05;
+    double extCollisionRangeBaseMin_ = 0.05;
+    double extCollisionRangeArmMin_ = 0.1;
     double rolloverRollThreshold_ = 0.2;
     double rolloverPitchThreshold_ = 0.2;
-    visualization_msgs::MarkerArray selfCollisionDistanceMsg_;
-    visualization_msgs::MarkerArray extCollisionDistanceMsg_;
+    ocs2_msgs::collision_info selfCollisionInfoMsg_;
+    ocs2_msgs::collision_info extCollisionInfoBaseMsg_;
+    ocs2_msgs::collision_info extCollisionInfoArmMsg_;
     visualization_msgs::MarkerArray pointsOnRobotMsg_;
     visualization_msgs::MarkerArray goalMsg_;
-    ros::Subscriber selfCollisionDistanceSub_;
-    ros::Subscriber extCollisionDistanceSub_;
+    ros::Subscriber selfCollisionInfoSub_;
+    ros::Subscriber extCollisionInfoBaseSub_;
+    ros::Subscriber extCollisionInfoArmSub_;
     ros::Subscriber pointsOnRobotSub_;
     ros::Subscriber goalSub_;
     

@@ -20,6 +20,7 @@ add_message_files(
     mpc_flattened_controller.msg
     lagrangian_metrics.msg
     multiplier.msg
+    collision_info.msg
 )
 
 add_service_files(
