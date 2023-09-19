@@ -313,7 +313,8 @@ class MobileManipulatorInterface final : public RobotInterface
     std::string worldFrameName_ = "world";
     //std::string graspFrameName_ = "grasp";
 
-    std::string modelModeMsgName_ = "mobile_manipulator_model_mode";
+    std::string modelModeMsgName_;
+    std::string mpcTargetMsgName_;
     std::string targetMsgName_;
     std::string goalMsgName_;
 

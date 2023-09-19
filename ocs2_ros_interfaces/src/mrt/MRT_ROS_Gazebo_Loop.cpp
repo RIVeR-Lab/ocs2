@@ -96,7 +96,11 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   jointStateSub_ = nh.subscribe(armStateMsg, 5, &MRT_ROS_Gazebo_Loop::jointStateCallback, this);
   //jointTrajectoryControllerStateSub_ = nh.subscribe(armStateMsg, 5, &MRT_ROS_Gazebo_Loop::jointTrajectoryControllerStateCallback, this);
 
-  std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting to subscribe selfCollisionInfoMsgName_, extCollisionDistanceBaseMsgName_, extCollisionDistanceArmMsgName_, pointsOnRobotMsgName_, goalMsgName_..." << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting to subscribe selfCollisionInfoMsgName_: " << selfCollisionInfoMsgName_ << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting to subscribe extCollisionInfoBaseMsgName_: " << extCollisionInfoBaseMsgName_ << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting to subscribe extCollisionInfoArmMsgName_: " << extCollisionInfoArmMsgName_ << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting to subscribe pointsOnRobotMsgName_: " << pointsOnRobotMsgName_ << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting to subscribe goalMsgName_: "<< goalMsgName_ << std::endl;
   selfCollisionInfoSub_ = nh.subscribe(selfCollisionInfoMsgName_, 5, &MRT_ROS_Gazebo_Loop::selfCollisionInfoCallback, this);
   extCollisionInfoBaseSub_ = nh.subscribe(extCollisionInfoBaseMsgName_, 5, &MRT_ROS_Gazebo_Loop::extCollisionInfoBaseCallback, this);
   extCollisionInfoArmSub_ = nh.subscribe(extCollisionInfoArmMsgName_, 5, &MRT_ROS_Gazebo_Loop::extCollisionInfoArmCallback, this);
@@ -1927,7 +1931,9 @@ int MRT_ROS_Gazebo_Loop::checkTaskStatus(bool enableShutDownFlag)
     }
     else if (time_ > drlActionTimeHorizon_)
     {
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] checkTaskStatus: END OF ACTION HORIZON!" << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] time_: " << time_ << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] drlActionTimeHorizon_: " << drlActionTimeHorizon_ << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] END OF ACTION HORIZON!" << std::endl;
       shutDownFlag_ = enableShutDownFlag;
       drlActionResult_ = 5;
       return 5;

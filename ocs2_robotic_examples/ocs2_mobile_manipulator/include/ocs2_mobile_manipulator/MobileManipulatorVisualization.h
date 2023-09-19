@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.09.16
+// LAST UPDATE: 2023.09.18
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -83,6 +83,13 @@ class MobileManipulatorVisualization final : public DummyObserver
 
     void jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 
+    void transformPoint(std::string& frame_from,
+                        std::string& frame_to,
+                        geometry_msgs::Point& p_from_to);
+
+    // DESCRIPTION: TODO...
+    void transformPointFromWorldtoBase(vector<geometry_msgs::Point>& p_from, vector<geometry_msgs::Point>& p_to);
+
     // DESCRIPTION: TODO...
     void fillSelfCollisionInfo(vector<bool>& col_status,
                                vector<double>& dist, 
@@ -126,8 +133,12 @@ class MobileManipulatorVisualization final : public DummyObserver
     //Eigen::Matrix<scalar_t, -1, 1> distances_;
     vector<geometry_msgs::Point> p0_vec_;
     vector<geometry_msgs::Point> p1_vec_;
+    vector<geometry_msgs::Point> p0_vec_wrt_base_;
+    vector<geometry_msgs::Point> p1_vec_wrt_base_;
     vector<geometry_msgs::Point> p0_vec2_;
     vector<geometry_msgs::Point> p1_vec2_;
+    vector<geometry_msgs::Point> p0_vec2_wrt_base_;
+    vector<geometry_msgs::Point> p1_vec2_wrt_base_;
     vector<double> dist_;
     vector<double> dist2_;
     std::vector<std::string> removeJointNames_;

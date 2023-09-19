@@ -296,6 +296,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   loadData::loadPtreeValue<std::string>(pt, pointsOnRobotMsgName_, "model_information.pointsOnRobotMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, octomapMsg_, "model_information.octomapMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, modelModeMsgName_, "model_information.modelModeMsg", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, mpcTargetMsgName_, "model_information.mpcTargetMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, targetMsgName_, "model_information.targetMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, goalMsgName_, "model_information.goalMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, collisionConstraintPoints, "model_information.collisionConstraintPoints", printOutFlag_);
@@ -336,6 +337,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     std::cout << "#### model_information.pointsOnRobotMsg: " << pointsOnRobotMsgName_ << std::endl;
     std::cout << "#### model_information.octomapMsg: " << octomapMsg_ << std::endl;
     std::cout << "#### model_information.modelModeMsg: " << modelModeMsgName_ << std::endl;
+    std::cout << "#### model_information.mpcTargetMsg: " << mpcTargetMsgName_ << std::endl;
     std::cout << "#### model_information.targetMsg: " << targetMsgName_ << std::endl;
     std::cout << "#### model_information.goalMsg: " << goalMsgName_ << std::endl;
     std::cout << "#### model_information.logSavePathRel: " << logSavePathRel_ << std::endl;
@@ -910,7 +912,7 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
     //targetReadyFlag_ = true;
     //std::cout << "[MobileManipulatorInterface::targetTrajectoriesCallback] END" << std::endl;
   };
-  targetTrajectoriesSubscriber_ = nodeHandle_.subscribe<ocs2_msgs::mpc_target_trajectories>(targetMsgName_, 5, targetTrajectoriesCallback);
+  targetTrajectoriesSubscriber_ = nodeHandle_.subscribe<ocs2_msgs::mpc_target_trajectories>(mpcTargetMsgName_, 5, targetTrajectoriesCallback);
 
   //spin();
 }

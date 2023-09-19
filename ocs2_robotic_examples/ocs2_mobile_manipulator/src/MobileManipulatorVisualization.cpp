@@ -737,18 +737,20 @@ void MobileManipulatorVisualization::updateExtCollisionDistances(bool normalize_
     col_dist_thresh_arm_.push_back(radii[i]);
   }
   
-
   //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START getNearestOccupancyDist" << std::endl;
   timer3_.startTimer();
   pointsOnRobotPtr_->getPointsEigenToGeometryMsgsVec(positionPointsOnRobot, p0_vec_);
   emuPtr_->getNearestOccupancyDist(numPoints, positionPointsOnRobot, radii, maxDistance_, p1_vec_, dist_, col_status_arm_, normalize_flag);
   timer3_.endTimer();
 
+  transformPointFromWorldtoBase(p0_vec_, p0_vec_wrt_base_);
+  transformPointFromWorldtoBase(p1_vec_, p1_vec_wrt_base_);
+
   //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] collision: " << collision << std::endl;
 
   //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START fillOccDistanceArrayVisu" << std::endl;
   timer4_.startTimer();
-  emuPtr_->fillCollisionInfoArm(col_status_arm_, dist_, p0_vec_, p1_vec_, col_dist_thresh_arm_);
+  emuPtr_->fillCollisionInfoArm(baseFrameName_, col_status_arm_, dist_, p0_vec_, p1_vec_wrt_base_, col_dist_thresh_arm_);
   emuPtr_->fillOccDistanceArrayVisu(p0_vec_, p1_vec_, dist_);
   timer4_.endTimer();
 
@@ -786,9 +788,12 @@ void MobileManipulatorVisualization::updateExtCollisionDistances(bool normalize_
   }
   timer10_.endTimer();
 
+  transformPointFromWorldtoBase(p0_vec2_, p0_vec2_wrt_base_);
+  transformPointFromWorldtoBase(p1_vec2_, p1_vec2_wrt_base_);
+
   //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] BEFORE fillOccDistanceArrayVisu2" << std::endl;
   timer11_.startTimer();
-  emuPtr_->fillCollisionInfoBase(col_status_base_, dist2_, p0_vec2_, p1_vec2_, col_dist_thresh_base_);
+  emuPtr_->fillCollisionInfoBase(baseFrameName_, col_status_base_, dist2_, p0_vec2_wrt_base_, p1_vec2_wrt_base_, col_dist_thresh_base_);
   emuPtr_->fillOccDistanceArrayVisu2(p0_vec2_, p1_vec2_, dist2_);
   timer11_.endTimer();
 
@@ -884,6 +889,74 @@ void MobileManipulatorVisualization::distanceVisualizationCallback(const ros::Ti
   */
 
   //std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::transformPoint(std::string& frame_from,
+                                                    std::string& frame_to,
+                                                    geometry_msgs::Point& p_from_to)
+{
+  tf::Point p_from_tf;
+  geometry_msgs::Point p_from_msg = p_from_to;
+  tf::pointMsgToTF(p_from_msg, p_from_tf);
+  tf::Stamped<tf::Point> p_from_stamped_tf(p_from_tf, ros::Time(0), frame_from);
+  tf::Stamped<tf::Point> p_to_stamped_tf;
+  geometry_msgs::PointStamped p_to_stamped_msg;
+
+  try
+  {
+    tfListener_.transformPoint(frame_to, p_from_stamped_tf, p_to_stamped_tf);
+
+    tf::pointStampedTFToMsg(p_to_stamped_tf, p_to_stamped_msg);
+    p_from_to = p_to_stamped_msg.point;
+  }
+  catch(tf::TransformException ex)
+  {
+    ROS_INFO("[MobileManipulatorVisualization::transformPoint] Couldn't get transform!");
+    ROS_ERROR("%s",ex.what());
+    //ros::Duration(1.0).sleep();
+  }
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::transformPointFromWorldtoBase(vector<geometry_msgs::Point>& p_from, vector<geometry_msgs::Point>& p_to)
+{
+  p_to.clear();
+  for (size_t i = 0; i < p_from.size(); i++)
+  {
+    tf::Vector3 point_from(p_from[i].x, p_from[i].y, p_from[i].z);
+    tf::Vector3 point_to = tf_robot_wrt_world_.inverse() * point_from;
+
+    geometry_msgs::Point pto;
+    pto.x = point_to.x();
+    pto.y = point_to.y();
+    pto.z = point_to.z();
+
+    p_to.push_back(pto);
+
+    /*
+    geometry_msgs::Point pto_tmp;
+    pto_tmp.x = p_from[i].x;
+    pto_tmp.y = p_from[i].y;
+    pto_tmp.z = p_from[i].z;
+    transformPoint(worldFrameName_, baseFrameName_, pto_tmp);
+
+    std::cout << "[MobileManipulatorVisualization::transformPointFromWorldtoBase] pto x: " << pto.x << std::endl;
+    std::cout << "[MobileManipulatorVisualization::transformPointFromWorldtoBase] pto_tmp x: " << pto_tmp.x << std::endl << std::endl;
+
+    std::cout << "[MobileManipulatorVisualization::transformPointFromWorldtoBase] pto y: " << pto.y << std::endl;
+    std::cout << "[MobileManipulatorVisualization::transformPointFromWorldtoBase] pto_tmp y: " << pto_tmp.y << std::endl << std::endl;
+
+    std::cout << "[MobileManipulatorVisualization::transformPointFromWorldtoBase] pto z: " << pto.z << std::endl;
+    std::cout << "[MobileManipulatorVisualization::transformPointFromWorldtoBase] pto_tmp z: " << pto_tmp.z << std::endl << std::endl;
+    */
+  }
+  //std::cout << "[MobileManipulatorVisualization::transformPointFromWorldtoBase] DEBUG INF" << std::endl;
+  //while(1);
 }
 
 //-------------------------------------------------------------------------------------------------------

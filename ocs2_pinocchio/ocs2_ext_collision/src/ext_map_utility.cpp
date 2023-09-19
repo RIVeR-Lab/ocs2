@@ -1468,7 +1468,8 @@ void ExtMapUtility::fillPCMsgFromOctByResolutionScale()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void ExtMapUtility::fillCollisionInfoBase(vector<bool>& col_status,
+void ExtMapUtility::fillCollisionInfoBase(std::string& frame_name,
+                                          vector<bool>& col_status,
                                           vector<double>& dist, 
                                           vector<geometry_msgs::Point>& p0_vec, 
                                           vector<geometry_msgs::Point>& p1_vec,
@@ -1480,6 +1481,7 @@ void ExtMapUtility::fillCollisionInfoBase(vector<bool>& col_status,
     cs.push_back((uint8_t) col_status[i]);
   }
 
+  collision_info_base_.frame_name = frame_name;
   collision_info_base_.status = cs;
   collision_info_base_.distance = dist;
   collision_info_base_.p0 = p0_vec;
@@ -1490,7 +1492,8 @@ void ExtMapUtility::fillCollisionInfoBase(vector<bool>& col_status,
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void ExtMapUtility::fillCollisionInfoArm(vector<bool>& col_status,
+void ExtMapUtility::fillCollisionInfoArm(std::string& frame_name,
+                                         vector<bool>& col_status,
                                          vector<double>& dist, 
                                          vector<geometry_msgs::Point>& p0_vec, 
                                          vector<geometry_msgs::Point>& p1_vec,
@@ -1502,6 +1505,7 @@ void ExtMapUtility::fillCollisionInfoArm(vector<bool>& col_status,
     cs.push_back((uint8_t) col_status[i]);
   }
 
+  collision_info_arm_.frame_name = frame_name;
   collision_info_arm_.status = cs;
   collision_info_arm_.distance = dist;
   collision_info_arm_.p0 = p0_vec;
@@ -1545,7 +1549,7 @@ void ExtMapUtility::fillOccDistanceArrayVisu(vector<geometry_msgs::Point>& p0_ve
   for (size_t i = 0; i < p0_vec.size(); i++)
   {
     visualization_msgs::Marker occ_distance_visu;
-    occ_distance_visu.ns = "occupancy_distance_" + i;
+    occ_distance_visu.ns = to_string(i);
     occ_distance_visu.id = i;
     occ_distance_visu.type = visualization_msgs::Marker::ARROW;
     occ_distance_visu.action = visualization_msgs::Marker::ADD;
@@ -1607,7 +1611,7 @@ void ExtMapUtility::fillOccDistanceArrayVisu2(vector<geometry_msgs::Point>& p0_v
   for (size_t i = 0; i < p0_vec2.size(); i++)
   {
     visualization_msgs::Marker occ_distance_visu;
-    occ_distance_visu.ns = "occupancy_distance2_" + i;
+    occ_distance_visu.ns = to_string(i);
     occ_distance_visu.id = i;
     occ_distance_visu.type = visualization_msgs::Marker::ARROW;
     occ_distance_visu.action = visualization_msgs::Marker::ADD;
@@ -2695,13 +2699,14 @@ void ExtMapUtility::publishCollisionInfoBase()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void ExtMapUtility::publishCollisionInfoBase(vector<bool>& col_status, 
+void ExtMapUtility::publishCollisionInfoBase(std::string& frame_name,
+                                             vector<bool>& col_status, 
                                              vector<double>& dist, 
                                              vector<geometry_msgs::Point>& p0_vec, 
                                              vector<geometry_msgs::Point>& p1_vec,
                                              vector<double>& dist_threshold)
 {
-  fillCollisionInfoBase(col_status, dist, p0_vec, p1_vec, dist_threshold);
+  fillCollisionInfoBase(frame_name, col_status, dist, p0_vec, p1_vec, dist_threshold);
   pub_collision_info_base_.publish(collision_info_base_);
 }
 
@@ -2716,13 +2721,14 @@ void ExtMapUtility::publishCollisionInfoArm()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void ExtMapUtility::publishCollisionInfoArm(vector<bool>& col_status, 
+void ExtMapUtility::publishCollisionInfoArm(std::string& frame_name,
+                                            vector<bool>& col_status, 
                                             vector<double>& dist, 
                                             vector<geometry_msgs::Point>& p0_vec, 
                                             vector<geometry_msgs::Point>& p1_vec,
                                             vector<double>& dist_threshold)
 {
-  fillCollisionInfoArm(col_status, dist, p0_vec, p1_vec, dist_threshold);
+  fillCollisionInfoArm(frame_name, col_status, dist, p0_vec, p1_vec, dist_threshold);
   pub_collision_info_arm_.publish(collision_info_arm_);
 }
 

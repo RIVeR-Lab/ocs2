@@ -467,14 +467,16 @@ class ExtMapUtility
     void fillPCMsgFromOctByResolutionScale();
 
     // DESCRIPTION: TODO...
-    void fillCollisionInfoBase(vector<bool>& status,
+    void fillCollisionInfoBase(std::string& frame_name,
+                               vector<bool>& status,
                                vector<double>& dist, 
                                vector<geometry_msgs::Point>& p0_vec, 
                                vector<geometry_msgs::Point>& p1_vec,
                                vector<double>& dist_threshold) const;
 
     // DESCRIPTION: TODO...
-    void fillCollisionInfoArm(vector<bool>& status,
+    void fillCollisionInfoArm(std::string& frame_name,
+                              vector<bool>& status,
                               vector<double>& dist, 
                               vector<geometry_msgs::Point>& p0_vec, 
                               vector<geometry_msgs::Point>& p1_vec,
@@ -654,7 +656,8 @@ class ExtMapUtility
     void publishCollisionInfoBase();
 
     // DESCRIPTION: TODO...
-    void publishCollisionInfoBase(vector<bool>& col_status, 
+    void publishCollisionInfoBase(std::string& frame_name,
+                                  vector<bool>& col_status, 
                                   vector<double>& dist, 
                                   vector<geometry_msgs::Point>& p0_vec, 
                                   vector<geometry_msgs::Point>& p1_vec,
@@ -664,7 +667,8 @@ class ExtMapUtility
     void publishCollisionInfoArm();
 
     // DESCRIPTION: TODO...
-    void publishCollisionInfoArm(vector<bool>& col_status, 
+    void publishCollisionInfoArm(std::string& frame_name,
+                                 vector<bool>& col_status, 
                                  vector<double>& dist, 
                                  vector<geometry_msgs::Point>& p0_vec, 
                                  vector<geometry_msgs::Point>& p1_vec,
