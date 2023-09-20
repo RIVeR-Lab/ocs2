@@ -1119,6 +1119,13 @@ void MobileManipulatorInterface::runMPC()
     }
     //std::cout << "[MobileManipulatorInterface::runMPC] MRT EXIT HAPPENED" << std::endl;
 
+    std::cout << "[MobileManipulatorInterface::runMPC] START DRL TRAINING!!!" << std::endl;
+    while(!targetReceivedFlag_)
+    {
+      setMRTReady();
+      spinOnce();
+    }
+
     //mpcTimer3_.startTimer();
     setMPCProblem();
     //mpcTimer3_.endTimer();
@@ -1969,16 +1976,20 @@ void MobileManipulatorInterface::mapContinuousActionDRL(std::vector<double>& act
   // Set Model Mode
   if (modelModeProb <= 0.3)
   {
+    std::cout << "[MobileManipulatorInterface::mapContinuousActionDRL] BASE MOTION" << std::endl;
     target_roll = 0.0;
     target_pitch = 0.0;
+    target_z = 0.12;
     modelModeIntQuery_ = 0;
   }
   else if (modelModeProb > 0.6)
   {
+    std::cout << "[MobileManipulatorInterface::mapContinuousActionDRL] WHOLE-BODY MOTION" << std::endl;
     modelModeIntQuery_ = 2;
   }
   else
   {
+    std::cout << "[MobileManipulatorInterface::mapContinuousActionDRL] ARM MOTION" << std::endl;
     modelModeIntQuery_ = 1;
   }
 

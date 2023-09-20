@@ -1810,7 +1810,6 @@ bool MRT_ROS_Gazebo_Loop::checkTarget(bool enableShutDownFlag)
 
   tf::StampedTransform tf_goal_wrt_world = tf_goal_wrt_world_;
   vector_t currentTarget = currentTarget_;
-  tf::StampedTransform tf_ee_wrt_world = tf_ee_wrt_world_;
 
   vector_t dist_goal_target(3);
   dist_goal_target << abs(tf_goal_wrt_world.getOrigin().x() - currentTarget(0)), 
@@ -1843,24 +1842,41 @@ bool MRT_ROS_Gazebo_Loop::checkTarget(bool enableShutDownFlag)
 
   if ((err_pos_goal_target >= err_threshold_pos_) || (err_ori_goal_target >= err_threshold_ori_quat_))
   {
+    tf::StampedTransform tf_robot_wrt_world = tf_robot_wrt_world_;
+    tf::StampedTransform tf_ee_wrt_world = tf_ee_wrt_world_;
+
     //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] currentTarget(0): " << currentTarget(0) << std::endl;
     //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] currentTarget(1): " << currentTarget(1) << std::endl;
     //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] currentTarget(2): " << currentTarget(2) << std::endl;
 
     int modelModeInt = getModelModeInt(robotModelInfo_);
-
-    vector_t dist_pos(3);
-    dist_pos << abs(tf_ee_wrt_world.getOrigin().x() - currentTarget(0)), 
-                abs(tf_ee_wrt_world.getOrigin().y() - currentTarget(1)), 
-                abs(tf_ee_wrt_world.getOrigin().z() - currentTarget(2));
-
     double err_pos;
     if (modelModeInt == 0)
     {
+      vector_t dist_pos(3);
+      dist_pos << abs(tf_robot_wrt_world.getOrigin().x() - currentTarget(0)), 
+                  abs(tf_robot_wrt_world.getOrigin().y() - currentTarget(1)), 
+                  abs(tf_robot_wrt_world.getOrigin().z() - currentTarget(2));
+
       err_pos = sqrt(pow(dist_pos(0), 2) + pow(dist_pos(1), 2));
+
+      /*
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] modelModeInt: " << modelModeInt << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] currentTarget x: " << currentTarget(0) << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] base x: " << tf_ee_wrt_world.getOrigin().x() << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] currentTarget y: " << currentTarget(1) << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] base y: " << tf_ee_wrt_world.getOrigin().y() << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] currentTarget z: " << currentTarget(2) << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] base z: " << tf_ee_wrt_world.getOrigin().z() << std::endl;
+      */
     }
     else
     {
+      vector_t dist_pos(3);
+      dist_pos << abs(tf_ee_wrt_world.getOrigin().x() - currentTarget(0)), 
+                  abs(tf_ee_wrt_world.getOrigin().y() - currentTarget(1)), 
+                  abs(tf_ee_wrt_world.getOrigin().z() - currentTarget(2));
+
       err_pos = dist_pos.norm();
     }
 
@@ -1869,17 +1885,18 @@ bool MRT_ROS_Gazebo_Loop::checkTarget(bool enableShutDownFlag)
     //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_pos z: " << dist_pos[2] << std::endl;
     //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_pos: " << err_pos << std::endl;
 
-    Eigen::Quaterniond quat_ee(tf_ee_wrt_world.getRotation().w(), tf_ee_wrt_world.getRotation().x(), tf_ee_wrt_world.getRotation().y(), tf_ee_wrt_world.getRotation().z());
+    
     //Eigen::Quaterniond quat_target(currentTarget(6), currentTarget(3), currentTarget(4), currentTarget(5));
 
     double err_ori;
     if (modelModeInt == 0)
     {
-      geometry_msgs::Quaternion quat_msg_ee;
-      quat_msg_ee.x = quat_ee.x();
-      quat_msg_ee.y = quat_ee.y();
-      quat_msg_ee.z = quat_ee.z();
-      quat_msg_ee.w = quat_ee.w();
+      //Eigen::Quaterniond quat_base(tf_robot_wrt_world.getRotation().w(), tf_robot_wrt_world.getRotation().x(), tf_robot_wrt_world.getRotation().y(), tf_robot_wrt_world.getRotation().z());
+      geometry_msgs::Quaternion quat_msg_base;
+      quat_msg_base.x = tf_robot_wrt_world.getRotation().x();
+      quat_msg_base.y = tf_robot_wrt_world.getRotation().y();
+      quat_msg_base.z = tf_robot_wrt_world.getRotation().z();
+      quat_msg_base.w = tf_robot_wrt_world.getRotation().w();
 
       geometry_msgs::Quaternion quat_msg_target;
       quat_msg_target.x = quat_target.x();
@@ -1887,24 +1904,34 @@ bool MRT_ROS_Gazebo_Loop::checkTarget(bool enableShutDownFlag)
       quat_msg_target.z = quat_target.z();
       quat_msg_target.w = quat_target.w();
 
-      err_ori = abs(getYawDifference(quat_msg_ee, quat_msg_target)) / M_PI;
+      err_ori = abs(getYawDifference(quat_msg_base, quat_msg_target)) / M_PI;
+      //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_pos: " << err_pos << std::endl;
+      //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_threshold_pos_: " << err_threshold_pos_ << std::endl;
+
+      //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_ori: " << err_ori << std::endl;
+      //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_threshold_ori_yaw_: " << err_threshold_ori_yaw_ << std::endl;
 
       if ((err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_yaw_))
       {
+        std::cout << "[MRT_ROS_Gazebo_Loop::checkGoal] REACHED TO THE TARGET with modelModeInt: " << modelModeInt << std::endl;
         drlActionResult_ = 4;
         shutDownFlag_ = enableShutDownFlag;
         //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END true" << std::endl;
+        
+        //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] DEBUG INF" << std::endl;
+        //while(1);
         return true;
       }
     }
     else
     {
+      Eigen::Quaterniond quat_ee(tf_ee_wrt_world.getRotation().w(), tf_ee_wrt_world.getRotation().x(), tf_ee_wrt_world.getRotation().y(), tf_ee_wrt_world.getRotation().z());
       vector_t dist_quat = quaternionDistance(quat_ee, quat_target);
       err_ori = dist_quat.norm();
 
       if ((err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_quat_))
       {
-        std::cout << "[MRT_ROS_Gazebo_Loop::checkGoal] REACHED TO THE TARGET!" << std::endl;
+        std::cout << "[MRT_ROS_Gazebo_Loop::checkGoal] REACHED TO THE TARGET with modelModeInt: " << modelModeInt << std::endl;
         drlActionResult_ = 4;
         shutDownFlag_ = enableShutDownFlag;
         //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END true" << std::endl;
@@ -1913,10 +1940,13 @@ bool MRT_ROS_Gazebo_Loop::checkTarget(bool enableShutDownFlag)
     }
     //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END" << std::endl << std::endl;
   }
-  //else
-  //{
-  //  std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] TARGET IS GOAL!" << std::endl << std::endl;
-  //}
+  else
+  {
+    int modelModeInt = getModelModeInt(robotModelInfo_);
+
+    std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] modelModeInt: " << modelModeInt << std::endl;
+    std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] TARGET IS GOAL!" << std::endl << std::endl;
+  }
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END false" << std::endl;
   return false;
@@ -1942,6 +1972,15 @@ int MRT_ROS_Gazebo_Loop::checkTaskStatus(bool enableShutDownFlag)
 
   if (drlFlag_)
   {
+    /*
+    int modelModeInt = getModelModeInt(robotModelInfo_);
+
+    if (modelModeInt == 0)
+    {
+      drlActionTimeHorizon_ = 30;
+    }
+    */
+
     if (checkCollision(enableShutDownFlag))
     {
       std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] checkTaskStatus: COLLISION!" << std::endl;
@@ -1967,6 +2006,7 @@ int MRT_ROS_Gazebo_Loop::checkTaskStatus(bool enableShutDownFlag)
       std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] time_: " << time_ << std::endl;
       std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] drlActionTimeHorizon_: " << drlActionTimeHorizon_ << std::endl;
       std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] END OF ACTION HORIZON!" << std::endl;
+      
       shutDownFlag_ = enableShutDownFlag;
       drlActionResult_ = 5;
       return 5;
