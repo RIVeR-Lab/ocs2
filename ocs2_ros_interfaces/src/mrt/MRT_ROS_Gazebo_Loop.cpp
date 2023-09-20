@@ -108,7 +108,7 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   //goalSub_ = nh.subscribe(goalMsgName_, 5, &MRT_ROS_Gazebo_Loop::goalCallback, this);
 
   // Timers
-  updateTimer_ = nh.createTimer(ros::Duration(dt_), &MRT_ROS_Gazebo_Loop::updateCallback, this);
+  //updateTimer_ = nh.createTimer(ros::Duration(dt_), &MRT_ROS_Gazebo_Loop::updateCallback, this);
 
   currentTarget_.resize(7);
 
@@ -756,8 +756,8 @@ void MRT_ROS_Gazebo_Loop::tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg)
     tfListener_.waitForTransform(worldFrameName_, robotModelInfo_.robotArm.eeFrame, ros::Time::now(), ros::Duration(5.0));
     tfListener_.lookupTransform(worldFrameName_, robotModelInfo_.robotArm.eeFrame, ros::Time(0), tf_ee_wrt_world_);
 
-    //tfListener_.waitForTransform(worldFrameName_, graspFrameName_, ros::Time::now(), ros::Duration(1.0));
-    //tfListener_.lookupTransform(worldFrameName_, graspFrameName_, ros::Time(0), tf_grasp_wrt_world_);
+    tfListener_.waitForTransform(worldFrameName_, goalFrameName_, ros::Time::now(), ros::Duration(5.0));
+    tfListener_.lookupTransform(worldFrameName_, goalFrameName_, ros::Time(0), tf_goal_wrt_world_);
   }
   catch (tf::TransformException ex)
   {
@@ -775,7 +775,7 @@ void MRT_ROS_Gazebo_Loop::tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg)
 //-------------------------------------------------------------------------------------------------------
 void MRT_ROS_Gazebo_Loop::updateCallback(const ros::TimerEvent& event)
 {
-  //std::cout << "[MobileManipulatorInterface::updateCallback] START" << std::endl;
+  std::cout << "[MobileManipulatorInterface::updateCallback] START" << std::endl;
 
   try
   {
@@ -805,7 +805,7 @@ void MRT_ROS_Gazebo_Loop::updateCallback(const ros::TimerEvent& event)
 
   try
   {
-    tfListener_.waitForTransform(worldFrameName_, goalFrameName_, ros::Time::now(), ros::Duration(1.0));
+    tfListener_.waitForTransform(worldFrameName_, goalFrameName_, ros::Time::now(), ros::Duration(5.0));
     tfListener_.lookupTransform(worldFrameName_, goalFrameName_, ros::Time(0), tf_goal_wrt_world_);
 
     initFlagBaseState2_ = true;
@@ -818,7 +818,7 @@ void MRT_ROS_Gazebo_Loop::updateCallback(const ros::TimerEvent& event)
 
   initFlagBaseState_ = initFlagBaseState0_ && initFlagBaseState1_ && initFlagBaseState2_;
 
-  //std::cout << "[MobileManipulatorInterface::updateCallback] END" << std::endl;
+  std::cout << "[MobileManipulatorInterface::updateCallback] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1834,11 +1834,11 @@ bool MRT_ROS_Gazebo_Loop::checkTarget(bool enableShutDownFlag)
   std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] target y: " << currentTarget.y() << std::endl;
   std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] goal z: " << tf_goal_wrt_world.getOrigin().z() << std::endl;
   std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] target z: " << currentTarget.z() << std::endl;
-  */
   std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_pos_goal_target: " << err_pos_goal_target << std::endl;
   std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_threshold_pos_: " << err_threshold_pos_ << std::endl;
   std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_ori_goal_target: " << err_ori_goal_target << std::endl;
   std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_threshold_ori_quat_: " << err_threshold_ori_quat_ << std::endl << std::endl;
+  */
   
 
   if ((err_pos_goal_target >= err_threshold_pos_) || (err_ori_goal_target >= err_threshold_ori_quat_))
@@ -1913,10 +1913,10 @@ bool MRT_ROS_Gazebo_Loop::checkTarget(bool enableShutDownFlag)
     }
     //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END" << std::endl << std::endl;
   }
-  else
-  {
-    std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] TARGET IS GOAL!" << std::endl << std::endl;
-  }
+  //else
+  //{
+  //  std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] TARGET IS GOAL!" << std::endl << std::endl;
+  //}
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END false" << std::endl;
   return false;
