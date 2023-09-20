@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.09.15
+// LAST UPDATE: 2023.09.19
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -64,7 +64,7 @@ class MRT_ROS_Gazebo_Loop
                         MRT_ROS_Interface& mrt,
                         std::string& worldFrameName,
                         std::string& targetMsgName,
-                        std::string& goalMsgName,
+                        std::string& goalFrameName,
                         std::string& baseStateMsg,
                         std::string& armStateMsg,
                         std::string& baseControlMsg,
@@ -84,7 +84,10 @@ class MRT_ROS_Gazebo_Loop
     /**
      * Destructor.
      */
-    virtual ~MRT_ROS_Gazebo_Loop() = default;
+    ~MRT_ROS_Gazebo_Loop()
+    {
+      std::cout << "[MRT_ROS_Gazebo_Loop::~MRT_ROS_Gazebo_Loop] SHUTTING DOWN..." << std::endl;
+    }
 
     /** NUA TODO: Add description */
     int getDRLActionResult();
@@ -100,9 +103,6 @@ class MRT_ROS_Gazebo_Loop
 
     /** NUA TODO: Add description */
     void setPointsOnRobotMsgName(std::string& pointsOnRobotMsgName);
-
-    /** NUA TODO: Add description */
-    void setGoalMsgName(std::string& goalMsgName);
 
     /** NUA TODO: Add description */
     void setStateIndexMap(std::vector<int>& stateIndexMap);
@@ -172,6 +172,9 @@ class MRT_ROS_Gazebo_Loop
     void tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg);
 
     /** NUA TODO: Add description */
+    void updateCallback(const ros::TimerEvent& event);
+
+    /** NUA TODO: Add description */
     void odometryCallback(const nav_msgs::Odometry::ConstPtr& msg);
 
     /** NUA TODO: Add description */
@@ -187,7 +190,7 @@ class MRT_ROS_Gazebo_Loop
     void pointsOnRobotCallback(const visualization_msgs::MarkerArray::ConstPtr& msg);
 
     /** NUA TODO: Add description */
-    void goalCallback(const visualization_msgs::MarkerArray::ConstPtr& msg);
+    //void goalCallback(const visualization_msgs::MarkerArray::ConstPtr& msg);
 
     /** NUA TODO: Add description */
     void linkStateCallback(const gazebo_msgs::LinkStates::ConstPtr& msg);
@@ -271,7 +274,7 @@ class MRT_ROS_Gazebo_Loop
 
     std::string worldFrameName_;
     std::string baseFrameName_;
-    std::string graspFrameName_;
+    std::string goalFrameName_;
 
     bool dataCollectionFlag_ = true;
 
@@ -285,6 +288,9 @@ class MRT_ROS_Gazebo_Loop
 
     bool tfFlag_ = false;
     bool initFlagBaseState_ = false;
+    bool initFlagBaseState0_ = false;
+    bool initFlagBaseState1_ = false;
+    bool initFlagBaseState2_ = false;
     bool initFlagArmState_ = false;
     bool initFlagArmState2_ = false;
     bool targetReceivedFlag_ = false;
@@ -320,7 +326,7 @@ class MRT_ROS_Gazebo_Loop
 
     tf::StampedTransform tf_robot_wrt_world_;
     tf::StampedTransform tf_ee_wrt_world_;
-    //tf::StampedTransform tf_grasp_wrt_world_;
+    tf::StampedTransform tf_goal_wrt_world_;
 
     nav_msgs::Odometry odometryMsg_;
     geometry_msgs::Pose robotBasePoseMsg_;
@@ -355,6 +361,8 @@ class MRT_ROS_Gazebo_Loop
     benchmark::RepeatedTimer timer1_;
     benchmark::RepeatedTimer timer2_;
 
+    ros::Timer updateTimer_;
+
     ros::Subscriber tfSub_;
     ros::Subscriber odometrySub_;
     ros::Subscriber linkStateSub_;
@@ -365,30 +373,30 @@ class MRT_ROS_Gazebo_Loop
     bool initFlagExtCollisionBase_ = false;
     bool initFlagExtCollisionArm_ = false;
     bool initFlagPointsOnRobot_ = false;
-    bool initFlagGoal_ = false;
+    //bool initFlagGoal_ = false;
     std::string selfCollisionInfoMsgName_;
     std::string extCollisionInfoBaseMsgName_;
     std::string extCollisionInfoArmMsgName_;
     std::string pointsOnRobotMsgName_;
     std::string targetMsgName_;
-    std::string goalMsgName_;
-    int selfColDistance_n_coeff_ = 5;
+    //std::string goalMsgName_;
+    //int selfColDistance_n_coeff_ = 5;
     //int extColDistance_n_coeff_ = 2;
-    double selfCollisionRangeMin_ = 0.05;
-    double extCollisionRangeBaseMin_ = 0.05;
-    double extCollisionRangeArmMin_ = 0.1;
+    double selfCollisionRangeMin_ = 0.02;
+    double extCollisionRangeBaseMin_ = 0.01;
+    double extCollisionRangeArmMin_ = 0.01;
     double rolloverRollThreshold_ = 0.2;
     double rolloverPitchThreshold_ = 0.2;
     ocs2_msgs::collision_info selfCollisionInfoMsg_;
     ocs2_msgs::collision_info extCollisionInfoBaseMsg_;
     ocs2_msgs::collision_info extCollisionInfoArmMsg_;
     visualization_msgs::MarkerArray pointsOnRobotMsg_;
-    visualization_msgs::MarkerArray goalMsg_;
+    //visualization_msgs::MarkerArray goalMsg_;
     ros::Subscriber selfCollisionInfoSub_;
     ros::Subscriber extCollisionInfoBaseSub_;
     ros::Subscriber extCollisionInfoArmSub_;
     ros::Subscriber pointsOnRobotSub_;
-    ros::Subscriber goalSub_;
+    //ros::Subscriber goalSub_;
     
     ros::Subscriber jointTrajectoryControllerStateSub_;
     ros::Subscriber targetTrajectoriesSubscriber_;

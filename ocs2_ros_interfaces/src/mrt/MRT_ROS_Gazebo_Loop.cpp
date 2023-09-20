@@ -17,7 +17,7 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                                          MRT_ROS_Interface& mrt,
                                          std::string& worldFrameName,
                                          std::string& targetMsgName,
-                                         std::string& goalMsgName,
+                                         std::string& goalFrameName,
                                          std::string& baseStateMsg,
                                          std::string& armStateMsg,
                                          std::string& baseControlMsg,
@@ -36,14 +36,14 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   : mrt_(mrt), 
     worldFrameName_(worldFrameName),
     targetMsgName_(targetMsgName),
-    goalMsgName_(goalMsgName),
+    goalFrameName_(goalFrameName),
     selfCollisionInfoMsgName_(selfCollisionInfoMsgName),
     extCollisionInfoBaseMsgName_(extCollisionInfoBaseMsgName),
     extCollisionInfoArmMsgName_(extCollisionInfoArmMsgName),
     pointsOnRobotMsgName_(pointsOnRobotMsgName),
     err_threshold_pos_(err_threshold_pos),
-    err_threshold_ori_quat_(err_threshold_ori_yaw),
-    err_threshold_ori_yaw_(err_threshold_ori_quat),
+    err_threshold_ori_yaw_(err_threshold_ori_yaw),
+    err_threshold_ori_quat_(err_threshold_ori_quat),
     mrtDesiredFrequency_(mrtDesiredFrequency), 
     mpcDesiredFrequency_(mpcDesiredFrequency),
     drlFlag_(drlFlag),
@@ -100,12 +100,15 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting to subscribe extCollisionInfoBaseMsgName_: " << extCollisionInfoBaseMsgName_ << std::endl;
   std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting to subscribe extCollisionInfoArmMsgName_: " << extCollisionInfoArmMsgName_ << std::endl;
   std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting to subscribe pointsOnRobotMsgName_: " << pointsOnRobotMsgName_ << std::endl;
-  std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting to subscribe goalMsgName_: "<< goalMsgName_ << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting to subscribe goalMsgName_: "<< goalMsgName_ << std::endl;
   selfCollisionInfoSub_ = nh.subscribe(selfCollisionInfoMsgName_, 5, &MRT_ROS_Gazebo_Loop::selfCollisionInfoCallback, this);
   extCollisionInfoBaseSub_ = nh.subscribe(extCollisionInfoBaseMsgName_, 5, &MRT_ROS_Gazebo_Loop::extCollisionInfoBaseCallback, this);
   extCollisionInfoArmSub_ = nh.subscribe(extCollisionInfoArmMsgName_, 5, &MRT_ROS_Gazebo_Loop::extCollisionInfoArmCallback, this);
   pointsOnRobotSub_ = nh.subscribe(pointsOnRobotMsgName_, 5, &MRT_ROS_Gazebo_Loop::pointsOnRobotCallback, this);
-  goalSub_ = nh.subscribe(goalMsgName_, 5, &MRT_ROS_Gazebo_Loop::goalCallback, this);
+  //goalSub_ = nh.subscribe(goalMsgName_, 5, &MRT_ROS_Gazebo_Loop::goalCallback, this);
+
+  // Timers
+  updateTimer_ = nh.createTimer(ros::Duration(dt_), &MRT_ROS_Gazebo_Loop::updateCallback, this);
 
   currentTarget_.resize(7);
 
@@ -153,6 +156,9 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   std::cout << "\n###   Maximum : " << timer2_.getMaxIntervalInMilliseconds() << "[ms].";
   std::cout << "\n###   Average : " << timer2_.getAverageInMilliseconds() << "[ms].";
   std::cout << "\n###   Latest  : " << timer2_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+
+  //std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] END" << std::endl;
+  //while(1);
 
   std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] END" << std::endl;
 }
@@ -215,7 +221,7 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
   if (drlFlag_)
   {
     std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting for the initFlagSelfCollision_, initFlagExtCollision_, initFlagPointsOnRobot_, initFlagGoal_ to be initialized..." << std::endl;
-    while(!initFlagSelfCollision_ || !initFlagExtCollisionBase_ || !initFlagExtCollisionArm_ || !initFlagPointsOnRobot_ || !initFlagGoal_){ros::spinOnce();}
+    while(!initFlagSelfCollision_ || !initFlagExtCollisionBase_ || !initFlagExtCollisionArm_ || !initFlagPointsOnRobot_){ros::spinOnce();}
   }
 
   //ROS_INFO_STREAM("[MRT_ROS_Gazebo_Loop::run] BEFORE getCurrentObservation");
@@ -616,14 +622,6 @@ void MRT_ROS_Gazebo_Loop::setPointsOnRobotMsgName(std::string& pointsOnRobotMsgN
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MRT_ROS_Gazebo_Loop::setGoalMsgName(std::string& goalMsgName)
-{
-  goalMsgName_ = goalMsgName;
-}
-
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
 void MRT_ROS_Gazebo_Loop::setStateIndexMap(std::vector<int>& stateIndexMap)
 {
   stateIndexMap_ = stateIndexMap;
@@ -775,6 +773,57 @@ void MRT_ROS_Gazebo_Loop::tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::updateCallback(const ros::TimerEvent& event)
+{
+  //std::cout << "[MobileManipulatorInterface::updateCallback] START" << std::endl;
+
+  try
+  {
+    tfListener_.waitForTransform(worldFrameName_, baseFrameName_, ros::Time::now(), ros::Duration(5.0));
+    tfListener_.lookupTransform(worldFrameName_, baseFrameName_, ros::Time(0), tf_robot_wrt_world_);
+
+    initFlagBaseState0_ = true;
+  }
+  catch (tf::TransformException ex)
+  {
+    ROS_INFO("[MRT_ROS_Gazebo_Loop::tfCallback] ERROR 0: Couldn't get transform!");
+    ROS_ERROR("%s", ex.what());
+  }
+
+  try
+  {
+    tfListener_.waitForTransform(worldFrameName_, robotModelInfo_.robotArm.eeFrame, ros::Time::now(), ros::Duration(5.0));
+    tfListener_.lookupTransform(worldFrameName_, robotModelInfo_.robotArm.eeFrame, ros::Time(0), tf_ee_wrt_world_);
+
+    initFlagBaseState1_ = true;
+  }
+  catch (tf::TransformException ex)
+  {
+    ROS_INFO("[MRT_ROS_Gazebo_Loop::tfCallback] ERROR 1: Couldn't get transform!");
+    ROS_ERROR("%s", ex.what());
+  }
+
+  try
+  {
+    tfListener_.waitForTransform(worldFrameName_, goalFrameName_, ros::Time::now(), ros::Duration(1.0));
+    tfListener_.lookupTransform(worldFrameName_, goalFrameName_, ros::Time(0), tf_goal_wrt_world_);
+
+    initFlagBaseState2_ = true;
+  }
+  catch (tf::TransformException ex)
+  {
+    ROS_INFO("[MRT_ROS_Gazebo_Loop::tfCallback] ERROR 2: Couldn't get transform!");
+    ROS_ERROR("%s", ex.what());
+  }
+
+  initFlagBaseState_ = initFlagBaseState0_ && initFlagBaseState1_ && initFlagBaseState2_;
+
+  //std::cout << "[MobileManipulatorInterface::updateCallback] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MRT_ROS_Gazebo_Loop::odometryCallback(const nav_msgs::Odometry::ConstPtr& msg)
 {
   odometryMsg_ = *msg;
@@ -819,11 +868,13 @@ void MRT_ROS_Gazebo_Loop::pointsOnRobotCallback(const visualization_msgs::Marker
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+/*
 void MRT_ROS_Gazebo_Loop::goalCallback(const visualization_msgs::MarkerArray::ConstPtr& msg)
 {
   goalMsg_ = *msg;
   initFlagGoal_  = true;
 }
+*/
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -1713,13 +1764,13 @@ bool MRT_ROS_Gazebo_Loop::checkGoal(bool enableShutDownFlag)
 {
   //std::cout << "[MRT_ROS_Gazebo_Loop::checkGoal] START" << std::endl;
 
-  visualization_msgs::MarkerArray goalMsg = goalMsg_;
+  tf::StampedTransform tf_goal_wrt_world = tf_goal_wrt_world_;
   tf::StampedTransform tf_ee_wrt_world = tf_ee_wrt_world_;
 
   vector_t dist_pos(3);
-  dist_pos << abs(tf_ee_wrt_world.getOrigin().x() - goalMsg.markers[0].pose.position.x), 
-              abs(tf_ee_wrt_world.getOrigin().y() - goalMsg.markers[0].pose.position.y), 
-              abs(tf_ee_wrt_world.getOrigin().z() - goalMsg.markers[0].pose.position.z);
+  dist_pos << abs(tf_ee_wrt_world.getOrigin().x() - tf_goal_wrt_world.getOrigin().x()), 
+              abs(tf_ee_wrt_world.getOrigin().y() - tf_goal_wrt_world.getOrigin().y()), 
+              abs(tf_ee_wrt_world.getOrigin().z() - tf_goal_wrt_world.getOrigin().z());
   double err_pos = dist_pos.norm();
 
   Eigen::Quaterniond quat_ee(tf_ee_wrt_world.getRotation().w(), 
@@ -1727,10 +1778,10 @@ bool MRT_ROS_Gazebo_Loop::checkGoal(bool enableShutDownFlag)
                              tf_ee_wrt_world.getRotation().y(), 
                              tf_ee_wrt_world.getRotation().z());
   
-  Eigen::Quaterniond quat_goal(goalMsg.markers[0].pose.orientation.w, 
-                               goalMsg.markers[0].pose.orientation.x, 
-                               goalMsg.markers[0].pose.orientation.y, 
-                               goalMsg.markers[0].pose.orientation.z);
+  Eigen::Quaterniond quat_goal(tf_goal_wrt_world.getRotation().w(), 
+                               tf_goal_wrt_world.getRotation().x(), 
+                               tf_goal_wrt_world.getRotation().y(), 
+                               tf_goal_wrt_world.getRotation().z());
 
   vector_t dist_quat = quaternionDistance(quat_ee, quat_goal);
   double err_ori = dist_quat.norm();
@@ -1740,6 +1791,7 @@ bool MRT_ROS_Gazebo_Loop::checkGoal(bool enableShutDownFlag)
     drlActionResult_ = 3;
     shutDownFlag_ = enableShutDownFlag;
 
+    std::cout << "[MRT_ROS_Gazebo_Loop::checkGoal] GOALLLLLLLLLLLLLLLLLLLLL" << std::endl;
     //std::cout << "[MRT_ROS_Gazebo_Loop::checkGoal] END true" << std::endl;
     return true;
   }
@@ -1756,79 +1808,73 @@ bool MRT_ROS_Gazebo_Loop::checkTarget(bool enableShutDownFlag)
 {
   //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] START" << std::endl;
 
+  tf::StampedTransform tf_goal_wrt_world = tf_goal_wrt_world_;
   vector_t currentTarget = currentTarget_;
   tf::StampedTransform tf_ee_wrt_world = tf_ee_wrt_world_;
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] currentTarget(0): " << currentTarget(0) << std::endl;
-  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] currentTarget(1): " << currentTarget(1) << std::endl;
-  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] currentTarget(2): " << currentTarget(2) << std::endl;
-
-  int modelModeInt = getModelModeInt(robotModelInfo_);
-
-  vector_t dist_pos(3);
-  dist_pos << abs(tf_ee_wrt_world.getOrigin().x() - currentTarget(0)), 
-              abs(tf_ee_wrt_world.getOrigin().y() - currentTarget(1)), 
-              abs(tf_ee_wrt_world.getOrigin().z() - currentTarget(2));
-
-  double err_pos;
-  if (modelModeInt == 0)
-  {
-    err_pos = sqrt(pow(dist_pos(0), 2) + pow(dist_pos(1), 2));
-  }
-  else
-  {
-    err_pos = dist_pos.norm();
-  }
-
-  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_pos x: " << dist_pos[0] << std::endl;
-  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_pos y: " << dist_pos[1] << std::endl;
-  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_pos z: " << dist_pos[2] << std::endl;
-  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_pos: " << err_pos << std::endl;
-
-  Eigen::Quaterniond quat_ee(tf_ee_wrt_world.getRotation().w(), tf_ee_wrt_world.getRotation().x(), tf_ee_wrt_world.getRotation().y(), tf_ee_wrt_world.getRotation().z());
+  vector_t dist_goal_target(3);
+  dist_goal_target << abs(tf_goal_wrt_world.getOrigin().x() - currentTarget(0)), 
+                      abs(tf_goal_wrt_world.getOrigin().y() - currentTarget(1)), 
+                      abs(tf_goal_wrt_world.getOrigin().z() - currentTarget(2));
+  double err_pos_goal_target = dist_goal_target.norm();
+  
+  Eigen::Quaterniond quat_goal(tf_goal_wrt_world.getRotation().w(), 
+                               tf_goal_wrt_world.getRotation().x(), 
+                               tf_goal_wrt_world.getRotation().y(), 
+                               tf_goal_wrt_world.getRotation().z());
   Eigen::Quaterniond quat_target(currentTarget(6), currentTarget(3), currentTarget(4), currentTarget(5));
 
-  double err_ori;
-  if (modelModeInt == 0)
+  vector_t dist_quat_goal_target = quaternionDistance(quat_goal, quat_target);
+  double err_ori_goal_target = dist_quat_goal_target.norm();
+
+  /*
+  std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] goal x: " << tf_goal_wrt_world.getOrigin().x() << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] target x: " << currentTarget.x() << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] goal y: " << tf_goal_wrt_world.getOrigin().y() << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] target y: " << currentTarget.y() << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] goal z: " << tf_goal_wrt_world.getOrigin().z() << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] target z: " << currentTarget.z() << std::endl;
+  */
+  std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_pos_goal_target: " << err_pos_goal_target << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_threshold_pos_: " << err_threshold_pos_ << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_ori_goal_target: " << err_ori_goal_target << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_threshold_ori_quat_: " << err_threshold_ori_quat_ << std::endl << std::endl;
+  
+
+  if ((err_pos_goal_target >= err_threshold_pos_) || (err_ori_goal_target >= err_threshold_ori_quat_))
   {
-    geometry_msgs::Quaternion quat_msg_ee;
-    quat_msg_ee.x = quat_ee.x();
-    quat_msg_ee.y = quat_ee.y();
-    quat_msg_ee.z = quat_ee.z();
-    quat_msg_ee.w = quat_ee.w();
+    //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] currentTarget(0): " << currentTarget(0) << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] currentTarget(1): " << currentTarget(1) << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] currentTarget(2): " << currentTarget(2) << std::endl;
 
-    geometry_msgs::Quaternion quat_msg_target;
-    quat_msg_target.x = quat_target.x();
-    quat_msg_target.y = quat_target.y();
-    quat_msg_target.z = quat_target.z();
-    quat_msg_target.w = quat_target.w();
+    int modelModeInt = getModelModeInt(robotModelInfo_);
 
-    err_ori = abs(getYawDifference(quat_msg_ee, quat_msg_target)) / M_PI;
+    vector_t dist_pos(3);
+    dist_pos << abs(tf_ee_wrt_world.getOrigin().x() - currentTarget(0)), 
+                abs(tf_ee_wrt_world.getOrigin().y() - currentTarget(1)), 
+                abs(tf_ee_wrt_world.getOrigin().z() - currentTarget(2));
 
-    if ((err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_yaw_))
+    double err_pos;
+    if (modelModeInt == 0)
     {
-      drlActionResult_ = 4;
-      shutDownFlag_ = enableShutDownFlag;
-      //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END true" << std::endl;
-      return true;
+      err_pos = sqrt(pow(dist_pos(0), 2) + pow(dist_pos(1), 2));
     }
-  }
-  else
-  {
-    vector_t dist_quat = quaternionDistance(quat_ee, quat_target);
-    err_ori = dist_quat.norm();
-
-    if ((err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_quat_))
+    else
     {
-      drlActionResult_ = 4;
-      shutDownFlag_ = enableShutDownFlag;
-      //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END true" << std::endl;
-      return true;
+      err_pos = dist_pos.norm();
     }
 
-    /*
-    if (err_ori > 0.5)
-    { 
+    //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_pos x: " << dist_pos[0] << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_pos y: " << dist_pos[1] << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_pos z: " << dist_pos[2] << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_pos: " << err_pos << std::endl;
+
+    Eigen::Quaterniond quat_ee(tf_ee_wrt_world.getRotation().w(), tf_ee_wrt_world.getRotation().x(), tf_ee_wrt_world.getRotation().y(), tf_ee_wrt_world.getRotation().z());
+    //Eigen::Quaterniond quat_target(currentTarget(6), currentTarget(3), currentTarget(4), currentTarget(5));
+
+    double err_ori;
+    if (modelModeInt == 0)
+    {
       geometry_msgs::Quaternion quat_msg_ee;
       quat_msg_ee.x = quat_ee.x();
       quat_msg_ee.y = quat_ee.y();
@@ -1841,49 +1887,36 @@ bool MRT_ROS_Gazebo_Loop::checkTarget(bool enableShutDownFlag)
       quat_msg_target.z = quat_target.z();
       quat_msg_target.w = quat_target.w();
 
-      double yaw_diff = abs(getYawDifference(quat_msg_ee, quat_msg_target)) / M_PI;
+      err_ori = abs(getYawDifference(quat_msg_ee, quat_msg_target)) / M_PI;
 
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] yaw_diff: " << yaw_diff << std::endl;
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_quat r: " << dist_quat[0] << std::endl;
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_quat p: " << dist_quat[1] << std::endl;
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_quat y: " << dist_quat[2] << std::endl;
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_ori: " << err_ori << std::endl;
-
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] DEBUG INF" << std::endl;
-      while(1);
+      if ((err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_yaw_))
+      {
+        drlActionResult_ = 4;
+        shutDownFlag_ = enableShutDownFlag;
+        //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END true" << std::endl;
+        return true;
+      }
     }
-    */
-  }
+    else
+    {
+      vector_t dist_quat = quaternionDistance(quat_ee, quat_target);
+      err_ori = dist_quat.norm();
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_quat r: " << dist_quat[0] << std::endl;
-  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_quat p: " << dist_quat[1] << std::endl;
-  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] dist_quat y: " << dist_quat[2] << std::endl;
-  
-  /*
-  if (modelModeInt != 0 && err_ori > 0.5)
+      if ((err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_quat_))
+      {
+        std::cout << "[MRT_ROS_Gazebo_Loop::checkGoal] REACHED TO THE TARGET!" << std::endl;
+        drlActionResult_ = 4;
+        shutDownFlag_ = enableShutDownFlag;
+        //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END true" << std::endl;
+        return true;
+      }
+    }
+    //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END" << std::endl << std::endl;
+  }
+  else
   {
-    abs(getYawDifference(quat_msg_ee, quat_msg_target)) / M_PI;
-
-    std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] modelModeInt: " << modelModeInt << std::endl;
-    std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_ori: " << err_ori << std::endl << std::endl;
-
-    std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] DEBUG INF" << std::endl;
-    while(1);
+    std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] TARGET IS GOAL!" << std::endl << std::endl;
   }
-  else if (modelModeInt == 0 && err_ori > 2*M_PI)
-  {
-    std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] modelModeInt: " << modelModeInt << std::endl;
-    std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] err_ori: " << err_ori << std::endl << std::endl;
-
-    std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] DEBUG INF" << std::endl;
-    while(1);
-  }
-  */
-  
-
-  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END" << std::endl << std::endl;
-
-  
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END false" << std::endl;
   return false;

@@ -311,12 +311,12 @@ class MobileManipulatorInterface final : public RobotInterface
     const std::string urdfFile_;
     std::string robotModelName_ = "mobile_manipulator";
     std::string worldFrameName_ = "world";
-    //std::string graspFrameName_ = "grasp";
+    std::string goalFrameName_;
 
     std::string modelModeMsgName_;
     std::string mpcTargetMsgName_;
     std::string targetMsgName_;
-    std::string goalMsgName_;
+    //std::string goalMsgName_;
 
     std::vector<std::pair<size_t, size_t>> collisionObjectPairs_;
     std::vector<std::pair<std::string, std::string>> collisionLinkPairs_;

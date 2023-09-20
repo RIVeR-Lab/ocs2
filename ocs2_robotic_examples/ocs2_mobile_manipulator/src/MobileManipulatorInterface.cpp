@@ -298,7 +298,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   loadData::loadPtreeValue<std::string>(pt, modelModeMsgName_, "model_information.modelModeMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, mpcTargetMsgName_, "model_information.mpcTargetMsg", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, targetMsgName_, "model_information.targetMsg", printOutFlag_);
-  loadData::loadPtreeValue<std::string>(pt, goalMsgName_, "model_information.goalMsg", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, goalFrameName_, "model_information.goalFrame", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, collisionConstraintPoints, "model_information.collisionConstraintPoints", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, collisionCheckPoints, "model_information.collisionCheckPoints", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, logSavePathRel_, "model_information.logSavePathRel", printOutFlag_);
@@ -339,7 +339,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     std::cout << "#### model_information.modelModeMsg: " << modelModeMsgName_ << std::endl;
     std::cout << "#### model_information.mpcTargetMsg: " << mpcTargetMsgName_ << std::endl;
     std::cout << "#### model_information.targetMsg: " << targetMsgName_ << std::endl;
-    std::cout << "#### model_information.goalMsg: " << goalMsgName_ << std::endl;
+    std::cout << "#### model_information.goalFrame: " << goalFrameName_ << std::endl;
     std::cout << "#### model_information.logSavePathRel: " << logSavePathRel_ << std::endl;
     std::cout << "#### =============================================================================" << std::endl;
   }
@@ -1325,7 +1325,7 @@ void MobileManipulatorInterface::runMRT()
                                  mrt, 
                                  worldFrameName_,
                                  targetMsgName_,
-                                 goalMsgName_,
+                                 goalFrameName_,
                                  baseStateMsg_,
                                  armStateMsg_,
                                  baseControlMsg_,
