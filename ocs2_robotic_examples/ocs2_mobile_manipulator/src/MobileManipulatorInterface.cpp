@@ -1361,11 +1361,11 @@ void MobileManipulatorInterface::runMRT()
     {
       std::cout << "[MobileManipulatorInterface::runMRT] Waiting for targetReceivedFlag_..." << std::endl;
       //setMRTReady();
-      while(!targetReceivedFlag_)
-      {
-        setMRTReady();
-        spinOnce();
-      }
+      while(!targetReceivedFlag_);
+      //{
+        //setMRTReady();
+        //spinOnce();
+      //}
       //mrt_loop.setDRLFlag(drlFlag_);
       mrt_loop.setTargetReceivedFlag(targetReceivedFlag_);
       mrt_loop.setTaskMode(taskMode_);
