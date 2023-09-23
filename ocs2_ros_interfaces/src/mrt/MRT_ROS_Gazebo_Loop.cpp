@@ -147,6 +147,7 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
 
   timer1_.endTimer();
 
+  /*
   std::cout << "\n### [MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] MRT_ROS Benchmarking";
   std::cout << "\n### timer1_";
   std::cout << "\n###   Maximum : " << timer1_.getMaxIntervalInMilliseconds() << "[ms].";
@@ -156,6 +157,7 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   std::cout << "\n###   Maximum : " << timer2_.getMaxIntervalInMilliseconds() << "[ms].";
   std::cout << "\n###   Average : " << timer2_.getAverageInMilliseconds() << "[ms].";
   std::cout << "\n###   Latest  : " << timer2_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+  */
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] END" << std::endl;
   //while(1);
@@ -1940,6 +1942,7 @@ bool MRT_ROS_Gazebo_Loop::checkTarget(bool enableShutDownFlag)
     }
     //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END" << std::endl << std::endl;
   }
+  /*
   else
   {
     int modelModeInt = getModelModeInt(robotModelInfo_);
@@ -1947,6 +1950,7 @@ bool MRT_ROS_Gazebo_Loop::checkTarget(bool enableShutDownFlag)
     std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] modelModeInt: " << modelModeInt << std::endl;
     std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] TARGET IS GOAL!" << std::endl << std::endl;
   }
+  */
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END false" << std::endl;
   return false;

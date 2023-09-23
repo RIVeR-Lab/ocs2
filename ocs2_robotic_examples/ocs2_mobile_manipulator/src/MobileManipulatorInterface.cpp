@@ -567,7 +567,7 @@ void MobileManipulatorInterface::initializePointsOnRobotPtr(std::string& collisi
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::setMPCProblem()
 {
-  std::cout << "[MobileManipulatorInterface::setMPCProblem] START" << std::endl;
+  //std::cout << "[MobileManipulatorInterface::setMPCProblem] START" << std::endl;
 
   /*
   while(!mpcExitFlag_)
@@ -619,9 +619,9 @@ void MobileManipulatorInterface::setMPCProblem()
   */
 
   mpcTimer2_.startTimer();
-  std::cout << "[MobileManipulatorInterface::setMPCProblem] modelModeInt: " << modelModeInt << std::endl;
+  //std::cout << "[MobileManipulatorInterface::setMPCProblem] modelModeInt: " << modelModeInt << std::endl;
   bool isModeUpdated = updateModelMode(robotModelInfo_, modelModeInt);
-  std::cout << "[MobileManipulatorInterface::setMPCProblem] isModeUpdated: " << isModeUpdated << std::endl;
+  //std::cout << "[MobileManipulatorInterface::setMPCProblem] isModeUpdated: " << isModeUpdated << std::endl;
   //printRobotModelInfo(robotModelInfo_);
   mpcTimer2_.endTimer();
 
@@ -631,8 +631,6 @@ void MobileManipulatorInterface::setMPCProblem()
   //// Optimal control problem
   if (modelModeInt == 0)
   {
-    std::cout << "[MobileManipulatorInterface::setMPCProblem] dynamicsPtr: MobileBaseDynamics" << std::endl;
-
     mpcTimer3_.startTimer();
     ocp_.costPtr->add("inputCost", quadraticInputCostPtr_mode0_);
     mpcTimer3_.endTimer();
@@ -759,7 +757,7 @@ void MobileManipulatorInterface::setMPCProblem()
   //std::cout << "" << std::endl;
 
   // Rollout
-  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Rollout" << std::endl;
+  //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Rollout" << std::endl;
   mpcTimer10_.startTimer();
   rolloutPtr_.reset(new TimeTriggeredRollout(*ocp_.dynamicsPtr, rolloutSettings_));
   mpcTimer10_.endTimer();
@@ -767,13 +765,14 @@ void MobileManipulatorInterface::setMPCProblem()
   // Initialization
   mpcTimer11_.startTimer();
   auto modeInputDim = getModeInputDim(robotModelInfo_);
-  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Initialization" << std::endl;
-  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] modeInputDim: " << modeInputDim << std::endl;
+  //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] BEFORE Initialization" << std::endl;
+  //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] modeInputDim: " << modeInputDim << std::endl;
   initializerPtr_.reset(new DefaultInitializer(modeInputDim));
   mpcTimer11_.endTimer();
 
   mpcTimer0_.endTimer();
 
+  /*
   std::cout << "\n### MPC_ROS Benchmarking mpcTimer0_: TOTAL";
   std::cout << "\n###   Maximum : " << mpcTimer0_.getMaxIntervalInMilliseconds() << "[ms].";
   std::cout << "\n###   Average : " << mpcTimer0_.getAverageInMilliseconds() << "[ms].";
@@ -822,7 +821,8 @@ void MobileManipulatorInterface::setMPCProblem()
   std::cout << "\n###   Maximum : " << mpcTimer11_.getMaxIntervalInMilliseconds() << "[ms].";
   std::cout << "\n###   Average : " << mpcTimer11_.getAverageInMilliseconds() << "[ms].";
   std::cout << "\n###   Latest  : " << mpcTimer11_.getLastIntervalInMilliseconds() << "[ms]." << std::endl << std::endl;
-
+  */
+ 
   //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] DEBUG INF" << std::endl;
   //while(1);
 
@@ -1074,6 +1074,7 @@ void MobileManipulatorInterface::runMPC()
   mpcIter_ = 0;
   while (ros::ok() && ros::master::check())
   {
+    std::cout << "===================== MPC START =====================" << std::endl;
     std::cout << "[MobileManipulatorInterface::runMPC] mpcIter_: " << mpcIter_ << std::endl;
     std::cout << "[MobileManipulatorInterface::runMPC] mrtIter_: " << mrtIter_ << std::endl;
 
@@ -1090,6 +1091,8 @@ void MobileManipulatorInterface::runMPC()
 
     if (mpcPrintOutFlag)
     {
+      std::cout << "===================== MPC START =====================" << std::endl;
+      std::cout << "=====================================================" << std::endl;
       std::cout << "=====================================================" << std::endl;
       std::cout << "=====================================================" << std::endl;
       std::cout << "[MobileManipulatorInterface::runMPC] START ITERATION: " << mpcIter_ << std::endl;
@@ -1243,13 +1246,15 @@ void MobileManipulatorInterface::runMPC()
     {
       std::cout << "[MobileManipulatorInterface::runMPC] END ITERATION: " << mpcIter_ << std::endl;
       std::cout << "=====================================================" << std::endl;
-      std::cout << "=====================================================" << std::endl;
+      std::cout << "====================== MPC END ======================" << std::endl;
     }
 
     //std::cout << "[MobileManipulatorInterface::runMPC] DEBUG INF" << std::endl;
     //while(1);
 
     mpcIter_++;
+
+    std::cout << "====================== MPC END ======================" << std::endl;
   }
 
   //std::cout << "[MobileManipulatorInterface::runMPC] END" << std::endl;
@@ -1262,7 +1267,7 @@ void MobileManipulatorInterface::runMRT()
 {
   //std::cout << "[MobileManipulatorInterface::runMRT] START" << std::endl;
 
-  bool mrtPrintOutFlag = true;
+  bool mrtPrintOutFlag = false;
 
   RobotModelInfo robotModelInfo;
   //OptimalControlProblem ocp;
@@ -1272,6 +1277,7 @@ void MobileManipulatorInterface::runMRT()
   mrtIter_ = 0;
   while (ros::ok() && ros::master::check())
   {
+    std::cout << "*********************** MRT START *******************" << std::endl;
     std::cout << "[MobileManipulatorInterface::runMRT] mpcIter_: " << mpcIter_ << std::endl;
     std::cout << "[MobileManipulatorInterface::runMRT] mrtIter_: " << mrtIter_ << std::endl;
 
@@ -1288,14 +1294,16 @@ void MobileManipulatorInterface::runMRT()
 
     if (mrtPrintOutFlag)
     {
-      std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-      std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+      std::cout << "*********************** MRT START *******************" << std::endl;
+      std::cout << "*****************************************************" << std::endl;
+      std::cout << "*****************************************************" << std::endl;
+      std::cout << "*****************************************************" << std::endl;
       std::cout << "[MobileManipulatorInterface::runMRT] START ITERATION: " << mrtIter_ << std::endl;
     }
 
     //mrtTimer1_.startTimer();
 
-    std::cout << "[MobileManipulatorInterface::runMRT] BEFORE setMPCProblem" << std::endl;
+    //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE setMPCProblem" << std::endl;
     //mrtTimer2_.startTimer();
     //setMPCProblem();
     //OptimalControlProblem ocp;
@@ -1303,9 +1311,9 @@ void MobileManipulatorInterface::runMRT()
     //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE TimeTriggeredRollout" << std::endl;
     //mrtRolloutPtr_.reset(new TimeTriggeredRollout(*ocp_.dynamicsPtr, rolloutSettings_));
     robotModelInfo = robotModelInfo_;
-    printRobotModelInfo(robotModelInfo); 
+    //printRobotModelInfo(robotModelInfo); 
     //mrtTimer2_.endTimer();
-    std::cout << "[MobileManipulatorInterface::runMRT] AFTER setMPCProblem" << std::endl;
+    //std::cout << "[MobileManipulatorInterface::runMRT] AFTER setMPCProblem" << std::endl;
 
     // MRT
     //std::cout << "[MobileManipulatorInterface::runMRT] BEFORE mrt" << std::endl;
@@ -1359,9 +1367,9 @@ void MobileManipulatorInterface::runMRT()
 
     if (drlFlag_)
     {
-      std::cout << "[MobileManipulatorInterface::runMRT] Waiting for targetReceivedFlag_..." << std::endl;
+      //std::cout << "[MobileManipulatorInterface::runMRT] Waiting for targetReceivedFlag_..." << std::endl;
       //setMRTReady();
-      while(!targetReceivedFlag_);
+      //while(!targetReceivedFlag_);
       //{
         //setMRTReady();
         //spinOnce();
@@ -1448,14 +1456,16 @@ void MobileManipulatorInterface::runMRT()
     if (mrtPrintOutFlag)
     {
       std::cout << "[MobileManipulatorInterface::runMRT] END ITERATION: " << mrtIter_ << std::endl;
-      std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-      std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+      std::cout << "*****************************************************" << std::endl;
+      std::cout << "********************* MRT END ***********************" << std::endl;
     }
 
     //std::cout << "[MobileManipulatorInterface::runMRT] DEBUG INF" << std::endl;
     //while(1);
 
     mrtIter_++;
+
+    std::cout << "********************* MRT END ***********************" << std::endl;
   }
 
   //std::cout << "[MobileManipulatorInterface::runMRT] END" << std::endl;

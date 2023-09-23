@@ -489,10 +489,10 @@ void MPC_ROS_Interface::shutdownNode()
   // shutdown publishers
   mpcPolicyPublisher_.shutdown();
 
-   std::cout << "[MPC_ROS_Interface::shutdownNode] BEFORE mpcObservationSubscriber_" << std::endl << std::endl;
+   std::cout << "[MPC_ROS_Interface::shutdownNode] BEFORE mpcObservationSubscriber_" << std::endl;
   mpcObservationSubscriber_.shutdown();
 
-  std::cout << "[MPC_ROS_Interface::shutdownNode] END" << std::endl << std::endl;
+  std::cout << "[MPC_ROS_Interface::shutdownNode] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
