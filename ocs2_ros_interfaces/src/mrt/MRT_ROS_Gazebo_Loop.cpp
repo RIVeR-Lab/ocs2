@@ -758,8 +758,11 @@ void MRT_ROS_Gazebo_Loop::tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg)
     tfListener_.waitForTransform(worldFrameName_, robotModelInfo_.robotArm.eeFrame, ros::Time::now(), ros::Duration(5.0));
     tfListener_.lookupTransform(worldFrameName_, robotModelInfo_.robotArm.eeFrame, ros::Time(0), tf_ee_wrt_world_);
 
-    tfListener_.waitForTransform(worldFrameName_, goalFrameName_, ros::Time::now(), ros::Duration(5.0));
-    tfListener_.lookupTransform(worldFrameName_, goalFrameName_, ros::Time(0), tf_goal_wrt_world_);
+    if (drlFlag_)
+    {
+      tfListener_.waitForTransform(worldFrameName_, goalFrameName_, ros::Time::now(), ros::Duration(5.0));
+      tfListener_.lookupTransform(worldFrameName_, goalFrameName_, ros::Time(0), tf_goal_wrt_world_);
+    }
   }
   catch (tf::TransformException ex)
   {
@@ -788,7 +791,7 @@ void MRT_ROS_Gazebo_Loop::updateCallback(const ros::TimerEvent& event)
   }
   catch (tf::TransformException ex)
   {
-    ROS_INFO("[MRT_ROS_Gazebo_Loop::tfCallback] ERROR 0: Couldn't get transform!");
+    ROS_INFO("[MRT_ROS_Gazebo_Loop::updateCallback] ERROR 0: Couldn't get transform!");
     ROS_ERROR("%s", ex.what());
   }
 
@@ -801,7 +804,7 @@ void MRT_ROS_Gazebo_Loop::updateCallback(const ros::TimerEvent& event)
   }
   catch (tf::TransformException ex)
   {
-    ROS_INFO("[MRT_ROS_Gazebo_Loop::tfCallback] ERROR 1: Couldn't get transform!");
+    ROS_INFO("[MRT_ROS_Gazebo_Loop::updateCallback] ERROR 1: Couldn't get transform!");
     ROS_ERROR("%s", ex.what());
   }
 
@@ -814,7 +817,7 @@ void MRT_ROS_Gazebo_Loop::updateCallback(const ros::TimerEvent& event)
   }
   catch (tf::TransformException ex)
   {
-    ROS_INFO("[MRT_ROS_Gazebo_Loop::tfCallback] ERROR 2: Couldn't get transform!");
+    ROS_INFO("[MRT_ROS_Gazebo_Loop::updateCallback] ERROR 2: Couldn't get transform!");
     ROS_ERROR("%s", ex.what());
   }
 

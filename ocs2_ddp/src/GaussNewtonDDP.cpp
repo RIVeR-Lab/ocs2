@@ -1270,7 +1270,7 @@ void GaussNewtonDDP::initializeDualSolutionAndMetrics()
 /******************************************************************************************************/
 void GaussNewtonDDP::takePrimalDualStep(scalar_t lqModelExpectedCost) 
 {
-  //std::cout << "[GaussNewtonDDP::takePrimalDualStep] START" << std::endl;
+  std::cout << "[GaussNewtonDDP::takePrimalDualStep] START" << std::endl;
 
   // update primal: run search strategy and find the optimal stepLength
   searchStrategyTimer_.startTimer();
@@ -1307,7 +1307,7 @@ void GaussNewtonDDP::takePrimalDualStep(scalar_t lqModelExpectedCost)
                                                solution);
   //*/
   
-  //std::cout << "[GaussNewtonDDP::takePrimalDualStep] END searchStrategyPtr_" << std::endl;
+  std::cout << "[GaussNewtonDDP::takePrimalDualStep] END searchStrategyPtr_" << std::endl;
 
   if (success) 
   {
@@ -1626,7 +1626,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const
   // DDP main loop
   while (true) 
   {
-    //std::cout << "[GaussNewtonDDP::runImpl(4)] START DDP LOOP" << std::endl;
+    std::cout << "[GaussNewtonDDP::runImpl(4)] START DDP LOOP" << std::endl;
 
     if (ddpSettings_.displayInfo_)
     {
@@ -1649,21 +1649,21 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const
     backwardPassTimer_.endTimer();
     //std::cout << "[GaussNewtonDDP::runImpl(4)] END solveSequentialRiccatiEquations" << std::endl;
 
-    //std::cout << "[GaussNewtonDDP::runImpl(4)] START calculateController" << std::endl;
+    std::cout << "[GaussNewtonDDP::runImpl(4)] START calculateController" << std::endl;
     // calculate controller and store the result in unoptimizedController_
     computeControllerTimer_.startTimer();
     calculateController();
     computeControllerTimer_.endTimer();
-    //std::cout << "[GaussNewtonDDP::runImpl(4)] END calculateController" << std::endl;
+    std::cout << "[GaussNewtonDDP::runImpl(4)] END calculateController" << std::endl;
     
 
     // the expected cost/merit calculated by the Riccati solution is not reliable
     const auto lqModelExpectedCost = initialSolutionExists ? nominalDualData_.valueFunctionTrajectory.front().f : performanceIndex_.merit;
 
-    //std::cout << "[GaussNewtonDDP::runImpl(4)] START takePrimalDualStep" << std::endl;
+    std::cout << "[GaussNewtonDDP::runImpl(4)] START takePrimalDualStep" << std::endl;
     // nominal --> optimized: based on the current LQ solution updates the optimized primal and dual solutions
     takePrimalDualStep(lqModelExpectedCost);
-    //std::cout << "[GaussNewtonDDP::runImpl(4)] END takePrimalDualStep" << std::endl;
+    std::cout << "[GaussNewtonDDP::runImpl(4)] END takePrimalDualStep" << std::endl;
 
     // iteration info
     ++totalNumIterations_;
@@ -1679,11 +1679,11 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const
     std::tie(isConverged, convergenceInfo) = searchStrategyPtr_->checkConvergence(!initialSolutionExists, *std::prev(performanceIndexHistory_.end(), 2), performanceIndexHistory_.back());
     initialSolutionExists = true;
 
-    //std::cout << "[GaussNewtonDDP::runImpl(4)] convergenceInfo: " << std::endl;
+    std::cout << "[GaussNewtonDDP::runImpl(4)] convergenceInfo: " << std::endl;
     //std::cout << convergenceInfo << std::endl;
     if (isConverged || (totalNumIterations_ - initIteration) == ddpSettings_.maxNumIterations_) 
     {
-      //std::cout << "[GaussNewtonDDP::runImpl(4)] END DDP LOOP" << std::endl;
+      std::cout << "[GaussNewtonDDP::runImpl(4)] END DDP LOOP" << std::endl;
       break;
     } 
     else 
@@ -1703,7 +1703,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const
       optimizedPrimalSolution_.swap(nominalPrimalData_.primalSolution);
       optimizedProblemMetrics_.swap(nominalPrimalData_.problemMetrics);
 
-      //std::cout << "[GaussNewtonDDP::runImpl(4)] CONTINUE DDP LOOP" << std::endl;
+      std::cout << "[GaussNewtonDDP::runImpl(4)] CONTINUE DDP LOOP" << std::endl << std::endl;;
     }
     //ctr++;
   }  // end of while loop

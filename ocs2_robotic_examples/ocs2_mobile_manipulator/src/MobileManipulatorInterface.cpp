@@ -1122,11 +1122,14 @@ void MobileManipulatorInterface::runMPC()
     }
     //std::cout << "[MobileManipulatorInterface::runMPC] MRT EXIT HAPPENED" << std::endl;
 
-    std::cout << "[MobileManipulatorInterface::runMPC] START DRL TRAINING!!!" << std::endl;
-    while(!targetReceivedFlag_)
+    if (drlFlag_)
     {
-      setMRTReady();
-      spinOnce();
+      std::cout << "[MobileManipulatorInterface::runMPC] START DRL TRAINING!!!" << std::endl;
+      while(!targetReceivedFlag_)
+      {
+        setMRTReady();
+        spinOnce();
+      }
     }
 
     //mpcTimer3_.startTimer();
