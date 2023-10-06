@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.05.02
+// LAST UPDATE: 2023.10.05
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -37,22 +37,37 @@ SelfCollisionCppAd::SelfCollisionCppAd(const PinocchioInterface& pinocchioInterf
     robotModelInfo_(robotModelInfo),
     minimumDistance_(minimumDistance) 
 {
+  //std::cout << "[SelfCollisionCppAd::SelfCollisionCppAd] START" << std::endl;
+
   PinocchioInterfaceCppAd pinocchioInterfaceCppAd = pinocchioInterface.toCppAd();
+  
+  //std::cout << "[SelfCollisionCppAd::SelfCollisionCppAd] BEFORE mappingCppAdPtr" << std::endl;
   std::unique_ptr<ocs2::PinocchioStateInputMapping<ad_scalar_t>> mappingCppAdPtr(mappingCppAd.clone());
+
+  //std::cout << "[SelfCollisionCppAd::SelfCollisionCppAd] BEFORE setPinocchioInterface" << std::endl;
   mappingCppAdPtr->setPinocchioInterface(pinocchioInterfaceCppAd);
 
+  //std::cout << "[SelfCollisionCppAd::SelfCollisionCppAd] BEFORE setADInterfaces" << std::endl;
   setADInterfaces(pinocchioInterfaceCppAd, *mappingCppAdPtr, modelName, modelFolder);
   
   if (recompileLibraries)
   {
+    //std::cout << "[SelfCollisionCppAd::SelfCollisionCppAd] BEFORE cppAdInterfaceDistanceCalculation_ createModels" << std::endl;
     cppAdInterfaceDistanceCalculation_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
+
+    //std::cout << "[SelfCollisionCppAd::SelfCollisionCppAd] BEFORE cppAdInterfaceLinkPoints_ createModels" << std::endl;
     cppAdInterfaceLinkPoints_->createModels(CppAdInterface::ApproximationOrder::First, verbose);
   }
   else 
   {
+    //std::cout << "[SelfCollisionCppAd::SelfCollisionCppAd] BEFORE cppAdInterfaceDistanceCalculation_ loadModelsIfAvailable" << std::endl;
     cppAdInterfaceDistanceCalculation_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
+
+    //std::cout << "[SelfCollisionCppAd::SelfCollisionCppAd] BEFORE cppAdInterfaceLinkPoints_ loadModelsIfAvailable" << std::endl;
     cppAdInterfaceLinkPoints_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
   }
+
+  //std::cout << "[SelfCollisionCppAd::SelfCollisionCppAd] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -447,11 +462,17 @@ void SelfCollisionCppAd::setADInterfaces(PinocchioInterfaceCppAd& pinocchioInter
                                          const std::string& modelName,
                                          const std::string& modelFolder) 
 {
+  //std::cout << "[SelfCollisionCppAd::setADInterfaces] START" << std::endl;
+
   const size_t modeStateDim = getModeStateDim(robotModelInfo_);
   const size_t stateDim = getStateDim(robotModelInfo_);
   const size_t numDistanceResults = pinocchioGeometryInterface_.getGeometryModel().collisionPairs.size();
   const size_t n_points_param = numDistanceResults * numberOfParamsPerResult_;
   const size_t paramDim = stateDim + n_points_param;
+
+  //std::cout << "[SelfCollisionCppAd::setADInterfaces::stateAndClosestPointsToDistance] numDistanceResults: " << numDistanceResults << std::endl;
+  //std::cout << "[SelfCollisionCppAd::setADInterfaces::stateAndClosestPointsToDistance] n_points_param: " << n_points_param << std::endl;
+  //std::cout << "[SelfCollisionCppAd::setADInterfaces::stateAndClosestPointsToDistance] paramDim: " << paramDim << std::endl;
 
   /*
   auto stateAndClosestPointsToDistance = [&, this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) 
@@ -470,8 +491,16 @@ void SelfCollisionCppAd::setADInterfaces(PinocchioInterfaceCppAd& pinocchioInter
   auto stateAndClosestPointsToDistance = [&, this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) 
   {
     const size_t stateDim = getStateDim(robotModelInfo_);
+    const size_t numDistanceResults = pinocchioGeometryInterface_.getGeometryModel().collisionPairs.size();
+    const size_t n_points_param = numDistanceResults * numberOfParamsPerResult_;
+
     auto x_full = p.head(stateDim);
     auto p_param = p.tail(n_points_param);
+
+    //std::cout << "[SelfCollisionCppAd::setADInterfaces::stateAndClosestPointsToDistance] n_points_param: " << n_points_param << std::endl;
+    //std::cout << "[SelfCollisionCppAd::setADInterfaces::stateAndClosestPointsToDistance] stateDim: " << stateDim << std::endl;
+    //std::cout << "[SelfCollisionCppAd::setADInterfaces::stateAndClosestPointsToDistance] x_full size: " << x_full.size() << std::endl;
+    //std::cout << "[SelfCollisionCppAd::setADInterfaces::stateAndClosestPointsToDistance] p_param size: " << p_param.size() << std::endl;
 
     Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, -1> matrixResult = distanceCalculationAd(pinocchioInterfaceAd, mappingCppAd, x, x_full, p_param);
     y = Eigen::Map<Eigen::Matrix<ad_scalar_t, -1, 1>>(matrixResult.data(), matrixResult.size());
@@ -491,7 +520,8 @@ void SelfCollisionCppAd::setADInterfaces(PinocchioInterfaceCppAd& pinocchioInter
   };
   
   cppAdInterfaceLinkPoints_.reset(new CppAdInterface(stateAndClosestPointsToLinkFrame, 
-                                                     stateDim,
+                 std::cout << "[SelfCollisionCppAd::setADInterfaces::stateAndClosestPointsToDistance] n_points_param: " << n_points_param << std::endl;
+    std::cout << "[SelfCollisionCppAd::setADInterfaces::stateAndClosestPointsToDistance] stateDim: " << stateDim << std::endl;                                    stateDim,
                                                      numDistanceResults * numberOfParamsPerResult_, 
                                                      modelName + "_links_intermediate",
                                                      modelFolder));
@@ -500,8 +530,16 @@ void SelfCollisionCppAd::setADInterfaces(PinocchioInterfaceCppAd& pinocchioInter
   auto stateAndClosestPointsToLinkFrame = [&, this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) 
   {
     const size_t stateDim = getStateDim(robotModelInfo_);
+    const size_t numDistanceResults = pinocchioGeometryInterface_.getGeometryModel().collisionPairs.size();
+    const size_t n_points_param = numDistanceResults * numberOfParamsPerResult_;
+
     auto x_full = p.head(stateDim);
     auto p_param = p.tail(n_points_param);
+
+    //std::cout << "[SelfCollisionCppAd::setADInterfaces::stateAndClosestPointsToLinkFrame] n_points_param: " << n_points_param << std::endl;
+    //std::cout << "[SelfCollisionCppAd::setADInterfaces::stateAndClosestPointsToLinkFrame] stateDim: " << stateDim << std::endl;
+    //std::cout << "[SelfCollisionCppAd::setADInterfaces::stateAndClosestPointsToLinkFrame] x_full : " << x_full.size() << std::endl;
+    //std::cout << "[SelfCollisionCppAd::setADInterfaces::stateAndClosestPointsToLinkFrame] p_param size: " << p_param.size() << std::endl;
     
     Eigen::Matrix<ad_scalar_t, Eigen::Dynamic, -1> matrixResult = computeLinkPointsAd(pinocchioInterfaceAd, mappingCppAd, x, x_full, p_param);
     y = Eigen::Map<Eigen::Matrix<ad_scalar_t, -1, 1>>(matrixResult.data(), matrixResult.size());
@@ -512,6 +550,8 @@ void SelfCollisionCppAd::setADInterfaces(PinocchioInterfaceCppAd& pinocchioInter
                                                      paramDim,
                                                      modelName + "_links_intermediate",
                                                      modelFolder));
+
+  //std::cout << "[SelfCollisionCppAd::setADInterfaces] END" << std::endl;
 }
 
 } /* namespace ocs2 */

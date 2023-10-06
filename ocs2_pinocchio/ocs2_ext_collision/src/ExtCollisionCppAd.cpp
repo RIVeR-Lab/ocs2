@@ -559,7 +559,7 @@ void ExtCollisionCppAd::setADInterfaces(PinocchioInterfaceCppAd& pinocchioInterf
   auto modeStateDim = getModeStateDim(robotModelInfo);
   auto stateDim = getStateDim(robotModelInfo);
   const size_t numDistanceResults = distances_.size();
-  const size_t n_points_param = numDistanceResults * numberOfParamsPerResult_;
+  //const size_t n_points_param = numDistanceResults * numberOfParamsPerResult_;
 
   /*
   auto stateAndClosestPointsToDistance = [&, this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) 
@@ -577,6 +577,11 @@ void ExtCollisionCppAd::setADInterfaces(PinocchioInterfaceCppAd& pinocchioInterf
 
   auto stateAndClosestPointsToDistance = [&, this](const ad_vector_t& x, const ad_vector_t& p, ad_vector_t& y) 
   {
+    auto robotModelInfo = pointsOnRobotPtr_->getRobotModelInfo();
+    auto stateDim = getStateDim(robotModelInfo);
+    const size_t numDistanceResults = distances_.size();
+    const size_t n_points_param = numDistanceResults * numberOfParamsPerResult_;
+
     auto x_full = p.head(stateDim);
     auto p_param = p.tail(n_points_param);
 
