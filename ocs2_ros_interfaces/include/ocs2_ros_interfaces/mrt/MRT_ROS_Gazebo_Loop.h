@@ -63,6 +63,7 @@ class MRT_ROS_Gazebo_Loop
     MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                         MRT_ROS_Interface& mrt,
                         std::string& worldFrameName,
+                        std::string& ns,
                         std::string& targetMsgName,
                         std::string& goalFrameName,
                         std::string& baseStateMsg,
@@ -272,8 +273,10 @@ class MRT_ROS_Gazebo_Loop
     double dataWriteFreq_ = 10;
     double dataWriteLastTime_ = 0;
 
+    std::string ns_;
     std::string worldFrameName_;
     std::string baseFrameName_;
+    std::string eeFrameName_;
     std::string goalFrameName_;
 
     bool dataCollectionFlag_ = true;

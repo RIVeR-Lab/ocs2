@@ -41,6 +41,8 @@ int main(int argc, char* argv[])
   const std::string robotMode = "mobile_manipulator";
   ros::init(argc, argv, robotMode + "_target");
   
+  ros::MultiThreadedSpinner spinner(4);
+
   // INITIALIZE TRANSFORM LISTENER
   tf::TransformListener tflistener;
 
@@ -82,7 +84,7 @@ int main(int argc, char* argv[])
   
   // Set TargetTrajectoriesGazebo
   TargetTrajectoriesGazebo gu(nh, robotMode, gz_model_msg_name, robot_name, target_names, drop_target_name, &goalPoseToTargetTrajectories);
-
+  
   if (drlFlag)
   {
     cout << "[MobileManipulatorTarget::main] DRL MODE IS ON!" << endl;
@@ -99,7 +101,8 @@ int main(int argc, char* argv[])
   
   gu.setTargetToEEPose();
 
-  ros::Rate r(100);
+  /*
+  //ros::Rate r(100);
   while(ros::ok)
   {
     //gu.updateObservationAndTarget();
@@ -110,9 +113,15 @@ int main(int argc, char* argv[])
     gu.publishGraspFrame();
     gu.publishDropFrame();
 
-    ros::spinOnce();
-    r.sleep();
+    //ros::spinOnce();
+    //r.sleep();
   }
+  */
+
+  double update_dt = 0.01;
+  ros::Timer updateTimer = nh.createTimer(ros::Duration(update_dt), &TargetTrajectoriesGazebo::updateCallback, &gu);
+
+  spinner.spin();
 
   // Interactive Marker
   //TargetTrajectoriesInteractiveMarker targetPoseCommand(nh, robotMode, &goalPoseToTargetTrajectories);

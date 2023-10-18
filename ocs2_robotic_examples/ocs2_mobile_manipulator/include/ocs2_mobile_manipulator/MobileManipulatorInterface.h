@@ -306,6 +306,14 @@ class MobileManipulatorInterface final : public RobotInterface
     ros::Timer mpcTimer_;
     ros::Timer mrtTimer_;
 
+    std::string sim_;
+    std::string ns_;
+
+    std::string baseFrame_withNS_;
+    std::string armBaseFrame_withNS_;
+    std::string eeFrame_withNS_;
+    std::vector<std::string> armJointFrameNames_withNS_;
+
     const std::string taskFile_;
     const std::string libraryFolder_;
     const std::string urdfFile_;

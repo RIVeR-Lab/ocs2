@@ -113,6 +113,9 @@ class TargetTrajectoriesGazebo final
     // DESCRIPTION: TODO...
     void publishTargetTrajectories(Eigen::Vector3d& position, Eigen::Quaterniond& orientation);
 
+    // DESCRIPTION: TODO...
+    void updateCallback(const ros::TimerEvent& event);
+
   private:
     /// FUNCTIONS:
     // DESCRIPTION: TODO...

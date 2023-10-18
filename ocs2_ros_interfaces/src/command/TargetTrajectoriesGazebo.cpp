@@ -346,7 +346,7 @@ void TargetTrajectoriesGazebo::initializeInteractiveMarkerDropTarget()
 //-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::initializeInteractiveMarkerModelMode()
 {
-  //std::cout << "[TargetTrajectoriesGazebo::initializeInteractiveMarkerModelMode] START" << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::initializeInteractiveMarkerModelMode] START" << std::endl;
 
   //while (!initCallbackFlag_);
   
@@ -363,7 +363,7 @@ void TargetTrajectoriesGazebo::initializeInteractiveMarkerModelMode()
   // 'commit' changes and send to all clients
   modelModeServer_.applyChanges();
 
-  //std::cout << "[TargetTrajectoriesGazebo::initializeInteractiveMarkerModelMode] END" << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::initializeInteractiveMarkerModelMode] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1323,6 +1323,7 @@ void TargetTrajectoriesGazebo::publishTargetVisu()
   visualization_msgs::MarkerArray targetMarkerArray = targetMarkerArray_;
   int target_size = targetMarkerArray.markers.size();
 
+  //std::cout << "[TargetTrajectoriesGazebo::publishTargetVisu] target_size: " << target_size << std::endl;
   if (target_size > 0)
   {
     for(int i = 0; i < target_size; i++)
@@ -1443,6 +1444,20 @@ void TargetTrajectoriesGazebo::publishTargetTrajectories(Eigen::Vector3d& positi
 
   // Publish target trajectories
   targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
+}
+
+void TargetTrajectoriesGazebo::updateCallback(const ros::TimerEvent& event)
+{
+  //std::cout << "[TargetTrajectoriesGazebo::updateCallback] START" << std::endl;
+
+  updateGoal(true);
+  publishTargetTrajectories();
+  publishGoalVisu();
+  publishTargetVisu();
+  publishGraspFrame();
+  publishDropFrame();
+
+  //std::cout << "[TargetTrajectoriesGazebo::updateCallback] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------

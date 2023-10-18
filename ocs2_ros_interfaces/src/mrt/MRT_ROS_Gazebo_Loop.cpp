@@ -16,6 +16,7 @@ namespace ocs2 {
 MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                                          MRT_ROS_Interface& mrt,
                                          std::string& worldFrameName,
+                                         std::string& ns,
                                          std::string& targetMsgName,
                                          std::string& goalFrameName,
                                          std::string& baseStateMsg,
@@ -35,6 +36,7 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                                          std::string logSavePathRel)
   : mrt_(mrt), 
     worldFrameName_(worldFrameName),
+    ns_(ns),
     targetMsgName_(targetMsgName),
     goalFrameName_(goalFrameName),
     selfCollisionInfoMsgName_(selfCollisionInfoMsgName),
@@ -74,6 +76,13 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
       baseFrameName_ = robotModelInfo_.mobileBase.baseFrame;
       std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] ERROR: Invalid robot model type!" << std::endl;
       break;
+  }
+
+  eeFrameName_ = robotModelInfo_.robotArm.eeFrame;
+  if (ns_ != "")
+  {
+    baseFrameName_ = ns + "/" + baseFrameName_;
+    eeFrameName_ = ns + "/" + eeFrameName_;
   }
 
   dataCollectionFlag_ = (dataPathReL_ == "") ? false : true;
@@ -755,8 +764,8 @@ void MRT_ROS_Gazebo_Loop::tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg)
     tfListener_.waitForTransform(worldFrameName_, baseFrameName_, ros::Time::now(), ros::Duration(5.0));
     tfListener_.lookupTransform(worldFrameName_, baseFrameName_, ros::Time(0), tf_robot_wrt_world_);
 
-    tfListener_.waitForTransform(worldFrameName_, robotModelInfo_.robotArm.eeFrame, ros::Time::now(), ros::Duration(5.0));
-    tfListener_.lookupTransform(worldFrameName_, robotModelInfo_.robotArm.eeFrame, ros::Time(0), tf_ee_wrt_world_);
+    tfListener_.waitForTransform(worldFrameName_, eeFrameName_, ros::Time::now(), ros::Duration(5.0));
+    tfListener_.lookupTransform(worldFrameName_, eeFrameName_, ros::Time(0), tf_ee_wrt_world_);
 
     if (drlFlag_)
     {
@@ -781,6 +790,9 @@ void MRT_ROS_Gazebo_Loop::tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg)
 void MRT_ROS_Gazebo_Loop::updateCallback(const ros::TimerEvent& event)
 {
   std::cout << "[MobileManipulatorInterface::updateCallback] START" << std::endl;
+
+  std::cout << "[MobileManipulatorInterface::updateCallback] DEBUG INF" << std::endl;
+  while(1);
 
   try
   {

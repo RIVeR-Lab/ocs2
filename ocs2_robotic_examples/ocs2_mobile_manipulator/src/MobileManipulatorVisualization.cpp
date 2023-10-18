@@ -106,10 +106,13 @@ MobileManipulatorVisualization::MobileManipulatorVisualization(ros::NodeHandle& 
 {
   std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] START" << std::endl;
 
+  std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] ns: " << ns << std::endl;
+  std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] baseFrameName: " << baseFrameName << std::endl;
   if (ns != "")
   {
     baseFrameName_withNS_ = ns + "/" + baseFrameName;
   }
+  std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] baseFrameName_withNS_: " << baseFrameName_withNS_ << std::endl;
 
   launchVisualizerNode(nodeHandle);
   std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] END" << std::endl;
@@ -155,6 +158,7 @@ void MobileManipulatorVisualization::launchVisualizerNode(ros::NodeHandle& nodeH
     visualizationInterfacePtr_.reset(new GeometryInterfaceVisualization(std::move(pinocchioInterfaceInternal_), geometryInterface, nodeHandle));
   }
 
+  std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] jointStateMsgName_: " << jointStateMsgName_ << std::endl;
   std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] Waiting for initTFTransformFlag_ and initJointStateFlag_..." << std::endl;
   while(!initTFTransformFlag_ || !initJointStateFlag_){ros::spinOnce();}
 
