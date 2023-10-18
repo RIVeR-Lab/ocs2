@@ -84,7 +84,7 @@ void PointsOnRobot::initialize(ocs2::PinocchioInterface& pinocchioInterface,
                                bool recompileLibraries, 
                                bool verbose)
 {
-  std::cout << "[PointsOnRobot::initialize] START" << std::endl;
+  //std::cout << "[PointsOnRobot::initialize] START" << std::endl;
 
   robotModelInfo_ = robotModelInfo;
 
@@ -128,7 +128,7 @@ void PointsOnRobot::initialize(ocs2::PinocchioInterface& pinocchioInterface,
       break;
   }
 
-  std::cout << "[PointsOnRobot::initialize] frameNames_: " << std::endl;
+  //std::cout << "[PointsOnRobot::initialize] frameNames_: " << std::endl;
   for (size_t i = 0; i < frameNames_.size(); i++)
   {
     std::cout << i << " -> " << frameNames_[i] << std::endl;
@@ -140,35 +140,42 @@ void PointsOnRobot::initialize(ocs2::PinocchioInterface& pinocchioInterface,
   // Set link Ids of joints
   for (const auto& bodyName : frameNames_) 
   {
+    //std::cout << "[PointsOnRobot::initialize] START getBodyId" << std::endl;
     auto id =  pinocchioInterface.getModel().getBodyId(bodyName);
     frameIds_.push_back(id);
 
     //std::cout << bodyName << " -> " << id << std::endl;
   }
 
+  //std::cout << "[PointsOnRobot::initialize] START PinocchioInterfaceCppAd" << std::endl;
   // CppAD interface
   ocs2::PinocchioInterfaceCppAd pinocchioInterfaceCppAd = pinocchioInterface.toCppAd();
 
+  //std::cout << "[PointsOnRobot::initialize] START PinocchioStateInputMapping" << std::endl;
   // pinocchioInterface to mapping
   std::unique_ptr<ocs2::PinocchioStateInputMapping<ad_scalar_t>> mappingCppAdPtr(mappingCppAd.clone());
   mappingCppAdPtr->setPinocchioInterface(pinocchioInterfaceCppAd);
 
+  //std::cout << "[PointsOnRobot::initialize] START setADInterfaces" << std::endl;
   setADInterfaces(pinocchioInterface,
                   pinocchioInterfaceCppAd, 
                   *mappingCppAdPtr, 
                   modelName, 
                   modelFolder);
 
+  
   if (recompileLibraries) 
   {
+    //std::cout << "[PointsOnRobot::initialize] START createModels" << std::endl;
     createModels(verbose);
   } 
   else 
   {
+    //std::cout << "[PointsOnRobot::initialize] START loadModelsIfAvailable" << std::endl;
     loadModelsIfAvailable(verbose);
   }
 
-  std::cout << "[PointsOnRobot::initialize] END" << std::endl;
+  //std::cout << "[PointsOnRobot::initialize] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------

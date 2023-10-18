@@ -108,7 +108,9 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   loadData::loadStdVector<std::string>(taskFile_, "model_information.armJointNames", armJointNames, printOutFlag_);
 
   // Read the frame names
-  std::string robotName, baseFrame, armBaseFrame, eeFrame;
+  std::string sim, ns, robotName, baseFrame, armBaseFrame, eeFrame;
+  loadData::loadPtreeValue<std::string>(pt, sim, "model_information.sim", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, ns, "model_information.ns", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, robotName, "model_information.robotName", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, baseFrame, "model_information.baseFrame", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, armBaseFrame, "model_information.armBaseFrame", printOutFlag_);
@@ -122,6 +124,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
   {
     std::cout << "\n #### Model Information:" << std::endl;
     std::cout << "#### =============================================================================" << std::endl;
+    std::cout << "#### model_information.sim: " << sim << std::endl;
+    std::cout << "#### model_information.ns: " << ns << std::endl;
     std::cout << "#### model_information.robotName: " << robotName << std::endl;
     std::cout << "#### model_information.robotModelType: " << static_cast<int>(robotModelType) << std::endl;
     std::cout << "#### model_information.removeJoints: " << std::endl;
@@ -149,10 +153,23 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
     std::cout << "#### =============================================================================" << std::endl;
   }
 
+  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] ns: " << ns << std::endl;
+  // Adding namespace
+  if (ns != "")
+  {
+    baseFrame = ns + "/" + baseFrame;
+    armBaseFrame = ns + "/" + armBaseFrame;
+    eeFrame = ns + "/" + eeFrame;
+
+    std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] baseFrame: " << baseFrame << std::endl;
+  }
+
+  std::cerr << "[MobileManipulatorInterface::MobileManipulatorInterface] START createPinocchioInterface" << std::endl;
   // Create pinocchio interface
-  pinocchioInterfacePtr_.reset(new PinocchioInterface(createPinocchioInterface(urdfFile_, robotModelType, removeJointNames)));
+  pinocchioInterfacePtr_.reset(new PinocchioInterface(createPinocchioInterface(urdfFile_, robotModelType, removeJointNames, baseFrame, worldFrameName_)));
   //std::cerr << *pinocchioInterfacePtr_;
 
+  std::cerr << "[MobileManipulatorInterface::MobileManipulatorInterface] START createRobotModelInfo" << std::endl;
   // Set Robot Model Info
   robotModelInfo_ = createRobotModelInfo(robotName,
                                          robotModelType,
@@ -273,14 +290,18 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   
   // Read the link names of joints
   std::vector<std::string> armJointFrameNames;
+  std::vector<std::string> armJointFrameNames_withNS;
   loadData::loadStdVector<std::string>(taskFile_, "model_information.armJointFrameNames", armJointFrameNames, printOutFlag_);
+  armJointFrameNames_withNS = armJointFrameNames;
 
   // Read the names of joints
   std::vector<std::string> armJointNames;
   loadData::loadStdVector<std::string>(taskFile_, "model_information.armJointNames", armJointNames, printOutFlag_);
-
+  
   // Read the frame names
-  std::string robotName, baseFrame, armBaseFrame, eeFrame, collisionConstraintPoints, collisionCheckPoints;
+  std::string sim, ns, robotName, baseFrame, baseFrame_withNS, armBaseFrame, armBaseFrame_withNS, eeFrame, eeFrame_withNS, collisionConstraintPoints, collisionCheckPoints;
+  loadData::loadPtreeValue<std::string>(pt, sim, "model_information.sim", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, ns, "model_information.ns", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, robotName, "model_information.robotName", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, worldFrameName_, "model_information.worldFrame", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, baseFrame, "model_information.baseFrame", printOutFlag_);
@@ -303,6 +324,10 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   loadData::loadPtreeValue<std::string>(pt, collisionCheckPoints, "model_information.collisionCheckPoints", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, logSavePathRel_, "model_information.logSavePathRel", printOutFlag_);
 
+  baseFrame_withNS = baseFrame;
+  armBaseFrame_withNS = armBaseFrame;
+  eeFrame_withNS = eeFrame;
+
   if (printOutFlag_)
   {
     std::cout << "\n #### Model Information:" << std::endl;
@@ -324,6 +349,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     {
       std::cout << name << std::endl;
     }
+    std::cout << "#### model_information.sim: " << sim << std::endl;
+    std::cout << "#### model_information.ns: " << ns << std::endl;
     std::cout << "#### model_information.baseFrame: " << baseFrame << std::endl;
     std::cout << "#### model_information.armBaseFrame: " << armBaseFrame << std::endl;
     std::cout << "#### model_information.eeFrame: " << eeFrame << std::endl;
@@ -344,11 +371,27 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     std::cout << "#### =============================================================================" << std::endl;
   }
 
+  // Adding namespace
+  std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] ns: " << ns << std::endl;
+  if (ns != "")
+  {
+    baseFrame_withNS = ns + "/" + baseFrame;
+    armBaseFrame_withNS = ns + "/" + armBaseFrame;
+    eeFrame_withNS = ns + "/" + eeFrame;
+
+    for (auto& name : armJointFrameNames_withNS) 
+    {
+      name = ns + "/" + name;
+    }
+  }
+
   // Create pinocchio interface
-  pinocchioInterfacePtr_.reset(new PinocchioInterface(createPinocchioInterface(urdfFile_, robotModelType, removeJointNames)));
+  std::cerr << "[MobileManipulatorInterface::MobileManipulatorInterface] START createPinocchioInterface" << std::endl;
+  pinocchioInterfacePtr_.reset(new PinocchioInterface(createPinocchioInterface(urdfFile_, robotModelType, removeJointNames, baseFrame_withNS, worldFrameName_)));
   //std::cerr << *pinocchioInterfacePtr_;
 
   // Set Robot Model Info
+  std::cerr << "[MobileManipulatorInterface::MobileManipulatorInterface] START createRobotModelInfo" << std::endl;
   robotModelInfo_ = createRobotModelInfo(robotName,
                                          robotModelType,
                                          baseFrame, 
@@ -462,6 +505,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   mobileManipulatorVisu_.reset(new ocs2::mobile_manipulator::MobileManipulatorVisualization(nodeHandle_, 
                                                                                             *pinocchioInterfacePtr_,
                                                                                             worldFrameName_,
+                                                                                            ns,
                                                                                             baseFrame,
                                                                                             urdfFile,
                                                                                             armStateMsg_,

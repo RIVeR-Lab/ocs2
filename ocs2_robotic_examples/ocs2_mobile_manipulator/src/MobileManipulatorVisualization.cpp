@@ -70,6 +70,7 @@ void assignIncreasingId(It firstIt, It lastIt, int startId = 0)
 MobileManipulatorVisualization::MobileManipulatorVisualization(ros::NodeHandle& nodeHandle, 
                                                                const PinocchioInterface& pinocchioInterface,
                                                                const std::string& worldFrameName,
+                                                               const std::string& ns,
                                                                const std::string& baseFrameName,
                                                                const std::string& urdfFile,
                                                                const std::string& jointStateMsgName,
@@ -85,6 +86,7 @@ MobileManipulatorVisualization::MobileManipulatorVisualization(ros::NodeHandle& 
                                                                double maxDistance)
   : pinocchioInterface_(pinocchioInterface),
     worldFrameName_(worldFrameName),
+    ns_(ns),
     baseFrameName_(baseFrameName),
     urdfFile_(urdfFile),
     jointStateMsgName_(jointStateMsgName),
@@ -98,10 +100,17 @@ MobileManipulatorVisualization::MobileManipulatorVisualization(ros::NodeHandle& 
     pointsOnRobotPtr_(pointsOnRobotPtr),
     emuPtr_(emuPtr),
     maxDistance_(maxDistance),
+    baseFrameName_withNS_(baseFrameName),
     pinocchioInterfaceInternal_(pinocchioInterface)
     //distances_(pointsOnRobotPtr->getNumOfPoints())
 {
   std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] START" << std::endl;
+
+  if (ns != "")
+  {
+    baseFrameName_withNS_ = ns + "/" + baseFrameName;
+  }
+
   launchVisualizerNode(nodeHandle);
   std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] END" << std::endl;
 }
@@ -133,7 +142,7 @@ void MobileManipulatorVisualization::launchVisualizerNode(ros::NodeHandle& nodeH
   markerPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(selfCollisionMsg_ + "_visu", 10, true);
 
   // Create pinocchio interface
-  pinocchioInterfaceInternal_ = mobile_manipulator::createPinocchioInterface(urdfFile_, robotModelInfo_.robotModelType, removeJointNames_);
+  pinocchioInterfaceInternal_ = mobile_manipulator::createPinocchioInterface(urdfFile_, robotModelInfo_.robotModelType, removeJointNames_, baseFrameName_withNS_, worldFrameName_);
 
   // activate markers for self-collision visualization
   if (selfCollisionFlag_) 
@@ -161,8 +170,8 @@ void MobileManipulatorVisualization::tfCallback(const tf2_msgs::TFMessage::Const
 
   try
   {
-    tfListener_.waitForTransform(worldFrameName_, baseFrameName_, ros::Time::now(), ros::Duration(1.0));
-    tfListener_.lookupTransform(worldFrameName_, baseFrameName_, ros::Time(0), tf_robot_wrt_world_);
+    tfListener_.waitForTransform(worldFrameName_, baseFrameName_withNS_, ros::Time::now(), ros::Duration(1.0));
+    tfListener_.lookupTransform(worldFrameName_, baseFrameName_withNS_, ros::Time(0), tf_robot_wrt_world_);
 
     /*
     std::cout << "[MobileManipulatorVisualization::tfCallback] worldFrameName_: " << worldFrameName_ << std::endl;
@@ -750,7 +759,7 @@ void MobileManipulatorVisualization::updateExtCollisionDistances(bool normalize_
 
   //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START fillOccDistanceArrayVisu" << std::endl;
   timer4_.startTimer();
-  emuPtr_->fillCollisionInfoArm(baseFrameName_, col_status_arm_, dist_, p0_vec_, p1_vec_wrt_base_, col_dist_thresh_arm_);
+  emuPtr_->fillCollisionInfoArm(baseFrameName_withNS_, col_status_arm_, dist_, p0_vec_, p1_vec_wrt_base_, col_dist_thresh_arm_);
   emuPtr_->fillOccDistanceArrayVisu(p0_vec_, p1_vec_, dist_);
   timer4_.endTimer();
 
@@ -793,7 +802,7 @@ void MobileManipulatorVisualization::updateExtCollisionDistances(bool normalize_
 
   //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] BEFORE fillOccDistanceArrayVisu2" << std::endl;
   timer11_.startTimer();
-  emuPtr_->fillCollisionInfoBase(baseFrameName_, col_status_base_, dist2_, p0_vec2_wrt_base_, p1_vec2_wrt_base_, col_dist_thresh_base_);
+  emuPtr_->fillCollisionInfoBase(baseFrameName_withNS_, col_status_base_, dist2_, p0_vec2_wrt_base_, p1_vec2_wrt_base_, col_dist_thresh_base_);
   emuPtr_->fillOccDistanceArrayVisu2(p0_vec2_, p1_vec2_, dist2_);
   timer11_.endTimer();
 

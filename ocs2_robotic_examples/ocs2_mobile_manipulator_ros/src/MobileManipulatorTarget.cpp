@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.08.24
+// LAST UPDATE: 2023.10.17
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -56,8 +56,8 @@ int main(int argc, char* argv[])
   double map_resolution;
   bool drlFlag, printOutFlag = false;
 
-  pnh.param<std::string>("/world_frame_name", world_frame_name, "");
-  pnh.param<std::string>("/gz_model_msg_name", gz_model_msg_name, "");
+  //pnh.param<std::string>("/world_frame_name", world_frame_name, "");
+  //pnh.param<std::string>("/gz_model_msg_name", gz_model_msg_name, "");
   robot_name = "mobiman";
   target_names = {"red_cube"};
   drop_target_name = "bin_4_dropping_task";
@@ -73,8 +73,13 @@ int main(int argc, char* argv[])
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile, pt);
 
+  loadData::loadPtreeValue(pt, world_frame_name, "model_information.worldFrame", printOutFlag);
   loadData::loadPtreeValue(pt, drlFlag, "model_settings.drlFlag", printOutFlag);
 
+  cout << "[MobileManipulatorTarget::main] world_frame_name: " << world_frame_name << endl;
+  cout << "[MobileManipulatorTarget::main] drlFlag: " << drlFlag << endl;
+  cout << "[MobileManipulatorTarget::main] gz_model_msg_name: " << gz_model_msg_name << endl;
+  
   // Set TargetTrajectoriesGazebo
   TargetTrajectoriesGazebo gu(nh, robotMode, gz_model_msg_name, robot_name, target_names, drop_target_name, &goalPoseToTargetTrajectories);
 

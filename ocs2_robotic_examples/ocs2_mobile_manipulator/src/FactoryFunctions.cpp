@@ -131,8 +131,8 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath,
   std::cout << "[FactoryFunctions::createPinocchioInterface(5)] Waiting for the base transform..." << std::endl;
   try
   {
-    while(!tflistener.waitForTransform(world_frame_name, base_frame_name, ros::Time(0), ros::Duration(1.0))){ros::spinOnce();}
-    tflistener.lookupTransform(world_frame_name, base_frame_name, ros::Time(0), transform_base_wrt_world);
+    while(!tflistener.waitForTransform(base_frame_name, world_frame_name, ros::Time(0), ros::Duration(1.0))){ros::spinOnce();}
+    tflistener.lookupTransform(base_frame_name, world_frame_name, ros::Time(0), transform_base_wrt_world);
   }
   catch (tf::TransformException ex)
   {
@@ -146,11 +146,14 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath,
   //se3_base_wrt_world.translation().y() = transform_base_wrt_world.getOrigin().y();
   se3_base_wrt_world.translation().y() = 0;
   se3_base_wrt_world.translation().z() = transform_base_wrt_world.getOrigin().z();
+  //se3_base_wrt_world.translation().z() = 0;
 
 
-  //std::cout << "[FactoryFunctions::createPinocchioInterface(5)] x: " << se3_base_wrt_world.translation().x() << std::endl;
-  //std::cout << "[FactoryFunctions::createPinocchioInterface(5)] y: " << se3_base_wrt_world.translation().y() << std::endl;
-  //std::cout << "[FactoryFunctions::createPinocchioInterface(5)] z: " << se3_base_wrt_world.translation().z() << std::endl;
+  std::cout << "[FactoryFunctions::createPinocchioInterface(5)] x: " << se3_base_wrt_world.translation().x() << std::endl;
+  std::cout << "[FactoryFunctions::createPinocchioInterface(5)] y: " << se3_base_wrt_world.translation().y() << std::endl;
+  std::cout << "[FactoryFunctions::createPinocchioInterface(5)] z: " << se3_base_wrt_world.translation().z() << std::endl;
+  
+  //std::cout << "[FactoryFunctions::createPinocchioInterface(5)] DEBUG INF" << std::endl;
   //while(1);
 
   //tf::matrixTFToEigen(tf::Matrix3x3(transform_base_wrt_world.getRotation()), se3_base_wrt_world.rotation());

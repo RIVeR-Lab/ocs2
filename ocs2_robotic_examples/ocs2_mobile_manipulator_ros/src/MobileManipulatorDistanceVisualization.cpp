@@ -54,7 +54,7 @@ int main(int argc, char** argv)
   // Initialize local parameters
   RobotModelType robotModelType;
   std::vector<std::string> removeJointNames, armJointFrameNames, armJointNames;
-  std::string worldFrameName, robotName, baseFrameName, armBaseFrame, eeFrame, collisionConstraintPoints, collisionCheckPoints,
+  std::string sim, ns, worldFrameName, robotName, baseFrameName, armBaseFrame, eeFrame, collisionConstraintPoints, collisionCheckPoints,
               baseStateMsg, armStateMsg, baseControlMsg, armControlMsg, selfCollisionMsg, occupancyDistanceBaseMsg, occupancyDistanceArmMsg, octomapMsg;
   std::vector<std::pair<size_t, size_t>> selfCollisionObjectPairs;
   std::vector<std::pair<std::string, std::string>> selfCollisionLinkPairs;
@@ -63,6 +63,8 @@ int main(int argc, char** argv)
   bool printOutFlag_ = false;
 
   // Read parameters from task file
+  loadData::loadPtreeValue<std::string>(pt, sim, "model_information.sim", printOutFlag_);
+  loadData::loadPtreeValue<std::string>(pt, ns, "model_information.ns", printOutFlag_);
   robotModelType = loadRobotType(taskFile, "model_information.robotModelType");
   loadData::loadStdVector<std::string>(taskFile, "model_information.removeJoints", removeJointNames, printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, worldFrameName, "model_information.worldFrame", printOutFlag_);
@@ -88,6 +90,8 @@ int main(int argc, char** argv)
   loadData::loadPtreeValue(pt, recompileLibraries, "model_settings.recompileLibraries", printOutFlag_);
 
   // Print out parameter values
+  std::cout << "[MobileManipulatorDistanceVisualization::main] sim: " << sim << std::endl;
+  std::cout << "[MobileManipulatorDistanceVisualization::main] ns: " << ns << std::endl;
   std::cout << "[MobileManipulatorDistanceVisualization::main] robotModelType: " << static_cast<int>(robotModelType) << std::endl;
   std::cout << "[MobileManipulatorDistanceVisualization::main] worldFrameName: " << worldFrameName << std::endl;
   std::cout << "[MobileManipulatorDistanceVisualization::main] robotName: " << robotName << std::endl;
@@ -255,6 +259,7 @@ int main(int argc, char** argv)
   MobileManipulatorVisualization mobileManipulatorVisu(nodeHandle, 
                                                        *pinocchioInterfacePtr,
                                                        worldFrameName,
+                                                       ns,
                                                        baseFrameName,
                                                        urdfFile,
                                                        armStateMsg,

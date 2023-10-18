@@ -36,6 +36,7 @@ class MobileManipulatorVisualization final : public DummyObserver
     MobileManipulatorVisualization(ros::NodeHandle& nodeHandle, 
                                    const PinocchioInterface& pinocchioInterface,
                                    const std::string& worldFrameName,
+                                   const std::string& ns,
                                    const std::string& baseFrameName,
                                    const std::string& urdfFile,
                                    const std::string& jointStateMsgName,
@@ -120,7 +121,9 @@ class MobileManipulatorVisualization final : public DummyObserver
 
     const std::string urdfFile_;
     std::string worldFrameName_;
+    std::string ns_;
     std::string baseFrameName_;
+    std::string baseFrameName_withNS_;
     
     RobotModelInfo robotModelInfo_;
 
