@@ -81,8 +81,8 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   eeFrameName_ = robotModelInfo_.robotArm.eeFrame;
   if (ns_ != "")
   {
-    baseFrameName_ = ns + "/" + baseFrameName_;
-    eeFrameName_ = ns + "/" + eeFrameName_;
+    baseFrameName_ = ns_ + "/" + baseFrameName_;
+    eeFrameName_ = ns_ + "/" + eeFrameName_;
   }
 
   dataCollectionFlag_ = (dataPathReL_ == "") ? false : true;
@@ -122,9 +122,9 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   currentTarget_.resize(7);
 
   // Publishers
-  baseTwistPub_ = nh.advertise<geometry_msgs::Twist>(baseControlMsg, 1);
-  armJointTrajectoryPub_ = nh.advertise<trajectory_msgs::JointTrajectory>(armControlMsg, 1);
-  armJointVelocityPub_ = nh.advertise<kinova_msgs::JointVelocity>("/arm_controller/velocity", 1);
+  baseTwistPub_ = nh.advertise<geometry_msgs::Twist>(ns_ + baseControlMsg, 1);
+  armJointTrajectoryPub_ = nh.advertise<trajectory_msgs::JointTrajectory>(ns_ + armControlMsg, 1);
+  armJointVelocityPub_ = nh.advertise<kinova_msgs::JointVelocity>(ns_ + "/arm_controller/velocity", 1);
 
   /// Clients
   attachClient_ = nh.serviceClient<gazebo_ros_link_attacher::Attach>("/link_attacher_node/attach");
