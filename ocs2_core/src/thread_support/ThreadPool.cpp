@@ -103,13 +103,13 @@ void ThreadPool::runTask(std::unique_ptr<TaskBase> taskPtr) {
 /**************************************************************************************************/
 void ThreadPool::runParallel(std::function<void(int)> taskFunction, int N) 
 {
-  std::cout << "[ThreadPool::runParallel] START" << std::endl;
+  //std::cout << "[ThreadPool::runParallel] START" << std::endl;
   
   // Launch tasks in helper threads
   std::vector<std::future<void>> futures;
   if (N > 1) 
   {
-    std::cout << "[ThreadPool::runParallel] GALAPAKOS 0" << std::endl;
+    //std::cout << "[ThreadPool::runParallel] GALAPAKOS 0" << std::endl;
     const int numHelpers = N - 1;
     futures.reserve(numHelpers);
     for (int i = 0; i < numHelpers; ++i) 
@@ -125,11 +125,11 @@ void ThreadPool::runParallel(std::function<void(int)> taskFunction, int N)
   // Wait for helpers to finish.
   for (auto&& fut : futures) 
   {
-    std::cout << "[ThreadPool::runParallel] GALAPAKOS 1" << std::endl;
+    //std::cout << "[ThreadPool::runParallel] GALAPAKOS 1" << std::endl;
     fut.get();
   }
 
-  std::cout << "[ThreadPool::runParallel] END" << std::endl;
+  //std::cout << "[ThreadPool::runParallel] END" << std::endl;
 }
 
 }  // namespace ocs2

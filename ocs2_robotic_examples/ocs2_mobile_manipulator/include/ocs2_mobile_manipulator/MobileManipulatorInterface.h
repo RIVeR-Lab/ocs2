@@ -317,7 +317,9 @@ class MobileManipulatorInterface final : public RobotInterface
     const std::string taskFile_;
     const std::string libraryFolder_;
     const std::string urdfFile_;
-    std::string robotModelName_ = "mobile_manipulator";
+
+    /// NUA TODO: ADD NAMESPACE IN robotModelName_ AND ADD THAT INTO CONFIG!!!!
+    //std::string robotModelName_ = "mobile_manipulator";
     std::string worldFrameName_ = "world";
     std::string goalFrameName_;
 

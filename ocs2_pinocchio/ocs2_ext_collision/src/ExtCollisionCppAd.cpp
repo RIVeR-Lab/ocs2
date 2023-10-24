@@ -38,7 +38,7 @@ ExtCollisionCppAd::ExtCollisionCppAd(const PinocchioInterface& pinocchioInterfac
     distances_(pointsOnRobotPtr->getNumOfPoints()),
     emuPtr_(emuPtr)
 {
-  std::cout << "[ExtCollisionCppAd::ExtCollisionCppAd] START" << std::endl;
+  //std::cout << "[ExtCollisionCppAd::ExtCollisionCppAd] START" << std::endl;
 
   normalize_flag_ = true;
 
@@ -57,7 +57,7 @@ ExtCollisionCppAd::ExtCollisionCppAd(const PinocchioInterface& pinocchioInterfac
     cppAdInterfaceDistanceCalculation_->loadModelsIfAvailable(CppAdInterface::ApproximationOrder::First, verbose);
   }
 
-  std::cout << "[ExtCollisionCppAd::ExtCollisionCppAd] END" << std::endl;
+  //std::cout << "[ExtCollisionCppAd::ExtCollisionCppAd] END" << std::endl;
 }
 
 /******************************************************************************************************/

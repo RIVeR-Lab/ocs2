@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.08.24
+// LAST UPDATE: 2023.10.24
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -28,13 +28,12 @@ using namespace mobile_manipulator;
 
 int main(int argc, char** argv) 
 {
-  std::cout << "[MobileManipulatorNode::main] START" << std::endl;
+  //std::cout << "[MobileManipulatorNode::main] START" << std::endl;
 
-  //std::string robotName = "jackal_ur5";
-  std::string robotModelName = "mobile_manipulator";
+  bool printOutFlag = false;
 
   // Initialize ros node
-  ros::init(argc, argv, robotModelName + "_mpc");
+  ros::init(argc, argv, "mobile_manipulator_node");
   ros::NodeHandle nh_interface;
   //ros::NodeHandle nh_mpc;
   //ros::NodeHandle nh_mrt;
@@ -48,25 +47,28 @@ int main(int argc, char** argv)
   nh_interface.getParam("/libFolder", libFolder);
   nh_interface.getParam("/urdfFile", urdfFile);
 
-  std::cout << "[MobileManipulatorNode::main] Loading task file: " << taskFile << std::endl;
-  std::cout << "[MobileManipulatorNode::main] Loading library folder: " << libFolder << std::endl;
-  std::cout << "[MobileManipulatorNode::main] Loading urdf file: " << urdfFile << std::endl;
+  if (printOutFlag)
+  {
+    std::cout << "[MobileManipulatorNode::main] Loading task file: " << taskFile << std::endl;
+    std::cout << "[MobileManipulatorNode::main] Loading library folder: " << libFolder << std::endl;
+    std::cout << "[MobileManipulatorNode::main] Loading urdf file: " << urdfFile << std::endl;
+  }
 
   // Robot interface
   int initModelModeInt = 2;
-  std::cout << "[MobileManipulatorNode::main] START interface" << std::endl;
+  //std::cout << "[MobileManipulatorNode::main] START interface" << std::endl;
   MobileManipulatorInterface m4_interface(nh_interface, taskFile, libFolder, urdfFile, initModelModeInt);
 
   double mpc_dt = 0.01;
   double mrt_dt = 0.01;
 
-  std::cout << "[MobileManipulatorNode::main] BEFORE mpcTimer " << std::endl;
+  //std::cout << "[MobileManipulatorNode::main] BEFORE mpcTimer " << std::endl;
   ros::Timer mpcTimer = nh_interface.createTimer(ros::Duration(mpc_dt), &MobileManipulatorInterface::mpcCallback, &m4_interface);
-  std::cout << "[MobileManipulatorNode::main] AFTER mpcTimer" << std::endl;
+  //std::cout << "[MobileManipulatorNode::main] AFTER mpcTimer" << std::endl;
 
   ros::Timer mrtTimer = nh_interface.createTimer(ros::Duration(mrt_dt), &MobileManipulatorInterface::mrtCallback, &m4_interface);
 
-  std::cout << "[MobileManipulatorNode::main] END" << std::endl;
+  //std::cout << "[MobileManipulatorNode::main] END" << std::endl;
 
   spinner.spin(); // spin() will not return until the node has been shutdown
   //ros::spin();

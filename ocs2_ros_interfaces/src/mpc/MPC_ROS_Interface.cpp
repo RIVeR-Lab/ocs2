@@ -91,7 +91,7 @@ MPC_ROS_Interface::MPC_ROS_Interface(MPC_BASE& mpc_baseMotion,
 //-------------------------------------------------------------------------------------------------------
 MPC_ROS_Interface::~MPC_ROS_Interface() 
 {
-  std::cout << "[MPC_ROS_Interface::~MPC_ROS_Interface] SHUTTING DOWN..." << std::endl;
+  //std::cout << "[MPC_ROS_Interface::~MPC_ROS_Interface] SHUTTING DOWN..." << std::endl;
   shutdownNode();
 }
 
@@ -164,11 +164,13 @@ bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_ms
     resetMpcNode(std::move(targetTrajectories));
     res.done = static_cast<uint8_t>(true);
 
-    std::cerr << "\n#####################################################"
+    /*
+    std::cout << "\n#####################################################"
               << "\n#####################################################"
               << "\n#################  MPC is reset.  ###################"
               << "\n#####################################################"
               << "\n#####################################################\n";
+    */
     return true;
   } 
   else 
@@ -358,7 +360,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
 
     if (!resetRequestedEver_.load()) 
     {
-      ROS_WARN_STREAM("[MPC_ROS_Interface::mpcObservationCallback] MPC should be reset first. Either call MPC_ROS_Interface::reset() or use the reset service.");
+      //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] MPC should be reset first. Either call MPC_ROS_Interface::reset() or use the reset service." << std::endl;
       return;
     }
 
@@ -423,17 +425,17 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
 
     if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) 
     {
-      std::cerr << "[MPC_ROS_Interface::mpcObservationCallback] WARNING: The solution time window might be shorter than the MPC delay!\n";
+      std::cout << "[MPC_ROS_Interface::mpcObservationCallback] WARNING: The solution time window might be shorter than the MPC delay!\n";
     }
 
     // Display time benchmarks
     if (mpc_.settings().debugPrint_) 
     {
-      std::cerr << '\n';
-      std::cerr << "\n### MPC_ROS Benchmarking";
-      std::cerr << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
-      std::cerr << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].";
-      std::cerr << "\n###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+      std::cout << '\n';
+      std::cout << "\n### MPC_ROS Benchmarking";
+      std::cout << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
+      std::cout << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].";
+      std::cout << "\n###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
     }
 
 #ifdef PUBLISH_THREAD
@@ -450,6 +452,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   {
     if (!callbackEndFlag_)
     {
+      /*
       if (internalShutDownFlag_)
       {
         std::cout << "[MPC_ROS_Interface::mpcObservationCallback] INTERNALLY SHUT DOWN!!!: " << internalShutDownFlag_ << std::endl;
@@ -457,6 +460,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
       std::cout << "[MPC_ROS_Interface::mpcObservationCallback] shutDownFlag_: " << shutDownFlag_ << std::endl;
       std::cout << "[MPC_ROS_Interface::mpcObservationCallback] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
       std::cout << "[MPC_ROS_Interface::mpcObservationCallback] Shutting down..." << std::endl;
+      */
     }
     callbackEndFlag_ = true;
   }
@@ -468,10 +472,10 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
 //-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::shutdownNode() 
 {
-  std::cout << "[MPC_ROS_Interface::shutdownNode] START" << std::endl;
+  //std::cout << "[MPC_ROS_Interface::shutdownNode] START" << std::endl;
 
 #ifdef PUBLISH_THREAD
-  ROS_INFO_STREAM("[MPC_ROS_Interface::shutdownNode] Shutting down workers ...");
+  //std::cout << "[MPC_ROS_Interface::shutdownNode] Shutting down workers ..." << std::endl;
 
   std::unique_lock<std::mutex> lk(publisherMutex_);
   terminateThread_ = true;
@@ -483,16 +487,16 @@ void MPC_ROS_Interface::shutdownNode()
     publisherWorker_.join();
   }
 
-  ROS_INFO_STREAM("[MPC_ROS_Interface::shutdownNode] All workers are shut down.");
+  //std::cout << "[MPC_ROS_Interface::shutdownNode] All workers are shut down." << std::endl;
 #endif
 
   // shutdown publishers
   mpcPolicyPublisher_.shutdown();
 
-   std::cout << "[MPC_ROS_Interface::shutdownNode] BEFORE mpcObservationSubscriber_" << std::endl;
+   //std::cout << "[MPC_ROS_Interface::shutdownNode] BEFORE mpcObservationSubscriber_" << std::endl;
   mpcObservationSubscriber_.shutdown();
 
-  std::cout << "[MPC_ROS_Interface::shutdownNode] END" << std::endl;
+  //std::cout << "[MPC_ROS_Interface::shutdownNode] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -500,7 +504,7 @@ void MPC_ROS_Interface::shutdownNode()
 //-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::spin() 
 {
-  ROS_INFO_STREAM("[MPC_ROS_Interface::spin] Start spinning now...");
+  //std::cout << "[MPC_ROS_Interface::spin] Start spinning now..." << std::endl;
   // Equivalent to ros::spin() + check if master is alive
   while (ros::ok() && ros::master::check() && !shutDownFlag_) 
   {
@@ -509,7 +513,7 @@ void MPC_ROS_Interface::spin()
 
     if (mpcShutDownFlag_ == "true")
     {
-      std::cout << "[MPC_ROS_Interface::spin] Shutting down..." << std::endl;
+      //std::cout << "[MPC_ROS_Interface::spin] Shutting down..." << std::endl;
       shutDownFlag_ = true;
     }
 
@@ -524,10 +528,10 @@ void MPC_ROS_Interface::spin()
 //-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) 
 {
-  ROS_INFO_STREAM("[MPC_ROS_Interface::launchNodes] MPC node is setting up...");
+  //std::cout << "[MPC_ROS_Interface::launchNodes] MPC node is setting up..." << std::endl;
 
   // Subscribe Observation 
-  mpcObservationSubscriber_ = nodeHandle.subscribe(topicPrefix_ + "_mpc_observation", 
+  mpcObservationSubscriber_ = nodeHandle.subscribe(topicPrefix_ + "mpc_observation", 
                                                    1, 
                                                    &MPC_ROS_Interface::mpcObservationCallback, 
                                                    this,
@@ -553,20 +557,21 @@ void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
   */
 
   // Publish MPC Policy
-  mpcPolicyPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_flattened_controller>(topicPrefix_ + "_mpc_policy", 1, true);
+  mpcPolicyPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_flattened_controller>(topicPrefix_ + "mpc_policy", 1, true);
 
   // Publish Model Mode MPC Status
-  statusModelModeMPCPublisher_ = nodeHandle.advertise<std_msgs::Bool>(topicPrefix_ + "_model_mode_mpc_status", 1, true);
+  statusModelModeMPCPublisher_ = nodeHandle.advertise<std_msgs::Bool>(topicPrefix_ + "model_mode_mpc_status", 1, true);
 
   // Service Server to reset MPC
-  mpcResetServiceServer_ = nodeHandle.advertiseService(topicPrefix_ + "_mpc_reset", &MPC_ROS_Interface::resetMpcCallback, this);
+  mpcResetServiceServer_ = nodeHandle.advertiseService(topicPrefix_ + "mpc_reset", &MPC_ROS_Interface::resetMpcCallback, this);
 
+  /*
 #ifdef PUBLISH_THREAD
-  ROS_INFO_STREAM("[MPC_ROS_Interface::launchNodes] Publishing SLQ-MPC messages on a separate thread.");
+  std::cout << "[MPC_ROS_Interface::launchNodes] Publishing SLQ-MPC messages on a separate thread." << std::endl;
 #endif
-
-  ROS_INFO_STREAM("[MPC_ROS_Interface::launchNodes] MPC node is ready.");
-
+  std::cout << "[MPC_ROS_Interface::launchNodes] MPC node is ready." << std::endl;
+  */
+ 
   statusModelModeMPCMsg_.data = true;
   statusModelModeMPCPublisher_.publish(statusModelModeMPCMsg_);
 
@@ -636,17 +641,17 @@ void MPC_ROS_Interface::run()
 
     if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) 
     {
-      std::cerr << "[MPC_ROS_Interface::run] WARNING: The solution time window might be shorter than the MPC delay!\n";
+      std::cout << "[MPC_ROS_Interface::run] WARNING: The solution time window might be shorter than the MPC delay!\n";
     }
 
     // Display time benchmarks
     if (mpc_.settings().debugPrint_) 
     {
-      std::cerr << '\n';
-      std::cerr << "\n### MPC_ROS Benchmarking";
-      std::cerr << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
-      std::cerr << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].";
-      std::cerr << "\n###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+      std::cout << '\n';
+      std::cout << "\n### MPC_ROS Benchmarking";
+      std::cout << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
+      std::cout << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].";
+      std::cout << "\n###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
     }
 #ifdef PUBLISH_THREAD
   std::unique_lock<std::mutex> lk(publisherMutex_);

@@ -50,6 +50,7 @@ class TargetTrajectoriesGazebo final
      * @param [in] goalPoseToTargetTrajectories: A function which transforms the commanded pose to TargetTrajectories.
      */
     TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
+                             const std::string& ns,
                              const std::string& topicPrefix,
                              const std::string& gazeboModelMsgName,
                              std::string robotName,

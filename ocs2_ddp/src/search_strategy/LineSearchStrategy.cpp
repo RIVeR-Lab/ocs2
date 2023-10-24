@@ -162,7 +162,7 @@ void LineSearchStrategy::computeSolution(size_t taskId,
                                          const vector_t& initFullState, 
                                          search_strategy::Solution& solution) 
 {
-  std::cout << "[LineSearchStrategy::computeSolution(4)] START" << std::endl;
+  //std::cout << "[LineSearchStrategy::computeSolution(4)] START" << std::endl;
 
   auto& problem = optimalControlProblemRefStock_[taskId];
   auto& rollout = rolloutRefStock_[taskId];
@@ -223,7 +223,7 @@ void LineSearchStrategy::computeSolution(size_t taskId,
     printString(infoDisplay.str());
   }
 
-  std::cout << "[LineSearchStrategy::computeSolution(4)] END" << std::endl;
+  //std::cout << "[LineSearchStrategy::computeSolution(4)] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -309,7 +309,7 @@ bool LineSearchStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod,
                              const ModeSchedule& modeSchedule, 
                              search_strategy::SolutionRef solutionRef) 
 {
-  std::cout << "[LineSearchStrategy::run(8)] START" << std::endl;
+  //std::cout << "[LineSearchStrategy::run(8)] START" << std::endl;
 
   // initialize lineSearchModule inputs
   lineSearchInputRef_.timePeriodPtr = &timePeriod;
@@ -325,10 +325,10 @@ bool LineSearchStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod,
   
   try 
   {
-    std::cout << "[LineSearchStrategy::run(8)] START computeSolution" << std::endl;
+    //std::cout << "[LineSearchStrategy::run(8)] START computeSolution" << std::endl;
     //computeSolution(taskId, stepLength, workersSolution_[taskId]);
     computeSolution(taskId, stepLength, initFullState, workersSolution_[taskId]);
-    std::cout << "[LineSearchStrategy::run(8)] END computeSolution" << std::endl;
+    //std::cout << "[LineSearchStrategy::run(8)] END computeSolution" << std::endl;
 
     baselineMerit_ = workersSolution_[taskId].performanceIndex.merit;
     unoptimizedControllerUpdateIS_ = computeControllerUpdateIS(unoptimizedController);
@@ -345,22 +345,22 @@ bool LineSearchStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod,
                   " is terminated: " + error.what() + '\n');
     }
 
-    std::cout << "[LineSearchStrategy::run(8)] BEFORE internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
+    //std::cout << "[LineSearchStrategy::run(8)] BEFORE internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
     internalShutDownFlag_ = true;
-    std::cout << "[LineSearchStrategy::run(8)] AFTER internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
+    //std::cout << "[LineSearchStrategy::run(8)] AFTER internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
     //throw std::runtime_error("[LineSearchStrategy::run(8)] DDP controller does not generate a stable rollout!");
   }
 
-  std::cout << "[LineSearchStrategy::run(8)] START lineSearchTask" << std::endl;
+  //std::cout << "[LineSearchStrategy::run(8)] START lineSearchTask" << std::endl;
   // run workers
   nextTaskId_ = 0;
   alphaExpNext_ = 0;
   alphaProcessed_ = std::vector<bool>(maxNumOfSearches(), false);
   //auto task = [&](int) { lineSearchTask(nextTaskId_++); };
   auto task = [&](int) { lineSearchTask(nextTaskId_++, initFullState); };
-  std::cout << "[LineSearchStrategy::run(8)] numThreads: " << threadPoolRef_.numThreads() << std::endl;
+  //std::cout << "[LineSearchStrategy::run(8)] numThreads: " << threadPoolRef_.numThreads() << std::endl;
   threadPoolRef_.runParallel(task, threadPoolRef_.numThreads());
-  std::cout << "[LineSearchStrategy::run(8)] END lineSearchTask" << std::endl;
+  //std::cout << "[LineSearchStrategy::run(8)] END lineSearchTask" << std::endl;
 
   //std::cout << "[LineSearchStrategy::run(8)] START reactivateRollout" << std::endl;
   // revitalize all integrators
@@ -376,7 +376,7 @@ bool LineSearchStrategy::run(const std::pair<scalar_t, scalar_t>& timePeriod,
     std::cerr << "[LineSearchStrategy::run(8)] The chosen step length is: " + std::to_string(bestStepSize_) << "\n";
   }
 
-  std::cout << "[LineSearchStrategy::run(8)] END" << std::endl;
+  //std::cout << "[LineSearchStrategy::run(8)] END" << std::endl;
 
   return true;
 }
@@ -477,12 +477,12 @@ void LineSearchStrategy::lineSearchTask(const size_t taskId)
 /******************************************************************************************************/
 void LineSearchStrategy::lineSearchTask(const size_t taskId, const vector_t& initFullState) 
 {
-  std::cout << "[LineSearchStrategy::lineSearchTask(2)] START" << std::endl;
+  //std::cout << "[LineSearchStrategy::lineSearchTask(2)] START" << std::endl;
 
   int ctr = 0;
   while (true) 
   {
-    std::cout << "[LineSearchStrategy::lineSearchTask(2)] ctr: " << ctr << std::endl;
+    //std::cout << "[LineSearchStrategy::lineSearchTask(2)] ctr: " << ctr << std::endl;
 
     const size_t alphaExp = alphaExpNext_++;
     const scalar_t stepLength = settings_.maxStepLength * std::pow(settings_.contractionRate, alphaExp);
@@ -494,14 +494,14 @@ void LineSearchStrategy::lineSearchTask(const size_t taskId, const vector_t& ini
      */
     if (!numerics::almost_ge(stepLength, settings_.minStepLength)) 
     {
-      std::cout << "[LineSearchStrategy::lineSearchTask(2)] BEFORE break 0" << std::endl;
+      //std::cout << "[LineSearchStrategy::lineSearchTask(2)] BEFORE break 0" << std::endl;
       break;
     }
 
     // skip if the current learning rate is less than the best candidate
     if (stepLength < bestStepSize_) 
     {
-      std::cout << "[LineSearchStrategy::lineSearchTask(2)] BEFORE break 1" << std::endl;
+      //std::cout << "[LineSearchStrategy::lineSearchTask(2)] BEFORE break 1" << std::endl;
       // display
       if (baseSettings_.displayInfo) 
       {
@@ -515,7 +515,7 @@ void LineSearchStrategy::lineSearchTask(const size_t taskId, const vector_t& ini
 
     try 
     {
-      std::cout << "[LineSearchStrategy::lineSearchTask(2)] BEFORE computeSolution" << std::endl;
+      //std::cout << "[LineSearchStrategy::lineSearchTask(2)] BEFORE computeSolution" << std::endl;
       //computeSolution(taskId, stepLength, workersSolution_[taskId]);
       computeSolution(taskId, stepLength, initFullState, workersSolution_[taskId]);
     } 
@@ -543,7 +543,6 @@ void LineSearchStrategy::lineSearchTask(const size_t taskId, const vector_t& ini
       const bool armijoCondition = workersSolution_[taskId].performanceIndex.merit < (baselineMerit_ - settings_.armijoCoefficient * stepLength * unoptimizedControllerUpdateIS_);
       if (armijoCondition && stepLength > bestStepSize_) 
       {  // save solution
-        std::cout << "[LineSearchStrategy::lineSearchTask(2)] ARMIJOOOOO" << std::endl;
         bestStepSize_ = stepLength;
         swap(*bestSolutionRef_, workersSolution_[taskId]);
         terminateLinesearchTasks = std::all_of(alphaProcessed_.cbegin(), alphaProcessed_.cbegin() + alphaExp, [](bool f) { return f; });
@@ -557,7 +556,7 @@ void LineSearchStrategy::lineSearchTask(const size_t taskId, const vector_t& ini
     {
       for (RolloutBase& rollout : rolloutRefStock_) 
       {
-        std::cout << "[LineSearchStrategy::lineSearchTask(2)] BEFORE abortRollout" << std::endl;
+        //std::cout << "[LineSearchStrategy::lineSearchTask(2)] BEFORE abortRollout" << std::endl;
         rollout.abortRollout();
       }
 
@@ -570,7 +569,7 @@ void LineSearchStrategy::lineSearchTask(const size_t taskId, const vector_t& ini
     ctr++;
   }  // end of while loop
 
-  std::cout << "[LineSearchStrategy::lineSearchTask(2)] END" << std::endl;
+  //std::cout << "[LineSearchStrategy::lineSearchTask(2)] END" << std::endl;
 }
 
 /******************************************************************************************************/

@@ -53,7 +53,7 @@ MRT_ROS_Interface::MRT_ROS_Interface(RobotModelInfo& robotModelInfo, std::string
 /******************************************************************************************************/
 MRT_ROS_Interface::~MRT_ROS_Interface() 
 {
-  std::cout << "[MRT_ROS_Interface::~MRT_ROS_Interface] SHUTTING DOWN..." << std::endl;
+  //std::cout << "[MRT_ROS_Interface::~MRT_ROS_Interface] SHUTTING DOWN..." << std::endl;
   shutdownNodes();
 }
 
@@ -82,7 +82,7 @@ void MRT_ROS_Interface::resetMpcNode(const TargetTrajectories& initTargetTraject
   }
 
   mpcResetServiceClient_.call(resetSrv);
-  ROS_INFO_STREAM("[MRT_ROS_Interface::resetMpcNode] MPC node has been reset.");
+  //std::cout << "[MRT_ROS_Interface::resetMpcNode] MPC node has been reset." << std::endl;
 }
 
 /******************************************************************************************************/
@@ -268,11 +268,12 @@ void MRT_ROS_Interface::mpcPolicyCallback(const ocs2_msgs::mpc_flattened_control
 /******************************************************************************************************/
 void MRT_ROS_Interface::shutdownNodes() 
 {
-  std::cout << "[MRT_ROS_Interface::shutdownNodes] START" << std::endl;
+  //std::cout << "[MRT_ROS_Interface::shutdownNodes] START" << std::endl;
+  
 #ifdef PUBLISH_THREAD
-  ROS_INFO_STREAM("[MRT_ROS_Interface::shutdownNodes] Shutting down workers...");
+  //std::cout << "[MRT_ROS_Interface::shutdownNodes] Shutting down workers..." << std::endl;
   shutdownPublisher();
-  ROS_INFO_STREAM("[MRT_ROS_Interface::shutdownNodes] All workers are shut down.");
+  //std::cout << "[MRT_ROS_Interface::shutdownNodes] All workers are shut down." << std::endl;
 #endif
 
   // clean up callback queue
@@ -284,7 +285,7 @@ void MRT_ROS_Interface::shutdownNodes()
 
   setenv("mrtExitFlag", "true", 1);
 
-  std::cout << "[MRT_ROS_Interface::shutdownNodes] END" << std::endl;
+  //std::cout << "[MRT_ROS_Interface::shutdownNodes] END" << std::endl;
 }
 
 /******************************************************************************************************/
@@ -321,17 +322,17 @@ void MRT_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
 {
   this->reset();
 
-  ROS_INFO_STREAM("[MRT_ROS_Interface::launchNodes] MRT node is setting up ...");
+  //std::cout << "[MRT_ROS_Interface::launchNodes] MRT node is setting up ..." << std::endl;
 
   // Publish Observation
-  mpcObservationPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_observation>(topicPrefix_ + "_mpc_observation", 1);
+  mpcObservationPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_observation>(topicPrefix_ + "mpc_observation", 1);
 
   // Publish Model Mode MPC Status
-  statusModelModeMRTPublisher_ = nodeHandle.advertise<std_msgs::Bool>(topicPrefix_ + "_model_mode_mrt_status", 1, true);
+  statusModelModeMRTPublisher_ = nodeHandle.advertise<std_msgs::Bool>(topicPrefix_ + "model_mode_mrt_status", 1, true);
 
   // Subscribe Policy
   auto ops = ros::SubscribeOptions::create<ocs2_msgs::mpc_flattened_controller>(
-    topicPrefix_ + "_mpc_policy",                                                       // topic name
+    topicPrefix_ + "mpc_policy",                                                       // topic name
     1,                                                                                  // queue length
     boost::bind(&MRT_ROS_Interface::mpcPolicyCallback, this, boost::placeholders::_1),  // callback
     ros::VoidConstPtr(),                                                                // tracked object
@@ -364,14 +365,15 @@ void MRT_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
   */
 
   // Service client to reset MPC 
-  mpcResetServiceClient_ = nodeHandle.serviceClient<ocs2_msgs::reset>(topicPrefix_ + "_mpc_reset");
+  mpcResetServiceClient_ = nodeHandle.serviceClient<ocs2_msgs::reset>(topicPrefix_ + "mpc_reset");
 
+  /*
 #ifdef PUBLISH_THREAD
   ROS_INFO_STREAM("[MRT_ROS_Interface::launchNodes] Publishing MRT messages on a separate thread.");
 #endif
-
   ROS_INFO_STREAM("[MRT_ROS_Interface::launchNodes] MRT node is ready.");
-
+  */
+ 
   statusModelModeMRTMsg_.data = true;
   statusModelModeMRTPublisher_.publish(statusModelModeMRTMsg_);
 

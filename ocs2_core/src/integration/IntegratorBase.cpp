@@ -178,7 +178,7 @@ void IntegratorBase::integrateTimes(OdeBase& system,
   }
   catch (const std::runtime_error& error) 
   {
-    std::cout << "[IntegratorBase::integrateTimes] INTEGRATION TERMINATED!!!" << std::endl << std::endl;
+    //std::cout << "[IntegratorBase::integrateTimes] INTEGRATION TERMINATED!!!" << std::endl << std::endl;
     //std::cout << "[IntegratorBase::integrateTimes] DEBUG INF" << std::endl << std::endl;
     //while(1);
   }

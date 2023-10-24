@@ -21,7 +21,7 @@
 PointsOnRobot::PointsOnRobot(const PointsOnRobot::points_radii_t& points_radii)
   : points_(), radii_()
 {
-  std::cout << "[PointsOnRobot::PointsOnRobot] START" << std::endl;
+  //std::cout << "[PointsOnRobot::PointsOnRobot] START" << std::endl;
 
   const auto& pointsAndRadii = points_radii;
 
@@ -51,7 +51,7 @@ PointsOnRobot::PointsOnRobot(const PointsOnRobot::points_radii_t& points_radii)
   //nh_ = nh;
   //pointsOnRobot_visu_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("points_on_robot", 1);
 
-  std::cout << "[PointsOnRobot::PointsOnRobot] END" << std::endl;
+  //std::cout << "[PointsOnRobot::PointsOnRobot] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -128,11 +128,13 @@ void PointsOnRobot::initialize(ocs2::PinocchioInterface& pinocchioInterface,
       break;
   }
 
-  //std::cout << "[PointsOnRobot::initialize] frameNames_: " << std::endl;
+  /*
+  std::cout << "[PointsOnRobot::initialize] frameNames_: " << std::endl;
   for (size_t i = 0; i < frameNames_.size(); i++)
   {
     std::cout << i << " -> " << frameNames_[i] << std::endl;
   }
+  */
 
   //std::cout << "[PointsOnRobot::initialize] DEBUG INF" << std::endl;
   //while(1);
@@ -418,7 +420,7 @@ Eigen::Matrix<ocs2::scalar_t, 3, 1> PointsOnRobot::QuaternionToEuler(Eigen::Quat
   Eigen::Matrix<ocs2::scalar_t, 3, 1> euler;
   euler = quat.toRotationMatrix().eulerAngles(3,2,1);
   
-  std::cout << "[PointsOnRobot::QuaternionToEuler] Euler from quaternion in yaw, pitch, roll"<< std::endl << euler << std::endl;
+  //std::cout << "[PointsOnRobot::QuaternionToEuler] Euler from quaternion in yaw, pitch, roll"<< std::endl << euler << std::endl;
 
   return euler;
 }

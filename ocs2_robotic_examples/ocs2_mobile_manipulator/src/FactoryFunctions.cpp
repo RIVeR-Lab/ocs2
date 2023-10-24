@@ -128,13 +128,13 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath,
   tf::StampedTransform transform_base_wrt_world;
   pinocchio::SE3 se3_base_wrt_world = pinocchio::SE3::Identity();
 
-  std::cout << "[FactoryFunctions::createPinocchioInterface(5)] base_frame_name: " << base_frame_name << std::endl;
-  std::cout << "[FactoryFunctions::createPinocchioInterface(5)] world_frame_name: " << world_frame_name << std::endl;
-  std::cout << "[FactoryFunctions::createPinocchioInterface(5)] Waiting for the transformation between base and world..." << std::endl;
+  //std::cout << "[FactoryFunctions::createPinocchioInterface(5)] base_frame_name: " << base_frame_name << std::endl;
+  //std::cout << "[FactoryFunctions::createPinocchioInterface(5)] world_frame_name: " << world_frame_name << std::endl;
+  //std::cout << "[FactoryFunctions::createPinocchioInterface(5)] Waiting for the transformation between base and world..." << std::endl;
   try
   {
-    while(!tflistener.waitForTransform(base_frame_name, world_frame_name, ros::Time(0), ros::Duration(1.0))){ros::spinOnce();}
-    tflistener.lookupTransform(base_frame_name, world_frame_name, ros::Time(0), transform_base_wrt_world);
+    while(!tflistener.waitForTransform(world_frame_name, base_frame_name, ros::Time(0), ros::Duration(1.0))){ros::spinOnce();}
+    tflistener.lookupTransform(world_frame_name, base_frame_name, ros::Time(0), transform_base_wrt_world);
   }
   catch (tf::TransformException ex)
   {
@@ -151,9 +151,9 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath,
   //se3_base_wrt_world.translation().z() = 0;
 
 
-  std::cout << "[FactoryFunctions::createPinocchioInterface(5)] x: " << se3_base_wrt_world.translation().x() << std::endl;
-  std::cout << "[FactoryFunctions::createPinocchioInterface(5)] y: " << se3_base_wrt_world.translation().y() << std::endl;
-  std::cout << "[FactoryFunctions::createPinocchioInterface(5)] z: " << se3_base_wrt_world.translation().z() << std::endl;
+  //std::cout << "[FactoryFunctions::createPinocchioInterface(5)] x: " << se3_base_wrt_world.translation().x() << std::endl;
+  //std::cout << "[FactoryFunctions::createPinocchioInterface(5)] y: " << se3_base_wrt_world.translation().y() << std::endl;
+  //std::cout << "[FactoryFunctions::createPinocchioInterface(5)] z: " << se3_base_wrt_world.translation().z() << std::endl;
   
   //std::cout << "[FactoryFunctions::createPinocchioInterface(5)] DEBUG INF" << std::endl;
   //while(1);

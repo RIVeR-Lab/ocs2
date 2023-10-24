@@ -104,18 +104,18 @@ MobileManipulatorVisualization::MobileManipulatorVisualization(ros::NodeHandle& 
     pinocchioInterfaceInternal_(pinocchioInterface)
     //distances_(pointsOnRobotPtr->getNumOfPoints())
 {
-  std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] START" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] START" << std::endl;
 
-  std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] ns: " << ns << std::endl;
-  std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] baseFrameName: " << baseFrameName << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] ns: " << ns << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] baseFrameName: " << baseFrameName << std::endl;
   if (ns != "")
   {
     baseFrameName_withNS_ = ns + "/" + baseFrameName;
   }
-  std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] baseFrameName_withNS_: " << baseFrameName_withNS_ << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] baseFrameName_withNS_: " << baseFrameName_withNS_ << std::endl;
 
   launchVisualizerNode(nodeHandle);
-  std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] END" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -131,21 +131,21 @@ void MobileManipulatorVisualization::setObjOctomapNames(std::vector<std::string>
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorVisualization::launchVisualizerNode(ros::NodeHandle& nodeHandle) 
 {
-  std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] START" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] START" << std::endl;
 
   // Subscribers
   jointStatesSub_ = nodeHandle.subscribe(jointStateMsgName_, 5, &MobileManipulatorVisualization::jointStateCallback, this);
   tfSub_ = nodeHandle.subscribe("/tf", 5, &MobileManipulatorVisualization::tfCallback, this);
 
   // Publishers
-  stateOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/mobile_manipulator/optimizedStateTrajectory", 1);
-  stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/mobile_manipulator/optimizedPoseTrajectory", 1);
+  stateOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(ns_ + "/optimizedStateTrajectory", 1);
+  stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>(ns_ + "/optimizedPoseTrajectory", 1);
 
   pubSelfCollisionInfo_ = nodeHandle.advertise<ocs2_msgs::collision_info>(selfCollisionMsg_, 10, true);
   markerPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(selfCollisionMsg_ + "_visu", 10, true);
 
   // Create pinocchio interface
-  pinocchioInterfaceInternal_ = mobile_manipulator::createPinocchioInterface(urdfFile_, robotModelInfo_.robotModelType, removeJointNames_, baseFrameName_withNS_, worldFrameName_);
+  pinocchioInterfaceInternal_ = mobile_manipulator::createPinocchioInterface(urdfFile_, robotModelInfo_.robotModelType, removeJointNames_, worldFrameName_, baseFrameName_withNS_);
 
   // activate markers for self-collision visualization
   if (selfCollisionFlag_) 
@@ -158,11 +158,11 @@ void MobileManipulatorVisualization::launchVisualizerNode(ros::NodeHandle& nodeH
     visualizationInterfacePtr_.reset(new GeometryInterfaceVisualization(std::move(pinocchioInterfaceInternal_), geometryInterface, nodeHandle));
   }
 
-  std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] jointStateMsgName_: " << jointStateMsgName_ << std::endl;
-  std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] Waiting for initTFTransformFlag_ and initJointStateFlag_..." << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] jointStateMsgName_: " << jointStateMsgName_ << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] Waiting for initTFTransformFlag_ and initJointStateFlag_..." << std::endl;
   while(!initTFTransformFlag_ || !initJointStateFlag_){ros::spinOnce();}
 
-  std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] END" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -170,7 +170,7 @@ void MobileManipulatorVisualization::launchVisualizerNode(ros::NodeHandle& nodeH
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorVisualization::tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg)
 {
-  //std::cerr << "[MobileManipulatorVisualization::tfCallback] START " << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::tfCallback] START " << std::endl;
 
   try
   {
@@ -194,7 +194,7 @@ void MobileManipulatorVisualization::tfCallback(const tf2_msgs::TFMessage::Const
     ROS_ERROR("%s", ex.what());
   }
 
-  //std::cerr << "[MobileManipulatorVisualization::tfCallback] END " << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::tfCallback] END " << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -474,7 +474,7 @@ void MobileManipulatorVisualization::publishSelfCollisionDistances(const ocs2::v
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorVisualization::getPoint(std::string& baseFrameName, std::string& pointFrameName, geometry_msgs::Point p)
 {
-  //std::cerr << "[MobileManipulatorVisualization::getPoint] START " << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::getPoint] START " << std::endl;
 
   tf::StampedTransform tf_point_wrt_base;
   try
@@ -488,7 +488,7 @@ void MobileManipulatorVisualization::getPoint(std::string& baseFrameName, std::s
     ROS_ERROR("%s", ex.what());
   }
 
-  //std::cerr << "[MobileManipulatorVisualization::getPoint] END " << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::getPoint] END " << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -529,11 +529,13 @@ void MobileManipulatorVisualization::updateStateIndexMap()
     }
   }
 
+  /*
   std::cout << "[MobileManipulatorVisualization::updateStateIndexMap] stateIndexMap_ size: " << stateIndexMap_.size() << std::endl;
   for (int i = 0; i < stateIndexMap_.size(); ++i)
   {
     std::cout << i << " -> " << stateIndexMap_[i] << std::endl;
   }
+  */
 
   //std::cout << "[MobileManipulatorVisualization::updateStateIndexMap] DEBUG INF" << std::endl;
   //while(1);
@@ -1055,7 +1057,7 @@ void MobileManipulatorVisualization::publishTargetTrajectories(const ros::Time& 
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorVisualization::publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy) 
 {
-  std::cout << "[MobileManipulatorVisualization::publishOptimizedTrajectory(2)] START" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::publishOptimizedTrajectory(2)] START" << std::endl;
 
   std::cout << "[MobileManipulatorVisualization::publishOptimizedTrajectory(2)] DEBUG INF" << std::endl;
   while(1);
@@ -1119,7 +1121,7 @@ void MobileManipulatorVisualization::publishOptimizedTrajectory(const ros::Time&
   stateOptimizedPublisher_.publish(markerArray);
   stateOptimizedPosePublisher_.publish(poseArray);
 
-  std::cout << "[MobileManipulatorVisualization::publishOptimizedTrajectory(2)] END" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::publishOptimizedTrajectory(2)] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------

@@ -87,7 +87,7 @@ class MRT_ROS_Gazebo_Loop
      */
     ~MRT_ROS_Gazebo_Loop()
     {
-      std::cout << "[MRT_ROS_Gazebo_Loop::~MRT_ROS_Gazebo_Loop] SHUTTING DOWN..." << std::endl;
+      //std::cout << "[MRT_ROS_Gazebo_Loop::~MRT_ROS_Gazebo_Loop] SHUTTING DOWN..." << std::endl;
     }
 
     /** NUA TODO: Add description */

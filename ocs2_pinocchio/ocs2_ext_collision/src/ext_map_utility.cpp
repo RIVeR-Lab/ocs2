@@ -2504,7 +2504,7 @@ void ExtMapUtility::subscribeOctMsg(string oct_msg_name)
   //std::cout << "[ExtMapUtility::subscribeOctMsg] oct_msg_name: " << oct_msg_name << std::endl;
   sub_oct_msg_ = nh_.subscribe(oct_msg_name, 10, &ExtMapUtility::octMsgCallback, this);
 
-  std::cout << "[ExtMapUtility::subscribeOctMsg] Waiting for " << oct_msg_name << "..." << std::endl;
+  //std::cout << "[ExtMapUtility::subscribeOctMsg] Waiting for " << oct_msg_name << "..." << std::endl;
   boost::shared_ptr<octomap_msgs::Octomap const> octMsgWait = ros::topic::waitForMessage<octomap_msgs::Octomap>(oct_msg_name);
 }
 
@@ -2515,56 +2515,56 @@ void ExtMapUtility::subscribeObjectsOctMsg(string obj_oct_msg_name)
 {
   if (obj_oct_msg_name == "oct_conveyor")
   {
-    std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
+    //std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
     sub_oct_msg_conveyor_ = nh_.subscribe(obj_oct_msg_name, 10, &ExtMapUtility::conveyorOctMsgCallback, this);
   }
   else if (obj_oct_msg_name == "oct_normal_pkg")
   {
-    std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
+    //std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
     sub_oct_msg_normal_pkg_ = nh_.subscribe(obj_oct_msg_name, 10, &ExtMapUtility::normalPkgOctMsgCallback, this);
   }
   else if (obj_oct_msg_name == "oct_long_pkg")
   {
-    std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
+    //std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
     sub_oct_msg_long_pkg_ = nh_.subscribe(obj_oct_msg_name, 10, &ExtMapUtility::longPkgOctMsgCallback, this);
   }
   else if (obj_oct_msg_name == "oct_longwide_pkg")
   {
-    std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
+    //std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
     sub_oct_msg_longwide_pkg_ = nh_.subscribe(obj_oct_msg_name, 10, &ExtMapUtility::longwidePkgOctMsgCallback, this);
   }
   else if (obj_oct_msg_name == "oct_red_cube")
   {
-    std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
+    //std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
     sub_oct_msg_red_cube_ = nh_.subscribe(obj_oct_msg_name, 10, &ExtMapUtility::redCubeOctMsgCallback, this);
   }
   else if (obj_oct_msg_name == "oct_green_cube")
   {
-    std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
+    //std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
     sub_oct_msg_green_cube_ = nh_.subscribe(obj_oct_msg_name, 10, &ExtMapUtility::greenCubeOctMsgCallback, this);
   }
   else if (obj_oct_msg_name == "oct_blue_cube")
   {
-    std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
+    //std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
     sub_oct_msg_blue_cube_ = nh_.subscribe(obj_oct_msg_name, 10, &ExtMapUtility::blueCubeOctMsgCallback, this);
   }
   else if (obj_oct_msg_name == "oct_actor0")
   {
-    std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
+    //std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
     sub_oct_msg_actor0_ = nh_.subscribe(obj_oct_msg_name, 10, &ExtMapUtility::actor0OctMsgCallback, this);
   }
   else if (obj_oct_msg_name == "oct_actor1")
   {
-    std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
+    //std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
     sub_oct_msg_actor1_ = nh_.subscribe(obj_oct_msg_name, 10, &ExtMapUtility::actor1OctMsgCallback, this);
   }
   else if (obj_oct_msg_name == "oct_bin")
   {
-    std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
+    //std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
     sub_oct_msg_bin_ = nh_.subscribe(obj_oct_msg_name, 10, &ExtMapUtility::binOctMsgCallback, this);
   }
 
-  std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] Waiting for " << obj_oct_msg_name << "..." << std::endl;
+  //std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] Waiting for " << obj_oct_msg_name << "..." << std::endl;
   boost::shared_ptr<octomap_msgs::Octomap const> octMsgWait = ros::topic::waitForMessage<octomap_msgs::Octomap>(obj_oct_msg_name);
 }
 
@@ -2594,14 +2594,14 @@ void ExtMapUtility::pointcloud2ToOctPc2(const sensor_msgs::PointCloud2& cloud_pc
 //-------------------------------------------------------------------------------------------------------
 void ExtMapUtility::publishOctMsg()
 {
-  std::cout << "[ExtMapUtility::publishOctMsg] START" << std::endl;
+  //std::cout << "[ExtMapUtility::publishOctMsg] START" << std::endl;
   oct_msg.header.frame_id = world_frame_name;
   //oct_msg.header.seq++;
   oct_msg.header.stamp = ros::Time::now();
 
   pub_oct_msg_.publish(oct_msg);
 
-  std::cout << "[ExtMapUtility::publishOctMsg] END" << std::endl;
+  //std::cout << "[ExtMapUtility::publishOctMsg] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------

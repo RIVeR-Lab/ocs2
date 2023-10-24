@@ -36,10 +36,9 @@ TargetTrajectories goalPoseToTargetTrajectories(const Eigen::Vector3d& position,
 
 int main(int argc, char* argv[]) 
 {
-  cout << "[MobileManipulatorTarget::main] START" << endl;
+  //cout << "[MobileManipulatorTarget::main] START" << endl;
 
-  const std::string robotMode = "mobile_manipulator";
-  ros::init(argc, argv, robotMode + "_target");
+  ros::init(argc, argv, "mobile_manipulator_target");
   
   ros::MultiThreadedSpinner spinner(4);
 
@@ -53,10 +52,18 @@ int main(int argc, char* argv[])
   ros::NodeHandle pnh("~");
 
   // INITIALIZE AND SET PARAMETERS
-  std::string world_frame_name, gz_model_msg_name, robot_name, drop_target_name;
+  std::string ns, topicPrefix, taskFile, world_frame_name, gz_model_msg_name, robot_name, drop_target_name;
   std::vector<std::string> name_pkgs_ign, name_pkgs_man, scan_data_path_pkgs_ign, scan_data_path_pkgs_man, target_names;
   double map_resolution;
   bool drlFlag, printOutFlag = false;
+
+  ns = nh.getNamespace();
+  topicPrefix = "mobile_manipulator_";
+  ns += "/";
+  if (ns != "")
+  {
+    topicPrefix = ns;
+  }
 
   //pnh.param<std::string>("/world_frame_name", world_frame_name, "");
   //pnh.param<std::string>("/gz_model_msg_name", gz_model_msg_name, "");
@@ -68,7 +75,6 @@ int main(int argc, char* argv[])
   //cout << "[MobileManipulatorTarget::main] DEBUG INF" << endl;
   //while(1);
 
-  std::string taskFile;
   nh.getParam("/taskFile", taskFile);
 
   // read the task file
@@ -78,21 +84,21 @@ int main(int argc, char* argv[])
   loadData::loadPtreeValue(pt, world_frame_name, "model_information.worldFrame", printOutFlag);
   loadData::loadPtreeValue(pt, drlFlag, "model_settings.drlFlag", printOutFlag);
 
-  cout << "[MobileManipulatorTarget::main] world_frame_name: " << world_frame_name << endl;
-  cout << "[MobileManipulatorTarget::main] drlFlag: " << drlFlag << endl;
-  cout << "[MobileManipulatorTarget::main] gz_model_msg_name: " << gz_model_msg_name << endl;
+  //cout << "[MobileManipulatorTarget::main] world_frame_name: " << world_frame_name << endl;
+  //cout << "[MobileManipulatorTarget::main] drlFlag: " << drlFlag << endl;
+  //cout << "[MobileManipulatorTarget::main] gz_model_msg_name: " << gz_model_msg_name << endl;
   
   // Set TargetTrajectoriesGazebo
-  TargetTrajectoriesGazebo gu(nh, robotMode, gz_model_msg_name, robot_name, target_names, drop_target_name, &goalPoseToTargetTrajectories);
+  TargetTrajectoriesGazebo gu(nh, ns, topicPrefix, gz_model_msg_name, robot_name, target_names, drop_target_name, &goalPoseToTargetTrajectories);
   
   if (drlFlag)
   {
-    cout << "[MobileManipulatorTarget::main] DRL MODE IS ON!" << endl;
+    //cout << "[MobileManipulatorTarget::main] DRL MODE IS ON!" << endl;
     gu.setTaskMode(1);
   }
   else
   {
-    cout << "[MobileManipulatorTarget::main] MANUAL MODE IS ON!" << endl;
+    //cout << "[MobileManipulatorTarget::main] MANUAL MODE IS ON!" << endl;
     gu.initializeInteractiveMarkerTarget();
     gu.initializeInteractiveMarkerAutoTarget();
     gu.initializeInteractiveMarkerModelMode();
@@ -127,7 +133,7 @@ int main(int argc, char* argv[])
   //TargetTrajectoriesInteractiveMarker targetPoseCommand(nh, robotMode, &goalPoseToTargetTrajectories);
   //targetPoseCommand.publishInteractiveMarker();
 
-  cout << "[MobileManipulatorTarget::main] END" << endl;
+  //cout << "[MobileManipulatorTarget::main] END" << endl;
 
   // Successful exit
   return 0;
