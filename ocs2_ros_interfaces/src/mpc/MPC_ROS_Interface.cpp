@@ -164,13 +164,11 @@ bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_ms
     resetMpcNode(std::move(targetTrajectories));
     res.done = static_cast<uint8_t>(true);
 
-    /*
     std::cout << "\n#####################################################"
               << "\n#####################################################"
               << "\n#################  MPC is reset.  ###################"
               << "\n#####################################################"
               << "\n#####################################################\n";
-    */
     return true;
   } 
   else 

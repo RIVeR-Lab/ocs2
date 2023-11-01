@@ -226,7 +226,7 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
   shutDownFlag_ = false;
   currentTarget_ = initTarget;
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting for the state to be initialized..." << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting for the state to be initialized..." << std::endl;
   while(!isStateInitialized()){ros::spinOnce();}
   
   if (drlFlag_)
@@ -240,7 +240,7 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
 
   setSystemObservation(initObservation);
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting for the target to be received..." << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting for the target to be received..." << std::endl;
   while(!targetReceivedFlag_ && !shutDownFlag_)
   {
     mrtShutDownFlag_ = getenv("mrtShutDownFlag");

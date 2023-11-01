@@ -456,11 +456,13 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   ddpSettings_ = ddp::loadSettings(taskFile_, "ddp", printOutFlag_);
   mpcSettings_ = mpc::loadSettings(taskFile_, "mpc", printOutFlag_);
 
-  //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START referenceManagerPtr_" << std::endl;
+  if (printOutFlag_)
+    std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START referenceManagerPtr_" << std::endl;
   // Set Reference Manager
   referenceManagerPtr_.reset(new ReferenceManager);
 
-  //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START rosReferenceManagerPtr_" << std::endl;
+  if (printOutFlag_)
+    std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START rosReferenceManagerPtr_" << std::endl;
   // Set ROS Reference Manager
   std::string topicPrefix = "mobile_manipulator_";
   if (ns_ != "")
@@ -470,18 +472,21 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   rosReferenceManagerPtr_ = std::shared_ptr<ocs2::RosReferenceManager>(new ocs2::RosReferenceManager(topicPrefix, referenceManagerPtr_));
   rosReferenceManagerPtr_->subscribe(nodeHandle_);
 
-  //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START rolloutSettings_" << std::endl;
+  if (printOutFlag_)
+    std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START rolloutSettings_" << std::endl;
   // Set Rollout Settings
   rolloutSettings_ = rollout::loadSettings(taskFile_, "rollout", printOutFlag_);
 
-  //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START initializePointsOnRobotPtr" << std::endl;
+  if (printOutFlag_)
+    std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START initializePointsOnRobotPtr" << std::endl;
   // Set PointsOnRobot
   initializePointsOnRobotPtr(collisionConstraintPoints);
 
   //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface(6)] DEBUG INF" << std::endl;
   //while(1);
 
-  //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START emuPtr_" << std::endl;
+  if (printOutFlag_)
+    std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START emuPtr_" << std::endl;
   // Set ExtMapUtility
   emuPtr_.reset(new ExtMapUtility());
   emuPtr_->setWorldFrameName(worldFrameName_);
@@ -494,7 +499,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   bool isModeUpdated;
   std::string modelName;
 
-  //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START Mode 0" << std::endl;
+  if (printOutFlag_)
+    std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START Mode 0" << std::endl;
   // Mode 0
   modelModeInt = 0;
   isModeUpdated = updateModelMode(robotModelInfo_, modelModeInt);
@@ -513,7 +519,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
                                                   recompileLibraries_, 
                                                   printOutFlag_));
 
-  //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START Mode 1" << std::endl;
+  if (printOutFlag_)
+    std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START Mode 1" << std::endl;
   // Mode 1
   modelModeInt = 1;
   isModeUpdated = updateModelMode(robotModelInfo_, modelModeInt);
@@ -532,7 +539,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
                                                 recompileLibraries_, 
                                                 printOutFlag_));
   
-  //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START Mode 2" << std::endl;
+  if (printOutFlag_)
+    std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface] START Mode 2" << std::endl;
   // Mode 2
   modelModeInt = 2;
   isModeUpdated = updateModelMode(robotModelInfo_, modelModeInt);
@@ -552,7 +560,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
                                                          printOutFlag_));
   
   // Visualization
-  //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface(6)] BEFORE mobileManipulatorVisu_" << std::endl;
+  if (printOutFlag_)
+    std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface(6)] BEFORE mobileManipulatorVisu_" << std::endl;
   mobileManipulatorVisu_.reset(new ocs2::mobile_manipulator::MobileManipulatorVisualization(nodeHandle_, 
                                                                                             *pinocchioInterfacePtr_,
                                                                                             worldFrameName_,
@@ -570,14 +579,16 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
                                                                                             pointsOnRobotPtr_,
                                                                                             emuPtr_,
                                                                                             maxDistance_));
-  //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface(6)] AFTER mobileManipulatorVisu_" << std::endl;
+  if (printOutFlag_)
+    std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface(6)] AFTER mobileManipulatorVisu_" << std::endl;
 
   launchNodes(nodeHandle_);
 
   //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface(6)] DEBUG INF" << std::endl;
   //while(1);
 
-  //std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface(6)] END" << std::endl;
+  if (printOutFlag_)
+    std::cout << "[MobileManipulatorInterface::MobileManipulatorInterface(6)] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1368,7 +1379,7 @@ void MobileManipulatorInterface::runMRT()
 {
   //std::cout << "[MobileManipulatorInterface::runMRT] START" << std::endl;
 
-  bool mrtPrintOutFlag = false;
+  bool mrtPrintOutFlag = true;
 
   RobotModelInfo robotModelInfo;
   std::string mrtTopicPrefix = "mobile_manipulator_";

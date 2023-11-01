@@ -357,7 +357,7 @@ class MobileManipulatorInterface final : public RobotInterface
     int mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "false", 1);
     int mrtExitEnvStatus_ = setenv("mrtExitFlag", "true", 1);
 
-    bool printOutFlag_ = false;
+    bool printOutFlag_ = true;
     bool usePreComputation_;
     bool recompileLibraries_;
     bool activateSelfCollision_;

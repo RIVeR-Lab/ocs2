@@ -158,8 +158,8 @@ void MobileManipulatorVisualization::launchVisualizerNode(ros::NodeHandle& nodeH
     visualizationInterfacePtr_.reset(new GeometryInterfaceVisualization(std::move(pinocchioInterfaceInternal_), geometryInterface, nodeHandle));
   }
 
-  //std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] jointStateMsgName_: " << jointStateMsgName_ << std::endl;
-  //std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] Waiting for initTFTransformFlag_ and initJointStateFlag_..." << std::endl;
+  std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] jointStateMsgName_: " << jointStateMsgName_ << std::endl;
+  std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] Waiting for initTFTransformFlag_ and initJointStateFlag_..." << std::endl;
   while(!initTFTransformFlag_ || !initJointStateFlag_){ros::spinOnce();}
 
   //std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] END" << std::endl;
