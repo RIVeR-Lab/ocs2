@@ -20,6 +20,7 @@
 
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_core/dynamics/MultiModelFunctions.h>
+#include <ocs2_msgs/collision_info.h>
 #include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 #include "ocs2_mobile_manipulator/MobileManipulatorPinocchioMapping.h"
 #include <ocs2_self_collision_visualization/GeometryInterfaceVisualization.h>

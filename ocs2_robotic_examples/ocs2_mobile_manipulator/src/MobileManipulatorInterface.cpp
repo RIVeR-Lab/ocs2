@@ -1379,7 +1379,7 @@ void MobileManipulatorInterface::runMRT()
 {
   //std::cout << "[MobileManipulatorInterface::runMRT] START" << std::endl;
 
-  bool mrtPrintOutFlag = true;
+  bool mrtPrintOutFlag = false;
 
   RobotModelInfo robotModelInfo;
   std::string mrtTopicPrefix = "mobile_manipulator_";

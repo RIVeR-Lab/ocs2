@@ -13,6 +13,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   geometry_msgs
   tf
   ocs2_core
+  ocs2_msgs
   ocs2_robotic_tools
   ocs2_pinocchio_interface
   laser_geometry

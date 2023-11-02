@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.08.22
+// LAST UPDATE: 2023.11.02
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -16,6 +16,8 @@
 //-------------------------------------------------------------------------------------------------------
 ExtMapUtility::ExtMapUtility()
 {
+  //std::cout << "[ExtMapUtility::ExtMapUtility] START" << std::endl;
+
   tflistener = new tf::TransformListener;
   world_frame_name = "";
   map_name = "";
@@ -42,6 +44,8 @@ ExtMapUtility::ExtMapUtility()
   oct_msg.header.frame_id = world_frame_name;
   pc_msg.header.frame_id = world_frame_name;
   pc2_msg.header.frame_id = world_frame_name;
+
+  //std::cout << "[ExtMapUtility::ExtMapUtility] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2975,7 +2979,7 @@ void ExtMapUtility::pc2Callback(const sensor_msgs::PointCloud2::ConstPtr& msg)
 void ExtMapUtility::laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
   //cout << "[ExtMapUtility::laserCallback] Incoming data..." << endl;
-  sensor_laser_frame_name = msg -> header.frame_id;
+  sensor_laser_frame_name = msg->header.frame_id;
   //cout << "[ExtMapUtility::laserCallback] sensor_laser_frame_name: " << sensor_laser_frame_name << endl;
   measured_laser_msg = *msg;
 }

@@ -1,7 +1,7 @@
 #ifndef EXT_MAP_UTILITY_H
 #define EXT_MAP_UTILITY_H
 
-// LAST UPDATE: 2023.09.16
+// LAST UPDATE: 2023.11.02
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -914,7 +914,7 @@ class ExtMapUtility
     
     ros::Subscriber sub_pc2;
     ros::Subscriber sub_laser;
-
+    
     ros::Publisher pub_oct_msg_;
     ros::Publisher pc_msg_pub;
     ros::Publisher pc2_msg_pub;

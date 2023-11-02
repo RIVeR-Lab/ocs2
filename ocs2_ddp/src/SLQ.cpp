@@ -461,10 +461,10 @@ void SLQ::integrateRiccatiEquationNominalTime(IntegratorBase& riccatiIntegrator,
   // check size
   if (allSsTrajectory.size() != nominalTimeSize) 
   {
-    std::cout << "[SLQ::integrateRiccatiEquationNominalTime] BEFORE shutDownFlag_: " << internalShutDownFlag_ << std::endl;
+    //std::cout << "[SLQ::integrateRiccatiEquationNominalTime] BEFORE shutDownFlag_: " << internalShutDownFlag_ << std::endl;
     internalShutDownFlag_ = true;
     GaussNewtonDDP::setInternalShutDownFlag(true);
-    std::cout << "[SLQ::integrateRiccatiEquationNominalTime] AFTER shutDownFlag_: " << internalShutDownFlag_ << std::endl;
+    //std::cout << "[SLQ::integrateRiccatiEquationNominalTime] AFTER shutDownFlag_: " << internalShutDownFlag_ << std::endl;
     //throw std::runtime_error("[SLQ::integrateRiccatiEquationNominalTime] allSsTrajectory size is incorrect.");
   }
 
