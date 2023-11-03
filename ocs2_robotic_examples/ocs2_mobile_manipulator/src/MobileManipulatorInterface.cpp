@@ -316,6 +316,11 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   loadData::loadPtreeValue<std::string>(pt, collisionCheckPoints, "model_information.collisionCheckPoints", printOutFlag_);
   loadData::loadPtreeValue<std::string>(pt, logSavePathRel_, "model_information.logSavePathRel", printOutFlag_);
 
+  /// NUA TODO: SET THEM IN THE CONFIG!
+  setTargetDRLServiceName_ = "/set_target_drl";
+  setMRTReadyServiceName_ = "/set_mrt_ready";
+  setMPCActionResultServiceName_ = "/set_mpc_action_result";
+
   if (printOutFlag_)
   {
     std::cout << "\n #### Model Information:" << std::endl;
@@ -396,6 +401,9 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     mpcTargetMsgName_ = ns_ + mpcTargetMsgName_;
     targetMsgName_ = ns_ + targetMsgName_;
     goalFrameName_ = ns_ + goalFrameName_;
+    setTargetDRLServiceName_ = ns_ + setTargetDRLServiceName_;
+    setMRTReadyServiceName_ = ns_ + setMRTReadyServiceName_;
+    setMPCActionResultServiceName_ = ns_ + setMPCActionResultServiceName_;
 
     if (printOutFlag_)
     {
@@ -954,16 +962,16 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
       setActionDRLService_ = nodeHandle_.advertiseService("set_action_drl", &MobileManipulatorInterface::setContinuousActionDRLSrv, this);
     }
 
-    setTargetDRLClient_ = nodeHandle_.serviceClient<ocs2_msgs::setTask>("/set_target_drl");
-    setMRTReadyClient_ = nodeHandle_.serviceClient<ocs2_msgs::setBool>("/set_mrt_ready");
-    setMPCActionResultClient_ = nodeHandle_.serviceClient<ocs2_msgs::setMPCActionResult>("/set_mpc_action_result");
+    setTargetDRLClient_ = nodeHandle_.serviceClient<ocs2_msgs::setTask>(setTargetDRLServiceName_);
+    setMRTReadyClient_ = nodeHandle_.serviceClient<ocs2_msgs::setBool>(setMRTReadyServiceName_);
+    setMPCActionResultClient_ = nodeHandle_.serviceClient<ocs2_msgs::setMPCActionResult>(setMPCActionResultServiceName_);
   }
   else
   {
     // Subscribe Model Mode
     auto modelModeCallback = [this](const std_msgs::UInt8::ConstPtr& msg) 
     {
-      //std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] START" << std::endl;
+      std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] START" << std::endl;
 
       // Shutdown MRT
       //std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] mrtShutDownFlag true"  << std::endl;
@@ -986,12 +994,14 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
       //std::cout << "\n###   Latest  : " << mpcTimer3_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
 
       //std::cout << "[MobileManipulatorInterface::launchNodes::modelModeCallback] END" << std::endl;
-      //std::cout << "" << std::endl;
+      std::cout << "" << std::endl;
     };
     modelModeSubscriber_ = nodeHandle_.subscribe<std_msgs::UInt8>(modelModeMsgName_, 1, modelModeCallback);
   }
 
   //modelModeSubscriber_ = nodeHandle_.subscribe(model_mode_msg_name, 5, &MobileManipulatorInterface::modelModeCallback, this);
+
+  std::cout << "[MobileManipulatorInterface::targetTrajectoriesCallback] mpcTargetMsgName_: " << mpcTargetMsgName_ << std::endl;
 
   // TargetTrajectories
   auto targetTrajectoriesCallback = [this](const ocs2_msgs::mpc_target_trajectories::ConstPtr& msg) 
@@ -1016,6 +1026,9 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
     }
     */
     
+    //std::cout << "[MobileManipulatorInterface::targetTrajectoriesCallback] TARGET RECEIVED!" << std::endl;
+    //targetReceivedFlag_ = true;
+
     //targetReadyFlag_ = true;
     //std::cout << "[MobileManipulatorInterface::targetTrajectoriesCallback] END" << std::endl;
   };
@@ -1156,7 +1169,6 @@ bool MobileManipulatorInterface::setContinuousActionDRLSrv(ocs2_msgs::setContinu
   std::cout << "\n###   Latest  : " << mpcTimer3_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
   */
 
-  targetReceivedFlag_ = true;
   //std::cout << "[MobileManipulatorInterface::setContinuousActionDRLSrv] END" << std::endl;
   //std::cout << "" << std::endl;
   
@@ -1202,29 +1214,18 @@ void MobileManipulatorInterface::runMPC()
     }
     */
 
-    // Wait for sync mpc and mrt
+    // Wait to sync mpc and mrt
     while(mpcIter_ != mrtIter_){spinOnce();}
 
-    //mpcTimer1_.startTimer();
-
-    // Robot interface
-    //std::cout << "[MobileManipulatorInterface::runMPC] START launchNodes" << std::endl;
-    //mpcTimer2_.startTimer();
-    //launchNodes(nodeHandle_);
-    //mpcTimer2_.endTimer();
-    //std::cout << "[MobileManipulatorInterface::runMPC] END launchNodes" << std::endl;
-
-    //ros::Duration(3.0).sleep();
-
+    /// Make sure mpc exit! NUA NOTE: CHECK IF IT IS STILL NECESSARY? 
     while(!mrtExitFlag_){spinOnce();}
     setenv("mpcShutDownFlag", "false", 1);
 
+    /// Make sure mrt exit! NUA NOTE: CHECK IF IT IS STILL NECESSARY? 
     std::string mrtExitEnvStatus = getenv("mrtExitFlag");
     //std::cout << "[MobileManipulatorInterface::runMPC] mrtExitEnvStatus: " << mrtExitEnvStatus << std::endl;
-
     while(mrtExitEnvStatus == "false")
     {
-      //std::cout << "[MobileManipulatorInterface::runMPC] CMOOOOOOOOOOOOOOOOOON: " << std::endl;
       mrtExitEnvStatus = getenv("mrtExitFlag");
     }
     //std::cout << "[MobileManipulatorInterface::runMPC] MRT EXIT HAPPENED" << std::endl;
@@ -1379,7 +1380,7 @@ void MobileManipulatorInterface::runMRT()
 {
   //std::cout << "[MobileManipulatorInterface::runMRT] START" << std::endl;
 
-  bool mrtPrintOutFlag = false;
+  bool mrtPrintOutFlag = true;
 
   RobotModelInfo robotModelInfo;
   std::string mrtTopicPrefix = "mobile_manipulator_";
@@ -2044,6 +2045,8 @@ bool MobileManipulatorInterface::setTargetDRL(double x, double y, double z, doub
     success = false;
   }
 
+  targetReceivedFlag_ = true;
+
   //std::cout << "[MobileManipulatorInterface::setTargetDRL] END" << std::endl;
   
   return success;
@@ -2152,7 +2155,7 @@ bool MobileManipulatorInterface::setMRTReady()
   srv.request.val = true;
 
   //std::cout << "[MobileManipulatorInterface::setMRTReady] Waiting for the service..." << std::endl;
-  ros::service::waitForService("/set_mrt_ready");
+  ros::service::waitForService(setMRTReadyServiceName_);
   if (setMRTReadyClient_.call(srv))
   {
     success = srv.response.success;

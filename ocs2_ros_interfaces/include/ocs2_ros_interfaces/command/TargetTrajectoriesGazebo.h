@@ -68,6 +68,9 @@ class TargetTrajectoriesGazebo final
   	TargetTrajectoriesGazebo& operator=(const TargetTrajectoriesGazebo& ttg);
 
     // DESCRIPTION: TODO...
+    void updateDummyGoal(double x, double y, double z, double roll, double pitch, double yaw);
+
+    // DESCRIPTION: TODO...
     void setTaskMode(int taskMode);
 
     // DESCRIPTION: TODO...
@@ -97,7 +100,11 @@ class TargetTrajectoriesGazebo final
     // DESCRIPTION: TODO...
     void initializeInteractiveMarkerModelMode();
 
+    // DESCRIPTION: TODO...
     void publishGoalVisu();
+
+    // DESCRIPTION: TODO...
+    void publishGoalFrame();
 
     // DESCRIPTION: TODO...
     void publishTargetVisu();
@@ -239,6 +246,7 @@ class TargetTrajectoriesGazebo final
 
     std::string worldFrameName_ = "world";
     std::string robotFrameName_ = "base_link"; 
+    std::string goalFrameName_ = "golazo"; 
     std::string graspFrameName_ = "grasp"; 
     std::string dropFrameName_ = "drop";
     std::string eeFrame_ = "j2n6s300_end_effector";
@@ -256,6 +264,9 @@ class TargetTrajectoriesGazebo final
     Eigen::Quaterniond goalOrientation_;
     visualization_msgs::MarkerArray goalMarkerArray_;
     ros::Publisher goalMarkerArrayPublisher_;
+
+    Eigen::Vector3d dummyGoalPosition_;
+    Eigen::Quaterniond dummyGoalOrientation_;
 
     bool targetReadyFlag_ = false;
     std::string currentTargetName_;

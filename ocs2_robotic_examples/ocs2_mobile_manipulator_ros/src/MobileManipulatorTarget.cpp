@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
   // INITIALIZE AND SET PARAMETERS
   std::string ns, topicPrefix, taskFile, world_frame_name, gz_model_msg_name, robot_name, drop_target_name;
   std::vector<std::string> name_pkgs_ign, name_pkgs_man, scan_data_path_pkgs_ign, scan_data_path_pkgs_man, target_names;
-  double map_resolution;
+  double map_resolution, dummy_goal_pos_x, dummy_goal_pos_y, dummy_goal_pos_z, dummy_goal_ori_r, dummy_goal_ori_p, dummy_goal_ori_y;
   bool drlFlag, printOutFlag = false;
 
   ns = nh.getNamespace();
@@ -76,6 +76,12 @@ int main(int argc, char* argv[])
   //while(1);
 
   nh.getParam("/taskFile", taskFile);
+  nh.getParam("dummy_goal_pos_x", dummy_goal_pos_x);
+  nh.getParam("dummy_goal_pos_y", dummy_goal_pos_y);
+  nh.getParam("dummy_goal_pos_z", dummy_goal_pos_z);
+  nh.getParam("dummy_goal_ori_r", dummy_goal_ori_r);
+  nh.getParam("dummy_goal_ori_p", dummy_goal_ori_p);
+  nh.getParam("dummy_goal_ori_y", dummy_goal_ori_y);
 
   // read the task file
   boost::property_tree::ptree pt;
@@ -90,7 +96,8 @@ int main(int argc, char* argv[])
   
   // Set TargetTrajectoriesGazebo
   TargetTrajectoriesGazebo gu(nh, ns, topicPrefix, gz_model_msg_name, robot_name, target_names, drop_target_name, &goalPoseToTargetTrajectories);
-  
+  gu.updateDummyGoal(dummy_goal_pos_x, dummy_goal_pos_y, dummy_goal_pos_z, dummy_goal_ori_r, dummy_goal_ori_p, dummy_goal_ori_y);
+
   if (drlFlag)
   {
     //cout << "[MobileManipulatorTarget::main] DRL MODE IS ON!" << endl;

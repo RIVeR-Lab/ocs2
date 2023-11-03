@@ -35,6 +35,7 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
 {
   tflistenerPtr_ = new tf::TransformListener;
 
+  /// NUA TODO: SET THIS IN CONFIG!
   graspPositionOffset_.x() = 0;
   graspPositionOffset_.y() = 0.2;
   graspPositionOffset_.z() = 0;
@@ -49,6 +50,11 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
                                   0.0, 0.0, -1.0,
                                   0.0, 1.0, 0.0;
   //dropOrientationOffsetMatrix_ = graspOrientationOffsetMatrix_;
+
+  if (ns != "")
+  {
+    goalFrameName_ = ns + goalFrameName_;
+  }
 
   /*
   std::cout << "[TargetTrajectoriesGazebo::statusModelModeMPCCallback] targetNames_: " << std::endl;
@@ -115,8 +121,8 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
   /// Publishers
   targetTrajectoriesPublisherPtr_.reset(new TargetTrajectoriesRosPublisher(nodeHandle, topicPrefix));
   modelModePublisher_ = nodeHandle.advertise<std_msgs::UInt8>(ns + "model_mode", 1, false);
-  goalMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(ns + "goal", 10);
-  targetMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(ns + "target", 10);
+  goalMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(ns + "goal_visu", 10);
+  targetMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(ns + "target_visu", 10);
 
   /// Clients
   //setTaskModeClient_ = nodeHandle.serviceClient<ocs2_msgs::setInt>("/set_task_mode");
@@ -165,6 +171,9 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(const TargetTrajectoriesGazeb
   currentTargetPositions_ = ttg.currentTargetPositions_;
   currentTargetOrientations_ = ttg.currentTargetOrientations_;
 
+  dummyGoalPosition_ = ttg.dummyGoalPosition_;
+  dummyGoalOrientation_ = ttg.dummyGoalOrientation_;
+
   targetMarkerArray_ = ttg.targetMarkerArray_;
   targetMarkerArrayPublisher_ = ttg.targetMarkerArrayPublisher_;
 
@@ -204,6 +213,9 @@ TargetTrajectoriesGazebo& TargetTrajectoriesGazebo::operator=(const TargetTrajec
   currentTargetPositions_ = ttg.currentTargetPositions_;
   currentTargetOrientations_ = ttg.currentTargetOrientations_;
 
+  dummyGoalPosition_ = ttg.dummyGoalPosition_;
+  dummyGoalOrientation_ = ttg.dummyGoalOrientation_;
+
   targetMarkerArray_ = ttg.targetMarkerArray_;
   targetMarkerArrayPublisher_ = ttg.targetMarkerArrayPublisher_;
 
@@ -219,6 +231,31 @@ TargetTrajectoriesGazebo& TargetTrajectoriesGazebo::operator=(const TargetTrajec
   latestObservation_ = ttg.latestObservation_;
 
   return *this;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::updateDummyGoal(double x, double y, double z, double roll, double pitch, double yaw)
+{
+  //std::cout << "[TargetTrajectoriesGazebo::updateDummyGoal] START" << std::endl;
+
+  tf2::Quaternion quat_tf;
+  quat_tf.setRPY(roll, pitch, yaw);
+
+  dummyGoalPosition_.x() = x;
+  dummyGoalPosition_.y() = y;
+  dummyGoalPosition_.z() = z;
+
+  dummyGoalOrientation_.x() = quat_tf.x();
+  dummyGoalOrientation_.y() = quat_tf.y();
+  dummyGoalOrientation_.z() = quat_tf.z();
+  dummyGoalOrientation_.w() = quat_tf.w();
+
+  //std::cout << "[TargetTrajectoriesGazebo::updateDummyGoal] DEBUG_INF" << std::endl;
+  //while(1);
+
+  //std::cout << "[TargetTrajectoriesGazebo::updateDummyGoal] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -730,9 +767,17 @@ void TargetTrajectoriesGazebo::updateGoal(bool autoFlag)
       //publishTargetVisu();
       //publishGraspFrame();
     }
+    else
+    {
+      //std::cout << "[TargetTrajectoriesGazebo::updateGoal] DUMMY GOAL" << std::endl;
+
+      goalPosition_ = dummyGoalPosition_;
+      goalOrientation_ = dummyGoalOrientation_;
+    }
   }
   else if (taskMode_ == 2)
   {
+    //std::cout << "[TargetTrajectoriesGazebo::updateGoal] taskMode_: 2" << std::endl;
     gazebo_msgs::ModelStates ms = modelStatesMsg_;
 
     for (size_t i = 0; i < ms.name.size(); i++)
@@ -772,6 +817,13 @@ void TargetTrajectoriesGazebo::updateGoal(bool autoFlag)
     
     //publishTargetVisu();
     //publishDropFrame();
+  }
+  else
+  {
+    //std::cout << "[TargetTrajectoriesGazebo::updateGoal] DUMMY GOAL DEFAULT" << std::endl;
+
+    goalPosition_ = dummyGoalPosition_;
+    goalOrientation_ = dummyGoalOrientation_;
   }
 
   fillGoalVisu();
@@ -936,7 +988,7 @@ void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
 //-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::updateTarget(const Eigen::Vector3d& targetPos, const Eigen::Quaterniond& targetOri)
 {
-  //std::cout << "[TargetTrajectoriesGazebo::updateTarget(2)] START" << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::updateTarget(2)] START" << std::endl;
 
   currentTargetPosition_ = targetPos;
   currentTargetOrientation_ = targetOri;
@@ -946,7 +998,7 @@ void TargetTrajectoriesGazebo::updateTarget(const Eigen::Vector3d& targetPos, co
 
   targetReadyFlag_ = true;
   
-  //std::cout << "[TargetTrajectoriesGazebo::updateTarget(2)] END" << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::updateTarget(2)] END" << std::endl;
 }
 
 void TargetTrajectoriesGazebo::updateGraspPose()
@@ -1353,6 +1405,40 @@ void TargetTrajectoriesGazebo::publishTargetVisu()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::publishGoalFrame()
+{
+  //std::cout << "[TargetTrajectoriesGazebo::publishGoalFrame] START" << std::endl;
+
+  Eigen::Vector3d goalPosition = goalPosition_;
+  Eigen::Quaterniond goalOrientation = goalOrientation_;
+
+  /*
+  std::cout << "[TargetTrajectoriesGazebo::publishGoalFrame] goalPosition x: " << goalPosition.x() << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::publishGoalFrame] goalPosition y: " << goalPosition.y() << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::publishGoalFrame] goalPosition z: " << goalPosition.z() << std::endl;
+
+  std::cout << "[TargetTrajectoriesGazebo::publishGoalFrame] goalOrientation x: " << goalOrientation.x() << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::publishGoalFrame] goalOrientation y: " << goalOrientation.y() << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::publishGoalFrame] goalOrientation z: " << goalOrientation.z() << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::publishGoalFrame] goalOrientation w: " << goalOrientation.w() << std::endl;
+  */
+
+  //std::cout << "[TargetTrajectoriesGazebo::publishGoalFrame] DEBUG_INF" << std::endl;
+  //while(1);
+
+  static tf::TransformBroadcaster tf_br;
+  tf::Transform tf_virtual;
+  tf_virtual.setOrigin(tf::Vector3(goalPosition.x(), goalPosition.y(), goalPosition.z()));
+  tf_virtual.setRotation(tf::Quaternion(goalOrientation.x(), goalOrientation.y(), goalOrientation.z(), goalOrientation.w()));
+
+  tf_br.sendTransform(tf::StampedTransform(tf_virtual, ros::Time::now(), worldFrameName_, goalFrameName_));
+
+  //std::cout << "[TargetTrajectoriesGazebo::publishGoalFrame] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::publishGraspFrame()
 {
   //std::cout << "[TargetTrajectoriesGazebo::publishGraspFrame] START" << std::endl;
@@ -1463,6 +1549,7 @@ void TargetTrajectoriesGazebo::updateCallback(const ros::TimerEvent& event)
   publishTargetTrajectories();
   publishGoalVisu();
   publishTargetVisu();
+  publishGoalFrame();
   publishGraspFrame();
   publishDropFrame();
 
@@ -2068,7 +2155,7 @@ bool TargetTrajectoriesGazebo::setSystemObservationSrv(ocs2_msgs::setSystemObser
 bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req, 
                                                ocs2_msgs::setTask::Response &res)
 {
-  //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] START" << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] START" << std::endl;
 
   geometry_msgs::Pose targetPose = req.targetPose;
   res.success = true;
@@ -2089,7 +2176,7 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
   target.orientation.w = targetPose.orientation.w;
   //bool taskModeSuccess = setTask(taskMode_, target);
   
-  //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] END" << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] END" << std::endl;
   return res.success;
 }
 

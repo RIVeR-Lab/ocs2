@@ -453,6 +453,10 @@ class MobileManipulatorInterface final : public RobotInterface
     
     vector_t currentTarget_;
 
+    std::string setTargetDRLServiceName_;
+    std::string setMRTReadyServiceName_;
+    std::string setMPCActionResultServiceName_;
+
     benchmark::RepeatedTimer mpcTimer0_;
     benchmark::RepeatedTimer mpcTimer1_;
     benchmark::RepeatedTimer mpcTimer2_;

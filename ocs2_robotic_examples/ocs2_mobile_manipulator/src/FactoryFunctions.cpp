@@ -128,9 +128,9 @@ PinocchioInterface createPinocchioInterface(const std::string& robotUrdfPath,
   tf::StampedTransform transform_base_wrt_world;
   pinocchio::SE3 se3_base_wrt_world = pinocchio::SE3::Identity();
 
-  std::cout << "[FactoryFunctions::createPinocchioInterface(5)] base_frame_name: " << base_frame_name << std::endl;
-  std::cout << "[FactoryFunctions::createPinocchioInterface(5)] world_frame_name: " << world_frame_name << std::endl;
-  std::cout << "[FactoryFunctions::createPinocchioInterface(5)] Waiting for the transformation between base and world..." << std::endl;
+  //std::cout << "[FactoryFunctions::createPinocchioInterface(5)] base_frame_name: " << base_frame_name << std::endl;
+  //std::cout << "[FactoryFunctions::createPinocchioInterface(5)] world_frame_name: " << world_frame_name << std::endl;
+  //std::cout << "[FactoryFunctions::createPinocchioInterface(5)] Waiting for the transformation between base and world..." << std::endl;
   try
   {
     while(!tflistener.waitForTransform(world_frame_name, base_frame_name, ros::Time(0), ros::Duration(1.0))){ros::spinOnce();}

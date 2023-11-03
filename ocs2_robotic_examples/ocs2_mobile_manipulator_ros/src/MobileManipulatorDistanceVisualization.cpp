@@ -229,7 +229,7 @@ int main(int argc, char** argv)
 
     if (collisionPoints.getType() != XmlRpc::XmlRpcValue::TypeArray) 
     {
-      ROS_WARN("[MobileManipulatorDistanceVisualization::main] collision_points parameter is not of type array.");
+      std::cout << "[MobileManipulatorDistanceVisualization::main] collision_points parameter is not of type array." << std::endl;
     }
     
     //// NUA TODO: Get the point and radii info from task file! Also seperate base and arm!
@@ -239,25 +239,29 @@ int main(int argc, char** argv)
     {
       if (collisionPoints.getType() != XmlRpc::XmlRpcValue::TypeArray) 
       {
-        ROS_WARN_STREAM("[MobileManipulatorDistanceVisualization::main] collision_points[" << i << "] parameter is not of type array.");
+        if (printOutFlag)
+          std::cout << "[MobileManipulatorDistanceVisualization::main] collision_points[" << i << "] parameter is not of type array." << std::endl;
       }
 
       for (int j = 0; j < collisionPoints[i].size(); j++) 
       {
         if (collisionPoints[j].getType() != XmlRpc::XmlRpcValue::TypeArray) 
         {
-          ROS_WARN_STREAM("[MobileManipulatorDistanceVisualization::main] collision_points[" << i << "][" << j << "] parameter is not of type array.");
+          if (printOutFlag)
+            std::cout << "[MobileManipulatorDistanceVisualization::main] collision_points[" << i << "][" << j << "] parameter is not of type array." << std::endl;
         }
 
         if (collisionPoints[i][j].size() != 2) 
         {
-          ROS_WARN_STREAM("[MobileManipulatorDistanceVisualization::main] collision_points[" << i << "][" << j << "] does not have 2 elements.");
+          if (printOutFlag)
+            std::cout << "[MobileManipulatorDistanceVisualization::main] collision_points[" << i << "][" << j << "] does not have 2 elements." << std::endl;
         }
 
         double segmentId = collisionPoints[i][j][0];
         double radius = collisionPoints[i][j][1];
         pointsAndRadii[i].push_back(pair_t(segmentId, radius));
-        ROS_INFO_STREAM("[MobileManipulatorDistanceVisualization::main] segment=" << i << ". relative pos on segment:" << segmentId << ". radius:" << radius);
+        if (printOutFlag)
+          std::cout << "[MobileManipulatorDistanceVisualization::main] segment=" << i << ". relative pos on segment:" << segmentId << ". radius:" << radius << std::endl;
       }
     }
   }
