@@ -453,6 +453,7 @@ class MobileManipulatorInterface final : public RobotInterface
     
     vector_t currentTarget_;
 
+    std::string setActionDRLServiceName_;
     std::string setTargetDRLServiceName_;
     std::string setMRTReadyServiceName_;
     std::string setMPCActionResultServiceName_;
