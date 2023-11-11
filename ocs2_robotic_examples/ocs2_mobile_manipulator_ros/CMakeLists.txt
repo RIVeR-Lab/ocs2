@@ -85,6 +85,20 @@ link_directories(
   ${pinocchio_LIBRARY_DIRS}
 )
 
+# Simplified MPC+MRT node
+add_executable(mobile_manipulator_node_simplified
+  src/MobileManipulatorNodeSimplified.cpp
+)
+add_dependencies(mobile_manipulator_node_simplified
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(mobile_manipulator_node_simplified
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${EIGEN_LIBRARIES}
+)
+target_compile_options(mobile_manipulator_node_simplified PUBLIC ${FLAGS})
+
 # MPC+MRT node
 add_executable(mobile_manipulator_node
   src/MobileManipulatorNode.cpp

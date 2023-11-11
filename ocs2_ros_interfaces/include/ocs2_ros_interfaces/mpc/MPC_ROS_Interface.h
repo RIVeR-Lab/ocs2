@@ -19,7 +19,13 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <nlohmann/json.hpp>
+#include <fstream>
+#include <boost/filesystem.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
+#include <ros/package.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/UInt8.h>
 #include <ros/callback_queue.h>
@@ -98,6 +104,16 @@ class MPC_ROS_Interface
      */
     //void setExtMapUtility(std::shared_ptr<ExtMapUtility> emuPtr);
 
+    void setTargetTrajectories(TargetTrajectories& tt)
+    {
+      testTargetTrajectories_ = tt;
+    }
+
+    void setSystemObservation(SystemObservation& so)
+    {
+      testCurrentObservation_ = so;
+    }
+
     /**
      * Resets the class to its instantiation state.
      *
@@ -122,7 +138,9 @@ class MPC_ROS_Interface
      */
     void launchNodes(ros::NodeHandle& nodeHandle);
 
-    void run();
+    void computeTraj(TargetTrajectories& targetTrajectories, SystemObservation& currentObservation);
+
+    void computeTraj2(TargetTrajectories targetTrajectories, SystemObservation currentObservation, bool flag_reset=true);
 
   protected:
     /**
@@ -172,11 +190,20 @@ class MPC_ROS_Interface
      */
     void mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg);
 
+    void writeData();
+
+    void loadData();
+
   protected:
     /*
     * Variables
     */
     MPC_BASE& mpc_;
+
+    int ctr_ = 0;
+
+    TargetTrajectories testTargetTrajectories_;
+    SystemObservation testCurrentObservation_;
 
     bool shutDownFlag_ = false;
     //bool mpcLaunchReadyFlag_ = false;

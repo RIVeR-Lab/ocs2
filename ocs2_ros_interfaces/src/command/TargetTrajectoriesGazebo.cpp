@@ -2185,7 +2185,7 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
 //-------------------------------------------------------------------------------------------------------
 bool TargetTrajectoriesGazebo::setTask(int taskMode, geometry_msgs::Pose targetPose)
 {
-  //std::cout << "[TargetTrajectoriesGazebo::setTask] START" << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::setTask] START" << std::endl;
 
   bool success = false;
   ocs2_msgs::setTask srv;
@@ -2203,7 +2203,7 @@ bool TargetTrajectoriesGazebo::setTask(int taskMode, geometry_msgs::Pose targetP
     success = false;
   }
 
-  //std::cout << "[TargetTrajectoriesGazebo::setTask] END" << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::setTask] END" << std::endl;
   
   return success;
 }

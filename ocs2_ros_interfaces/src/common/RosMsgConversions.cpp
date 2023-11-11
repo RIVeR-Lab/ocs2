@@ -133,16 +133,34 @@ ModeSchedule readModeScheduleMsg(const ocs2_msgs::mode_schedule& modeScheduleMsg
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-ocs2_msgs::mpc_performance_indices createPerformanceIndicesMsg(scalar_t initTime, const PerformanceIndex& performanceIndices) {
+ocs2_msgs::mpc_performance_indices createPerformanceIndicesMsg(scalar_t initTime, const PerformanceIndex& performanceIndices) 
+{
+  std::cout << "[RosMsgConversions::mpc_performance_indices::createPerformanceIndicesMsg] START" << std::endl;
+
   ocs2_msgs::mpc_performance_indices performanceIndicesMsg;
 
+  std::cout << "[RosMsgConversions::mpc_performance_indices::createPerformanceIndicesMsg] initTime: " << initTime << std::endl;
   performanceIndicesMsg.initTime = initTime;
+
+  std::cout << "[RosMsgConversions::mpc_performance_indices::createPerformanceIndicesMsg] merit: " << performanceIndices.merit << std::endl;
   performanceIndicesMsg.merit = performanceIndices.merit;
+
+  std::cout << "[RosMsgConversions::mpc_performance_indices::createPerformanceIndicesMsg] cost: " << performanceIndices.cost << std::endl;
   performanceIndicesMsg.cost = performanceIndices.cost;
+
+  std::cout << "[RosMsgConversions::mpc_performance_indices::createPerformanceIndicesMsg] dynamicsViolationSSE: " << performanceIndices.dynamicsViolationSSE << std::endl;
   performanceIndicesMsg.dynamicsViolationSSE = performanceIndices.dynamicsViolationSSE;
+
+  std::cout << "[RosMsgConversions::mpc_performance_indices::createPerformanceIndicesMsg] equalityConstraintsSSE: " << performanceIndices.equalityConstraintsSSE << std::endl;
   performanceIndicesMsg.equalityConstraintsSSE = performanceIndices.equalityConstraintsSSE;
+
+  std::cout << "[RosMsgConversions::mpc_performance_indices::createPerformanceIndicesMsg] equalityLagrangian: " << performanceIndices.equalityLagrangian << std::endl;
   performanceIndicesMsg.equalityLagrangian = performanceIndices.equalityLagrangian;
+
+  std::cout << "[RosMsgConversions::mpc_performance_indices::createPerformanceIndicesMsg] inequalityLagrangian: " << performanceIndices.inequalityLagrangian << std::endl;
   performanceIndicesMsg.inequalityLagrangian = performanceIndices.inequalityLagrangian;
+
+  std::cout << "[RosMsgConversions::mpc_performance_indices::createPerformanceIndicesMsg] END" << std::endl;
 
   return performanceIndicesMsg;
 }

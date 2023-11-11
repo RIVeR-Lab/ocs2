@@ -80,6 +80,8 @@ class GaussNewtonDDP : public SolverBase
 
     void reset() override;
 
+    void loadInitialData() override;
+
     size_t getNumIterations() const override 
     { 
       return totalNumIterations_; 

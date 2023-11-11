@@ -362,6 +362,13 @@ scalar_t computeCost(const OptimalControlProblem& problem,
   const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
   //TargetTrajectories targetTrajectories(0);
 
+  //std::cout << "[LinearQuadraticApproximator::computeCost(5)] targetTrajectories size:" << targetTrajectories.stateTrajectory.size() << std::endl;
+  //for (size_t i = 0; i < targetTrajectories.stateTrajectory.size(); i++)
+  //{
+  //  std::cout << targetTrajectories.stateTrajectory[i] << std::endl;
+  //}
+  
+
   const auto& preComputation = *problem.preComputationPtr;
 
   // Compute and sum all costs

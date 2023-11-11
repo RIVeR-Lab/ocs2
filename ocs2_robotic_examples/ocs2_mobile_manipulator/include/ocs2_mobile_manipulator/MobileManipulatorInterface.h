@@ -22,6 +22,8 @@
 #include <pinocchio/multibody/model.hpp>
 #include <cstdlib>
 //#include <voxblox/interpolator/interpolator.h>
+#include <nav_msgs/Odometry.h>
+#include <sensor_msgs/JointState.h>
 
 // OCS2
 #include <ocs2_core/Types.h>
@@ -185,6 +187,11 @@ class MobileManipulatorInterface final : public RobotInterface
     }
     */
 
+    std::string getOdomMsgName() 
+    { 
+      return odomMsgName_;
+    }
+
     std::string getBaseStateMsg() 
     { 
       return baseStateMsg_;
@@ -233,6 +240,12 @@ class MobileManipulatorInterface final : public RobotInterface
 
     void initializePointsOnRobotPtr(std::string& collisionPointsName);
 
+    void updateFullModelState(std::vector<double>& statePositionBase, 
+                              std::vector<double>& statePositionArm,
+                              std::vector<double>& stateVelocityBase);
+
+    SystemObservation getCurrentObservation(scalar_t time=0.0);
+
     void setMPCProblem();
 
     /*
@@ -268,6 +281,8 @@ class MobileManipulatorInterface final : public RobotInterface
     void mpcCallback(const ros::TimerEvent& event);
 
     void mrtCallback(const ros::TimerEvent& event);
+
+    void calculateMPCTrajectory();
   
   private:
     std::unique_ptr<StateInputCost> getQuadraticInputCost();
@@ -279,6 +294,12 @@ class MobileManipulatorInterface final : public RobotInterface
     std::unique_ptr<StateCost> getSelfCollisionConstraint(const std::string& prefix);
 
     std::unique_ptr<StateCost> getExtCollisionConstraint(const std::string& prefix);
+
+    void updateStateIndexMap();
+
+    void odomCallback(const nav_msgs::Odometry::ConstPtr& msg);
+
+    void jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 
     bool setTargetDRL(double x, double y, double z, double roll, double pitch, double yaw);
 
@@ -302,6 +323,11 @@ class MobileManipulatorInterface final : public RobotInterface
 
     ros::NodeHandle nodeHandle_;
     tf::TransformListener tfListener_;
+
+    bool initFlagBaseState_ = false;
+    bool initFlagArmState_ = false;
+    nav_msgs::Odometry odomMsg_;
+    sensor_msgs::JointState jointStateMsg_;
 
     ros::Timer mpcTimer_;
     ros::Timer mrtTimer_;
@@ -443,8 +469,10 @@ class MobileManipulatorInterface final : public RobotInterface
     std::shared_ptr<SystemDynamicsBase> dynamicsPtr_mode2_;
     // -----------------
 
+    std::string odomMsgName_;
     std::string baseStateMsg_;
     std::string armStateMsg_;
+    std::vector<int> stateIndexMap_;
 
     std::string baseControlMsg_;
     std::string armControlMsg_;
@@ -481,6 +509,8 @@ class MobileManipulatorInterface final : public RobotInterface
 
     ros::Subscriber modelModeSubscriber_;
     ros::Subscriber targetTrajectoriesSubscriber_;
+    ros::Subscriber odomSubscriber_;
+    ros::Subscriber jointStateSub_;
 
     ros::ServiceClient setTargetDRLClient_;
     ros::ServiceClient setMPCActionResultClient_;

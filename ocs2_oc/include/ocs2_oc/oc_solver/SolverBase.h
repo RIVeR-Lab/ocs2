@@ -69,6 +69,8 @@ class SolverBase
      */
     virtual void reset() = 0;
 
+    virtual void loadInitialData() = 0;
+
     /**
      * The main routine of solver which runs the optimizer for a given initial state, initial time, and final time.
      *
