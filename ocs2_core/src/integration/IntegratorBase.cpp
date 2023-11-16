@@ -109,12 +109,31 @@ void IntegratorBase::integrateConst(OdeBase& system, Observer& observer, const v
 /******************************************************************************************************/
 void IntegratorBase::integrateAdaptive(OdeBase& system, Observer& observer, const vector_t& initialState, scalar_t startTime,
                                        scalar_t finalTime, scalar_t dtInitial /*= 0.01*/, scalar_t AbsTol /*= 1e-6*/,
-                                       scalar_t RelTol /*= 1e-3*/, int maxNumSteps /*= std::numeric_limits<int>::max()*/) {
-  observer_func_t callback = [&](const vector_t& x, scalar_t t) {
+                                       scalar_t RelTol /*= 1e-3*/, int maxNumSteps /*= std::numeric_limits<int>::max()*/) 
+{
+  //std::cout << "[IntegratorBase::integrateAdaptive] START" << std::endl;
+  
+  /*
+  std::cout << "[IntegratorBase::integrateAdaptive] initialState: " << initialState << std::endl;
+  std::cout << "[IntegratorBase::integrateAdaptive] startTime: " << startTime << std::endl;
+  std::cout << "[IntegratorBase::integrateAdaptive] finalTime: " << finalTime << std::endl;
+  std::cout << "[IntegratorBase::integrateAdaptive] dtInitial: " << dtInitial << std::endl;
+  std::cout << "[IntegratorBase::integrateAdaptive] AbsTol: " << AbsTol << std::endl;
+  std::cout << "[IntegratorBase::integrateAdaptive] RelTol: " << RelTol << std::endl;
+  std::cout << "[IntegratorBase::integrateAdaptive] maxNumSteps: " << maxNumSteps << std::endl;
+  */
+
+  observer_func_t callback = [&](const vector_t& x, scalar_t t) 
+  {
     observer.observe(x, t);
     eventHandlerPtr_->handleEvent(system, t, x);
   };
+
+  //std::cout << "[IntegratorBase::integrateAdaptive] BEFORE runIntegrateAdaptive" << std::endl;
+
   runIntegrateAdaptive(systemFunction(system, maxNumSteps), callback, initialState, startTime, finalTime, dtInitial, AbsTol, RelTol);
+
+  //std::cout << "[IntegratorBase::integrateAdaptive] END" << std::endl;
 }
 
 /******************************************************************************************************/

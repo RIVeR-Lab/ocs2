@@ -215,4 +215,45 @@ std::ostream& operator<<(std::ostream& out, const FeedforwardController& control
   return out;
 }
 
+/// NUA TODO: GET RID OF ASAP IN THE BASE CLASS!
+scalar_array_t FeedforwardController::getTimeStamp()
+{
+  std::cout << "[FeedforwardController::getTimeStamp] ERROR: NOT IMPLEMENTED!" << std::endl;
+}
+
+vector_array_t FeedforwardController::getBiasArray()
+{
+  std::cout << "[FeedforwardController::getBiasArray] ERROR: NOT IMPLEMENTED!" << std::endl;
+}
+
+vector_array_t FeedforwardController::getDeltaBiasArray()
+{
+  std::cout << "[FeedforwardController::getDeltaBiasArray] ERROR: NOT IMPLEMENTED!" << std::endl;
+}
+
+matrix_array_t FeedforwardController::getGainArray()
+{
+  std::cout << "[FeedforwardController::getGainArray] ERROR: NOT IMPLEMENTED!" << std::endl;
+}
+
+void FeedforwardController::setTimeStamp(scalar_array_t& ts)
+{
+  std::cout << "[FeedforwardController::setTimeStamp] ERROR: NOT IMPLEMENTED!" << std::endl;
+}
+  
+void FeedforwardController::setBiasArray(vector_array_t& ba)
+{
+  std::cout << "[FeedforwardController::setBiasArray] ERROR: NOT IMPLEMENTED!" << std::endl;
+}
+  
+void FeedforwardController::setDeltaBiasArray(vector_array_t& dba)
+{
+  std::cout << "[FeedforwardController::setDeltaBiasArray] ERROR: NOT IMPLEMENTED!" << std::endl;
+}
+  
+void FeedforwardController::setGainArray(matrix_array_t& ga)
+{
+  std::cout << "[FeedforwardController::setGainArray] ERROR: NOT IMPLEMENTED!" << std::endl;
+}
+
 }  // namespace ocs2

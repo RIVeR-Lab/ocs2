@@ -134,4 +134,45 @@ StateBasedLinearController* StateBasedLinearController::clone() const {
   return new StateBasedLinearController(*this);
 }
 
+/// NUA TODO: GET RID OF ASAP IN THE BASE CLASS!
+scalar_array_t StateBasedLinearController::getTimeStamp()
+{
+  std::cout << "[StateBasedLinearController::getTimeStamp] ERROR: NOT IMPLEMENTED!" << std::endl;
+}
+
+vector_array_t StateBasedLinearController::getBiasArray()
+{
+  std::cout << "[StateBasedLinearController::getBiasArray] ERROR: NOT IMPLEMENTED!" << std::endl;
+}
+
+vector_array_t StateBasedLinearController::getDeltaBiasArray()
+{
+  std::cout << "[StateBasedLinearController::getDeltaBiasArray] ERROR: NOT IMPLEMENTED!" << std::endl;
+}
+
+matrix_array_t StateBasedLinearController::getGainArray()
+{
+  std::cout << "[StateBasedLinearController::getGainArray] ERROR: NOT IMPLEMENTED!" << std::endl;
+}
+
+void StateBasedLinearController::setTimeStamp(scalar_array_t& ts)
+{
+  std::cout << "[StateBasedLinearController::setTimeStamp] ERROR: NOT IMPLEMENTED!" << std::endl;
+}
+  
+void StateBasedLinearController::setBiasArray(vector_array_t& ba)
+{
+  std::cout << "[StateBasedLinearController::setBiasArray] ERROR: NOT IMPLEMENTED!" << std::endl;
+}
+  
+void StateBasedLinearController::setDeltaBiasArray(vector_array_t& dba)
+{
+  std::cout << "[StateBasedLinearController::setDeltaBiasArray] ERROR: NOT IMPLEMENTED!" << std::endl;
+}
+  
+void StateBasedLinearController::setGainArray(matrix_array_t& ga)
+{
+  std::cout << "[StateBasedLinearController::setGainArray] ERROR: NOT IMPLEMENTED!" << std::endl;
+}
+
 }  // namespace ocs2

@@ -213,6 +213,13 @@ class SolverBase
     virtual const DualSolution& getDualSolution() const = 0;
 
     /**
+     * @brief Returns the optimized primal solution.
+     *
+     * @return: The optimized primal solution.
+     */
+    virtual const PrimalSolution& getPrimalSolution() const = 0;
+
+    /**
      * @brief Returns the optimized value of the Metrics.
      *
      * @return: The solution's metrics.
@@ -259,6 +266,10 @@ class SolverBase
      * Gets benchmarking information.
      */
     virtual std::string getBenchmarkingInfo() const { return {}; }
+
+    virtual void setOptimizedPrimalSolution(PrimalSolution& ops) = 0;
+
+    virtual void setOptimizedDualSolution(DualSolution& ods) = 0;
 
     /**
      * Prints to output.

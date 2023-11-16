@@ -114,20 +114,31 @@ void RolloutBase::checkNumericalStability(const ControllerBase& controller,
                                           const vector_array_t& stateTrajectory,
                                           const vector_array_t& inputTrajectory) const 
 {
-  if (!rolloutSettings_.checkNumericalStability) {
+  //std::cout << "[RolloutBase::checkNumericalStability] START" << std::endl;
+
+  if (!rolloutSettings_.checkNumericalStability) 
+  {
+    //std::cout << "[RolloutBase::checkNumericalStability] END 0" << std::endl;
     return;
   }
 
-  for (size_t i = 0; i < timeTrajectory.size(); i++) {
-    try {
-      if (!stateTrajectory[i].allFinite()) {
+  for (size_t i = 0; i < timeTrajectory.size(); i++) 
+  {
+    try 
+    {
+      if (!stateTrajectory[i].allFinite()) 
+      {
         throw std::runtime_error("[RolloutBase::checkNumericalStability] State is not finite");
       }
-      if (rolloutSettings_.reconstructInputTrajectory && !inputTrajectory[i].allFinite()) {
+
+      if (rolloutSettings_.reconstructInputTrajectory && !inputTrajectory[i].allFinite()) 
+      {
         throw std::runtime_error("[RolloutBase::checkNumericalStability] input is not finite");
       }
-    } catch (const std::exception& error) {
-      std::cerr << "[RolloutBase::checkNumericalStability] what(): " << error.what() << " at time " + std::to_string(timeTrajectory[i]) + " [sec]." << '\n';
+    } 
+    catch (const std::exception& error) 
+    {
+      //std::cerr << "[RolloutBase::checkNumericalStability] what(): " << error.what() << " at time " + std::to_string(timeTrajectory[i]) + " [sec]." << '\n';
 
       // truncate trajectories
       scalar_array_t timeTrajectoryTemp;
@@ -150,5 +161,7 @@ void RolloutBase::checkNumericalStability(const ControllerBase& controller,
       throw;
     }
   }  // end of i loop
+
+  //std::cout << "[RolloutBase::checkNumericalStability] END" << std::endl;
 }
 }  // namespace ocs2

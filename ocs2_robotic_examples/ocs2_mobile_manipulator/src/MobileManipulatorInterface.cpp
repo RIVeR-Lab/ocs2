@@ -1953,16 +1953,12 @@ void MobileManipulatorInterface::calculateMPCTrajectory()
   //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] DEBUF_INF" << std::endl;
   //while(1);
   //spinOnce();
-  bool flag_reset = false;
-  for (size_t i = 0; i < 3; i++)
+  bool flag_reset = true;
+  for (size_t i = 0; i < 10; i++)
   {
     std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE getTargetTrajectories: " << referenceManagerPtr_->getTargetTrajectories().stateTrajectory.size() << std::endl;
     std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE computeTraj2" << std::endl << std::endl;
-    
-    if (i > 0)
-    {
-      flag_reset = false;
-    }
+
     mpcNode.computeTraj2(targetTrajectories, currentObservation, flag_reset);
     std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] AFTER getTargetTrajectories: " << referenceManagerPtr_->getTargetTrajectories().stateTrajectory.size() << std::endl;
 

@@ -138,8 +138,6 @@ class MPC_ROS_Interface
      */
     void launchNodes(ros::NodeHandle& nodeHandle);
 
-    void computeTraj(TargetTrajectories& targetTrajectories, SystemObservation& currentObservation);
-
     void computeTraj2(TargetTrajectories targetTrajectories, SystemObservation currentObservation, bool flag_reset=true);
 
   protected:

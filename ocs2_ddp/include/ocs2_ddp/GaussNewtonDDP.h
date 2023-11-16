@@ -114,6 +114,11 @@ class GaussNewtonDDP : public SolverBase
       return optimizedDualSolution_; 
     }
 
+    const PrimalSolution& getPrimalSolution() const override 
+    { 
+      return optimizedPrimalSolution_; 
+    }
+
     const ProblemMetrics& getSolutionMetrics() const override 
     { 
       return optimizedProblemMetrics_; 
@@ -147,6 +152,10 @@ class GaussNewtonDDP : public SolverBase
     { 
       internalShutDownFlag_ = internalShutDownFlag; 
     }
+
+    void setOptimizedPrimalSolution(PrimalSolution& ops) override;
+
+    void setOptimizedDualSolution(DualSolution& ods) override;
 
     /**
      * Const access to ddp settings

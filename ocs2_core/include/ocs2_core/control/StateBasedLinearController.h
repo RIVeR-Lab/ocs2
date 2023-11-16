@@ -78,6 +78,17 @@ class StateBasedLinearController final : public ControllerBase {
 
   StateBasedLinearController* clone() const override;
 
+  /// NUA TODO: GET RID OF ASAP IN THE BASE CLASS!
+  scalar_array_t getTimeStamp() override;
+  vector_array_t getBiasArray() override; 
+  vector_array_t getDeltaBiasArray() override;
+  matrix_array_t getGainArray() override;
+
+  void setTimeStamp(scalar_array_t& ts) override;
+  void setBiasArray(vector_array_t& ba) override;
+  void setDeltaBiasArray(vector_array_t& dba) override;
+  void setGainArray(matrix_array_t& ga) override;
+
  private:
   ControllerBase* ctrlPtr_ = nullptr;
   scalar_array_t ctrlEventTimes_{0};

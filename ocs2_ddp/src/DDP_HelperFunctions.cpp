@@ -291,6 +291,34 @@ scalar_t rolloutTrajectory(RolloutBase& rollout,
 {
   //std::cout << "[DDP_HelperFunctions::rolloutTrajectory] START" << std::endl;
 
+  //std::cout << "[DDP_HelperFunctions::rolloutTrajectory] initTime: " << initTime << std::endl;
+  //std::cout << "[DDP_HelperFunctions::rolloutTrajectory] finalTime: " << finalTime << std::endl;
+  //std::cout << "[DDP_HelperFunctions::rolloutTrajectory] initState: " << std::endl << initState << std::endl;
+  //std::cout << "----------" << std::endl;
+
+  /*
+  std::cout << "[DDP_HelperFunctions::rolloutTrajectory] primalSolution.timeTrajectory_ size: " << primalSolution.timeTrajectory_.size() << std::endl;
+  for (size_t i = 0; i < primalSolution.timeTrajectory_.size(); i++)
+  {
+    std::cout << i << " -> " << primalSolution.timeTrajectory_[i] << std::endl;
+  }
+  */
+
+  //std::cout << "[DDP_HelperFunctions::rolloutTrajectory] START rollout.run" << std::endl;
+  
+  /*
+  if (primalSolution.controllerPtr_.get()->getType() == ControllerType::LINEAR)
+  {
+    std::cout << "[DDP_HelperFunctions::rolloutTrajectory] ControllerType::LINEAR !!!" << std::endl;
+
+    //primalSolution.controllerPtr_->display();
+  }
+  else
+  {
+    std::cout << "[DDP_HelperFunctions::rolloutTrajectory] NOOOOOOOOOOOOOOOOOOOOOO ControllerType::LINEAR !!!" << std::endl;
+  }
+  */
+
   // rollout with controller
   const auto xCurrent = rollout.run(initTime, 
                                     initState, 
@@ -302,6 +330,14 @@ scalar_t rolloutTrajectory(RolloutBase& rollout,
                                     primalSolution.stateTrajectory_,
                                     primalSolution.inputTrajectory_);
   //std::cout << "[DDP_HelperFunctions::rolloutTrajectory] END rollout.run" << std::endl;
+
+  /*
+  std::cout << "[DDP_HelperFunctions::rolloutTrajectory] xCurrent:" << std::endl;
+  for (size_t i = 0; i < xCurrent.size(); i++)
+  {
+    std::cout << i << " -> " << xCurrent[i] << std::endl;
+  }
+  */
 
   if (!xCurrent.allFinite()) 
   {

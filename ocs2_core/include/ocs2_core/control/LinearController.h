@@ -91,6 +91,22 @@ class LinearController final : public ControllerBase {
 
   void display() const override;
 
+  scalar_array_t getTimeStamp() override;
+
+  vector_array_t getBiasArray() override;
+  
+  vector_array_t getDeltaBiasArray() override;
+  
+  matrix_array_t getGainArray() override;
+
+  void setTimeStamp(scalar_array_t& ts) override;
+
+  void setBiasArray(vector_array_t& ba) override;
+  
+  void setDeltaBiasArray(vector_array_t& dba) override;
+  
+  void setGainArray(matrix_array_t& ga) override;
+
   void getFeedbackGain(scalar_t time, matrix_t& gain) const;
 
   void getBias(scalar_t time, vector_t& bias) const;
@@ -99,7 +115,9 @@ class LinearController final : public ControllerBase {
 
   void flatten(const scalar_array_t& timeArray, const std::vector<std::vector<float>*>& flatArray2) const override;
 
-  static LinearController unFlatten(const size_array_t& stateDim, const size_array_t& inputDim, const scalar_array_t& timeArray,
+  static LinearController unFlatten(const size_array_t& stateDim, 
+                                    const size_array_t& inputDim, 
+                                    const scalar_array_t& timeArray,
                                     const std::vector<std::vector<float> const*>& flatArray2);
 
  private:

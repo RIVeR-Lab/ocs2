@@ -68,13 +68,22 @@ void SolverBase::run(scalar_t initTime, const vector_t& initState, const vector_
 {
   std::cout << "[SolverBase::run(4)] START" << std::endl;
 
-  std::cout << "[SolverBase::run(4)] targetTrajectories BEFORE size:" << this->getReferenceManager().getTargetTrajectories().stateTrajectory.size() << std::endl;
+  //std::cout << "[SolverBase::run(4)] targetTrajectories BEFORE preRun size:" << this->getReferenceManager().getTargetTrajectories().stateTrajectory.size() << std::endl;
+
+  //std::cout << "[SolverBase::run(4)] DEBUG_INF" << std::endl;
+  //while(1);
 
   preRun(initTime, initState, finalTime);
+
+  //std::cout << "[SolverBase::run(4)] targetTrajectories BEFORE runImpl size:" << this->getReferenceManager().getTargetTrajectories().stateTrajectory.size() << std::endl;
+
   runImpl(initTime, initState, initFullState, finalTime);
+
+  //std::cout << "[SolverBase::run(4)] targetTrajectories BEFORE postRun size:" << this->getReferenceManager().getTargetTrajectories().stateTrajectory.size() << std::endl;
+
   postRun();
 
-  std::cout << "[SolverBase::run(4)] targetTrajectories AFTER size:" << this->getReferenceManager().getTargetTrajectories().stateTrajectory.size() << std::endl;
+  //std::cout << "[SolverBase::run(4)] targetTrajectories AFTER size:" << this->getReferenceManager().getTargetTrajectories().stateTrajectory.size() << std::endl;
 
   std::cout << "[SolverBase::run(4)] END" << std::endl;
 }

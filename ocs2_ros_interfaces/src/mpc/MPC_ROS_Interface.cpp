@@ -241,12 +241,12 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(const 
   switch (primalSolution.controllerPtr_->getType()) 
   {
     case ControllerType::FEEDFORWARD:
-      //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE FEEDFORWARD: " << std::endl;
+      std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE FEEDFORWARD: " << std::endl;
       mpcPolicyMsg.controllerType = ocs2_msgs::mpc_flattened_controller::CONTROLLER_FEEDFORWARD;
       break;
     
     case ControllerType::LINEAR:
-      //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE LINEAR: " << std::endl;
+      std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE LINEAR: " << std::endl;
       mpcPolicyMsg.controllerType = ocs2_msgs::mpc_flattened_controller::CONTROLLER_LINEAR;
       break;
     
@@ -331,8 +331,7 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(const 
   for (auto t : primalSolution.timeTrajectory_) 
   {
     mpcPolicyMsg.data.emplace_back(ocs2_msgs::controller_data());
-
-    policyMsgDataPointers.push_back(&mpcPolicyMsg.data.back().data);
+    policyMsgDataPointers.push_back(&mpcPolicyMsg.data.back().data);    
     timeTrajectoryTruncated.push_back(t);
   }  // end of k loop
 
@@ -340,7 +339,28 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(const 
 
   //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE flatten" << std::endl;
   // serialize controller into data buffer
+  //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE flatten 1" << std::endl;
   primalSolution.controllerPtr_->flatten(timeTrajectoryTruncated, policyMsgDataPointers);
+
+  /*
+  std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] policyMsgDataPointers size: " << policyMsgDataPointers.size() << std::endl;
+  bool sameCheck = true;
+  for (size_t i = 0; i < policyMsgDataPointers.size(); i++)
+  {
+    std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] policyMsgDataPointers " << i << " size: " << policyMsgDataPointers[i]->size() << std::endl;
+    for (size_t j = 0; j < policyMsgDataPointers[i]->size(); j++)
+    {
+      //std::cout << j << " -> " << (*policyMsgDataPointers[i])[j] << std::endl;
+      if ((*policyMsgDataPointers[i])[j] != mpcPolicyMsg.data[i].data[j])
+      {
+        sameCheck = false;
+      }
+    }
+  }
+  */
+
+  //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] DEBUG_INF" << std::endl;
+  //while(1);
 
   //ros::spinOnce();
 
@@ -394,7 +414,7 @@ void MPC_ROS_Interface::publisherWorker()
 //-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::copyToBuffer(const SystemObservation& mpcInitObservation) 
 {
-  std::cout << "[MPC_ROS_Interface::copyToBuffer] START" << std::endl;
+  //std::cout << "[MPC_ROS_Interface::copyToBuffer] START" << std::endl;
 
   // buffer policy mutex
   std::lock_guard<std::mutex> policyBufferLock(bufferMutex_);
@@ -408,12 +428,14 @@ void MPC_ROS_Interface::copyToBuffer(const SystemObservation& mpcInitObservation
   }
   mpc_.getSolverPtr()->getPrimalSolution(finalTime, bufferPrimalSolutionPtr_.get());
 
+  //std::cout << "[MPC_ROS_Interface::copyToBuffer] bufferPrimalSolutionPtr_ controllerPtr_ size: " << bufferPrimalSolutionPtr_->controllerPtr_->size() << std::endl;
+
   // Command
   bufferCommandPtr_->mpcInitObservation_ = mpcInitObservation;
 
-  std::cout << "[MPC_ROS_Interface::copyToBuffer] BEFORE getTargetTrajectories" << std::endl;
+  //std::cout << "[MPC_ROS_Interface::copyToBuffer] BEFORE getTargetTrajectories" << std::endl;
   bufferCommandPtr_->mpcTargetTrajectories_ = mpc_.getSolverPtr()->getReferenceManager().getTargetTrajectories();
-  std::cout << "[MPC_ROS_Interface::copyToBuffer] AFTER getTargetTrajectories" << std::endl;
+  //std::cout << "[MPC_ROS_Interface::copyToBuffer] AFTER getTargetTrajectories" << std::endl;
 
   // Performance indices
   *bufferPerformanceIndicesPtr_ = mpc_.getSolverPtr()->getPerformanceIndeces();
@@ -446,7 +468,7 @@ void MPC_ROS_Interface::copyToBuffer(const SystemObservation& mpcInitObservation
   std::cout << "[MPC_ROS_Interface::copyToBuffer] bufferPerformanceIndicesPtr_ merit: " << bufferPerformanceIndicesPtr_->merit << std::endl;
   */
 
-  std::cout << "[MPC_ROS_Interface::copyToBuffer] END" << std::endl;
+  //std::cout << "[MPC_ROS_Interface::copyToBuffer] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -723,89 +745,6 @@ void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MPC_ROS_Interface::computeTraj(TargetTrajectories& targetTrajectories, SystemObservation& currentObservation) 
-{
-  std::cout << "[MPC_ROS_Interface::computeTraj] START" << std::endl;
-
-  resetMpcNode(std::move(targetTrajectories));
-
-  //ros::spinOnce();
-
-  // current time, state, input, and subsystem
-  //const auto currentObservation = ros_msg_conversions::readObservationMsg(*msg);
-
-  bool controllerIsUpdated;
-  internalShutDownFlag_ = false;
-
-  std::cout << "[MPC_ROS_Interface::computeTraj] BEFORE run" << std::endl;
-  mpcTimer_.startTimer();
-  controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state, currentObservation.full_state);
-  mpcTimer_.endTimer();
-  std::cout << "[MPC_ROS_Interface::computeTraj] AFTER run" << std::endl;
-  
-  //ros::spinOnce();
-
-  std::cout << "[MPC_ROS_Interface::computeTraj] controllerIsUpdated: " << controllerIsUpdated << std::endl;
-
-  internalShutDownFlag_ = mpc_.getInternalShutDownFlag();
-  std::cout << "[MPC_ROS_Interface::computeTraj] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
-
-  //ros::spinOnce();
-
-  // Check MPC delay and solution window compatibility
-  scalar_t timeWindow;
-  timeWindow = mpc_.settings().solutionTimeWindow_;
-  if (mpc_.settings().solutionTimeWindow_ < 0) 
-  {
-    timeWindow = mpc_.getSolverPtr()->getFinalTime() - currentObservation.time;
-  }
-
-  if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) 
-  {
-    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] WARNING: The solution time window might be shorter than the MPC delay!" << std::endl;
-  }
-
-  //ros::spinOnce();
-
-  // Display time benchmarks
-  //if (mpc_.settings().debugPrint_) 
-  if (true) 
-  {
-    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] ### MPC_ROS Benchmarking" << std::endl;
-    std::cout << "###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms]." << std::endl;
-    std::cout << "###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms]." << std::endl;
-    std::cout << "###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl << std::endl;
-  }
-
-  //ros::spinOnce();
-
-  {
-    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE policyBufferLock" << std::endl;
-    std::lock_guard<std::mutex> policyBufferLock(bufferMutex_);
-
-    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE publisherCommandPtr_" << std::endl;
-    publisherCommandPtr_.swap(bufferCommandPtr_);
-
-    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE publisherPrimalSolutionPtr_" << std::endl;
-    publisherPrimalSolutionPtr_.swap(bufferPrimalSolutionPtr_);
-
-    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE publisherPerformanceIndicesPtr_" << std::endl;
-    publisherPerformanceIndicesPtr_.swap(bufferPerformanceIndicesPtr_);
-  }
-
-  //ros::spinOnce();
-
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE createMpcPolicyMsg" << std::endl;
-  ocs2_msgs::mpc_flattened_controller mpcPolicyMsg = createMpcPolicyMsg(*publisherPrimalSolutionPtr_, *publisherCommandPtr_, *publisherPerformanceIndicesPtr_);
-
-  //ros::spinOnce();
-
-  std::cout << "[MPC_ROS_Interface::computeTraj] END" << std::endl;
-}
-
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::computeTraj2(TargetTrajectories tt, SystemObservation co, bool flag_reset) 
 {
   std::cout << "[MPC_ROS_Interface::computeTraj2] START ctr_: " << ctr_ << std::endl;
@@ -823,17 +762,26 @@ void MPC_ROS_Interface::computeTraj2(TargetTrajectories tt, SystemObservation co
   }
   else
   {
-    std::cout << "[MPC_ROS_Interface::computeTraj2] NO RESET!!!" << std::endl;
+    std::cout << "[MPC_ROS_Interface::computeTraj2] NO RESET !!!" << std::endl;
+    mpc_.getSolverPtr()->getReferenceManager().setTargetTrajectories(std::move(tt));
   }
 
+  /*
+  if (ctr_ >= 0)
+  {
+    std::cout << "[MPC_ROS_Interface::computeTraj2] DATA LOADED !!!" << std::endl;
+    mpc_.getSolverPtr()->loadInitialData();
+    loadData();
+  }
+  */
+  //copyToBuffer(co);
 
   // very important, these are variables that are carried in between iterations
-  mpc_.getSolverPtr()->loadInitialData();
+  //mpc_.getSolverPtr()->loadInitialData();
 
+  //mpc_.getSolverPtr()->getReferenceManager().setTargetTrajectories(std::move(tt));
 
-  mpc_.getSolverPtr()->getReferenceManager().setTargetTrajectories(std::move(tt));
-
-  if (ctr_ > 1)
+  if (ctr_ > 5)
   {
     std::cout << "[MPC_ROS_Interface::computeTraj2] DEBUG_INF" << std::endl;
     while(1);
@@ -893,9 +841,13 @@ void MPC_ROS_Interface::computeTraj2(TargetTrajectories tt, SystemObservation co
   */
 
   writeData();
+  //loadData();
 
-  ocs2_msgs::mpc_flattened_controller mpcPolicyMsg = createMpcPolicyMsg(*bufferPrimalSolutionPtr_, *bufferCommandPtr_, *bufferPerformanceIndicesPtr_);
-  mpcPolicyPublisher_.publish(mpcPolicyMsg);
+  //std::cout << "[MPC_ROS_Interface::computeTraj2] DEBUG_INF" << std::endl;
+  //while(1);
+
+  //ocs2_msgs::mpc_flattened_controller mpcPolicyMsg = createMpcPolicyMsg(*bufferPrimalSolutionPtr_, *bufferCommandPtr_, *bufferPerformanceIndicesPtr_);
+  //mpcPolicyPublisher_.publish(mpcPolicyMsg);
 
   // Check MPC delay and solution window compatibility
   scalar_t timeWindow;
@@ -940,9 +892,15 @@ void MPC_ROS_Interface::computeTraj2(TargetTrajectories tt, SystemObservation co
 //-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::writeData()
 {
-  std::vector<double> primalSolution_time;
-  std::vector<std::vector<double>> primalSolution_state;
-  std::vector<std::vector<double>> primalSolution_input;
+  //std::cout << "[MPC_ROS_Interface::writeData] START" << std::endl;
+
+  std::vector<double> bufferPrimalSolution_time;
+  std::vector<std::vector<double>> bufferPrimalSolution_state;
+  std::vector<std::vector<double>> bufferPrimalSolution_input;
+  std::vector<double> bufferPrimalSolution_controller_time_stamp;
+  std::vector<std::vector<double>> bufferPrimalSolution_controller_bias_array;
+  std::vector<std::vector<double>> bufferPrimalSolution_controller_delta_bias_array;
+  std::vector<std::vector<std::vector<double>>> bufferPrimalSolution_controller_gain_array;
 
   std::vector<double> mpcTargetTrajectories_time;
   std::vector<std::vector<double>> mpcTargetTrajectories_state;
@@ -952,10 +910,51 @@ void MPC_ROS_Interface::writeData()
   std::vector<double> initObservation_fullState;
   std::vector<double> initObservation_input;
 
+  std::vector<double> optimalDualSolution_time;
+  std::vector<size_t> optimalDualSolution_postEventIndices;
+
+  std::vector<double> optimalDualSolution_final_stateEq_penalty;
+  std::vector<std::vector<double>> optimalDualSolution_final_stateEq_lagrangian;
+  std::vector<double> optimalDualSolution_final_stateIneq_penalty;
+  std::vector<std::vector<double>> optimalDualSolution_final_stateIneq_lagrangian;
+  std::vector<double> optimalDualSolution_final_stateInputEq_penalty;
+  std::vector<std::vector<double>> optimalDualSolution_final_stateInputEq_lagrangian;
+  std::vector<double> optimalDualSolution_final_stateInputIneq_penalty;
+  std::vector<std::vector<double>> optimalDualSolution_final_stateInputIneq_lagrangian;
+
+  std::vector<std::vector<double>> optimalDualSolution_preJumps_stateEq_penalty;
+  std::vector<std::vector<std::vector<double>>> optimalDualSolution_preJumps_stateEq_lagrangian;
+  std::vector<std::vector<double>> optimalDualSolution_preJumps_stateIneq_penalty;
+  std::vector<std::vector<std::vector<double>>> optimalDualSolution_preJumps_stateIneq_lagrangian;
+  std::vector<std::vector<double>> optimalDualSolution_preJumps_stateInputEq_penalty;
+  std::vector<std::vector<std::vector<double>>> optimalDualSolution_preJumps_stateInputEq_lagrangian;
+  std::vector<std::vector<double>> optimalDualSolution_preJumps_stateInputIneq_penalty;
+  std::vector<std::vector<std::vector<double>>> optimalDualSolution_preJumps_stateInputIneq_lagrangian;
+
+  std::vector<std::vector<double>> optimalDualSolution_intermediates_stateEq_penalty;
+  std::vector<std::vector<std::vector<double>>> optimalDualSolution_intermediates_stateEq_lagrangian;
+  std::vector<std::vector<double>> optimalDualSolution_intermediates_stateIneq_penalty;
+  std::vector<std::vector<std::vector<double>>> optimalDualSolution_intermediates_stateIneq_lagrangian;
+  std::vector<std::vector<double>> optimalDualSolution_intermediates_stateInputEq_penalty;
+  std::vector<std::vector<std::vector<double>>> optimalDualSolution_intermediates_stateInputEq_lagrangian;
+  std::vector<std::vector<double>> optimalDualSolution_intermediates_stateInputIneq_penalty;
+  std::vector<std::vector<std::vector<double>>> optimalDualSolution_intermediates_stateInputIneq_lagrangian;
+
+  std::vector<double> optimalPrimalSolution_time;
+  std::vector<std::vector<double>> optimalPrimalSolution_state;
+  std::vector<std::vector<double>> optimalPrimalSolution_input;
+  std::vector<size_t> optimalPrimalSolution_postEventIndices;
+  std::vector<double> optimalPrimalSolution_modeSchedule_eventTimes;
+  std::vector<size_t> optimalPrimalSolution_modeSchedule_modeSequence;
+  std::vector<double> optimalPrimalSolution_controller_time_stamp;
+  std::vector<std::vector<double>> optimalPrimalSolution_controller_bias_array;
+  std::vector<std::vector<double>> optimalPrimalSolution_controller_delta_bias_array;
+  std::vector<std::vector<std::vector<double>>> optimalPrimalSolution_controller_gain_array;
+
   // Primal Solution
   for (size_t i = 0; i < bufferPrimalSolutionPtr_->timeTrajectory_.size(); i++)
   {
-    primalSolution_time.push_back(bufferPrimalSolutionPtr_->timeTrajectory_[i]);
+    bufferPrimalSolution_time.push_back(bufferPrimalSolutionPtr_->timeTrajectory_[i]);
   }
 
   for (size_t i = 0; i < bufferPrimalSolutionPtr_->stateTrajectory_.size(); i++)
@@ -965,7 +964,7 @@ void MPC_ROS_Interface::writeData()
     {
       tmp.push_back(bufferPrimalSolutionPtr_->stateTrajectory_[i][j]);
     }
-    primalSolution_state.push_back(tmp);
+    bufferPrimalSolution_state.push_back(tmp);
   }
 
   for (size_t i = 0; i < bufferPrimalSolutionPtr_->inputTrajectory_.size(); i++)
@@ -975,8 +974,64 @@ void MPC_ROS_Interface::writeData()
     {
       tmp.push_back(bufferPrimalSolutionPtr_->inputTrajectory_[i][j]);
     }
-    primalSolution_input.push_back(tmp);
+    bufferPrimalSolution_input.push_back(tmp);
   }
+
+  scalar_array_t bufferPrimalSolution_controllerTimeStamp = bufferPrimalSolutionPtr_->controllerPtr_->getTimeStamp();
+  vector_array_t bufferPrimalSolution_controllerBiasArray = bufferPrimalSolutionPtr_->controllerPtr_->getBiasArray();
+  vector_array_t bufferPrimalSolution_controllerDeltaBiasArray = bufferPrimalSolutionPtr_->controllerPtr_->getDeltaBiasArray();
+  matrix_array_t bufferPrimalSolution_controllerGainArray = bufferPrimalSolutionPtr_->controllerPtr_->getGainArray();
+
+  bufferPrimalSolution_controller_time_stamp.resize(bufferPrimalSolution_controllerTimeStamp.size());
+  for (size_t i = 0; i < bufferPrimalSolution_controllerTimeStamp.size(); i++)
+  {
+    bufferPrimalSolution_controller_time_stamp[i] = bufferPrimalSolution_controllerTimeStamp[i];
+  }
+  
+  bufferPrimalSolution_controller_bias_array.resize(bufferPrimalSolution_controllerBiasArray.size());
+  for (size_t i = 0; i < bufferPrimalSolution_controllerBiasArray.size(); i++)
+  {
+    bufferPrimalSolution_controller_bias_array[i].resize(bufferPrimalSolution_controllerBiasArray[i].size());
+    for (size_t j = 0; j < bufferPrimalSolution_controllerBiasArray[i].size(); j++)
+    {
+      bufferPrimalSolution_controller_bias_array[i][j] = bufferPrimalSolution_controllerBiasArray[i][j];
+    }
+  }
+
+  bufferPrimalSolution_controller_delta_bias_array.resize(bufferPrimalSolution_controllerDeltaBiasArray.size());
+  for (size_t i = 0; i < bufferPrimalSolution_controllerDeltaBiasArray.size(); i++)
+  {
+    bufferPrimalSolution_controller_delta_bias_array[i].resize(bufferPrimalSolution_controllerDeltaBiasArray[i].size());
+    for (size_t j = 0; j < bufferPrimalSolution_controllerDeltaBiasArray[i].size(); j++)
+    {
+      bufferPrimalSolution_controller_delta_bias_array[i][j] = bufferPrimalSolution_controllerDeltaBiasArray[i][j];
+    }
+  }
+
+  bufferPrimalSolution_controller_gain_array.resize(bufferPrimalSolution_controllerGainArray.size());
+  for (size_t i = 0; i < bufferPrimalSolution_controllerGainArray.size(); i++)
+  {
+    bufferPrimalSolution_controller_gain_array[i].resize(bufferPrimalSolution_controllerGainArray[i].rows());
+    for (size_t j = 0; j < bufferPrimalSolution_controllerGainArray[i].rows(); j++)
+    {
+      bufferPrimalSolution_controller_gain_array[i][j].resize(bufferPrimalSolution_controllerGainArray[i].cols());
+      for (size_t k = 0; k < bufferPrimalSolution_controllerGainArray[i].cols(); k++)
+      {
+        bufferPrimalSolution_controller_gain_array[i][j][k] = bufferPrimalSolution_controllerGainArray[i](j,k);
+      }
+    }
+  }
+
+  /*
+  std::cout << "[MPC_ROS_Interface::writeData] bufferPrimalSolution_controller_time_stamp size: " << bufferPrimalSolution_controller_time_stamp.size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::writeData] bufferPrimalSolution_controller_bias_array size: " << bufferPrimalSolution_controller_bias_array.size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::writeData] bufferPrimalSolution_controller_bias_array[0] size: " << bufferPrimalSolution_controller_bias_array[0].size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::writeData] bufferPrimalSolution_controller_delta_bias_array size: " << bufferPrimalSolution_controller_delta_bias_array.size() << std::endl;
+  //std::cout << "[MPC_ROS_Interface::writeData] bufferPrimalSolution_controller_delta_bias_array[0] size: " << bufferPrimalSolution_controller_delta_bias_array[0].size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::writeData] bufferPrimalSolution_controller_gain_array size: " << bufferPrimalSolution_controller_gain_array.size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::writeData] bufferPrimalSolution_controller_gain_array[0] size: " << bufferPrimalSolution_controller_gain_array[0].size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::writeData] bufferPrimalSolution_controller_gain_array[0][0] size: " << bufferPrimalSolution_controller_gain_array[0][0].size() << std::endl;
+  */
 
   // Target Trajectories
   for (size_t i = 0; i < bufferCommandPtr_->mpcTargetTrajectories_.timeTrajectory.size(); i++)
@@ -1020,10 +1075,364 @@ void MPC_ROS_Interface::writeData()
     initObservation_input.push_back(bufferCommandPtr_->mpcInitObservation_.input[i]);
   }
 
+  // Dual Solution
+  DualSolution ods = mpc_.getSolverPtr()->getDualSolution();
+
+  for (size_t i = 0; i < ods.timeTrajectory.size(); i++)
+  {
+    optimalDualSolution_time.push_back(ods.timeTrajectory[i]);
+  }
+
+  for (size_t i = 0; i < ods.postEventIndices.size(); i++)
+  {
+    optimalDualSolution_postEventIndices.push_back(ods.postEventIndices[i]);
+  }
+
+  optimalDualSolution_final_stateEq_penalty.resize(ods.final.stateEq.size());
+  optimalDualSolution_final_stateEq_lagrangian.resize(ods.final.stateEq.size());
+  for (size_t i = 0; i < ods.final.stateEq.size(); i++)
+  {
+    optimalDualSolution_final_stateEq_penalty[i] = ods.final.stateEq[i].penalty;
+
+    optimalDualSolution_final_stateEq_lagrangian[i].resize(ods.final.stateEq[i].lagrangian.size());
+    for (size_t j = 0; j < ods.final.stateEq[i].lagrangian.size(); j++)
+    {
+      optimalDualSolution_final_stateEq_lagrangian[i][j] = ods.final.stateEq[i].lagrangian[j];
+    }
+  }
+
+  optimalDualSolution_final_stateIneq_penalty.resize(ods.final.stateIneq.size());
+  optimalDualSolution_final_stateIneq_lagrangian.resize(ods.final.stateIneq.size());
+  for (size_t i = 0; i < ods.final.stateIneq.size(); i++)
+  {
+    optimalDualSolution_final_stateIneq_penalty[i] = ods.final.stateIneq[i].penalty;
+
+    optimalDualSolution_final_stateIneq_lagrangian[i].resize(ods.final.stateIneq[i].lagrangian.size());
+    for (size_t j = 0; j < ods.final.stateIneq[i].lagrangian.size(); j++)
+    {
+      optimalDualSolution_final_stateIneq_lagrangian[i][j] = ods.final.stateIneq[i].lagrangian[j];
+    }
+  }
+
+  optimalDualSolution_final_stateInputEq_penalty.resize(ods.final.stateInputEq.size());
+  optimalDualSolution_final_stateInputEq_lagrangian.resize(ods.final.stateInputEq.size());
+  for (size_t i = 0; i < ods.final.stateInputEq.size(); i++)
+  {
+    optimalDualSolution_final_stateInputEq_penalty[i] = ods.final.stateInputEq[i].penalty;
+
+    optimalDualSolution_final_stateInputEq_lagrangian[i].resize(ods.final.stateInputEq[i].lagrangian.size());
+    for (size_t j = 0; j < ods.final.stateInputEq[i].lagrangian.size(); j++)
+    {
+      optimalDualSolution_final_stateInputEq_lagrangian[i][j] = ods.final.stateInputEq[i].lagrangian[j];
+    }
+  }
+
+  optimalDualSolution_final_stateInputIneq_penalty.resize(ods.final.stateInputIneq.size());
+  optimalDualSolution_final_stateInputIneq_lagrangian.resize(ods.final.stateInputIneq.size());
+  for (size_t i = 0; i < ods.final.stateInputIneq.size(); i++)
+  {
+    optimalDualSolution_final_stateInputIneq_penalty[i] = ods.final.stateInputIneq[i].penalty;
+
+    optimalDualSolution_final_stateInputIneq_lagrangian[i].resize(ods.final.stateInputIneq[i].lagrangian.size());
+    for (size_t j = 0; j < ods.final.stateInputIneq[i].lagrangian.size(); j++)
+    {
+      optimalDualSolution_final_stateInputIneq_lagrangian[i][j] = ods.final.stateInputIneq[i].lagrangian[j];
+    }
+  }
+
+  optimalDualSolution_preJumps_stateEq_penalty.resize(ods.preJumps.size());
+  optimalDualSolution_preJumps_stateEq_lagrangian.resize(ods.preJumps.size());
+  for (size_t k = 0; k < ods.preJumps.size(); k++)
+  {
+    optimalDualSolution_preJumps_stateEq_penalty[k].resize(ods.preJumps[k].stateEq.size());
+    optimalDualSolution_preJumps_stateEq_lagrangian[k].resize(ods.preJumps[k].stateEq.size());
+    for (size_t i = 0; i < ods.preJumps[k].stateEq.size(); i++)
+    {
+      optimalDualSolution_preJumps_stateEq_penalty[k][i] = ods.preJumps[k].stateEq[i].penalty;
+
+      optimalDualSolution_preJumps_stateEq_lagrangian[k][i].resize(ods.preJumps[k].stateEq[i].lagrangian.size());
+      for (size_t j = 0; j < ods.preJumps[k].stateEq[i].lagrangian.size(); j++)
+      {
+        optimalDualSolution_preJumps_stateEq_lagrangian[k][i][j] = ods.preJumps[k].stateEq[i].lagrangian[j];
+      }
+    }
+  }
+
+  optimalDualSolution_preJumps_stateIneq_penalty.resize(ods.preJumps.size());
+  optimalDualSolution_preJumps_stateIneq_lagrangian.resize(ods.preJumps.size());
+  for (size_t k = 0; k < ods.preJumps.size(); k++)
+  {
+    optimalDualSolution_preJumps_stateIneq_penalty[k].resize(ods.preJumps[k].stateIneq.size());
+    optimalDualSolution_preJumps_stateIneq_lagrangian[k].resize(ods.preJumps[k].stateIneq.size());
+    for (size_t i = 0; i < ods.preJumps[k].stateIneq.size(); i++)
+    {
+      optimalDualSolution_preJumps_stateIneq_penalty[k][i] = ods.preJumps[k].stateIneq[i].penalty;
+
+      optimalDualSolution_preJumps_stateIneq_lagrangian[k][i].resize(ods.preJumps[k].stateIneq[i].lagrangian.size());
+      for (size_t j = 0; j < ods.preJumps[k].stateIneq[i].lagrangian.size(); j++)
+      {
+        optimalDualSolution_preJumps_stateIneq_lagrangian[k][i][j] = ods.preJumps[k].stateIneq[i].lagrangian[j];
+      }
+    }
+  }
+
+  optimalDualSolution_preJumps_stateInputEq_penalty.resize(ods.preJumps.size());
+  optimalDualSolution_preJumps_stateInputEq_lagrangian.resize(ods.preJumps.size());
+  for (size_t k = 0; k < ods.preJumps.size(); k++)
+  {
+    optimalDualSolution_preJumps_stateInputEq_penalty[k].resize(ods.preJumps[k].stateInputEq.size());
+    optimalDualSolution_preJumps_stateInputEq_lagrangian[k].resize(ods.preJumps[k].stateInputEq.size());
+    for (size_t i = 0; i < ods.preJumps[k].stateInputEq.size(); i++)
+    {
+      optimalDualSolution_preJumps_stateInputEq_penalty[k][i] = ods.preJumps[k].stateInputEq[i].penalty;
+
+      optimalDualSolution_preJumps_stateInputEq_lagrangian[k][i].resize(ods.preJumps[k].stateInputEq[i].lagrangian.size());
+      for (size_t j = 0; j < ods.preJumps[k].stateInputEq[i].lagrangian.size(); j++)
+      {
+        optimalDualSolution_preJumps_stateInputEq_lagrangian[k][i][j] = ods.preJumps[k].stateInputEq[i].lagrangian[j];
+      }
+    }
+  }
+  
+  optimalDualSolution_preJumps_stateInputIneq_penalty.resize(ods.preJumps.size());
+  optimalDualSolution_preJumps_stateInputIneq_lagrangian.resize(ods.preJumps.size());
+  for (size_t k = 0; k < ods.preJumps.size(); k++)
+  {
+    optimalDualSolution_preJumps_stateInputIneq_penalty[k].resize(ods.preJumps[k].stateInputIneq.size());
+    optimalDualSolution_preJumps_stateInputIneq_lagrangian[k].resize(ods.preJumps[k].stateInputIneq.size());
+    for (size_t i = 0; i < ods.preJumps[k].stateInputIneq.size(); i++)
+    {
+      optimalDualSolution_preJumps_stateInputIneq_penalty[k][i] = ods.preJumps[k].stateInputIneq[i].penalty;
+
+      optimalDualSolution_preJumps_stateInputIneq_lagrangian[k][i].resize(ods.preJumps[k].stateInputIneq[i].lagrangian.size());
+      for (size_t j = 0; j < ods.preJumps[k].stateInputIneq[i].lagrangian.size(); j++)
+      {
+        optimalDualSolution_preJumps_stateInputIneq_lagrangian[k][i][j] = ods.preJumps[k].stateInputIneq[i].lagrangian[j];
+      }
+    }
+  }
+
+  optimalDualSolution_intermediates_stateEq_penalty.resize(ods.intermediates.size());
+  optimalDualSolution_intermediates_stateEq_lagrangian.resize(ods.intermediates.size());
+  for (size_t k = 0; k < ods.intermediates.size(); k++)
+  {
+    optimalDualSolution_intermediates_stateEq_penalty[k].resize(ods.intermediates[k].stateEq.size());
+    optimalDualSolution_intermediates_stateEq_lagrangian[k].resize(ods.intermediates[k].stateEq.size());
+    for (size_t i = 0; i < ods.intermediates[k].stateEq.size(); i++)
+    {
+      optimalDualSolution_intermediates_stateEq_penalty[k][i] = ods.intermediates[k].stateEq[i].penalty;
+
+      optimalDualSolution_intermediates_stateEq_lagrangian[k][i].resize(ods.intermediates[k].stateEq[i].lagrangian.size());
+      for (size_t j = 0; j < ods.intermediates[k].stateEq[i].lagrangian.size(); j++)
+      {
+        optimalDualSolution_intermediates_stateEq_lagrangian[k][i][j] = ods.intermediates[k].stateEq[i].lagrangian[j];
+      }
+    }
+  }
+
+  optimalDualSolution_intermediates_stateIneq_penalty.resize(ods.intermediates.size());
+  optimalDualSolution_intermediates_stateIneq_lagrangian.resize(ods.intermediates.size());
+  for (size_t k = 0; k < ods.intermediates.size(); k++)
+  {
+    optimalDualSolution_intermediates_stateIneq_penalty[k].resize(ods.intermediates[k].stateIneq.size());
+    optimalDualSolution_intermediates_stateIneq_lagrangian[k].resize(ods.intermediates[k].stateIneq.size());
+    for (size_t i = 0; i < ods.intermediates[k].stateIneq.size(); i++)
+    {
+      optimalDualSolution_intermediates_stateIneq_penalty[k][i] = ods.intermediates[k].stateIneq[i].penalty;
+
+      optimalDualSolution_intermediates_stateIneq_lagrangian[k][i].resize(ods.intermediates[k].stateIneq[i].lagrangian.size());
+      for (size_t j = 0; j < ods.intermediates[k].stateIneq[i].lagrangian.size(); j++)
+      {
+        optimalDualSolution_intermediates_stateIneq_lagrangian[k][i][j] = ods.intermediates[k].stateIneq[i].lagrangian[j];
+      }
+    }
+  }
+
+  optimalDualSolution_intermediates_stateInputEq_penalty.resize(ods.intermediates.size());
+  optimalDualSolution_intermediates_stateInputEq_lagrangian.resize(ods.intermediates.size());
+  for (size_t k = 0; k < ods.intermediates.size(); k++)
+  {
+    optimalDualSolution_intermediates_stateInputEq_penalty[k].resize(ods.intermediates[k].stateInputEq.size());
+    optimalDualSolution_intermediates_stateInputEq_lagrangian[k].resize(ods.intermediates[k].stateInputEq.size());
+    for (size_t i = 0; i < ods.intermediates[k].stateInputEq.size(); i++)
+    {
+      optimalDualSolution_intermediates_stateInputEq_penalty[k][i] = ods.intermediates[k].stateInputEq[i].penalty;
+
+      optimalDualSolution_intermediates_stateInputEq_lagrangian[k][i].resize(ods.intermediates[k].stateInputEq[i].lagrangian.size());
+      for (size_t j = 0; j < ods.intermediates[k].stateInputEq[i].lagrangian.size(); j++)
+      {
+        optimalDualSolution_intermediates_stateInputEq_lagrangian[k][i][j] = ods.intermediates[k].stateInputEq[i].lagrangian[j];
+      }
+    }
+  }
+  
+  optimalDualSolution_intermediates_stateInputIneq_penalty.resize(ods.intermediates.size());
+  optimalDualSolution_intermediates_stateInputIneq_lagrangian.resize(ods.intermediates.size());
+  for (size_t k = 0; k < ods.intermediates.size(); k++)
+  {
+    optimalDualSolution_intermediates_stateInputIneq_penalty[k].resize(ods.intermediates[k].stateInputIneq.size());
+    optimalDualSolution_intermediates_stateInputIneq_lagrangian[k].resize(ods.intermediates[k].stateInputIneq.size());
+    for (size_t i = 0; i < ods.intermediates[k].stateInputIneq.size(); i++)
+    {
+      optimalDualSolution_intermediates_stateInputIneq_penalty[k][i] = ods.intermediates[k].stateInputIneq[i].penalty;
+
+      optimalDualSolution_intermediates_stateInputIneq_lagrangian[k][i].resize(ods.intermediates[k].stateInputIneq[i].lagrangian.size());
+      for (size_t j = 0; j < ods.intermediates[k].stateInputIneq[i].lagrangian.size(); j++)
+      {
+        optimalDualSolution_intermediates_stateInputIneq_lagrangian[k][i][j] = ods.intermediates[k].stateInputIneq[i].lagrangian[j];
+      }
+    }
+  }
+  
+  // Primal Solution
+  PrimalSolution ops = mpc_.getSolverPtr()->getPrimalSolution();
+  
+  /*
+  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+  //ops.controllerPtr_->display();
+  std::cout << "[MPC_ROS_Interface::writeData] ops.timeTrajectory_ size: " << ops.timeTrajectory_.size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::writeData] ops.stateTrajectory_ size: " << ops.stateTrajectory_.size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::writeData] ops.inputTrajectory_ size: " << ops.inputTrajectory_.size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::writeData] ops.controllerPtr_ size: " << ops.controllerPtr_->size() << std::endl; 
+  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+  */
+
+  optimalPrimalSolution_time.resize(ops.timeTrajectory_.size());
+  for (size_t i = 0; i < ops.timeTrajectory_.size(); i++)
+  {
+    optimalPrimalSolution_time[i] = ops.timeTrajectory_[i];
+  }
+
+  optimalPrimalSolution_state.resize(ops.stateTrajectory_.size());
+  for (size_t i = 0; i < ops.stateTrajectory_.size(); i++)
+  {
+    optimalPrimalSolution_state[i].resize(ops.stateTrajectory_[i].size());
+    for (size_t j = 0; j < ops.stateTrajectory_[i].size(); j++)
+    {
+      optimalPrimalSolution_state[i][j] = ops.stateTrajectory_[i][j];
+    }
+  }
+
+  optimalPrimalSolution_input.resize(ops.inputTrajectory_.size());
+  for (size_t i = 0; i < ops.inputTrajectory_.size(); i++)
+  {
+    optimalPrimalSolution_input[i].resize(ops.inputTrajectory_[i].size());
+    for (size_t j = 0; j < ops.inputTrajectory_[i].size(); j++)
+    {
+      optimalPrimalSolution_input[i][j] = ops.inputTrajectory_[i][j];
+    }
+  }
+
+  optimalPrimalSolution_postEventIndices.resize(ops.postEventIndices_.size());
+  for (size_t i = 0; i < ops.postEventIndices_.size(); i++)
+  {
+    optimalPrimalSolution_postEventIndices[i] = ops.postEventIndices_[i];
+  }
+
+  optimalPrimalSolution_modeSchedule_eventTimes.resize(ops.modeSchedule_.eventTimes.size());
+  for (size_t i = 0; i < ops.modeSchedule_.eventTimes.size(); i++)
+  {
+    optimalPrimalSolution_modeSchedule_eventTimes[i] = ops.modeSchedule_.eventTimes[i];
+  }
+
+  optimalPrimalSolution_modeSchedule_modeSequence.resize(ops.modeSchedule_.modeSequence.size());
+  for (size_t i = 0; i < ops.modeSchedule_.modeSequence.size(); i++)
+  {
+    optimalPrimalSolution_modeSchedule_modeSequence[i] = ops.modeSchedule_.modeSequence[i];
+  }
+
+  scalar_array_t controllerTimeStamp = ops.controllerPtr_->getTimeStamp();
+  vector_array_t controllerBiasArray = ops.controllerPtr_->getBiasArray();
+  vector_array_t controllerDeltaBiasArray = ops.controllerPtr_->getDeltaBiasArray();
+  matrix_array_t controllerGainArray = ops.controllerPtr_->getGainArray();
+
+  optimalPrimalSolution_controller_time_stamp.resize(controllerTimeStamp.size());
+  for (size_t i = 0; i < controllerTimeStamp.size(); i++)
+  {
+    optimalPrimalSolution_controller_time_stamp[i] = controllerTimeStamp[i];
+  }
+  
+  optimalPrimalSolution_controller_bias_array.resize(controllerBiasArray.size());
+  for (size_t i = 0; i < controllerBiasArray.size(); i++)
+  {
+    optimalPrimalSolution_controller_bias_array[i].resize(controllerBiasArray[i].size());
+    for (size_t j = 0; j < controllerBiasArray[i].size(); j++)
+    {
+      optimalPrimalSolution_controller_bias_array[i][j] = controllerBiasArray[i][j];
+    }
+  }
+
+  optimalPrimalSolution_controller_delta_bias_array.resize(controllerDeltaBiasArray.size());
+  for (size_t i = 0; i < controllerDeltaBiasArray.size(); i++)
+  {
+    optimalPrimalSolution_controller_delta_bias_array[i].resize(controllerDeltaBiasArray[i].size());
+    for (size_t j = 0; j < controllerDeltaBiasArray[i].size(); j++)
+    {
+      optimalPrimalSolution_controller_delta_bias_array[i][j] = controllerDeltaBiasArray[i][j];
+    }
+  }
+
+  optimalPrimalSolution_controller_gain_array.resize(controllerGainArray.size());
+  for (size_t i = 0; i < controllerGainArray.size(); i++)
+  {
+    optimalPrimalSolution_controller_gain_array[i].resize(controllerGainArray[i].rows());
+    for (size_t j = 0; j < controllerGainArray[i].rows(); j++)
+    {
+      optimalPrimalSolution_controller_gain_array[i][j].resize(controllerGainArray[i].cols());
+      for (size_t k = 0; k < controllerGainArray[i].cols(); k++)
+      {
+        optimalPrimalSolution_controller_gain_array[i][j][k] = controllerGainArray[i](j,k);
+      }
+    }
+  }
+  
+  /*
+  std::cout << "[MPC_ROS_Interface::writeData] optimalPrimalSolution_controller_time_stamp size: " << optimalPrimalSolution_controller_time_stamp.size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::writeData] optimalPrimalSolution_controller_bias_array size: " << optimalPrimalSolution_controller_bias_array.size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::writeData] optimalPrimalSolution_controller_bias_array[0] size: " << optimalPrimalSolution_controller_bias_array[0].size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::writeData] optimalPrimalSolution_controller_delta_bias_array size: " << optimalPrimalSolution_controller_delta_bias_array.size() << std::endl;
+  //std::cout << "[MPC_ROS_Interface::writeData] optimalPrimalSolution_controller_delta_bias_array[0] size: " << optimalPrimalSolution_controller_delta_bias_array[0].size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::writeData] optimalPrimalSolution_controller_gain_array size: " << optimalPrimalSolution_controller_gain_array.size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::writeData] optimalPrimalSolution_controller_gain_array[0] size: " << optimalPrimalSolution_controller_gain_array[0].size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::writeData] optimalPrimalSolution_controller_gain_array[0][0] size: " << optimalPrimalSolution_controller_gain_array[0][0].size() << std::endl;
+  */
+
+  //std::cout << "[MPC_ROS_Interface::writeData] DEBUG_INF" << std::endl;
+  //while(1);
+
+  //std::cout << "[MPC_ROS_Interface::writeData] controllerPtr_ size:" << ops.controllerPtr_->size() << std::endl;
+  
+  /*
+  if (ops.controllerPtr_->getType() == ControllerType::LINEAR)
+  {
+    std::cout << "[MPC_ROS_Interface::writeData] ControllerType::LINEAR" << std::endl;
+  }
+  else if (ops.controllerPtr_->getType() == ControllerType::FEEDFORWARD)
+  {
+    std::cout << "[MPC_ROS_Interface::writeData] ControllerType::FEEDFORWARD" << std::endl;
+  }
+  else
+  {
+    std::cout << "[MPC_ROS_Interface::writeData] ControllerType::WTF?!" << std::endl;
+  }
+  //ops.controllerPtr_->display();
+  */
+
+  //std::cout << "[MPC_ROS_Interface::writeData] DEBUG_INF" << std::endl;
+  //while(1);
+
   nlohmann::json j;
-  j["primalSolution_time"] = primalSolution_time;
-  j["primalSolution_state"] = primalSolution_state;
-  j["primalSolution_input"] = primalSolution_input;
+  j["bufferPrimalSolution_time"] = bufferPrimalSolution_time;
+  j["bufferPrimalSolution_state"] = bufferPrimalSolution_state;
+  j["bufferPrimalSolution_input"] = bufferPrimalSolution_input;
+  j["bufferPrimalSolution_controller_time_stamp"] = bufferPrimalSolution_controller_time_stamp;
+  j["bufferPrimalSolution_controller_bias_array"] = bufferPrimalSolution_controller_bias_array;
+  j["bufferPrimalSolution_controller_delta_bias_array"] = bufferPrimalSolution_controller_delta_bias_array;
+  j["bufferPrimalSolution_controller_gain_array"] = bufferPrimalSolution_controller_gain_array;
 
   j["mpcTargetTrajectories_time"] = mpcTargetTrajectories_time;
   j["mpcTargetTrajectories_state"] = mpcTargetTrajectories_state;
@@ -1035,11 +1444,52 @@ void MPC_ROS_Interface::writeData()
   j["initObservation_fullState"] = initObservation_fullState;
   j["initObservation_input"] = initObservation_input;
 
+  j["optimalDualSolution_time"] = optimalDualSolution_time;
+  j["optimalDualSolution_postEventIndices"] = optimalDualSolution_postEventIndices;
+  
+  j["optimalDualSolution_final_stateEq_penalty"] = optimalDualSolution_final_stateEq_penalty;
+  j["optimalDualSolution_final_stateEq_lagrangian"] = optimalDualSolution_final_stateEq_lagrangian;
+  j["optimalDualSolution_final_stateIneq_penalty"] = optimalDualSolution_final_stateIneq_penalty;
+  j["optimalDualSolution_final_stateIneq_lagrangian"] = optimalDualSolution_final_stateIneq_lagrangian;
+  j["optimalDualSolution_final_stateInputEq_penalty"] = optimalDualSolution_final_stateInputEq_penalty;
+  j["optimalDualSolution_final_stateInputEq_lagrangian"] = optimalDualSolution_final_stateInputEq_lagrangian;
+  j["optimalDualSolution_final_stateInputIneq_penalty"] = optimalDualSolution_final_stateInputIneq_penalty;
+  j["optimalDualSolution_final_stateInputIneq_lagrangian"] = optimalDualSolution_final_stateInputIneq_lagrangian;
+  
+  j["optimalDualSolution_preJumps_stateEq_penalty"] = optimalDualSolution_preJumps_stateEq_penalty;
+  j["optimalDualSolution_preJumps_stateEq_lagrangian"] = optimalDualSolution_preJumps_stateEq_lagrangian;
+  j["optimalDualSolution_preJumps_stateIneq_penalty"] = optimalDualSolution_preJumps_stateIneq_penalty;
+  j["optimalDualSolution_preJumps_stateIneq_lagrangian"] = optimalDualSolution_preJumps_stateIneq_lagrangian;
+  j["optimalDualSolution_preJumps_stateInputEq_penalty"] = optimalDualSolution_preJumps_stateInputEq_penalty;
+  j["optimalDualSolution_preJumps_stateInputEq_lagrangian"] = optimalDualSolution_preJumps_stateInputEq_lagrangian;
+  j["optimalDualSolution_preJumps_stateInputIneq_penalty"] = optimalDualSolution_preJumps_stateInputIneq_penalty;
+  j["optimalDualSolution_preJumps_stateInputIneq_lagrangian"] = optimalDualSolution_preJumps_stateInputIneq_lagrangian;
+
+  j["optimalDualSolution_intermediates_stateEq_penalty"] = optimalDualSolution_intermediates_stateEq_penalty;
+  j["optimalDualSolution_intermediates_stateEq_lagrangian"] = optimalDualSolution_intermediates_stateEq_lagrangian;
+  j["optimalDualSolution_intermediates_stateIneq_penalty"] = optimalDualSolution_intermediates_stateIneq_penalty;
+  j["optimalDualSolution_intermediates_stateIneq_lagrangian"] = optimalDualSolution_intermediates_stateIneq_lagrangian;
+  j["optimalDualSolution_intermediates_stateInputEq_penalty"] = optimalDualSolution_intermediates_stateInputEq_penalty;
+  j["optimalDualSolution_intermediates_stateInputEq_lagrangian"] = optimalDualSolution_intermediates_stateInputEq_lagrangian;
+  j["optimalDualSolution_intermediates_stateInputIneq_penalty"] = optimalDualSolution_intermediates_stateInputIneq_penalty;
+  j["optimalDualSolution_intermediates_stateInputIneq_lagrangian"] = optimalDualSolution_intermediates_stateInputIneq_lagrangian;
+
+  j["optimalPrimalSolution_time"] = optimalPrimalSolution_time;
+  j["optimalPrimalSolution_state"] = optimalPrimalSolution_state;
+  j["optimalPrimalSolution_input"] = optimalPrimalSolution_input;
+  j["optimalPrimalSolution_postEventIndices"] = optimalPrimalSolution_postEventIndices;
+  j["optimalPrimalSolution_modeSchedule_eventTimes"] = optimalPrimalSolution_modeSchedule_eventTimes;
+  j["optimalPrimalSolution_modeSchedule_modeSequence"] = optimalPrimalSolution_modeSchedule_modeSequence;
+  j["optimalPrimalSolution_controller_time_stamp"] = optimalPrimalSolution_controller_time_stamp;
+  j["optimalPrimalSolution_controller_bias_array"] = optimalPrimalSolution_controller_bias_array;
+  j["optimalPrimalSolution_controller_delta_bias_array"] = optimalPrimalSolution_controller_delta_bias_array;
+  j["optimalPrimalSolution_controller_gain_array"] = optimalPrimalSolution_controller_gain_array;
+
   std::string pkg_dir = ros::package::getPath("mobiman_simulation") + "/";
   std::string dataPath = pkg_dir + "dataset/ocs2/tmp/";
 
   boost::filesystem::create_directories(dataPath);
-  std::string filename = "tmp.json";
+  std::string filename = "init_data.json";
   std::ofstream o(dataPath + filename);
   o << std::setw(4) << j << std::endl;
 }
@@ -1049,19 +1499,23 @@ void MPC_ROS_Interface::writeData()
 //-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::loadData()
 {
-  std::cout << "[MPC_ROS_Interface::loadData] START" << std::endl;
+  //std::cout << "[MPC_ROS_Interface::loadData] START" << std::endl;
 
   std::string pkg_dir = ros::package::getPath("mobiman_simulation") + "/";
   std::string dataPath = pkg_dir + "dataset/ocs2/tmp/";
 
-  std::ifstream f(dataPath + "tmp.json");
+  std::ifstream f(dataPath + "init_data.json");
   nlohmann::json data = nlohmann::json::parse(f);
 
-  std::vector<double> primalSolution_time = data["primalSolution_time"];
-  std::vector<std::vector<double>> primalSolution_state = data["primalSolution_state"];
-  std::vector<std::vector<double>> primalSolution_input = data["primalSolution_input"];
+  std::vector<double> bufferPrimalSolution_time = data["bufferPrimalSolution_time"];
+  std::vector<std::vector<double>> bufferPrimalSolution_state = data["bufferPrimalSolution_state"];
+  std::vector<std::vector<double>> bufferPrimalSolution_input = data["bufferPrimalSolution_input"];
+  std::vector<double> bufferPrimalSolution_controller_time_stamp = data["bufferPrimalSolution_controller_time_stamp"];
+  std::vector<std::vector<double>> bufferPrimalSolution_controller_bias_array = data["bufferPrimalSolution_controller_bias_array"];
+  std::vector<std::vector<double>> bufferPrimalSolution_controller_delta_bias_array = data["bufferPrimalSolution_controller_delta_bias_array"];
+  std::vector<std::vector<std::vector<double>>> bufferPrimalSolution_controller_gain_array = data["bufferPrimalSolution_controller_gain_array"];
 
-  std::vector<double> mpcTargetTrajectories_time;
+  std::vector<double> mpcTargetTrajectories_time = data["mpcTargetTrajectories_time"];
   std::vector<std::vector<double>> mpcTargetTrajectories_state = data["mpcTargetTrajectories_state"];
   std::vector<std::vector<double>> mpcTargetTrajectories_input = data["mpcTargetTrajectories_input"];
 
@@ -1071,34 +1525,147 @@ void MPC_ROS_Interface::loadData()
   std::vector<double> initObservation_fullState =  data["initObservation_fullState"];
   std::vector<double> initObservation_input =  data["initObservation_input"];
 
+  /////////////////////
+
+  std::vector<double> optimalDualSolution_time = data["optimalDualSolution_time"];
+  std::vector<size_t> optimalDualSolution_postEventIndices = data["optimalDualSolution_postEventIndices"];
+
+  std::vector<double> optimalDualSolution_final_stateEq_penalty = data["optimalDualSolution_final_stateEq_penalty"];
+  std::vector<std::vector<double>> optimalDualSolution_final_stateEq_lagrangian = data["optimalDualSolution_final_stateEq_lagrangian"];
+  std::vector<double> optimalDualSolution_final_stateIneq_penalty = data["optimalDualSolution_final_stateIneq_penalty"];
+  std::vector<std::vector<double>> optimalDualSolution_final_stateIneq_lagrangian = data["optimalDualSolution_final_stateIneq_lagrangian"];
+  std::vector<double> optimalDualSolution_final_stateInputEq_penalty = data["optimalDualSolution_final_stateInputEq_penalty"];
+  std::vector<std::vector<double>> optimalDualSolution_final_stateInputEq_lagrangian = data["optimalDualSolution_final_stateInputEq_lagrangian"];
+  std::vector<double> optimalDualSolution_final_stateInputIneq_penalty = data["optimalDualSolution_final_stateInputIneq_penalty"];
+  std::vector<std::vector<double>> optimalDualSolution_final_stateInputIneq_lagrangian = data["optimalDualSolution_final_stateInputIneq_lagrangian"];
+
+  std::vector<std::vector<double>> optimalDualSolution_preJumps_stateEq_penalty = data["optimalDualSolution_preJumps_stateEq_penalty"];
+  std::vector<std::vector<std::vector<double>>> optimalDualSolution_preJumps_stateEq_lagrangian = data["optimalDualSolution_preJumps_stateEq_lagrangian"];
+  std::vector<std::vector<double>> optimalDualSolution_preJumps_stateIneq_penalty = data["optimalDualSolution_preJumps_stateIneq_penalty"];
+  std::vector<std::vector<std::vector<double>>> optimalDualSolution_preJumps_stateIneq_lagrangian = data["optimalDualSolution_preJumps_stateIneq_lagrangian"];
+  std::vector<std::vector<double>> optimalDualSolution_preJumps_stateInputEq_penalty = data["optimalDualSolution_preJumps_stateInputEq_penalty"];
+  std::vector<std::vector<std::vector<double>>> optimalDualSolution_preJumps_stateInputEq_lagrangian = data["optimalDualSolution_preJumps_stateInputEq_lagrangian"];
+  std::vector<std::vector<double>> optimalDualSolution_preJumps_stateInputIneq_penalty = data["optimalDualSolution_preJumps_stateInputIneq_penalty"];
+  std::vector<std::vector<std::vector<double>>> optimalDualSolution_preJumps_stateInputIneq_lagrangian = data["optimalDualSolution_preJumps_stateInputIneq_lagrangian"];
+
+  std::vector<std::vector<double>> optimalDualSolution_intermediates_stateEq_penalty = data["optimalDualSolution_intermediates_stateEq_penalty"];
+  std::vector<std::vector<std::vector<double>>> optimalDualSolution_intermediates_stateEq_lagrangian = data["optimalDualSolution_intermediates_stateEq_lagrangian"];
+  std::vector<std::vector<double>> optimalDualSolution_intermediates_stateIneq_penalty = data["optimalDualSolution_intermediates_stateIneq_penalty"];
+  std::vector<std::vector<std::vector<double>>> optimalDualSolution_intermediates_stateIneq_lagrangian = data["optimalDualSolution_intermediates_stateIneq_lagrangian"];
+  std::vector<std::vector<double>> optimalDualSolution_intermediates_stateInputEq_penalty = data["optimalDualSolution_intermediates_stateInputEq_penalty"];
+  std::vector<std::vector<std::vector<double>>> optimalDualSolution_intermediates_stateInputEq_lagrangian = data["optimalDualSolution_intermediates_stateInputEq_lagrangian"];
+  std::vector<std::vector<double>> optimalDualSolution_intermediates_stateInputIneq_penalty = data["optimalDualSolution_intermediates_stateInputIneq_penalty"];
+  std::vector<std::vector<std::vector<double>>> optimalDualSolution_intermediates_stateInputIneq_lagrangian = data["optimalDualSolution_intermediates_stateInputIneq_lagrangian"];
+
+  std::vector<double> optimalPrimalSolution_time = data["optimalPrimalSolution_time"];
+  std::vector<std::vector<double>> optimalPrimalSolution_state = data["optimalPrimalSolution_state"];
+  std::vector<std::vector<double>> optimalPrimalSolution_input = data["optimalPrimalSolution_input"];
+  std::vector<size_t> optimalPrimalSolution_postEventIndices = data["optimalPrimalSolution_postEventIndices"];
+  std::vector<double> optimalPrimalSolution_modeSchedule_eventTimes = data["optimalPrimalSolution_modeSchedule_eventTimes"];
+  std::vector<size_t> optimalPrimalSolution_modeSchedule_modeSequence = data["optimalPrimalSolution_modeSchedule_modeSequence"];
+  std::vector<double> optimalPrimalSolution_controller_time_stamp = data["optimalPrimalSolution_controller_time_stamp"];
+  std::vector<std::vector<double>> optimalPrimalSolution_controller_bias_array = data["optimalPrimalSolution_controller_bias_array"];
+  std::vector<std::vector<double>> optimalPrimalSolution_controller_delta_bias_array = data["optimalPrimalSolution_controller_delta_bias_array"];
+  std::vector<std::vector<std::vector<double>>> optimalPrimalSolution_controller_gain_array = data["optimalPrimalSolution_controller_gain_array"];
+
+  /////////////////////
+
   // Primal Solution
   bufferPrimalSolutionPtr_->timeTrajectory_.clear();
-  for (size_t i = 0; i < primalSolution_time.size(); i++)
+  for (size_t i = 0; i < bufferPrimalSolution_time.size(); i++)
   {
-    bufferPrimalSolutionPtr_->timeTrajectory_.push_back(primalSolution_time[i]);
+    bufferPrimalSolutionPtr_->timeTrajectory_.push_back(bufferPrimalSolution_time[i]);
   }
 
+  //const size_t N_1 = bufferPrimalSolutionPtr_->timeTrajectory_.size();
+  //size_array_t stateDim_1(N_1);
+  //size_array_t inputDim_1(N_1);
+
   bufferPrimalSolutionPtr_->stateTrajectory_.clear();
-  bufferPrimalSolutionPtr_->stateTrajectory_.resize(primalSolution_state.size());
-  for (size_t i = 0; i < primalSolution_state.size(); i++)
+  bufferPrimalSolutionPtr_->stateTrajectory_.resize(bufferPrimalSolution_state.size());
+  for (size_t i = 0; i < bufferPrimalSolution_state.size(); i++)
   {
-    bufferPrimalSolutionPtr_->stateTrajectory_[i].resize(primalSolution_state[i].size());
-    for (size_t j = 0; j < primalSolution_state[i].size(); j++)
+    //stateDim_1[i] = bufferPrimalSolution_state[i].size();
+    bufferPrimalSolutionPtr_->stateTrajectory_[i].resize(bufferPrimalSolution_state[i].size());
+    for (size_t j = 0; j < bufferPrimalSolution_state[i].size(); j++)
     {
-      bufferPrimalSolutionPtr_->stateTrajectory_[i][j] = primalSolution_state[i][j];
+      bufferPrimalSolutionPtr_->stateTrajectory_[i][j] = bufferPrimalSolution_state[i][j];
     }
   }
 
   bufferPrimalSolutionPtr_->inputTrajectory_.clear();
-  bufferPrimalSolutionPtr_->inputTrajectory_.resize(primalSolution_input.size());
-  for (size_t i = 0; i < primalSolution_input.size(); i++)
+  bufferPrimalSolutionPtr_->inputTrajectory_.resize(bufferPrimalSolution_input.size());
+  for (size_t i = 0; i < bufferPrimalSolution_input.size(); i++)
   {
-    bufferPrimalSolutionPtr_->inputTrajectory_[i].resize(primalSolution_input[i].size());
-    for (size_t j = 0; j < primalSolution_input[i].size(); j++)
+    //inputDim_1[i] = bufferPrimalSolution_input[i].size();
+    bufferPrimalSolutionPtr_->inputTrajectory_[i].resize(bufferPrimalSolution_input[i].size());
+    for (size_t j = 0; j < bufferPrimalSolution_input[i].size(); j++)
     {
-      bufferPrimalSolutionPtr_->inputTrajectory_[i][j] = primalSolution_input[i][j];
+      bufferPrimalSolutionPtr_->inputTrajectory_[i][j] = bufferPrimalSolution_input[i][j];
     }
   }
+
+  scalar_array_t bufferPrimalSolution_controllerTimeStamp;
+  vector_array_t bufferPrimalSolution_controllerBiasArray;
+  vector_array_t bufferPrimalSolution_controllerDeltaBiasArray;
+  matrix_array_t bufferPrimalSolution_controllerGainArray;
+
+  bufferPrimalSolution_controllerTimeStamp.resize(bufferPrimalSolution_controller_time_stamp.size());
+  for (size_t i = 0; i < bufferPrimalSolution_controller_time_stamp.size(); i++)
+  {
+    bufferPrimalSolution_controllerTimeStamp[i] = bufferPrimalSolution_controller_time_stamp[i];
+  }
+  
+  bufferPrimalSolution_controllerBiasArray.resize(bufferPrimalSolution_controller_bias_array.size());
+  for (size_t i = 0; i < bufferPrimalSolution_controller_bias_array.size(); i++)
+  {
+    bufferPrimalSolution_controllerBiasArray[i].resize(bufferPrimalSolution_controller_bias_array[i].size());
+    for (size_t j = 0; j < bufferPrimalSolution_controller_bias_array[i].size(); j++)
+    {
+      bufferPrimalSolution_controllerBiasArray[i][j] = bufferPrimalSolution_controller_bias_array[i][j];
+    }
+  }
+
+  bufferPrimalSolution_controllerDeltaBiasArray.resize(bufferPrimalSolution_controller_delta_bias_array.size());
+  for (size_t i = 0; i < bufferPrimalSolution_controller_delta_bias_array.size(); i++)
+  {
+    bufferPrimalSolution_controllerDeltaBiasArray[i].resize(bufferPrimalSolution_controller_delta_bias_array[i].size());
+    for (size_t j = 0; j < bufferPrimalSolution_controller_delta_bias_array[i].size(); j++)
+    {
+      bufferPrimalSolution_controllerDeltaBiasArray[i][j] = bufferPrimalSolution_controller_delta_bias_array[i][j];
+    }
+  }
+
+  bufferPrimalSolution_controllerGainArray.resize(bufferPrimalSolution_controller_gain_array.size());
+  for (size_t i = 0; i < bufferPrimalSolution_controller_gain_array.size(); i++)
+  {
+    int row_size = bufferPrimalSolution_controller_gain_array[i].size();
+    int col_size = bufferPrimalSolution_controller_gain_array[i][0].size();
+    bufferPrimalSolution_controllerGainArray[i].resize(row_size, col_size);
+    for (size_t j = 0; j < row_size; j++)
+    {
+      for (size_t k = 0; k < col_size; k++)
+      {
+        bufferPrimalSolution_controllerGainArray[i](j,k) = bufferPrimalSolution_controller_gain_array[i][j][k];
+      }
+    }
+  }
+
+  bufferPrimalSolutionPtr_->controllerPtr_.reset(new LinearController);
+  bufferPrimalSolutionPtr_->controllerPtr_->setTimeStamp(bufferPrimalSolution_controllerTimeStamp);
+  bufferPrimalSolutionPtr_->controllerPtr_->setBiasArray(bufferPrimalSolution_controllerBiasArray);
+  bufferPrimalSolutionPtr_->controllerPtr_->setDeltaBiasArray(bufferPrimalSolution_controllerDeltaBiasArray);
+  bufferPrimalSolutionPtr_->controllerPtr_->setGainArray(bufferPrimalSolution_controllerGainArray);
+
+  /*
+  std::cout << "[MPC_ROS_Interface::loadData] bufferPrimalSolutionPtr_ getTimeStamp size: " << bufferPrimalSolutionPtr_->controllerPtr_->getTimeStamp().size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::loadData] bufferPrimalSolutionPtr_ getBiasArray size: " << bufferPrimalSolutionPtr_->controllerPtr_->getBiasArray().size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::loadData] bufferPrimalSolutionPtr_ getBiasArray[0] size: " << bufferPrimalSolutionPtr_->controllerPtr_->getBiasArray()[0].size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::loadData] bufferPrimalSolutionPtr_ getDeltaBiasArray size: " << bufferPrimalSolutionPtr_->controllerPtr_->getDeltaBiasArray().size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::loadData] bufferPrimalSolutionPtr_ getGainArray size: " << bufferPrimalSolutionPtr_->controllerPtr_->getGainArray().size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::loadData] bufferPrimalSolutionPtr_ getGainArray rows: " << bufferPrimalSolutionPtr_->controllerPtr_->getGainArray()[0].rows() << std::endl;
+  std::cout << "[MPC_ROS_Interface::loadData] bufferPrimalSolutionPtr_ getGainArray cols: " << bufferPrimalSolutionPtr_->controllerPtr_->getGainArray()[0].cols() << std::endl;
+  */
 
   // Target Trajectories
   bufferCommandPtr_->mpcTargetTrajectories_.timeTrajectory.clear();
@@ -1148,41 +1715,330 @@ void MPC_ROS_Interface::loadData()
     bufferCommandPtr_->mpcInitObservation_.input[i] = initObservation_input[i];
   }
 
+  // Dual Solution
+  DualSolution ods;
+
+  ods.timeTrajectory.resize(optimalDualSolution_time.size());
+  for (size_t i = 0; i < ods.timeTrajectory.size(); i++)
+  {
+    ods.timeTrajectory[i] = optimalDualSolution_time[i];
+  }
+
+  ods.postEventIndices.resize(optimalDualSolution_postEventIndices.size());
+  for (size_t i = 0; i < ods.postEventIndices.size(); i++)
+  {
+    ods.postEventIndices[i] = optimalDualSolution_postEventIndices[i];
+  }
+
+  ods.final.stateEq.resize(optimalDualSolution_final_stateEq_penalty.size());
+  for (size_t i = 0; i < ods.final.stateEq.size(); i++)
+  {
+    ods.final.stateEq[i].penalty = optimalDualSolution_final_stateEq_penalty[i];
+
+    ods.final.stateEq[i].lagrangian.resize(optimalDualSolution_final_stateEq_lagrangian[i].size());
+    for (size_t j = 0; j < ods.final.stateEq[i].lagrangian.size(); j++)
+    {
+      ods.final.stateEq[i].lagrangian[j] = optimalDualSolution_final_stateEq_lagrangian[i][j];
+    }
+  }
+
+  ods.final.stateIneq.resize(optimalDualSolution_final_stateIneq_penalty.size());
+  for (size_t i = 0; i < ods.final.stateIneq.size(); i++)
+  {
+    ods.final.stateIneq[i].penalty = optimalDualSolution_final_stateIneq_penalty[i];
+
+    ods.final.stateIneq[i].lagrangian.resize(optimalDualSolution_final_stateIneq_lagrangian[i].size());
+    for (size_t j = 0; j < ods.final.stateIneq[i].lagrangian.size(); j++)
+    {
+      ods.final.stateIneq[i].lagrangian[j] = optimalDualSolution_final_stateIneq_lagrangian[i][j];
+    }
+  }
+
+  ods.final.stateInputEq.resize(optimalDualSolution_final_stateInputEq_penalty.size());
+  for (size_t i = 0; i < ods.final.stateInputEq.size(); i++)
+  {
+    ods.final.stateInputEq[i].penalty = optimalDualSolution_final_stateInputEq_penalty[i];
+    
+    ods.final.stateInputEq[i].lagrangian.resize(optimalDualSolution_final_stateInputEq_lagrangian[i].size());
+    for (size_t j = 0; j < ods.final.stateInputEq[i].lagrangian.size(); j++)
+    {
+      ods.final.stateInputEq[i].lagrangian[j] = optimalDualSolution_final_stateInputEq_lagrangian[i][j];
+    }
+  }
+
+  ods.final.stateInputIneq.resize(optimalDualSolution_final_stateInputIneq_penalty.size());
+  for (size_t i = 0; i < ods.final.stateInputIneq.size(); i++)
+  {
+    ods.final.stateInputIneq[i].penalty = optimalDualSolution_final_stateInputIneq_penalty[i];
+
+    ods.final.stateInputIneq[i].lagrangian.resize(optimalDualSolution_final_stateInputIneq_lagrangian.size());
+    for (size_t j = 0; j < ods.final.stateInputIneq[i].lagrangian.size(); j++)
+    {
+      ods.final.stateInputIneq[i].lagrangian[j] = optimalDualSolution_final_stateInputIneq_lagrangian[i][j];
+    }
+  }
+
+  ods.preJumps.resize(optimalDualSolution_preJumps_stateEq_penalty.size());
+  for (size_t k = 0; k < ods.preJumps.size(); k++)
+  {
+    ods.preJumps[k].stateEq.resize(optimalDualSolution_preJumps_stateEq_penalty[k].size());
+    for (size_t i = 0; i < ods.preJumps[k].stateEq.size(); i++)
+    {
+      ods.preJumps[k].stateEq[i].penalty = optimalDualSolution_preJumps_stateEq_penalty[k][i];
+
+      ods.preJumps[k].stateEq[i].lagrangian.resize(optimalDualSolution_preJumps_stateEq_lagrangian[k][i].size());
+      for (size_t j = 0; j < ods.preJumps[k].stateEq[i].lagrangian.size(); j++)
+      {
+        ods.preJumps[k].stateEq[i].lagrangian[j] = optimalDualSolution_preJumps_stateEq_lagrangian[k][i][j];
+      }
+    }
+  }
+
+  for (size_t k = 0; k < ods.preJumps.size(); k++)
+  {
+    ods.preJumps[k].stateIneq.resize(optimalDualSolution_preJumps_stateIneq_penalty[k].size());
+    for (size_t i = 0; i < ods.preJumps[k].stateIneq.size(); i++)
+    {
+      ods.preJumps[k].stateIneq[i].penalty = optimalDualSolution_preJumps_stateIneq_penalty[k][i];
+
+      ods.preJumps[k].stateIneq[i].lagrangian.resize(optimalDualSolution_preJumps_stateIneq_lagrangian[k][i].size());
+      for (size_t j = 0; j < ods.preJumps[k].stateIneq[i].lagrangian.size(); j++)
+      {
+        ods.preJumps[k].stateIneq[i].lagrangian[j] = optimalDualSolution_preJumps_stateIneq_lagrangian[k][i][j];
+      }
+    }
+  }
+
+  for (size_t k = 0; k < ods.preJumps.size(); k++)
+  {
+    ods.preJumps[k].stateInputEq.resize(optimalDualSolution_preJumps_stateInputEq_penalty[k].size());
+    for (size_t i = 0; i < ods.preJumps[k].stateInputEq.size(); i++)
+    {
+      ods.preJumps[k].stateInputEq[i].penalty = optimalDualSolution_preJumps_stateInputEq_penalty[k][i];
+
+      ods.preJumps[k].stateInputEq[i].lagrangian.resize(optimalDualSolution_preJumps_stateInputEq_lagrangian[k][i].size());
+      for (size_t j = 0; j < ods.preJumps[k].stateInputEq[i].lagrangian.size(); j++)
+      {
+        ods.preJumps[k].stateInputEq[i].lagrangian[j] = optimalDualSolution_preJumps_stateInputEq_lagrangian[k][i][j];
+      }
+    }
+  }
+  
+  for (size_t k = 0; k < ods.preJumps.size(); k++)
+  {
+    ods.preJumps[k].stateInputIneq.resize(optimalDualSolution_preJumps_stateInputIneq_penalty[k].size());
+    for (size_t i = 0; i < ods.preJumps[k].stateInputIneq.size(); i++)
+    {
+      ods.preJumps[k].stateInputIneq[i].penalty = optimalDualSolution_preJumps_stateInputIneq_penalty[k][i];
+
+      ods.preJumps[k].stateInputIneq[i].lagrangian.resize(optimalDualSolution_preJumps_stateInputIneq_lagrangian[k][i].size());
+      for (size_t j = 0; j < ods.preJumps[k].stateInputIneq[i].lagrangian.size(); j++)
+      {
+        ods.preJumps[k].stateInputIneq[i].lagrangian[j] = optimalDualSolution_preJumps_stateInputIneq_lagrangian[k][i][j];
+      }
+    }
+  }
+
+  optimalDualSolution_intermediates_stateEq_penalty.resize(ods.intermediates.size());
+  optimalDualSolution_intermediates_stateEq_lagrangian.resize(ods.intermediates.size());
+  for (size_t k = 0; k < ods.intermediates.size(); k++)
+  {
+    optimalDualSolution_intermediates_stateEq_penalty[k].resize(ods.intermediates[k].stateEq.size());
+    optimalDualSolution_intermediates_stateEq_lagrangian[k].resize(ods.intermediates[k].stateEq.size());
+    for (size_t i = 0; i < ods.intermediates[k].stateEq.size(); i++)
+    {
+      optimalDualSolution_intermediates_stateEq_penalty[k][i] = ods.intermediates[k].stateEq[i].penalty;
+
+      optimalDualSolution_intermediates_stateEq_lagrangian[k][i].resize(ods.intermediates[k].stateEq[i].lagrangian.size());
+      for (size_t j = 0; j < ods.intermediates[k].stateEq[i].lagrangian.size(); j++)
+      {
+        optimalDualSolution_intermediates_stateEq_lagrangian[k][i][j] = ods.intermediates[k].stateEq[i].lagrangian[j];
+      }
+    }
+  }
+
+  ods.intermediates.resize(optimalDualSolution_intermediates_stateIneq_penalty.size());
+  for (size_t k = 0; k < ods.intermediates.size(); k++)
+  {
+    ods.intermediates[k].stateIneq.resize(optimalDualSolution_intermediates_stateIneq_penalty[k].size());
+    for (size_t i = 0; i < ods.intermediates[k].stateIneq.size(); i++)
+    {
+      ods.intermediates[k].stateIneq[i].penalty = optimalDualSolution_intermediates_stateIneq_penalty[k][i];
+
+      ods.intermediates[k].stateIneq[i].lagrangian.resize(optimalDualSolution_intermediates_stateIneq_lagrangian[k][i].size());
+      for (size_t j = 0; j < ods.intermediates[k].stateIneq[i].lagrangian.size(); j++)
+      {
+        ods.intermediates[k].stateIneq[i].lagrangian[j] = optimalDualSolution_intermediates_stateIneq_lagrangian[k][i][j];
+      }
+    }
+  }
+
+  for (size_t k = 0; k < ods.intermediates.size(); k++)
+  {
+    ods.intermediates[k].stateInputEq.resize(optimalDualSolution_intermediates_stateInputEq_penalty[k].size());
+    for (size_t i = 0; i < ods.intermediates[k].stateInputEq.size(); i++)
+    {
+      ods.intermediates[k].stateInputEq[i].penalty = optimalDualSolution_intermediates_stateInputEq_penalty[k][i];
+
+      ods.intermediates[k].stateInputEq[i].lagrangian.resize(optimalDualSolution_intermediates_stateInputEq_lagrangian[k][i].size());
+      for (size_t j = 0; j < ods.intermediates[k].stateInputEq[i].lagrangian.size(); j++)
+      {
+        ods.intermediates[k].stateInputEq[i].lagrangian[j] = optimalDualSolution_intermediates_stateInputEq_lagrangian[k][i][j];
+      }
+    }
+  }
+  
+  for (size_t k = 0; k < ods.intermediates.size(); k++)
+  {
+    ods.intermediates[k].stateInputIneq.resize(optimalDualSolution_intermediates_stateInputIneq_penalty[k].size());
+    for (size_t i = 0; i < ods.intermediates[k].stateInputIneq.size(); i++)
+    {
+      ods.intermediates[k].stateInputIneq[i].penalty = optimalDualSolution_intermediates_stateInputIneq_penalty[k][i];
+
+      ods.intermediates[k].stateInputIneq[i].lagrangian.resize(optimalDualSolution_intermediates_stateInputIneq_lagrangian[k][i].size());
+      for (size_t j = 0; j < ods.intermediates[k].stateInputIneq[i].lagrangian.size(); j++)
+      {
+        ods.intermediates[k].stateInputIneq[i].lagrangian[j] = optimalDualSolution_intermediates_stateInputIneq_lagrangian[k][i][j];
+      }
+    }
+  }
+
+  mpc_.getSolverPtr()->setOptimizedDualSolution(ods);
+
+  ///////////////////
+
+  PrimalSolution ops;
+  
+  ops.timeTrajectory_.resize(optimalPrimalSolution_time.size());
+  for (size_t i = 0; i < ops.timeTrajectory_.size(); i++)
+  {
+    ops.timeTrajectory_[i] = optimalPrimalSolution_time[i];
+  }
+
+  const size_t N = ops.timeTrajectory_.size();
+  size_array_t stateDim(N);
+  size_array_t inputDim(N);
+
+  ops.stateTrajectory_.resize(optimalPrimalSolution_state.size());
+  for (size_t i = 0; i < ops.stateTrajectory_.size(); i++)
+  {
+    stateDim[i] = optimalPrimalSolution_state[i].size();
+    ops.stateTrajectory_[i].resize(optimalPrimalSolution_state[i].size());
+    for (size_t j = 0; j < ops.stateTrajectory_[i].size(); j++)
+    {
+      ops.stateTrajectory_[i][j] = optimalPrimalSolution_state[i][j];
+    }
+  }
+
+  ops.inputTrajectory_.resize(optimalPrimalSolution_input.size());
+  for (size_t i = 0; i < ops.inputTrajectory_.size(); i++)
+  {
+    inputDim[i] = optimalPrimalSolution_input[i].size();
+    ops.inputTrajectory_[i].resize(optimalPrimalSolution_input[i].size());
+    for (size_t j = 0; j < ops.inputTrajectory_[i].size(); j++)
+    {
+      ops.inputTrajectory_[i][j] = optimalPrimalSolution_input[i][j];
+    }
+  }
+
+  ops.postEventIndices_.resize(optimalPrimalSolution_postEventIndices.size());
+  for (size_t i = 0; i < ops.postEventIndices_.size(); i++)
+  {
+    ops.postEventIndices_[i] = optimalPrimalSolution_postEventIndices[i];
+  }
+
+  ops.modeSchedule_.eventTimes.resize(optimalPrimalSolution_modeSchedule_eventTimes.size());
+  for (size_t i = 0; i < ops.modeSchedule_.eventTimes.size(); i++)
+  {
+    ops.modeSchedule_.eventTimes[i] = optimalPrimalSolution_modeSchedule_eventTimes[i];
+  }
+
+  ops.modeSchedule_.modeSequence.resize(optimalPrimalSolution_modeSchedule_modeSequence.size());
+  for (size_t i = 0; i < ops.modeSchedule_.modeSequence.size(); i++)
+  {
+    ops.modeSchedule_.modeSequence[i] = optimalPrimalSolution_modeSchedule_modeSequence[i];
+  }
+
+  scalar_array_t optimalPrimalSolution_controllerTimeStamp;
+  vector_array_t optimalPrimalSolution_controllerBiasArray;
+  vector_array_t optimalPrimalSolution_controllerDeltaBiasArray;
+  matrix_array_t optimalPrimalSolution_controllerGainArray;
+
+  optimalPrimalSolution_controllerTimeStamp.resize(optimalPrimalSolution_controller_time_stamp.size());
+  for (size_t i = 0; i < optimalPrimalSolution_controller_time_stamp.size(); i++)
+  {
+    optimalPrimalSolution_controllerTimeStamp[i] = optimalPrimalSolution_controller_time_stamp[i];
+  }
+  
+  optimalPrimalSolution_controllerBiasArray.resize(optimalPrimalSolution_controller_bias_array.size());
+  for (size_t i = 0; i < optimalPrimalSolution_controller_bias_array.size(); i++)
+  {
+    optimalPrimalSolution_controllerBiasArray[i].resize(optimalPrimalSolution_controller_bias_array[i].size());
+    for (size_t j = 0; j < optimalPrimalSolution_controller_bias_array[i].size(); j++)
+    {
+      optimalPrimalSolution_controllerBiasArray[i][j] = optimalPrimalSolution_controller_bias_array[i][j];
+    }
+  }
+
+  optimalPrimalSolution_controllerDeltaBiasArray.resize(optimalPrimalSolution_controller_delta_bias_array.size());
+  for (size_t i = 0; i < optimalPrimalSolution_controller_delta_bias_array.size(); i++)
+  {
+    optimalPrimalSolution_controllerDeltaBiasArray[i].resize(optimalPrimalSolution_controller_delta_bias_array[i].size());
+    for (size_t j = 0; j < optimalPrimalSolution_controller_delta_bias_array[i].size(); j++)
+    {
+      optimalPrimalSolution_controllerDeltaBiasArray[i][j] = optimalPrimalSolution_controller_delta_bias_array[i][j];
+    }
+  }
+
+  optimalPrimalSolution_controllerGainArray.resize(optimalPrimalSolution_controller_gain_array.size());
+  for (size_t i = 0; i < optimalPrimalSolution_controller_gain_array.size(); i++)
+  {
+    int row_size = optimalPrimalSolution_controller_gain_array[i].size();
+    int col_size = optimalPrimalSolution_controller_gain_array[i][0].size();
+    optimalPrimalSolution_controllerGainArray[i].resize(row_size, col_size);
+    for (size_t j = 0; j < row_size; j++)
+    {
+      for (size_t k = 0; k < col_size; k++)
+      {
+        optimalPrimalSolution_controllerGainArray[i](j,k) = optimalPrimalSolution_controller_gain_array[i][j][k];
+      }
+    }
+  }
+
+  ops.controllerPtr_.reset(new LinearController);
+  ops.controllerPtr_->setTimeStamp(optimalPrimalSolution_controllerTimeStamp);
+  ops.controllerPtr_->setBiasArray(optimalPrimalSolution_controllerBiasArray);
+  ops.controllerPtr_->setDeltaBiasArray(optimalPrimalSolution_controllerDeltaBiasArray);
+  ops.controllerPtr_->setGainArray(optimalPrimalSolution_controllerGainArray);
+
   /*
-  std::cout << "/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/" << std::endl;
-  std::cout << "/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/" << std::endl;
-  std::cout << "/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/" << std::endl;
-  std::cout << "/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/" << std::endl;
-  std::cout << "[MPC_ROS_Interface::loadData] inputTrajectory_ size: " << bufferPrimalSolutionPtr_->inputTrajectory_.size() << std::endl;
-  for (size_t i = 0; i < bufferPrimalSolutionPtr_->inputTrajectory_.size(); i++)
-  {
-    std::cout << i << ": " << bufferPrimalSolutionPtr_->inputTrajectory_[i] << std::endl;
-  }
+  std::cout << "[MPC_ROS_Interface::loadData] ops getTimeStamp size: " << ops.controllerPtr_->getTimeStamp().size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::loadData] ops getBiasArray size: " << ops.controllerPtr_->getBiasArray().size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::loadData] ops getBiasArray[0] size: " << ops.controllerPtr_->getBiasArray()[0].size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::loadData] ops getDeltaBiasArray size: " << ops.controllerPtr_->getDeltaBiasArray().size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::loadData] ops getGainArray size: " << ops.controllerPtr_->getGainArray().size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::loadData] ops getGainArray rows: " << ops.controllerPtr_->getGainArray()[0].rows() << std::endl;
+  std::cout << "[MPC_ROS_Interface::loadData] ops getGainArray cols: " << ops.controllerPtr_->getGainArray()[0].cols() << std::endl;
   
-  std::cout << "[MPC_ROS_Interface::loadData] stateTrajectory_ size: " << bufferPrimalSolutionPtr_->stateTrajectory_.size() << std::endl;
-  for (size_t i = 0; i < bufferPrimalSolutionPtr_->stateTrajectory_.size(); i++)
-  {
-    std::cout << i << ": " << bufferPrimalSolutionPtr_->stateTrajectory_[i] << std::endl;
-  }
+
+  std::cout << "/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/" << std::endl;
+  std::cout << "/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/" << std::endl;
+  std::cout << "/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/" << std::endl;
+  std::cout << "/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/" << std::endl;
+  //ops.controllerPtr_->display();
+  std::cout << "[MPC_ROS_Interface::loadData] ops.timeTrajectory_ size: " << ops.timeTrajectory_.size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::loadData] ops.stateTrajectory_ size: " << ops.stateTrajectory_.size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::loadData] ops.inputTrajectory_ size: " << ops.inputTrajectory_.size() << std::endl;
+  std::cout << "[MPC_ROS_Interface::loadData] ops.controllerPtr_ size: " << ops.controllerPtr_->size() << std::endl;
   
-  std::cout << "[MPC_ROS_Interface::loadData] mpcInitObservation_.full_state size: " << bufferCommandPtr_->mpcInitObservation_.full_state.size() << std::endl;
-  std::cout << bufferCommandPtr_->mpcInitObservation_.full_state << std::endl;
-
-  std::cout << "[MPC_ROS_Interface::loadData] mpcTargetTrajectories_ size: " << bufferCommandPtr_->mpcTargetTrajectories_.size() << std::endl;
-  std::cout << bufferCommandPtr_->mpcTargetTrajectories_ << std::endl;
-
-  std::cout << "[MPC_ROS_Interface::loadData] bufferPerformanceIndicesPtr_ cost: " << bufferPerformanceIndicesPtr_->cost << std::endl;
-  std::cout << "[MPC_ROS_Interface::loadData] bufferPerformanceIndicesPtr_ dynamicsViolationSSE: " << bufferPerformanceIndicesPtr_->dynamicsViolationSSE << std::endl;
-  std::cout << "[MPC_ROS_Interface::loadData] bufferPerformanceIndicesPtr_ equalityConstraintsSSE: " << bufferPerformanceIndicesPtr_->equalityConstraintsSSE << std::endl;
-  std::cout << "[MPC_ROS_Interface::loadData] bufferPerformanceIndicesPtr_ equalityLagrangian: " << bufferPerformanceIndicesPtr_->equalityLagrangian << std::endl;
-  std::cout << "[MPC_ROS_Interface::loadData] bufferPerformanceIndicesPtr_ inequalityLagrangian: " << bufferPerformanceIndicesPtr_->inequalityLagrangian << std::endl;
-  std::cout << "[MPC_ROS_Interface::loadData] bufferPerformanceIndicesPtr_ merit: " << bufferPerformanceIndicesPtr_->merit << std::endl;
   std::cout << "/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/" << std::endl;
   std::cout << "/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/" << std::endl;
   std::cout << "/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/" << std::endl;
   std::cout << "/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/" << std::endl;
   */
-  
+
+  mpc_.getSolverPtr()->setOptimizedPrimalSolution(ops);
+
   std::cout << "[MPC_ROS_Interface::loadData] END" << std::endl;
 }
 

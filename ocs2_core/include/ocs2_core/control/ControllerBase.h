@@ -130,6 +130,17 @@ class ControllerBase {
     throw std::runtime_error("ControllerBase::flatten: not implemented.");
   }
 
+  /// NUA TODO: FIND A BETTER (GENERAL) WAY TO GET THE DATA FROM INHERITED CLASSES!
+  virtual scalar_array_t getTimeStamp() = 0;
+  virtual vector_array_t getBiasArray() = 0;
+  virtual vector_array_t getDeltaBiasArray() = 0;
+  virtual matrix_array_t getGainArray() = 0;
+
+  virtual void setTimeStamp(scalar_array_t& ts) = 0;
+  virtual void setBiasArray(vector_array_t& ba) = 0;
+  virtual void setDeltaBiasArray(vector_array_t& dba) = 0;
+  virtual void setGainArray(matrix_array_t& ga) = 0;
+
  protected:
   /** Copy constructor */
   ControllerBase(const ControllerBase& rhs) = default;
