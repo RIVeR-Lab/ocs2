@@ -140,6 +140,8 @@ class MPC_ROS_Interface
 
     void computeTraj2(TargetTrajectories targetTrajectories, SystemObservation currentObservation, bool flag_reset=true);
 
+    PrimalSolution getPolicy();
+
   protected:
     /**
      * Callback to reset MPC.
@@ -165,7 +167,8 @@ class MPC_ROS_Interface
      * @param [in] performanceIndices: The performance indices data of the solver.
      * @return MPC policy message.
      */
-    static ocs2_msgs::mpc_flattened_controller createMpcPolicyMsg(const PrimalSolution& primalSolution, const CommandData& commandData,
+    static ocs2_msgs::mpc_flattened_controller createMpcPolicyMsg(const PrimalSolution& primalSolution, 
+                                                                  const CommandData& commandData,
                                                                   const PerformanceIndex& performanceIndices);
 
     /**

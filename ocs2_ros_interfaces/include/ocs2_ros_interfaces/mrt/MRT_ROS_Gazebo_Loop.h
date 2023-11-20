@@ -152,6 +152,10 @@ class MRT_ROS_Gazebo_Loop
     void getInitTarget(vector_t& initTarget);
 
     void getCurrentState(vector_t& currentState);
+
+    /** NUA TODO: Add decription. */
+    void computeCommand();
+
     // Filter
     double prev_lin_x = 0.0;
     double prev_ang_z = 0.0;

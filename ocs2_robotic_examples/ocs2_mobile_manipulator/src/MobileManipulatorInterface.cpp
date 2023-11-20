@@ -699,6 +699,10 @@ void MobileManipulatorInterface::updateFullModelState(std::vector<double>& state
   nav_msgs::Odometry odomMsg = odomMsg_;
   sensor_msgs::JointState jointStateMsg = jointStateMsg_;
 
+  statePositionBase.clear();
+  statePositionArm.clear();
+  stateVelocityBase.clear();
+
   // Set mobile base state
   statePositionBase.push_back(odomMsg.pose.pose.position.x);
   statePositionBase.push_back(odomMsg.pose.pose.position.y);
@@ -1954,6 +1958,9 @@ void MobileManipulatorInterface::calculateMPCTrajectory()
   //while(1);
   //spinOnce();
   bool flag_reset = true;
+  mpcNode.computeTraj2(targetTrajectories, currentObservation, flag_reset);
+
+  /*
   for (size_t i = 0; i < 10; i++)
   {
     std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE getTargetTrajectories: " << referenceManagerPtr_->getTargetTrajectories().stateTrajectory.size() << std::endl;
@@ -1965,15 +1972,26 @@ void MobileManipulatorInterface::calculateMPCTrajectory()
     //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] DEBUF_INF" << std::endl;
     //while(1);
   }
+  */
   
   //spinOnce();
   /////////////////// SETTING MPC //////////// END
 
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] DEBUF_INF" << std::endl;
-  while(1);
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] DEBUF_INF" << std::endl;
+  //while(1);
 
   // ---------------------------------------------------
 
+  double dt = 1.0 / mpcSettings_.mrtDesiredFrequency_;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] dt: " << dt << std::endl;
+  
+  PrimalSolution currentPolicy = mpcNode.getPolicy();
+  vector_t currentInput_ = currentPolicy.getDesiredInput(dt);
+
+  computeCommand(currentPolicy, currentObservation, currentStateVelocityBase);
+
+
+  /*
   /////////////////// SETTING MRT //////////// START
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE MRT_ROS_Interface" << std::endl;
   MRT_ROS_Interface mrt(robotModelInfo, topicPrefix);
@@ -2009,6 +2027,9 @@ void MobileManipulatorInterface::calculateMPCTrajectory()
                                 drlFlag_,
                                 logSavePathRel_);
 
+  mrt_loop.computeCommand();
+
+  
   /// NUA NOTE: THIS MIGHT BE UNNECESSARY!
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE updateModelMode" << std::endl;
   mobileManipulatorVisu_->updateModelMode(getModelModeInt(robotModelInfo));
@@ -2040,6 +2061,7 @@ void MobileManipulatorInterface::calculateMPCTrajectory()
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE mrt_loop.run" << std::endl;
   mrt_loop.run(currentTarget);
   /////////////////// SETTING MRT //////////// END
+  */
 
   //spinOnce();
 
@@ -2047,6 +2069,102 @@ void MobileManipulatorInterface::calculateMPCTrajectory()
   while(1);
 
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorInterface::computeCommand(const PrimalSolution& currentPolicy, 
+                                                const SystemObservation& currentObservation,
+                                                std::vector<double>& currentStateVelocityBase)
+{
+  //std::cout << "[MobileManipulatorInterface::computeCommand] START" << std::endl;
+
+  std::vector<double> cmd;
+
+  geometry_msgs::Twist baseTwistMsg;
+  trajectory_msgs::JointTrajectory armJointTrajectoryMsg;
+  kinova_msgs::JointVelocity armJointVelocityMsg;
+
+  // Set mobile base command
+  if (robotModelInfo_.modelMode == ModelMode::BaseMotion || 
+      robotModelInfo_.modelMode == ModelMode::WholeBodyMotion)
+  {
+    baseTwistMsg.linear.x = currentInput_[0];
+    baseTwistMsg.angular.z = currentInput_[1];
+    
+    // Cutoff Frequency
+    if(abs(abs(baseTwistMsg.linear.x) - abs(prev_lin_x)) > lin_x_cutoff) {
+      baseTwistMsg.linear.x = prev_lin_x+copysign(1, baseTwistMsg.linear.x-prev_lin_x)*lin_x_cutoff;
+    }
+    if(abs(abs(baseTwistMsg.angular.z) - abs(prev_ang_z)) > ang_z_cutoff) {
+      baseTwistMsg.angular.z = prev_ang_z+copysign(1, baseTwistMsg.angular.z-prev_ang_z)*ang_z_cutoff;
+    }
+    prev_lin_x = baseTwistMsg.linear.x;
+    prev_ang_z = baseTwistMsg.angular.z;
+    
+    
+    cmd.push_back(baseTwistMsg.linear.x);
+    cmd.push_back(baseTwistMsg.angular.z);
+  }
+
+  // Set arm command
+  if (mrt_.getRobotModelInfo().modelMode == ModelMode::ArmMotion || 
+      mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+  {
+    int baseOffset = 0;
+    if (mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+    {
+      baseOffset = mrt_.getRobotModelInfo().mobileBase.stateDim;
+    }
+    int n_joints = mrt_.getRobotModelInfo().robotArm.jointNames.size();
+    armJointTrajectoryMsg.joint_names.resize(n_joints);
+
+    //PrimalSolution primalSolution = mrt_.getPolicy();
+    //PrimalSolution primalSolution = currentPolicy;
+    auto nextState = currentPolicy.getDesiredState(time_ + dt_);
+
+    trajectory_msgs::JointTrajectoryPoint jtp;
+    jtp.positions.resize(n_joints);
+    jtp.time_from_start = ros::Duration(dt_);
+
+    for (int i = 0; i < n_joints; ++i)
+    {
+      armJointTrajectoryMsg.joint_names[i] = mrt_.getRobotModelInfo().robotArm.jointNames[i];
+      jtp.positions[i] = nextState[baseOffset + i];
+
+      cmd.push_back(jtp.positions[i]);
+    }
+    armJointTrajectoryMsg.points.push_back(jtp);
+  }
+
+  // Publish command
+  if (mrt_.getRobotModelInfo().modelMode == ModelMode::BaseMotion || 
+      mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+  {
+    //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] BASE PUB" << std::endl;
+    baseTwistPub_.publish(baseTwistMsg);
+  }
+
+  if (mrt_.getRobotModelInfo().modelMode == ModelMode::ArmMotion || 
+      mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+  {
+    armJointVelocityMsg.joint1 = currentInput_[2] * (180.0/M_PIf32);
+    armJointVelocityMsg.joint2 = currentInput_[3] * (180.0/M_PIf32);
+    armJointVelocityMsg.joint3 = currentInput_[4] * (180.0/M_PIf32);
+    armJointVelocityMsg.joint4 = currentInput_[5] * (180.0/M_PIf32);
+    armJointVelocityMsg.joint5 = currentInput_[6] * (180.0/M_PIf32);
+    armJointVelocityMsg.joint6 = currentInput_[7] * (180.0/M_PIf32);
+    //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] ARM PUB" << std::endl;
+    armJointTrajectoryPub_.publish(armJointTrajectoryMsg);
+    armJointVelocityPub_.publish(armJointVelocityMsg);
+
+  }
+  
+  //std::cout << "[MobileManipulatorInterface::computeCommand] DEBUG INF" << std::endl;
+  //while(1);
+
+  //std::cout << "[MobileManipulatorInterface::computeCommand] END" << std::endl << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------

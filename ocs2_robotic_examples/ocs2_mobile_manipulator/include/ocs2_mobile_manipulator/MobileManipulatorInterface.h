@@ -283,6 +283,10 @@ class MobileManipulatorInterface final : public RobotInterface
     void mrtCallback(const ros::TimerEvent& event);
 
     void calculateMPCTrajectory();
+
+    void computeCommand(const PrimalSolution& currentPolicy, 
+                        const SystemObservation& currentObservation,
+                        std::vector<double>& currentStateVelocityBase);
   
   private:
     std::unique_ptr<StateInputCost> getQuadraticInputCost();
