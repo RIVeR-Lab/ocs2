@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.11.08
+// LAST UPDATE: 2023.11.22
 //
 // AUTHOR: Neset Unver Akmandor  (NUA)
 //
@@ -909,7 +909,9 @@ SystemObservation MobileManipulatorInterface::getCurrentObservation(scalar_t tim
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MobileManipulatorInterface::setMPCProblem()
+void MobileManipulatorInterface::setMPCProblem(size_t inputModelModeInt, 
+                                               size_t inputActivateSelfCollisionInt,
+                                               size_t inputActivateExtCollisionInt)
 {
   //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] START" << std::endl;
 
@@ -951,13 +953,42 @@ void MobileManipulatorInterface::setMPCProblem()
 
   mpcTimer1_.endTimer();
 
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] modelModeInt: " << inputModelModeInt << std::endl;
+
   // Set MPC Problem Settings
-  size_t modelModeInt = modelModeIntQuery_;
+  size_t modelModeInt = inputModelModeInt;
+  if (inputModelModeInt < 0)
+  {
+    modelModeInt = modelModeIntQuery_;
+  }
+  modelModeIntQuery_ = modelModeInt;
+
+  bool activateSelfCollision = false;
+  if (inputActivateSelfCollisionInt < 0)
+  {
+    activateSelfCollision = activateSelfCollision_;
+  }
+  else if (inputActivateSelfCollisionInt == 1)
+  {
+    activateSelfCollision = true;
+  }
+  activateSelfCollision_ = activateSelfCollision;
+
+  bool activateExtCollision = false;
+  if (inputActivateExtCollisionInt < 0)
+  {
+    activateExtCollision = activateExtCollision_;
+  }
+  else if (inputActivateExtCollisionInt == 1)
+  {
+    activateExtCollision = true;
+  }
+  activateExtCollision_ = activateExtCollision;
 
   mpcTimer2_.startTimer();
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] modelModeInt: " << modelModeInt << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] modelModeInt: " << modelModeInt << std::endl;
   bool isModeUpdated = updateModelMode(robotModelInfo_, modelModeInt);
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] isModeUpdated: " << isModeUpdated << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] isModeUpdated: " << isModeUpdated << std::endl;
   //printRobotModelInfo(robotModelInfo_);
   mpcTimer2_.endTimer();
 
@@ -984,14 +1015,14 @@ void MobileManipulatorInterface::setMPCProblem()
     mpcTimer6_.endTimer();
 
     mpcTimer7_.startTimer();
-    if (activateSelfCollision_) 
+    if (activateSelfCollision) 
     {
       //ocp_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode0_);
     }
     mpcTimer7_.endTimer();
 
     mpcTimer8_.startTimer();
-    if (activateExtCollision_) 
+    if (activateExtCollision) 
     {
       //ocp_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode0_);
     }
@@ -1022,14 +1053,14 @@ void MobileManipulatorInterface::setMPCProblem()
     mpcTimer6_.endTimer();
 
     mpcTimer7_.startTimer();
-    if (activateSelfCollision_) 
+    if (activateSelfCollision) 
     {
       ocp_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode1_);
     }
     mpcTimer7_.endTimer();
 
     mpcTimer8_.startTimer();
-    if (activateExtCollision_) 
+    if (activateExtCollision) 
     {
       //ocp_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode1_);
     }
@@ -1060,14 +1091,14 @@ void MobileManipulatorInterface::setMPCProblem()
     mpcTimer6_.endTimer();
 
     mpcTimer7_.startTimer();
-    if (activateSelfCollision_) 
+    if (activateSelfCollision) 
     {
       ocp_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode2_);
     }
     mpcTimer7_.endTimer();
 
     mpcTimer8_.startTimer();
-    if (activateExtCollision_) 
+    if (activateExtCollision) 
     {
       //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] BEFORE extCollisionConstraintPtr_mode2_" << std::endl;
       ocp_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode2_);
@@ -1548,21 +1579,21 @@ void MobileManipulatorInterface::runMPC()
     mpcNode.setModelModeInt(getModelModeInt(robotModelInfo));
     //mpcTimer8_.endTimer();
 
-    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE currentTarget" << std::endl;
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::runMPC] BEFORE currentTarget" << std::endl;
     vector_t currentTarget(7);
     currentTarget << -1.0, 0.5, 1.0, 0.0, 0.0, 0.0, 1.0;
 
-    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE getCurrentObservation" << std::endl;
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::runMPC] BEFORE getCurrentObservation" << std::endl;
     SystemObservation currentObservation = getCurrentObservation();
 
-    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE TargetTrajectories" << std::endl;
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::runMPC] BEFORE TargetTrajectories" << std::endl;
     TargetTrajectories targetTrajectories({currentObservation.time}, {currentTarget}, {currentObservation.input});
 
-    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] currentObservation.mode: " << currentObservation.mode << std::endl;
-    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] currentObservation.time: " << currentObservation.time << std::endl;
-    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] currentObservation.state size: " << currentObservation.state.size() << std::endl << currentObservation.state << std::endl;
-    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] currentObservation.full_state size: " << currentObservation.full_state.size() << std::endl << currentObservation.full_state << std::endl;
-    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] currentObservation.input size: " << currentObservation.input.size() << std::endl << currentObservation.input << std::endl;
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::runMPC] currentObservation.mode: " << currentObservation.mode << std::endl;
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::runMPC] currentObservation.time: " << currentObservation.time << std::endl;
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::runMPC] currentObservation.state size: " << currentObservation.state.size() << std::endl << currentObservation.state << std::endl;
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::runMPC] currentObservation.full_state size: " << currentObservation.full_state.size() << std::endl << currentObservation.full_state << std::endl;
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::runMPC] currentObservation.input size: " << currentObservation.input.size() << std::endl << currentObservation.input << std::endl;
 
     mpcNode.setTargetTrajectories(targetTrajectories);
     mpcNode.setSystemObservation(currentObservation);
@@ -1880,11 +1911,28 @@ void MobileManipulatorInterface::runMRT()
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::mpcCallback(const ros::TimerEvent& event)
 {
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcCallback] START" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcCallback] START" << std::endl;
 
-  runMPC();
+  //runMPC();
 
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcCallback] END" << std::endl;
+  SystemObservation currentObservation = getCurrentObservation();
+
+  vector_t currentTarget(7);
+  currentTarget << 2.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
+
+  bool setMPCProblemFlag = true;
+  size_t inputModelModeInt = 2;
+  size_t inputActivateSelfCollisionInt = 1;
+  size_t inputActivateExtCollisionInt = 0;
+
+  calculateMPCTrajectory(currentTarget, 
+                         currentObservation,
+                         setMPCProblemFlag,
+                         inputModelModeInt,
+                         inputActivateSelfCollisionInt,
+                         inputActivateExtCollisionInt);
+
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcCallback] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1899,12 +1947,20 @@ void MobileManipulatorInterface::mrtCallback(const ros::TimerEvent& event)
   //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] END" << std::endl;
 }
 
-void MobileManipulatorInterface::calculateMPCTrajectory()
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorInterface::calculateMPCTrajectory(vector_t& currentTarget,
+                                                        SystemObservation& currentObservation,
+                                                        bool setMPCProblemFlag,
+                                                        size_t inputModelModeInt,
+                                                        size_t inputActivateSelfCollisionInt,
+                                                        size_t inputActivateExtCollisionInt)
 {
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] START" << std::endl;
 
   /// NUA NOTE: UPDATE IF NECESSARY!
-  RobotModelInfo robotModelInfo = robotModelInfo_;
+  //RobotModelInfo robotModelInfo = robotModelInfo_;
   std::string topicPrefix = "mobile_manipulator_";
   if (ns_ != "")
   {
@@ -1912,20 +1968,21 @@ void MobileManipulatorInterface::calculateMPCTrajectory()
   }
 
   // NECESSARY INPUTS:
-  // robotModelInfo_
   // modelModeIntQuery_
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE setMPCProblem" << std::endl;
-  setMPCProblem();
+  if (setMPCProblemFlag)
+  {
+    setMPCProblem(inputModelModeInt, inputActivateSelfCollisionInt, inputActivateExtCollisionInt);
+  }
 
   /////////////////// SETTING MPC //////////// START
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE GaussNewtonDDP_MPC" << std::endl;
-  ocs2::GaussNewtonDDP_MPC mpc(mpcSettings_, 
-                               ddpSettings_, 
-                               *rolloutPtr_, 
-                               ocp_, 
+  ocs2::GaussNewtonDDP_MPC mpc(mpcSettings_,
+                               ddpSettings_,
+                               *rolloutPtr_,
+                               ocp_,
                                *initializerPtr_);
 
-  /// NUA NOTE: THIS MIGHT BE UNNECESSARY!
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE setReferenceManager" << std::endl;
   mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr_);
 
@@ -1933,17 +1990,17 @@ void MobileManipulatorInterface::calculateMPCTrajectory()
   MPC_ROS_Interface mpcNode(mpc, topicPrefix);
 
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE setModelModeInt" << std::endl;
-  mpcNode.setModelModeInt(getModelModeInt(robotModelInfo));
+  mpcNode.setModelModeInt(inputModelModeInt);
   
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE spin" << std::endl;
   //spinOnce();
 
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE currentTarget" << std::endl;
-  vector_t currentTarget(7);
-  currentTarget << 2.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE currentTarget" << std::endl;
+  //vector_t currentTarget(7);
+  //currentTarget << 2.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
 
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE getCurrentObservation" << std::endl;
-  SystemObservation currentObservation = getCurrentObservation();
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE getCurrentObservation" << std::endl;
+  //SystemObservation currentObservation = getCurrentObservation();
 
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE TargetTrajectories" << std::endl;
   TargetTrajectories targetTrajectories({currentObservation.time}, {currentTarget}, {currentObservation.input});
@@ -1982,91 +2039,25 @@ void MobileManipulatorInterface::calculateMPCTrajectory()
 
   // ---------------------------------------------------
 
-  double dt = 1.0 / mpcSettings_.mrtDesiredFrequency_;
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] dt: " << dt << std::endl;
+  //double dt = 1.0 / mpcSettings_.mrtDesiredFrequency_;
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] dt: " << dt << std::endl;
   
   PrimalSolution currentPolicy = mpcNode.getPolicy();
-  vector_t currentInput_ = currentPolicy.getDesiredInput(dt);
+  //vector_t currentInput_ = currentPolicy.getDesiredInput(dt);
 
-  computeCommand(currentPolicy, currentObservation, currentStateVelocityBase);
+  std::vector<double> cmd;
 
+  computeCommand(currentPolicy, currentObservation, cmd);
 
-  /*
-  /////////////////// SETTING MRT //////////// START
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE MRT_ROS_Interface" << std::endl;
-  MRT_ROS_Interface mrt(robotModelInfo, topicPrefix);
-
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE initRollout" << std::endl;
-  mrt.initRollout(&*rolloutPtr_);
-
-  // NUA NOTE: CHANGE IT TO SINGLE SHOT!
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE mrt.launchNodes" << std::endl;
-  mrt.launchNodes(nodeHandle_);
-
-  // NUA NOTE: CHANGE IT TO SINGLE SHOT!
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE MRT_ROS_Gazebo_Loop" << std::endl;
-  MRT_ROS_Gazebo_Loop mrt_loop(nodeHandle_, 
-                                mrt, 
-                                worldFrameName_,
-                                ns_,
-                                targetMsgName_,
-                                goalFrameName_,
-                                baseStateMsg_,
-                                armStateMsg_,
-                                baseControlMsg_,
-                                armControlMsg_,
-                                selfCollisionMsg_,
-                                occupancyDistanceBaseMsg_,
-                                occupancyDistanceArmMsg_,
-                                pointsOnRobotMsgName_,
-                                err_threshold_pos_,
-                                err_threshold_ori_yaw_,
-                                err_threshold_ori_quat_,
-                                mpcSettings_.mrtDesiredFrequency_, 
-                                mpcSettings_.mpcDesiredFrequency_,
-                                drlFlag_,
-                                logSavePathRel_);
-
-  mrt_loop.computeCommand();
-
-  
-  /// NUA NOTE: THIS MIGHT BE UNNECESSARY!
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE updateModelMode" << std::endl;
-  mobileManipulatorVisu_->updateModelMode(getModelModeInt(robotModelInfo));
-  
-  /// NUA NOTE: THIS MIGHT BE UNNECESSARY!
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE subscribeObservers" << std::endl;
-  mrt_loop.subscribeObservers({mobileManipulatorVisu_});
-
-  /// NUA NOTE: REMOVE UNNECESSARY ONES!
-  if (drlFlag_)
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] cmd:" << std::endl;
+  for (size_t i = 0; i < cmd.size(); i++)
   {
-    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE setTargetReceivedFlag" << std::endl;
-    mrt_loop.setTargetReceivedFlag(targetReceivedFlag_);
-
-    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE setTaskMode" << std::endl;
-    mrt_loop.setTaskMode(taskMode_);
-
-    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE setDRLActionTimeHorizon" << std::endl;
-    mrt_loop.setDRLActionTimeHorizon(drlActionTimeHorizon_);
-
-    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE setDRLActionLastStepFlag" << std::endl;
-    mrt_loop.setDRLActionLastStepFlag(drlActionLastStepFlag_);
-
-    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE setDRLActionLastStepDistanceThreshold" << std::endl;
-    mrt_loop.setDRLActionLastStepDistanceThreshold(drlActionLastStepDistanceThreshold_);
+    std::cout << i << " -> " << cmd[i] << std::endl;
   }
+  
 
-  // NUA NOTE: CHANGE IT TO SINGLE SHOT!
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE mrt_loop.run" << std::endl;
-  mrt_loop.run(currentTarget);
-  /////////////////// SETTING MRT //////////// END
-  */
-
-  //spinOnce();
-
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] DEBUG_INF" << std::endl;
-  while(1);
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] DEBUG_INF" << std::endl;
+  //while(1);
 
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] END" << std::endl;
 }
@@ -2076,61 +2067,67 @@ void MobileManipulatorInterface::calculateMPCTrajectory()
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::computeCommand(const PrimalSolution& currentPolicy, 
                                                 const SystemObservation& currentObservation,
-                                                std::vector<double>& currentStateVelocityBase)
+                                                std::vector<double>& cmd)
 {
   //std::cout << "[MobileManipulatorInterface::computeCommand] START" << std::endl;
 
-  std::vector<double> cmd;
-
+  //std::vector<double> cmd;
+  cmd.clear();
   geometry_msgs::Twist baseTwistMsg;
   trajectory_msgs::JointTrajectory armJointTrajectoryMsg;
   kinova_msgs::JointVelocity armJointVelocityMsg;
+
+  vector_t currentInput = currentPolicy.getDesiredInput(0);
+  double dt = 1.0 / mpcSettings_.mrtDesiredFrequency_;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::computeCommand] dt: " << dt << std::endl;
 
   // Set mobile base command
   if (robotModelInfo_.modelMode == ModelMode::BaseMotion || 
       robotModelInfo_.modelMode == ModelMode::WholeBodyMotion)
   {
-    baseTwistMsg.linear.x = currentInput_[0];
-    baseTwistMsg.angular.z = currentInput_[1];
+    baseTwistMsg.linear.x = currentInput[0];
+    baseTwistMsg.angular.z = currentInput[1];
     
-    // Cutoff Frequency
-    if(abs(abs(baseTwistMsg.linear.x) - abs(prev_lin_x)) > lin_x_cutoff) {
-      baseTwistMsg.linear.x = prev_lin_x+copysign(1, baseTwistMsg.linear.x-prev_lin_x)*lin_x_cutoff;
+    // Cut-off velocity
+    if(abs(abs(baseTwistMsg.linear.x) - abs(prev_lin_x_)) > lin_x_cutoff_) 
+    {
+      baseTwistMsg.linear.x = prev_lin_x_ + copysign(1, baseTwistMsg.linear.x - prev_lin_x_) * lin_x_cutoff_;
     }
-    if(abs(abs(baseTwistMsg.angular.z) - abs(prev_ang_z)) > ang_z_cutoff) {
-      baseTwistMsg.angular.z = prev_ang_z+copysign(1, baseTwistMsg.angular.z-prev_ang_z)*ang_z_cutoff;
-    }
-    prev_lin_x = baseTwistMsg.linear.x;
-    prev_ang_z = baseTwistMsg.angular.z;
     
+    if(abs(abs(baseTwistMsg.angular.z) - abs(prev_ang_z_)) > ang_z_cutoff_) 
+    {
+      baseTwistMsg.angular.z = prev_ang_z_ + copysign(1, baseTwistMsg.angular.z - prev_ang_z_) * ang_z_cutoff_;
+    }
+    prev_lin_x_ = baseTwistMsg.linear.x;
+    prev_ang_z_ = baseTwistMsg.angular.z;
     
     cmd.push_back(baseTwistMsg.linear.x);
     cmd.push_back(baseTwistMsg.angular.z);
   }
 
   // Set arm command
-  if (mrt_.getRobotModelInfo().modelMode == ModelMode::ArmMotion || 
-      mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+  if (robotModelInfo_.modelMode == ModelMode::ArmMotion || 
+      robotModelInfo_.modelMode == ModelMode::WholeBodyMotion)
   {
     int baseOffset = 0;
-    if (mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+    if (robotModelInfo_.modelMode == ModelMode::WholeBodyMotion)
     {
-      baseOffset = mrt_.getRobotModelInfo().mobileBase.stateDim;
+      baseOffset = robotModelInfo_.mobileBase.stateDim;
     }
-    int n_joints = mrt_.getRobotModelInfo().robotArm.jointNames.size();
+    int n_joints = robotModelInfo_.robotArm.jointNames.size();
     armJointTrajectoryMsg.joint_names.resize(n_joints);
 
     //PrimalSolution primalSolution = mrt_.getPolicy();
     //PrimalSolution primalSolution = currentPolicy;
-    auto nextState = currentPolicy.getDesiredState(time_ + dt_);
+    auto nextState = currentPolicy.getDesiredState(dt);
 
     trajectory_msgs::JointTrajectoryPoint jtp;
     jtp.positions.resize(n_joints);
-    jtp.time_from_start = ros::Duration(dt_);
+    jtp.time_from_start = ros::Duration(dt);
 
     for (int i = 0; i < n_joints; ++i)
     {
-      armJointTrajectoryMsg.joint_names[i] = mrt_.getRobotModelInfo().robotArm.jointNames[i];
+      armJointTrajectoryMsg.joint_names[i] = robotModelInfo_.robotArm.jointNames[i];
       jtp.positions[i] = nextState[baseOffset + i];
 
       cmd.push_back(jtp.positions[i]);
@@ -2139,26 +2136,28 @@ void MobileManipulatorInterface::computeCommand(const PrimalSolution& currentPol
   }
 
   // Publish command
-  if (mrt_.getRobotModelInfo().modelMode == ModelMode::BaseMotion || 
-      mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+  if (robotModelInfo_.modelMode == ModelMode::BaseMotion || 
+      robotModelInfo_.modelMode == ModelMode::WholeBodyMotion)
   {
     //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] BASE PUB" << std::endl;
-    baseTwistPub_.publish(baseTwistMsg);
+    //baseTwistPub_.publish(baseTwistMsg);
   }
 
-  if (mrt_.getRobotModelInfo().modelMode == ModelMode::ArmMotion || 
-      mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+  if (robotModelInfo_.modelMode == ModelMode::ArmMotion || 
+      robotModelInfo_.modelMode == ModelMode::WholeBodyMotion)
   {
-    armJointVelocityMsg.joint1 = currentInput_[2] * (180.0/M_PIf32);
-    armJointVelocityMsg.joint2 = currentInput_[3] * (180.0/M_PIf32);
-    armJointVelocityMsg.joint3 = currentInput_[4] * (180.0/M_PIf32);
-    armJointVelocityMsg.joint4 = currentInput_[5] * (180.0/M_PIf32);
-    armJointVelocityMsg.joint5 = currentInput_[6] * (180.0/M_PIf32);
-    armJointVelocityMsg.joint6 = currentInput_[7] * (180.0/M_PIf32);
+    /*
+    armJointVelocityMsg.joint1 = currentInput[2] * (180.0/M_PIf32);
+    armJointVelocityMsg.joint2 = currentInput[3] * (180.0/M_PIf32);
+    armJointVelocityMsg.joint3 = currentInput[4] * (180.0/M_PIf32);
+    armJointVelocityMsg.joint4 = currentInput[5] * (180.0/M_PIf32);
+    armJointVelocityMsg.joint5 = currentInput[6] * (180.0/M_PIf32);
+    armJointVelocityMsg.joint6 = currentInput[7] * (180.0/M_PIf32);
+    */
     //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] ARM PUB" << std::endl;
-    armJointTrajectoryPub_.publish(armJointTrajectoryMsg);
-    armJointVelocityPub_.publish(armJointVelocityMsg);
-
+    
+    //armJointTrajectoryPub_.publish(armJointTrajectoryMsg);
+    //armJointVelocityPub_.publish(armJointVelocityMsg);
   }
   
   //std::cout << "[MobileManipulatorInterface::computeCommand] DEBUG INF" << std::endl;

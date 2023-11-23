@@ -246,7 +246,9 @@ class MobileManipulatorInterface final : public RobotInterface
 
     SystemObservation getCurrentObservation(scalar_t time=0.0);
 
-    void setMPCProblem();
+    void setMPCProblem(size_t modelModeInt=-1, 
+                       size_t activateSelfCollisionInt_=-1, 
+                       size_t inputActivateExtCollisionInt=-1);
 
     /*
     void setEsdfCachingServerPtr(std::shared_ptr<voxblox::EsdfCachingServer> newEsdfCachingServerPtr) 
@@ -282,11 +284,16 @@ class MobileManipulatorInterface final : public RobotInterface
 
     void mrtCallback(const ros::TimerEvent& event);
 
-    void calculateMPCTrajectory();
+    void calculateMPCTrajectory(vector_t& currentTarget,
+                                SystemObservation& currentObservation,
+                                bool setMPCProblemFlag,
+                                size_t inputModelModeInt=2, 
+                                size_t inputActivateSelfCollisionInt=-1,
+                                size_t inputActivateExtCollisionInt=-1);
 
     void computeCommand(const PrimalSolution& currentPolicy, 
                         const SystemObservation& currentObservation,
-                        std::vector<double>& currentStateVelocityBase);
+                        std::vector<double>& cmd);
   
   private:
     std::unique_ptr<StateInputCost> getQuadraticInputCost();
@@ -436,6 +443,12 @@ class MobileManipulatorInterface final : public RobotInterface
     std::shared_ptr<ocs2::mobile_manipulator::MobileManipulatorVisualization> mobileManipulatorVisu_;
 
     RobotModelInfo robotModelInfo_;
+
+    /// Filter NUA TODO: CLEAN AND MOVE TO CONFIG!
+    double prev_lin_x_ = 0.0;
+    double prev_ang_z_ = 0.0;
+    double ang_z_cutoff_ = 0.02;
+    double lin_x_cutoff_ = 0.02;
 
     // NUA TODO: Added to speed up the mpc problem initialization, but GET RID OF THESE ASAP!
     // -----------------

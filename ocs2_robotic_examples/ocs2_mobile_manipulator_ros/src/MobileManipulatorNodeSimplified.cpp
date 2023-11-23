@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.11.08
+// LAST UPDATE: 2023.11.23
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -50,7 +50,12 @@ int main(int argc, char** argv)
   //std::cout << "[MobileManipulatorNodeSimplified::main] START interface" << std::endl;
   MobileManipulatorInterface m4_interface(nh_interface, taskFile, libFolder, urdfFile, initModelModeInt);
 
-  m4_interface.calculateMPCTrajectory();
+  double mpc_dt = 0.01;
+
+  //std::cout << "[MobileManipulatorNode::main] BEFORE mpcTimer " << std::endl;
+  ros::Timer mpcTimer = nh_interface.createTimer(ros::Duration(mpc_dt), &MobileManipulatorInterface::mpcCallback, &m4_interface);
+
+  //m4_interface.calculateMPCTrajectory();
 
   std::cout << "[MobileManipulatorNodeSimplified::main] END" << std::endl;
 
