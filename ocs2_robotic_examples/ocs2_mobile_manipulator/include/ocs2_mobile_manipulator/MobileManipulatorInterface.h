@@ -39,6 +39,7 @@
 #include "ocs2_msgs/setDiscreteActionDRL.h"
 #include "ocs2_msgs/setContinuousActionDRL.h"
 #include "ocs2_msgs/setMPCActionResult.h"
+#include "ocs2_msgs/calculateMPCTrajectory.h"
 
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
@@ -246,9 +247,9 @@ class MobileManipulatorInterface final : public RobotInterface
 
     SystemObservation getCurrentObservation(scalar_t time=0.0);
 
-    void setMPCProblem(size_t modelModeInt=-1, 
-                       size_t activateSelfCollisionInt_=-1, 
-                       size_t inputActivateExtCollisionInt=-1);
+    void setMPCProblem(size_t modelModeInt=2, 
+                       bool activateSelfCollision=false, 
+                       bool activateExtCollision=false);
 
     /*
     void setEsdfCachingServerPtr(std::shared_ptr<voxblox::EsdfCachingServer> newEsdfCachingServerPtr) 
@@ -276,6 +277,9 @@ class MobileManipulatorInterface final : public RobotInterface
     bool setContinuousActionDRLSrv(ocs2_msgs::setContinuousActionDRL::Request &req, 
                                    ocs2_msgs::setContinuousActionDRL::Response &res);
 
+    bool calculateMPCTrajectorySrv(ocs2_msgs::calculateMPCTrajectory::Request &req, 
+                                   ocs2_msgs::calculateMPCTrajectory::Response &res);
+
     void runMPC();
 
     void runMRT();
@@ -286,10 +290,10 @@ class MobileManipulatorInterface final : public RobotInterface
 
     void calculateMPCTrajectory(vector_t& currentTarget,
                                 SystemObservation& currentObservation,
-                                bool setMPCProblemFlag,
+                                bool setMPCProblemFlag=true,
                                 size_t inputModelModeInt=2, 
-                                size_t inputActivateSelfCollisionInt=-1,
-                                size_t inputActivateExtCollisionInt=-1);
+                                bool activateSelfCollision=false,
+                                bool activateExtCollision=false);
 
     void computeCommand(const PrimalSolution& currentPolicy, 
                         const SystemObservation& currentObservation,
@@ -369,7 +373,7 @@ class MobileManipulatorInterface final : public RobotInterface
     std::vector<std::pair<std::string, std::string>> collisionLinkPairs_;
 
     size_t initModelModeInt_ = 2;
-    size_t modelModeIntQuery_ = 2;
+    size_t modelModeInt_ = 2;
 
     // 0: Go
     // 1: Go & Pick
@@ -500,6 +504,7 @@ class MobileManipulatorInterface final : public RobotInterface
 
     std::string setActionDRLServiceName_;
     std::string setTargetDRLServiceName_;
+    std::string calculateMPCTrajectoryServiceName_;
     std::string setMRTReadyServiceName_;
     std::string setMPCActionResultServiceName_;
 
@@ -534,6 +539,7 @@ class MobileManipulatorInterface final : public RobotInterface
     ros::ServiceClient setMRTReadyClient_;
 
     ros::ServiceServer setActionDRLService_;
+    ros::ServiceServer calculateMPCTrajectoryService_;
 };
 
 }  // namespace mobile_manipulator

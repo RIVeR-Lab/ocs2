@@ -1,0 +1,15 @@
+## Request
+# 0: baseMotion
+# 1: armMotion
+# 2: wholeBodyMotion
+int8 model_mode
+
+bool selfCollisionFlag
+bool extCollisionFlag
+
+float64[] target
+
+---
+## Response
+bool success
+float64[] cmd

@@ -33,6 +33,7 @@ add_service_files(
     setContinuousActionDRL.srv
     setSystemObservation.srv
     setMPCActionResult.srv
+    calculateMPCTrajectory.srv
 )
 
 generate_messages(

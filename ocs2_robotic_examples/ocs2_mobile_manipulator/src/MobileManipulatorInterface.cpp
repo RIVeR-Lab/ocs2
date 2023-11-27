@@ -27,7 +27,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(const std::string& taskFi
     libraryFolder_(libraryFolder), 
     urdfFile_(urdfFile),
     initModelModeInt_(initModelModeInt), 
-    modelModeIntQuery_(initModelModeInt)
+    modelModeInt_(initModelModeInt)
 {
   //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] START" << std::endl;
 
@@ -211,7 +211,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     libraryFolder_(libraryFolder), 
     urdfFile_(urdfFile),
     initModelModeInt_(initModelModeInt),
-    modelModeIntQuery_(initModelModeInt)
+    modelModeInt_(initModelModeInt)
 {
   //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface(6)] START" << std::endl;
 
@@ -320,6 +320,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   /// NUA TODO: SET THEM IN THE CONFIG!
   setActionDRLServiceName_ = "/set_action_drl";
   setTargetDRLServiceName_ = "/set_target_drl";
+  calculateMPCTrajectoryServiceName_ = "/calculate_mpc_traj";
   setMRTReadyServiceName_ = "/set_mrt_ready";
   setMPCActionResultServiceName_ = "/set_mpc_action_result";
 
@@ -407,6 +408,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     goalFrameName_ = ns_ + goalFrameName_;
     setActionDRLServiceName_ = ns_ + setActionDRLServiceName_;
     setTargetDRLServiceName_ = ns_ + setTargetDRLServiceName_;
+    calculateMPCTrajectoryServiceName_ = ns_ + calculateMPCTrajectoryServiceName_;
     setMRTReadyServiceName_ = ns_ + setMRTReadyServiceName_;
     setMPCActionResultServiceName_ = ns_ + setMPCActionResultServiceName_;
 
@@ -430,6 +432,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
       std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] goalFrameName_: " << goalFrameName_ << std::endl;
       std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] setActionDRLServiceName_: " << setActionDRLServiceName_ << std::endl;
       std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] setTargetDRLServiceName_: " << setTargetDRLServiceName_ << std::endl;
+      std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] calculateMPCTrajectoryServiceName_: " << calculateMPCTrajectoryServiceName_ << std::endl;
       std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] setMRTReadyServiceName_: " << setMRTReadyServiceName_ << std::endl;
       std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] setMPCActionResultServiceName_: " << setMPCActionResultServiceName_ << std::endl;
     }
@@ -909,9 +912,9 @@ SystemObservation MobileManipulatorInterface::getCurrentObservation(scalar_t tim
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MobileManipulatorInterface::setMPCProblem(size_t inputModelModeInt, 
-                                               size_t inputActivateSelfCollisionInt,
-                                               size_t inputActivateExtCollisionInt)
+void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, 
+                                               bool activateSelfCollision,
+                                               bool activateExtCollision)
 {
   //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] START" << std::endl;
 
@@ -953,36 +956,11 @@ void MobileManipulatorInterface::setMPCProblem(size_t inputModelModeInt,
 
   mpcTimer1_.endTimer();
 
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] modelModeInt: " << inputModelModeInt << std::endl;
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] BEFORE modelModeInt: " << modelModeInt << std::endl;
 
   // Set MPC Problem Settings
-  size_t modelModeInt = inputModelModeInt;
-  if (inputModelModeInt < 0)
-  {
-    modelModeInt = modelModeIntQuery_;
-  }
-  modelModeIntQuery_ = modelModeInt;
-
-  bool activateSelfCollision = false;
-  if (inputActivateSelfCollisionInt < 0)
-  {
-    activateSelfCollision = activateSelfCollision_;
-  }
-  else if (inputActivateSelfCollisionInt == 1)
-  {
-    activateSelfCollision = true;
-  }
+  modelModeInt_ = modelModeInt;
   activateSelfCollision_ = activateSelfCollision;
-
-  bool activateExtCollision = false;
-  if (inputActivateExtCollisionInt < 0)
-  {
-    activateExtCollision = activateExtCollision_;
-  }
-  else if (inputActivateExtCollisionInt == 1)
-  {
-    activateExtCollision = true;
-  }
   activateExtCollision_ = activateExtCollision;
 
   mpcTimer2_.startTimer();
@@ -1203,6 +1181,7 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
 {
   if (drlFlag_)
   {
+    /*
     if (drlActionType_ == 0)
     {
       //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes] DISCRETE ACTION" << std::endl;
@@ -1213,10 +1192,11 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
       //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes] CONTINUOUS ACTION" << std::endl;
       setActionDRLService_ = nodeHandle_.advertiseService(setActionDRLServiceName_, &MobileManipulatorInterface::setContinuousActionDRLSrv, this);
     }
+    */
 
-    setTargetDRLClient_ = nodeHandle_.serviceClient<ocs2_msgs::setTask>(setTargetDRLServiceName_);
-    setMRTReadyClient_ = nodeHandle_.serviceClient<ocs2_msgs::setBool>(setMRTReadyServiceName_);
-    setMPCActionResultClient_ = nodeHandle_.serviceClient<ocs2_msgs::setMPCActionResult>(setMPCActionResultServiceName_);
+    //setTargetDRLClient_ = nodeHandle_.serviceClient<ocs2_msgs::setTask>(setTargetDRLServiceName_);
+    //setMRTReadyClient_ = nodeHandle_.serviceClient<ocs2_msgs::setBool>(setMRTReadyServiceName_);
+    //setMPCActionResultClient_ = nodeHandle_.serviceClient<ocs2_msgs::setMPCActionResult>(setMPCActionResultServiceName_);
   }
   else
   {
@@ -1229,8 +1209,8 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
       std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes::modelModeCallback] mrtShutDownFlag true"  << std::endl;
       mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "true", 1);
 
-      modelModeIntQuery_ = msg->data;
-      //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes::modelModeCallback] modelModeIntQuery_: " << modelModeIntQuery_ << std::endl;
+      modelModeInt_ = msg->data;
+      //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes::modelModeCallback] modelModeInt_: " << modelModeInt_ << std::endl;
 
       //mpcTimer3_.startTimer();
       //setMPCProblem();
@@ -1250,6 +1230,8 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
     };
     modelModeSubscriber_ = nodeHandle_.subscribe<std_msgs::UInt8>(modelModeMsgName_, 1, modelModeCallback);
   }
+
+  calculateMPCTrajectoryService_ = nodeHandle_.advertiseService(calculateMPCTrajectoryServiceName_, &MobileManipulatorInterface::calculateMPCTrajectorySrv, this);
 
   //modelModeSubscriber_ = nodeHandle_.subscribe(model_mode_msg_name, 5, &MobileManipulatorInterface::modelModeCallback, this);
 
@@ -1442,6 +1424,38 @@ bool MobileManipulatorInterface::setContinuousActionDRLSrv(ocs2_msgs::setContinu
   //while(1);
 
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLSrv] END" << std::endl;
+  return res.success;
+}
+
+bool MobileManipulatorInterface::calculateMPCTrajectorySrv(ocs2_msgs::calculateMPCTrajectory::Request &req, 
+                                                           ocs2_msgs::calculateMPCTrajectory::Response &res)
+{
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectorySrv] START" << std::endl;
+
+  drlActionContinuous_ = req.action;
+  drlActionTimeHorizon_ = req.time_horizon;
+  drlActionLastStepFlag_ = req.last_step_flag;
+  drlActionLastStepDistanceThreshold_ = req.last_step_distance_threshold;
+  res.success = true;
+
+  SystemObservation currentObservation = getCurrentObservation();
+
+  vector_t currentTarget(7);
+  currentTarget << 2.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
+
+  bool setMPCProblemFlag = true;
+  size_t inputModelModeInt = req;
+  size_t inputActivateSelfCollisionInt = 1;
+  size_t inputActivateExtCollisionInt = 0;
+
+  calculateMPCTrajectory(currentTarget, 
+                         currentObservation,
+                         setMPCProblemFlag,
+                         inputModelModeInt,
+                         inputActivateSelfCollisionInt,
+                         inputActivateExtCollisionInt);
+
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectorySrv] END" << std::endl;
   return res.success;
 }
 
@@ -1953,9 +1967,9 @@ void MobileManipulatorInterface::mrtCallback(const ros::TimerEvent& event)
 void MobileManipulatorInterface::calculateMPCTrajectory(vector_t& currentTarget,
                                                         SystemObservation& currentObservation,
                                                         bool setMPCProblemFlag,
-                                                        size_t inputModelModeInt,
-                                                        size_t inputActivateSelfCollisionInt,
-                                                        size_t inputActivateExtCollisionInt)
+                                                        size_t modelModeInt,
+                                                        bool activateSelfCollision,
+                                                        bool activateExtCollision)
 {
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] START" << std::endl;
 
@@ -1968,11 +1982,11 @@ void MobileManipulatorInterface::calculateMPCTrajectory(vector_t& currentTarget,
   }
 
   // NECESSARY INPUTS:
-  // modelModeIntQuery_
+  // modelModeInt_
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE setMPCProblem" << std::endl;
   if (setMPCProblemFlag)
   {
-    setMPCProblem(inputModelModeInt, inputActivateSelfCollisionInt, inputActivateExtCollisionInt);
+    setMPCProblem(modelModeInt, activateSelfCollision, activateExtCollision);
   }
 
   /////////////////// SETTING MPC //////////// START
@@ -1990,7 +2004,7 @@ void MobileManipulatorInterface::calculateMPCTrajectory(vector_t& currentTarget,
   MPC_ROS_Interface mpcNode(mpc, topicPrefix);
 
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE setModelModeInt" << std::endl;
-  mpcNode.setModelModeInt(inputModelModeInt);
+  mpcNode.setModelModeInt(modelModeInt_);
   
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE spin" << std::endl;
   //spinOnce();
@@ -2716,17 +2730,17 @@ void MobileManipulatorInterface::mapContinuousActionDRL(std::vector<double>& act
     target_roll = 0.0;
     target_pitch = 0.0;
     target_z = 0.12;
-    modelModeIntQuery_ = 0;
+    modelModeInt_ = 0;
   }
   else if (modelModeProb > 0.6)
   {
     //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] WHOLE-BODY MOTION" << std::endl;
-    modelModeIntQuery_ = 2;
+    modelModeInt_ = 2;
   }
   else
   {
     //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] ARM MOTION" << std::endl;
-    modelModeIntQuery_ = 1;
+    modelModeInt_ = 1;
   }
 
   // Set Constraint Flags
