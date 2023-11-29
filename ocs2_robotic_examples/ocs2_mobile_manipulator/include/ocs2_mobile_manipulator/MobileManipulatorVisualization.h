@@ -58,6 +58,8 @@ class MobileManipulatorVisualization final : public DummyObserver
 
     void updateModelMode(size_t modelModeInt);
 
+    void update(const SystemObservation& observation, const PrimalSolution& policy);
+
     void update(const SystemObservation& observation, const PrimalSolution& policy, const CommandData& command) override;
 
     void publishSelfCollisionDistances();

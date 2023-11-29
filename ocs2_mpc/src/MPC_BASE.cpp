@@ -106,7 +106,11 @@ bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState)
 /******************************************************************************************************/
 bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState, const vector_t& currentFullState) 
 {
-  std::cout << "[MPC_BASE::run(3)] START" << std::endl;
+  //std::cout << "[MPC_BASE::run(3)] START" << std::endl;
+
+  //std::cout << "[MPC_BASE::run(3)] DEBUG_INF" << std::endl;
+  //while(1);
+  
 
   // check if the current time exceeds the solver final limit
   if (!initRun_ && currentTime >= getSolverPtr()->getFinalTime()) 
@@ -131,10 +135,10 @@ bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState, const vec
   }
 
   // calculate the MPC policy
-  std::cout << "[MPC_BASE::run(3)] BEFORE calculateController" << std::endl;
+  //std::cout << "[MPC_BASE::run(3)] BEFORE calculateController" << std::endl;
   internalShutDownFlag_ = calculateController(currentTime, currentState, currentFullState, finalTime);
-  std::cout << "[MPC_BASE::run(3)] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
-  std::cout << "[MPC_BASE::run(3)] AFTER calculateController" << std::endl;
+  //std::cout << "[MPC_BASE::run(3)] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
+  //std::cout << "[MPC_BASE::run(3)] AFTER calculateController" << std::endl;
 
   // set initRun flag to false
   initRun_ = false;
@@ -149,7 +153,7 @@ bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState, const vec
     std::cerr << "\n###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
   }
 
-  std::cout << "[MPC_BASE::run(3)] END" << std::endl;
+  //std::cout << "[MPC_BASE::run(3)] END" << std::endl;
 
   return true;
 }

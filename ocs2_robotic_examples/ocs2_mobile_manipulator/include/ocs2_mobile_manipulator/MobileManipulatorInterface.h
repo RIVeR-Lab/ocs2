@@ -245,7 +245,7 @@ class MobileManipulatorInterface final : public RobotInterface
                               std::vector<double>& statePositionArm,
                               std::vector<double>& stateVelocityBase);
 
-    SystemObservation getCurrentObservation(scalar_t time=0.0);
+    SystemObservation getCurrentObservation(vector_t& currentInput, scalar_t time=0.0);
 
     void setMPCProblem(size_t modelModeInt=2, 
                        bool activateSelfCollision=false, 
@@ -288,15 +288,17 @@ class MobileManipulatorInterface final : public RobotInterface
 
     void mrtCallback(const ros::TimerEvent& event);
 
-    void calculateMPCTrajectory(vector_t& currentTarget,
+    bool calculateMPCTrajectory(bool useCurrentPolicyFlag,
+                                vector_t& currentTarget,
                                 SystemObservation& currentObservation,
-                                bool setMPCProblemFlag=true,
+                                std::vector<double>& cmd,
+                                bool setMPCProblemFlag=false,
                                 size_t inputModelModeInt=2, 
                                 bool activateSelfCollision=false,
                                 bool activateExtCollision=false);
 
-    void computeCommand(const PrimalSolution& currentPolicy, 
-                        const SystemObservation& currentObservation,
+    void computeCommand(vector_t& currentInput,
+                        vector_t& nextState,
                         std::vector<double>& cmd);
   
   private:
@@ -335,6 +337,8 @@ class MobileManipulatorInterface final : public RobotInterface
       std::vector<std::string> binarySettingNames = {"selfCollisionConstraint"};
       std::vector<bool> binarySettingValues;
     };
+
+    int debugCtr_ = 0;
 
     ros::NodeHandle nodeHandle_;
     tf::TransformListener tfListener_;
@@ -533,6 +537,10 @@ class MobileManipulatorInterface final : public RobotInterface
     ros::Subscriber targetTrajectoriesSubscriber_;
     ros::Subscriber odomSubscriber_;
     ros::Subscriber jointStateSub_;
+
+    ros::Publisher baseTwistPub_;
+    ros::Publisher armJointTrajectoryPub_;
+    ros::Publisher armJointVelocityPub_;
 
     ros::ServiceClient setTargetDRLClient_;
     ros::ServiceClient setMPCActionResultClient_;

@@ -1,15 +1,22 @@
 ## Request
+bool use_current_policy_flag
+float64 time
+
+float64[] target
+
+bool mpc_problem_flag
+
 # 0: baseMotion
 # 1: armMotion
 # 2: wholeBodyMotion
 int8 model_mode
 
-bool selfCollisionFlag
-bool extCollisionFlag
+bool self_collision_flag
 
-float64[] target
+bool ext_collision_flag
 
 ---
 ## Response
 bool success
+
 float64[] cmd

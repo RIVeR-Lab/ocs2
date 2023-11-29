@@ -218,10 +218,24 @@ void MobileManipulatorVisualization::updateModelMode(size_t modelModeInt)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorVisualization::update(const SystemObservation& observation, 
+                                            const PrimalSolution& policy) 
+{
+  //std::cout << "[MobileManipulatorVisualization::update] START" << std::endl;
+
+  const ros::Time timeStamp = ros::Time::now();
+  publishOptimizedTrajectory(timeStamp, policy, observation.full_state);
+
+  //std::cout << "[MobileManipulatorVisualization::update] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::update(const SystemObservation& observation, 
                                             const PrimalSolution& policy,
                                             const CommandData& command) 
 {
-  //std::cout << "[MobileManipulatorVisualization::update] START" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::update(3)] START" << std::endl;
 
   const ros::Time timeStamp = ros::Time::now();
   publishOptimizedTrajectory(timeStamp, policy, observation.full_state);
@@ -233,7 +247,7 @@ void MobileManipulatorVisualization::update(const SystemObservation& observation
   }
   */
 
-  //std::cout << "[MobileManipulatorVisualization::update] END" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::update(3)] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------

@@ -91,6 +91,9 @@ class MRT_ROS_Gazebo_Loop
     }
 
     /** NUA TODO: Add description */
+    vector_t getCurrentInput();
+
+    /** NUA TODO: Add description */
     int getDRLActionResult();
 
     /** NUA TODO: Add description */
@@ -154,7 +157,7 @@ class MRT_ROS_Gazebo_Loop
     void getCurrentState(vector_t& currentState);
 
     /** NUA TODO: Add decription. */
-    void computeCommand();
+    void computeCommand(vector_t currentTarget, SystemObservation initObservation);
 
     // Filter
     double prev_lin_x = 0.0;

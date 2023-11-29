@@ -66,7 +66,7 @@ void SolverBase::run(scalar_t initTime, const vector_t& initState, scalar_t fina
 /******************************************************************************************************/
 void SolverBase::run(scalar_t initTime, const vector_t& initState, const vector_t& initFullState, scalar_t finalTime) 
 {
-  std::cout << "[SolverBase::run(4)] START" << std::endl;
+  //std::cout << "[SolverBase::run(4)] START" << std::endl;
 
   //std::cout << "[SolverBase::run(4)] targetTrajectories BEFORE preRun size:" << this->getReferenceManager().getTargetTrajectories().stateTrajectory.size() << std::endl;
 
@@ -85,7 +85,7 @@ void SolverBase::run(scalar_t initTime, const vector_t& initState, const vector_
 
   //std::cout << "[SolverBase::run(4)] targetTrajectories AFTER size:" << this->getReferenceManager().getTargetTrajectories().stateTrajectory.size() << std::endl;
 
-  std::cout << "[SolverBase::run(4)] END" << std::endl;
+  //std::cout << "[SolverBase::run(4)] END" << std::endl;
 }
 
 /******************************************************************************************************/

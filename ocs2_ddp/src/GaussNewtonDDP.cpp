@@ -264,6 +264,9 @@ void GaussNewtonDDP::loadInitialData()
 
   //std::cout << "[GaussNewtonDDP::loadInitialData] START" << optimizedDualSolution_.final << std::endl;
 
+  std::cout << "[GaussNewtonDDP::loadInitialData] DEBUG_INF" << std::endl;
+  while(1);
+
   std::cout << "[GaussNewtonDDP::loadInitialData] END" << std::endl;
 }
 

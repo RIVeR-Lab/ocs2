@@ -88,7 +88,7 @@ void RosReferenceManager::subscribe(ros::NodeHandle& nodeHandle)
     std::cout << "[RosReferenceManager::subscribe::targetTrajectoriesCallback] targetTrajectories size: " << std::endl;
     */
 
-    targetTrajectories.stateTrajectory[0] << -1.0, 0.5, 1.0, 0.0, 0.0, 0.0, 1.0;
+    //targetTrajectories.stateTrajectory[0] << -1.0, 0.5, 1.0, 0.0, 0.0, 0.0, 1.0;
 
     referenceManagerPtr_->setTargetTrajectories(std::move(targetTrajectories));
 
