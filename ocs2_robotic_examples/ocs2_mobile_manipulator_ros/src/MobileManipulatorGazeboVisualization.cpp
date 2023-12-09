@@ -159,7 +159,8 @@ void MobileManipulatorGazeboVisualization::launchVisualizerNode(ros::NodeHandle&
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorGazeboVisualization::update(const SystemObservation& observation, 
                                                    const PrimalSolution& policy,
-                                                   const CommandData& command) 
+                                                   const CommandData& command,
+                                                   RobotModelInfo robotModelInfo) 
 {
   std::cout << "[MobileManipulatorGazeboVisualization::update] START" << std::endl;
 

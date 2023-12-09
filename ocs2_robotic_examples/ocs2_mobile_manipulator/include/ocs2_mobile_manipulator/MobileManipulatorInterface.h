@@ -249,7 +249,8 @@ class MobileManipulatorInterface final : public RobotInterface
 
     void setMPCProblem(size_t modelModeInt=2, 
                        bool activateSelfCollision=false, 
-                       bool activateExtCollision=false);
+                       bool activateExtCollision=false,
+                       bool updateMPCBaseFlag=false);
 
     /*
     void setEsdfCachingServerPtr(std::shared_ptr<voxblox::EsdfCachingServer> newEsdfCachingServerPtr) 
@@ -281,6 +282,8 @@ class MobileManipulatorInterface final : public RobotInterface
                                    ocs2_msgs::calculateMPCTrajectory::Response &res);
 
     void runMPC();
+
+    void setMPC();
 
     void runMRT();
 
@@ -562,6 +565,13 @@ class MobileManipulatorInterface final : public RobotInterface
 
     ros::ServiceServer setActionDRLService_;
     ros::ServiceServer calculateMPCTrajectoryService_;
+
+
+    /// NUA TODO: MAKE THE BELOW WORK!
+    std::shared_ptr<ocs2::GaussNewtonDDP_MPC> mpc_;
+    std::shared_ptr<MPC_ROS_Interface> mpcNode_;
+    std::shared_ptr<MRT_ROS_Interface> mrt_;
+    std::shared_ptr<MRT_ROS_Gazebo_Loop> mrt_loop_;
 };
 
 }  // namespace mobile_manipulator

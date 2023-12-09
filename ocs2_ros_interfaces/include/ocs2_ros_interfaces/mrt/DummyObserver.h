@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ocs2_mpc/CommandData.h>
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_oc/oc_data/PrimalSolution.h>
+#include <ocs2_core/dynamics/MultiModelFunctions.h>
 
 namespace ocs2 {
 
@@ -49,6 +50,6 @@ class DummyObserver {
    * @param primalSolution : latest MPC primal solution
    * @param command : latest command on which the MPC solution is based
    */
-  virtual void update(const SystemObservation& observation, const PrimalSolution& primalSolution, const CommandData& command) = 0;
+  virtual void update(const SystemObservation& observation, const PrimalSolution& primalSolution, const CommandData& command, RobotModelInfo robotModelInfo) = 0;
 };
 }  // namespace ocs2

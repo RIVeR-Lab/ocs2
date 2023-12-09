@@ -255,6 +255,44 @@ bool updateModelMode(RobotModelInfo& robotModelInfo, size_t& modelMode)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+bool updateModelModeByState(RobotModelInfo& robotModelInfo, size_t& stateDim)
+{
+  bool result = false;
+
+  if (robotModelInfo.robotModelType == RobotModelType::MobileManipulator)
+  {
+    if (stateDim == robotModelInfo.mobileBase.stateDim)
+    {
+      robotModelInfo.modelMode = ModelMode::BaseMotion;
+      robotModelInfo.modeStateDim = robotModelInfo.mobileBase.stateDim;
+      robotModelInfo.modeInputDim = robotModelInfo.mobileBase.inputDim;
+      result = true;
+    }
+    else if (stateDim == robotModelInfo.robotArm.stateDim)
+    {
+      robotModelInfo.modelMode = ModelMode::ArmMotion;
+      robotModelInfo.modeStateDim = robotModelInfo.robotArm.stateDim;
+      robotModelInfo.modeInputDim = robotModelInfo.robotArm.inputDim;
+      result = true;
+    }
+    else if (stateDim == robotModelInfo.mobileBase.stateDim + robotModelInfo.robotArm.stateDim)
+    {
+      robotModelInfo.modelMode = ModelMode::WholeBodyMotion;
+      robotModelInfo.modeStateDim = robotModelInfo.mobileBase.stateDim + robotModelInfo.robotArm.stateDim;
+      robotModelInfo.modeInputDim = robotModelInfo.mobileBase.inputDim + robotModelInfo.robotArm.inputDim;
+      result = true;
+    }
+    else
+    {
+      std::cerr << "[MultiModelFunctions::updateModelModeByState] ERROR: Invalid model mode!";
+    }
+  }
+  return result;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 std::string getRobotModelTypeString(RobotModelInfo& robotModelInfo) 
 {
   std::string robotModelTypeString;

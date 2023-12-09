@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ocs2_ros_interfaces/mrt/DummyObserver.h"
 #include "ocs2_ros_interfaces/mrt/MRT_ROS_Interface.h"
+#include <ocs2_core/dynamics/MultiModelFunctions.h>
 
 namespace ocs2 {
 
@@ -99,6 +100,8 @@ class MRT_ROS_Dummy_Loop {
 
   scalar_t mrtDesiredFrequency_;
   scalar_t mpcDesiredFrequency_;
+
+  RobotModelInfo robotModelInfo_;
 };
 
 }  // namespace ocs2

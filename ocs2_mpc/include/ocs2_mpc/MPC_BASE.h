@@ -72,6 +72,9 @@ class MPC_BASE
      */
     virtual void reset();
 
+    /// NUA TODO: ADD DESCRIPTION!
+    virtual bool updateOCP();
+
     /**
      * The main routine of MPC which runs MPC for the given state and time.
      *

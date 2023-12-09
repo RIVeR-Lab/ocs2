@@ -608,6 +608,74 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
 
   launchNodes();
 
+  
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface(6)] BEFORE MPC INITIALIZATION" << std::endl;
+  setMPCProblem(modelModeInt_, true, false, false);
+
+  /// NUA TODO: LEFT HERE: INITALIZE ONCE AND USE IT LATER!
+  mpc_.reset(new ocs2::GaussNewtonDDP_MPC(mpcSettings_, 
+                                          ddpSettings_, 
+                                          *rolloutPtr_, 
+                                          ocp_, 
+                                          *initializerPtr_));
+
+  mpc_->getSolverPtr()->setReferenceManager(rosReferenceManagerPtr_);
+
+  //std::string topicPrefix = "mobile_manipulator_";
+  mpcNode_.reset(new ocs2::MPC_ROS_Interface(*mpc_, topicPrefix));
+  
+  //mpcNode_->setModelModeInt(getModelModeInt(robotModelInfo_));
+
+  //mpcNode_->launchNodes(nodeHandle_);
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface(6)] AFTER MPC INITIALIZATION" << std::endl;
+
+  //int mm = getModelModeInt(robotModelInfo_);
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface(6)] BEFORE MRT INITIALIZATION" << std::endl;
+
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface(6)] BEFORE MRT INITIALIZATION" << std::endl;
+  //mrt_.reset(new MRT_ROS_Interface(robotModelInfo_, topicPrefix));
+  mrt_.reset(new MRT_ROS_Interface(topicPrefix));
+
+  mrt_->initRollout(&*rolloutPtr_);
+
+  mrt_->launchNodes(nodeHandle_);
+
+  mrt_loop_.reset(new MRT_ROS_Gazebo_Loop(nodeHandle_, 
+                                          *mrt_, 
+                                          robotModelInfo_,
+                                          worldFrameName_,
+                                          ns_,
+                                          targetMsgName_,
+                                          goalFrameName_,
+                                          baseStateMsg_,
+                                          armStateMsg_,
+                                          baseControlMsg_,
+                                          armControlMsg_,
+                                          selfCollisionMsg_,
+                                          occupancyDistanceBaseMsg_,
+                                          occupancyDistanceArmMsg_,
+                                          pointsOnRobotMsgName_,
+                                          err_threshold_pos_,
+                                          err_threshold_ori_yaw_,
+                                          err_threshold_ori_quat_,
+                                          mpcSettings_.mrtDesiredFrequency_, 
+                                          mpcSettings_.mpcDesiredFrequency_,
+                                          drlFlag_,
+                                          logSavePathRel_));
+
+  mobileManipulatorVisu_->updateModelMode(getModelModeInt(robotModelInfo_));
+  
+  mrt_loop_->subscribeObservers({mobileManipulatorVisu_});
+
+  currentTarget_.resize(7);
+  currentTarget_ << 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
+  
+  mrt_loop_->setTargetReceivedFlag(true);
+  
+  //mrt_loop_->run(currentTarget_);
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface(6)] BEFORE MRT INITIALIZATION" << std::endl;
+
+
   //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface(6)] DEBUG INF" << std::endl;
   //while(1);
 
@@ -927,9 +995,10 @@ SystemObservation MobileManipulatorInterface::getCurrentObservation(vector_t& cu
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt, 
                                                bool activateSelfCollision,
-                                               bool activateExtCollision)
+                                               bool activateExtCollision,
+                                               bool updateMPCBaseFlag)
 {
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] START" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] START" << std::endl;
 
   /*
   while(!mpcExitFlag_)
@@ -1128,6 +1197,12 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt,
   initializerPtr_.reset(new DefaultInitializer(modeInputDim));
   mpcTimer11_.endTimer();
 
+  // Update MPC Base
+  if (updateMPCBaseFlag)
+  {
+    mpc_->setOCPTemp(ocp_);
+  }
+
   mpcTimer0_.endTimer();
 
   /*
@@ -1180,11 +1255,11 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt,
   std::cout << "\n###   Average : " << mpcTimer11_.getAverageInMilliseconds() << "[ms].";
   std::cout << "\n###   Latest  : " << mpcTimer11_.getLastIntervalInMilliseconds() << "[ms]." << std::endl << std::endl;
   */
- 
+
   //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] DEBUG INF" << std::endl;
   //while(1);
 
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] END" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1219,11 +1294,14 @@ void MobileManipulatorInterface::launchNodes()
       std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes::modelModeCallback] START" << std::endl;
 
       // Shutdown MRT
-      std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes::modelModeCallback] mrtShutDownFlag true"  << std::endl;
-      mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "true", 1);
+      //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes::modelModeCallback] mrtShutDownFlag true"  << std::endl;
+      //mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "true", 1);
 
       modelModeInt_ = msg->data;
       //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes::modelModeCallback] modelModeInt_: " << modelModeInt_ << std::endl;
+
+      setMPCProblem(modelModeInt_, true, false, true);
+      //setMPC();
 
       //mpcTimer3_.startTimer();
       //setMPCProblem();
@@ -1263,6 +1341,8 @@ void MobileManipulatorInterface::launchNodes()
   {
     //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes::targetTrajectoriesCallback] START" << std::endl;
     auto targetTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(*msg);
+
+    mpcNode_->setTargetTrajectories(targetTrajectories);
 
     if (currentTarget_.size() == targetTrajectories.stateTrajectory[0].size())
     {
@@ -1646,22 +1726,24 @@ void MobileManipulatorInterface::runMPC()
     //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::runMPC] BEFORE mpc" << std::endl;
     //mpcTimer7_.startTimer();
     setenv("mpcShutDownFlag", "false", 1);
+    /*
     ocs2::GaussNewtonDDP_MPC mpc(mpcSettings_, 
                                  ddpSettings_, 
                                  *rolloutPtr_, 
                                  ocp_, 
                                  *initializerPtr_);
+    */
     //mpcTimer7_.endTimer();
 
     //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::runMPC] BEFORE mpc setReferenceManager" << std::endl;
-    mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr_);
+    mpc_->getSolverPtr()->setReferenceManager(rosReferenceManagerPtr_);
 
     // Launch MPC ROS node
     if (mpcPrintOutFlag)
       std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::runMPC] BEFORE mpc mpcNode" << std::endl;
     //mpcTimer8_.startTimer();
-    MPC_ROS_Interface mpcNode(mpc, mpcTopicPrefix);
-    mpcNode.setModelModeInt(getModelModeInt(robotModelInfo));
+    //MPC_ROS_Interface mpcNode(mpc, mpcTopicPrefix);
+    //mpcNode_->setModelModeInt(getModelModeInt(robotModelInfo));
     //mpcTimer8_.endTimer();
 
     /*
@@ -1740,7 +1822,7 @@ void MobileManipulatorInterface::runMPC()
       std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::runMPC] BEFORE mpc mpcNode launchNodes" << std::endl;
     //mpcExitFlag_ = false;
     //printRobotModelInfo(robotModelInfo);
-    mpcNode.launchNodes(nodeHandle_);
+    //mpcNode.launchNodes(nodeHandle_);
     //mpcExitFlag_ = true;
     mpcLaunchReadyFlag_ = false;
     if (mpcPrintOutFlag)
@@ -1761,6 +1843,22 @@ void MobileManipulatorInterface::runMPC()
   }
 
   //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::runMPC] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorInterface::setMPC()
+{
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMPC] START" << std::endl;
+  setMPCProblem(modelModeInt_, true, false);
+
+  //mpc_->setOCPTemp(ocp_);
+
+  //mobileManipulatorVisu_->updateModelMode(getModelModeInt(robotModelInfo_));
+
+  //mrt_loop_->setRobotModelInfo(robotModelInfo_);
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMPC] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1838,7 +1936,8 @@ void MobileManipulatorInterface::runMRT()
     if (mrtPrintOutFlag)
       std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::runMRT] BEFORE mrt" << std::endl;
     //mrtTimer3_.startTimer();
-    MRT_ROS_Interface mrt(robotModelInfo, mrtTopicPrefix);
+    //MRT_ROS_Interface mrt(robotModelInfo, mrtTopicPrefix);
+    MRT_ROS_Interface mrt(mrtTopicPrefix);
     //mrtTimer3_.endTimer();
 
     if (mrtPrintOutFlag)
@@ -1861,6 +1960,7 @@ void MobileManipulatorInterface::runMRT()
     //mrtTimer6_.startTimer();
     MRT_ROS_Gazebo_Loop mrt_loop(nodeHandle_, 
                                  mrt, 
+                                 robotModelInfo,
                                  worldFrameName_,
                                  ns_,
                                  targetMsgName_,
@@ -1981,8 +2081,8 @@ void MobileManipulatorInterface::runMRT()
     mrt_loop.computeCommand(currentTarget, initObservation);
     */
 
-    currentInput = mrt_loop.getCurrentInput(); 
-    
+    //currentInput = mrt_loop.getCurrentInput(); 
+
     //mrtExitFlag_ = true;
     setenv("mpcShutDownFlag", "true", 1);
 
@@ -2028,9 +2128,21 @@ void MobileManipulatorInterface::runMRT()
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::mpcCallback(const ros::TimerEvent& event)
 {
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcCallback] START" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcCallback] START" << std::endl;
 
-  runMPC();
+  /*
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcCallback] Waiting for syncing mpcIter_: " << mpcIter_ << " and mrtIter_: " << mrtIter_ << "..." << std::endl;
+  while(mpcIter_ != mrtIter_){
+    spinOnce();
+    //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::runMPC] mpcIter_: " << mpcIter_ << std::endl;
+    //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::runMPC] mrtIter_: " << mrtIter_ << std::endl;
+  }
+  */
+  mpcNode_->launchNodes(nodeHandle_);
+
+  mpcIter_++;
+
+  //runMPC();
 
   /*
   bool useCurrentPolicyFlag = false;
@@ -2059,7 +2171,7 @@ void MobileManipulatorInterface::mpcCallback(const ros::TimerEvent& event)
                                         activateExtCollision);
   */
 
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcCallback] END" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcCallback] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2067,11 +2179,24 @@ void MobileManipulatorInterface::mpcCallback(const ros::TimerEvent& event)
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::mrtCallback(const ros::TimerEvent& event)
 {
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] START" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] START" << std::endl;
 
-  runMRT();
+  /*
+  if (mrtPrintOutFlag)
+      std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] WAITING for mpcProblemReadyFlag_" << std::endl;
+    while(!mpcProblemReadyFlag_){spinOnce();}
+    mpcProblemReadyFlag_ = false;
+  */
+
+  mrt_loop_->run(currentTarget_);
+
+  mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "false", 1);
+
+  mrtIter_++;
+
+  //runMRT();
   
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] END" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] END" << std::endl;
 }
 
 void MobileManipulatorInterface::mpcMRTCallback(const ros::TimerEvent& event)
@@ -2104,7 +2229,7 @@ void MobileManipulatorInterface::mpcMRTCallback(const ros::TimerEvent& event)
   if (mpcMRTPrintOutFlag)
     std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcMRTCallback] BEFORE mpc mpcNode" << std::endl;
   MPC_ROS_Interface mpcNode(mpc, topicPrefix);
-  mpcNode.setModelModeInt(getModelModeInt(robotModelInfo));
+  //mpcNode.setModelModeInt(getModelModeInt(robotModelInfo));
 
   /// SET MRT
   if (mpcMRTPrintOutFlag)
@@ -2115,7 +2240,8 @@ void MobileManipulatorInterface::mpcMRTCallback(const ros::TimerEvent& event)
 
   if (mpcMRTPrintOutFlag)
     std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcMRTCallback] BEFORE MRT_ROS_Interface" << std::endl;
-  MRT_ROS_Interface mrt(robotModelInfo, topicPrefix);
+  MRT_ROS_Interface mrt(topicPrefix);
+  //MRT_ROS_Interface mrt(robotModelInfo, topicPrefix);
 
   if (mpcMRTPrintOutFlag)
     std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcMRTCallback] BEFORE initRollout" << std::endl;
@@ -2130,6 +2256,7 @@ void MobileManipulatorInterface::mpcMRTCallback(const ros::TimerEvent& event)
     std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcMRTCallback] BEFORE mrt_loop" << std::endl;
   MRT_ROS_Gazebo_Loop mrt_loop(nodeHandle_, 
                                 mrt, 
+                                robotModelInfo,
                                 worldFrameName_,
                                 ns_,
                                 targetMsgName_,
@@ -2212,7 +2339,7 @@ bool MobileManipulatorInterface::calculateTrajectory(bool useCurrentPolicyFlag,
   MPC_ROS_Interface mpcNode(mpc, topicPrefix);
 
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] BEFORE setModelModeInt" << std::endl;
-  mpcNode.setModelModeInt(modelModeInt_);
+  //mpcNode.setModelModeInt(modelModeInt_);
   
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] BEFORE spin" << std::endl;
   //spinOnce();

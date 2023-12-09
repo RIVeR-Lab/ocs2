@@ -86,9 +86,9 @@ class MPC_ROS_Interface
      */
     virtual ~MPC_ROS_Interface();
 
-    int getModelModeInt();
+    //int getModelModeInt();
 
-    void setModelModeInt(int modelModeInt);
+    //void setModelModeInt(int modelModeInt);
 
     //bool getMPCLaunchReadyFlag();
 
@@ -104,15 +104,11 @@ class MPC_ROS_Interface
      */
     //void setExtMapUtility(std::shared_ptr<ExtMapUtility> emuPtr);
 
-    void setTargetTrajectories(TargetTrajectories& tt)
-    {
-      testTargetTrajectories_ = tt;
-    }
+    /// NUA TODO: ADD DESCRIPTION!
+    void setTargetTrajectories(TargetTrajectories& tt);
 
-    void setSystemObservation(SystemObservation& so)
-    {
-      testCurrentObservation_ = so;
-    }
+    /// NUA TODO: ADD DESCRIPTION!
+    void setSystemObservation(SystemObservation& so);
 
     /**
      * Resets the class to its instantiation state.
@@ -203,6 +199,7 @@ class MPC_ROS_Interface
 
     int ctr_ = 0;
 
+    TargetTrajectories currentTargetTrajectories_;
     TargetTrajectories testTargetTrajectories_;
     SystemObservation testCurrentObservation_;
 
@@ -212,7 +209,7 @@ class MPC_ROS_Interface
     // 0: baseMotion
     // 1: armMotion
     // 2: wholeBodyMotion
-    int modelModeInt_ = 2;
+    //int modelModeInt_ = 2;
 
     // 0: Not Ready (In process of switching, old modelMode is in use)
     // 1: Ready

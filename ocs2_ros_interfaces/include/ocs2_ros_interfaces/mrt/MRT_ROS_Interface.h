@@ -74,20 +74,22 @@ class MRT_ROS_Interface : public MRT_BASE
      *
      * @param [in] NUA TODO: COMPLETE!
      */
+    /*
     explicit MRT_ROS_Interface(RobotModelInfo& robotModelInfo,
                                std::string topicPrefix = "anonymousRobot",
                                ::ros::TransportHints mrtTransportHints = ::ros::TransportHints().tcpNoDelay());
+    */
 
     /**
      * Destructor
      */
     ~MRT_ROS_Interface() override;
 
-    RobotModelInfo getRobotModelInfo();
+    //RobotModelInfo getRobotModelInfo();
 
     void resetMpcNode(const TargetTrajectories& initTargetTrajectories) override;
 
-    int getModelModeInt();
+    //int getModelModeInt();
 
     bool getShutDownFlag();
 
@@ -147,12 +149,12 @@ class MRT_ROS_Interface : public MRT_BASE
     std::string topicPrefix_;
     bool shutDownFlag_ = false;
 
-    RobotModelInfo robotModelInfo_;
+    //RobotModelInfo robotModelInfo_;
     
     // 0: baseMotion
-    // 0: armMotion
-    // 0: wholeBodyMotion
-    int modelModeInt_ = 2;
+    // 1: armMotion
+    // 2: wholeBodyMotion
+    //int modelModeInt_ = 2;
 
     // 0: Not Ready (In process of switching, old modelMode is in use)
     // 1: Ready

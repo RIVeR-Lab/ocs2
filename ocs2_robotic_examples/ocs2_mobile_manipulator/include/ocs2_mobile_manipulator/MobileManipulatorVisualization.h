@@ -60,7 +60,7 @@ class MobileManipulatorVisualization final : public DummyObserver
 
     void update(const SystemObservation& observation, const PrimalSolution& policy);
 
-    void update(const SystemObservation& observation, const PrimalSolution& policy, const CommandData& command) override;
+    void update(const SystemObservation& observation, const PrimalSolution& policy, const CommandData& command, RobotModelInfo robotModelInfo) override;
 
     void publishSelfCollisionDistances();
 

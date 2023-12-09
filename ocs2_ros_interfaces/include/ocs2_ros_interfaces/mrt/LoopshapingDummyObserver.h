@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ocs2_core/loopshaping/LoopshapingDefinition.h>
 #include <ocs2_ros_interfaces/mrt/DummyObserver.h>
+#include <ocs2_core/dynamics/MultiModelFunctions.h>
 
 namespace ocs2 {
 
@@ -44,7 +45,7 @@ class LoopshapingDummyObserver : public DummyObserver {
 
   ~LoopshapingDummyObserver() override = default;
 
-  void update(const SystemObservation& observation, const PrimalSolution& primalSolution, const CommandData& command) override;
+  void update(const SystemObservation& observation, const PrimalSolution& primalSolution, const CommandData& command, RobotModelInfo robotModelInfo) override;
 
   void add(std::shared_ptr<DummyObserver> observer) { observersPtrArray_.push_back(std::move(observer)); }
 

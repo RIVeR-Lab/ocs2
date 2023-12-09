@@ -137,7 +137,8 @@ void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& 
 /******************************************************************************************************/
 void MobileManipulatorDummyVisualization::update(const SystemObservation& observation, 
                                                  const PrimalSolution& policy,
-                                                 const CommandData& command) 
+                                                 const CommandData& command,
+                                                 RobotModelInfo robotModelInfo) 
 {
   const ros::Time timeStamp = ros::Time::now();
 

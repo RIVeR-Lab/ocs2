@@ -15,6 +15,7 @@ namespace ocs2 {
 
 MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                                          MRT_ROS_Interface& mrt,
+                                         RobotModelInfo robotModelInfo,
                                          std::string& worldFrameName,
                                          std::string& ns,
                                          std::string& targetMsgName,
@@ -49,7 +50,7 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
     mrtDesiredFrequency_(mrtDesiredFrequency), 
     mpcDesiredFrequency_(mpcDesiredFrequency),
     drlFlag_(drlFlag),
-    robotModelInfo_(mrt.getRobotModelInfo()),
+    robotModelInfo_(robotModelInfo),
     dataPathReL_(logSavePathRel)
 {
   //std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] START" << std::endl;
@@ -87,6 +88,8 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   setMRTReadySrvName_ = "set_mrt_ready";
   setTaskSrvName_ = "set_task";
   computeCommandSrvName_ = "compute_command";
+
+  currentStateDim_ = robotModelInfo_.modeStateDim;
 
   eeFrameName_ = robotModelInfo_.robotArm.eeFrame;
   if (ns_ != "/")
@@ -514,10 +517,12 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
 
   // Update the policy
   mrt_.updatePolicy();
+  updateModelMode();
 
   ros::Rate simRate(mrtDesiredFrequency_);
 
-  while (!shutDownFlag_ && ros::ok() && ros::master::check()) 
+  //while (!shutDownFlag_ && ros::ok() && ros::master::check()) 
+  while (ros::ok() && ros::master::check()) 
   {
     //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START while" << std::endl;
 
@@ -533,17 +538,30 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
     // Set current observation
     mrt_.setCurrentObservation(currentObservation);
 
+    /*
     mrtShutDownFlag_ = getenv("mrtShutDownFlag");
     if (mrtShutDownFlag_ == "true")
     {
       shutDownFlag_ = true;
     }
+    */
 
     // Get Initial Policy
-    while (!shutDownFlag_ && !mrt_.initialPolicyReceived() && ros::ok() && ros::master::check()) 
+    //while (!shutDownFlag_ && !mrt_.initialPolicyReceived() && ros::ok() && ros::master::check()) 
+    while (!mrt_.initialPolicyReceived() && ros::ok() && ros::master::check()) 
     {
       //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START initialPolicyReceived initPolicyCtr: " << initPolicyCtr << std::endl;
 
+      mrt_.spinMRT();
+
+      // Get current observation
+      currentObservation = getCurrentObservation(false);
+      currentStateVelocityBase = stateVelocityBase_;
+
+      // Set current observation
+      mrt_.setCurrentObservation(currentObservation);
+
+      /*
       if (initPolicyCtr > initPolicyCtrMax_)
       {
         std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] THATS ENOUGH WAITING FOR THE POLICY!" << std::endl;
@@ -561,11 +579,13 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
         // Set current observation
         mrt_.setCurrentObservation(currentObservation);
 
+        /*
         mrtShutDownFlag_ = getenv("mrtShutDownFlag");
         if (mrtShutDownFlag_ == "true")
         {
           shutDownFlag_ = true;
         }
+        * /
 
         //shutDownFlag_ = mrt_.getShutDownFlag();
 
@@ -573,14 +593,48 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
 
         initPolicyCtr++;
       }
+      */
+     initPolicyCtr++;
     }
 
+    mrt_.updatePolicy();
+    updateModelMode();
+
+    currentPolicy = mrt_.getPolicy();
+    currentInput_ = currentPolicy.getDesiredInput(time_);
+
+    //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START observer" << std::endl;
+    // Update observers for visualization
+    for (auto& observer : observers_) 
+    {
+      //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] OBSERVING..." << std::endl;
+      observer->update(currentObservation, currentPolicy, mrt_.getCommand(), robotModelInfo_);
+    }
+
+    //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START publishCommand" << std::endl;
+    // Publish the control command 
+    publishCommand(currentPolicy, currentObservation, currentStateVelocityBase);
+
+    int ts = checkTaskStatus(drlFlag_);
+    
+    writeData();
+
+    time_ += dt_;
+
+    //shutDownFlag_ = mrt_.getShutDownFlag();
+
+    ros::spinOnce();
+    simRate.sleep();
+
+    /*
     // Send the trajectory command to the robot
     if (!shutDownFlag_)
     {
       //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START updatePolicy" << std::endl;
       // Update the policy if a new one was received
       mrt_.updatePolicy();
+      updateModelMode();
+
       currentPolicy = mrt_.getPolicy();
       currentInput_ = currentPolicy.getDesiredInput(time_);
 
@@ -589,7 +643,7 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
       for (auto& observer : observers_) 
       {
         //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] OBSERVING..." << std::endl;
-        observer->update(currentObservation, currentPolicy, mrt_.getCommand());
+        observer->update(currentObservation, currentPolicy, mrt_.getCommand(), robotModelInfo_);
       }
 
       //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START publishCommand" << std::endl;
@@ -607,12 +661,15 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
       ros::spinOnce();
       simRate.sleep();
     }
+    */
 
+    /*
     mrtShutDownFlag_ = getenv("mrtShutDownFlag");
     if (mrtShutDownFlag_ == "true")
     {
       shutDownFlag_ = true;
     }
+    */
     
     //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] END while" << std::endl;
     //std::cout << "---------------" << std::endl << std::endl;
@@ -683,6 +740,7 @@ void MRT_ROS_Gazebo_Loop::computeCommand(vector_t currentTarget, SystemObservati
   //std::cout << "[MRT_ROS_Gazebo_Loop::computeCommand] BEFORE updatePolicy" << std::endl;
   // Update the policy
   mrt_.updatePolicy();
+  updateModelMode();
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::computeCommand] BEFORE getPolicy" << std::endl;
   currentPolicy = mrt_.getPolicy();
@@ -693,7 +751,7 @@ void MRT_ROS_Gazebo_Loop::computeCommand(vector_t currentTarget, SystemObservati
   for (auto& observer : observers_) 
   {
     std::cout << "[MRT_ROS_Gazebo_Loop::computeCommand] OBSERVING..." << std::endl;
-    observer->update(currentObservation, currentPolicy, mrt_.getCommand());
+    observer->update(currentObservation, currentPolicy, mrt_.getCommand(), robotModelInfo_);
   }
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::computeCommand] START publishCommand" << std::endl;
@@ -845,6 +903,14 @@ void MRT_ROS_Gazebo_Loop::setSelfCollisionInfoMsgName(std::string& selfCollision
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::setRobotModelInfo(RobotModelInfo robotModelInfo)
+{
+  robotModelInfo_ = robotModelInfo;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MRT_ROS_Gazebo_Loop::setExtCollisionInfoBaseMsgName(std::string& extCollisionInfoBaseMsgName)
 {
   extCollisionInfoBaseMsgName_ = extCollisionInfoBaseMsgName;
@@ -925,11 +991,46 @@ void MRT_ROS_Gazebo_Loop::setDRLActionLastStepDistanceThreshold(double drlAction
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::updateModelMode()
+{
+  //std::cout << "[MRT_ROS_Gazebo_Loop::updateModelMode] START" << std::endl;
+
+  size_t stateDim = 0;
+  auto currentPolicy = mrt_.getPolicy();
+  if (currentPolicy.stateTrajectory_.size() > 0)
+  {
+    stateDim = currentPolicy.stateTrajectory_[0].size();
+  }
+  else
+  {
+    std::cout << "[MRT_ROS_Gazebo_Loop::updateModelMode] ERROR: WRONG STATE DIM!" << std::endl;
+    std::cout << "[MRT_ROS_Gazebo_Loop::updateModelMode] DEBUG_INF" << std::endl;
+    while(1);
+  }
+
+  if (currentStateDim_ != stateDim)
+  {
+    currentStateDim_ = stateDim;
+    bool updateModelModeFlag = updateModelModeByState(robotModelInfo_, stateDim);
+
+    std::cout << "[MRT_ROS_Gazebo_Loop::updateModelMode] UPDATED MODE to " << getModelModeString(robotModelInfo_) << std::endl;
+  }
+
+  //std::cout << "[MRT_ROS_Gazebo_Loop::updateModelMode] modelModeInt: " << getModelModeInt(robotModelInfo_) << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::updateModelMode] updateModelModeFlag: " << updateModelModeFlag << std::endl;
+
+  //std::cout << "[MRT_ROS_Gazebo_Loop::updateModelMode] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MRT_ROS_Gazebo_Loop::updateStateIndexMap(bool updateStateIndexMapFlag)
 {
   //std::cout << "[MRT_ROS_Gazebo_Loop::updateStateIndexMap] START" << std::endl;
   
-  auto jointNames = mrt_.getRobotModelInfo().robotArm.jointNames;
+  //auto jointNames = mrt_.getRobotModelInfo().robotArm.jointNames;
+  auto jointNames = robotModelInfo_.robotArm.jointNames;
   int n_joints = jointNames.size();
   stateIndexMap_.clear();
   int c;
@@ -1797,8 +1898,8 @@ void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy,
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] BEFORE mobile base command" << std::endl;
   // Set mobile base command
-  if (mrt_.getRobotModelInfo().modelMode == ModelMode::BaseMotion || 
-      mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+  if (robotModelInfo_.modelMode == ModelMode::BaseMotion || 
+      robotModelInfo_.modelMode == ModelMode::WholeBodyMotion)
   {
     baseTwistMsg.linear.x = currentInput_[0];
     baseTwistMsg.angular.z = currentInput_[1];
@@ -1820,15 +1921,15 @@ void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy,
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] BEFORE arm command" << std::endl;
   // Set arm command
-  if (mrt_.getRobotModelInfo().modelMode == ModelMode::ArmMotion || 
-      mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+  if (robotModelInfo_.modelMode == ModelMode::ArmMotion || 
+      robotModelInfo_.modelMode == ModelMode::WholeBodyMotion)
   {
     int baseOffset = 0;
-    if (mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+    if (robotModelInfo_.modelMode == ModelMode::WholeBodyMotion)
     {
-      baseOffset = mrt_.getRobotModelInfo().mobileBase.stateDim;
+      baseOffset = robotModelInfo_.mobileBase.stateDim;
     }
-    int n_joints = mrt_.getRobotModelInfo().robotArm.jointNames.size();
+    int n_joints = robotModelInfo_.robotArm.jointNames.size();
     armJointTrajectoryMsg.joint_names.resize(n_joints);
 
     //PrimalSolution primalSolution = mrt_.getPolicy();
@@ -1841,7 +1942,7 @@ void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy,
 
     for (int i = 0; i < n_joints; ++i)
     {
-      armJointTrajectoryMsg.joint_names[i] = mrt_.getRobotModelInfo().robotArm.jointNames[i];
+      armJointTrajectoryMsg.joint_names[i] = robotModelInfo_.robotArm.jointNames[i];
       jtp.positions[i] = nextState[baseOffset + i];
 
       cmd.push_back(jtp.positions[i]);
@@ -1851,15 +1952,15 @@ void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy,
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] BEFORE Publish command" << std::endl;
   // Publish command
-  if (mrt_.getRobotModelInfo().modelMode == ModelMode::BaseMotion || 
-      mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+  if (robotModelInfo_.modelMode == ModelMode::BaseMotion || 
+      robotModelInfo_.modelMode == ModelMode::WholeBodyMotion)
   {
     //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] BASE PUB" << std::endl;
     baseTwistPub_.publish(baseTwistMsg);
   }
 
-  if (mrt_.getRobotModelInfo().modelMode == ModelMode::ArmMotion || 
-      mrt_.getRobotModelInfo().modelMode == ModelMode::WholeBodyMotion)
+  if (robotModelInfo_.modelMode == ModelMode::ArmMotion || 
+      robotModelInfo_.modelMode == ModelMode::WholeBodyMotion)
   {
     armJointVelocityMsg.joint1 = currentInput_[2] * (180.0/M_PIf32);
     armJointVelocityMsg.joint2 = currentInput_[3] * (180.0/M_PIf32);

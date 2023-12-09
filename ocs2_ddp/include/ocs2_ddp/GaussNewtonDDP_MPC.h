@@ -82,6 +82,30 @@ class GaussNewtonDDP_MPC final : public MPC_BASE
       return ddpPtr_.get(); 
     }
 
+    void setOCPTemp(OptimalControlProblem& ocp)
+    {
+      std::cout << "[GaussNewtonDDP_MPC::setOCPTemp] START" << std::endl;
+  
+      std::cout << "[GaussNewtonDDP_MPC::setOCPTemp] WAITING FOR OCP TO BE UPDATED..." << std::endl;
+      optimalControlProblemTmp_ = ocp;
+      updateOCPFlag_ = true;
+      std::cout << "[GaussNewtonDDP_MPC::setOCPTemp] updateOCPFlag_: " << updateOCPFlag_ << std::endl;
+      std::cout << "[GaussNewtonDDP_MPC::setOCPTemp] END" << std::endl;
+    }
+
+    bool updateOCP()
+    {
+      if (updateOCPFlag_)
+      {
+        std::cout << "[GaussNewtonDDP_MPC::updateOCP] OCP UPDATED!" << std::endl;
+        optimalControlProblem_ = optimalControlProblemTmp_;
+        updateOCPFlag_ = false;
+        reset();
+        return true;
+      }
+      return false;
+    }
+
     void initializeMPC(mpc::Settings mpcSettings, 
                        ddp::Settings ddpSettings, 
                        const RolloutBase& rollout,
@@ -136,6 +160,9 @@ class GaussNewtonDDP_MPC final : public MPC_BASE
     ddp::Settings ddpSettings_;
     mpc::Settings mpcSettings_;
     OptimalControlProblem optimalControlProblem_;
+
+    bool updateOCPFlag_ = false;
+    OptimalControlProblem optimalControlProblemTmp_;
 
     std::unique_ptr<GaussNewtonDDP> ddpPtr_;
 };

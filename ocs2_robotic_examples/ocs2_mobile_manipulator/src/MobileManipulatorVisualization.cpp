@@ -239,9 +239,12 @@ void MobileManipulatorVisualization::update(const SystemObservation& observation
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorVisualization::update(const SystemObservation& observation, 
                                             const PrimalSolution& policy,
-                                            const CommandData& command) 
+                                            const CommandData& command,
+                                            RobotModelInfo robotModelInfo) 
 {
   //std::cout << "[MobileManipulatorVisualization::update(3)] START" << std::endl;
+
+  robotModelInfo_ = robotModelInfo;
 
   const ros::Time timeStamp = ros::Time::now();
   publishOptimizedTrajectory(timeStamp, policy, observation.full_state);

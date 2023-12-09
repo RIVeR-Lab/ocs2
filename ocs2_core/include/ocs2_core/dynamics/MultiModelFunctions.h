@@ -45,6 +45,11 @@ bool updateModelMode(RobotModelInfo& robotModelInfo, size_t& modelMode);
 /**
  * NUA TODO: UPDATE!
  */
+bool updateModelModeByState(RobotModelInfo& robotModelInfo, size_t& stateDim);
+
+/**
+ * NUA TODO: UPDATE!
+ */
 std::string getRobotName(RobotModelInfo& robotModelInfo);
 
 /**

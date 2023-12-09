@@ -64,6 +64,7 @@ class MRT_ROS_Gazebo_Loop
      */
     MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
                         MRT_ROS_Interface& mrt,
+                        RobotModelInfo robotModelInfo,
                         std::string& worldFrameName,
                         std::string& ns,
                         std::string& targetMsgName,
@@ -99,6 +100,9 @@ class MRT_ROS_Gazebo_Loop
     int getDRLActionResult();
 
     /** NUA TODO: Add description */
+    void setRobotModelInfo(RobotModelInfo robotModelInfo);
+
+    /** NUA TODO: Add description */
     void setSelfCollisionInfoMsgName(std::string& selfCollisionInfoMsgName);
 
     /** NUA TODO: Add description */
@@ -130,6 +134,9 @@ class MRT_ROS_Gazebo_Loop
 
     /** NUA TODO: Add description */
     void setDRLActionLastStepDistanceThreshold(double drlActionLastStepDistanceThreshold);
+
+    /** NUA TODO: Add description */
+    void updateModelMode();
 
     /** NUA TODO: Add description */
     bool isArmStateInitialized();
@@ -356,6 +363,8 @@ class MRT_ROS_Gazebo_Loop
 
     bool shutDownFlag_ = false;
     std::string mrtShutDownFlag_;
+
+    size_t currentStateDim_ = 0;
 
     // 0: Go
     // 1: Go & Pick

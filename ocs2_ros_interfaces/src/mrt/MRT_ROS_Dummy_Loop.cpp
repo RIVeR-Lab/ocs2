@@ -118,7 +118,7 @@ void MRT_ROS_Dummy_Loop::synchronizedDummyLoop(const SystemObservation& initObse
 
     // Update observers
     for (auto& observer : observers_) {
-      observer->update(currentObservation, mrt_.getPolicy(), mrt_.getCommand());
+      observer->update(currentObservation, mrt_.getPolicy(), mrt_.getCommand(), robotModelInfo_);
     }
 
     ++loopCounter;
@@ -157,7 +157,7 @@ void MRT_ROS_Dummy_Loop::realtimeDummyLoop(const SystemObservation& initObservat
 
     // Update observers
     for (auto& observer : observers_) {
-      observer->update(currentObservation, mrt_.getPolicy(), mrt_.getCommand());
+      observer->update(currentObservation, mrt_.getPolicy(), mrt_.getCommand(), robotModelInfo_);
     }
 
     ros::spinOnce();

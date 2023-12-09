@@ -56,7 +56,7 @@ class MobileManipulatorGazeboVisualization final : public DummyObserver
 
     ~MobileManipulatorGazeboVisualization() override = default;
 
-    void update(const SystemObservation& observation, const PrimalSolution& policy, const CommandData& command) override;
+    void update(const SystemObservation& observation, const PrimalSolution& policy, const CommandData& command, RobotModelInfo robotModelInfo) override;
 
   private:
     void launchVisualizerNode(ros::NodeHandle& nodeHandle);
