@@ -61,6 +61,8 @@ int main(int argc, char** argv)
   std::vector<std::pair<std::string, std::string>> selfCollisionLinkPairs;
   double maxDistance;
   bool recompileLibraries;
+
+  /// NUA TODO: READ THIS IN CONFIG!
   bool printOutFlag = false;
 
   // Read parameters from task file
@@ -142,7 +144,7 @@ int main(int argc, char** argv)
   baseFrame_withNS = baseFrameName;
   armBaseFrame_withNS = armBaseFrame;
   eeFrame_withNS = eeFrame;
-  if (ns != "")
+  if (ns != "/")
   {
     baseFrame_withNS = ns + "/" + baseFrameName;
     armBaseFrame_withNS = ns + "/" + armBaseFrame;

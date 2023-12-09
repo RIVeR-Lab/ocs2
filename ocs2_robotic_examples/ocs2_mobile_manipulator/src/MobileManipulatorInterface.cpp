@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.11.22
+// LAST UPDATE: 2023.12.01
 //
 // AUTHOR: Neset Unver Akmandor  (NUA)
 //
@@ -320,7 +320,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   /// NUA TODO: SET THEM IN THE CONFIG!
   setActionDRLServiceName_ = "/set_action_drl";
   setTargetDRLServiceName_ = "/set_target_drl";
-  calculateMPCTrajectoryServiceName_ = "/calculate_mpc_traj";
+  calculateMPCTrajectoryServiceName_ = "/calculate_mpc_trajectory";
+  computeCommandServiceName_ = "/compute_command";
   setMRTReadyServiceName_ = "/set_mrt_ready";
   setMPCActionResultServiceName_ = "/set_mpc_action_result";
 
@@ -373,7 +374,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   baseFrame_withNS_ = baseFrame;
   armBaseFrame_withNS_ = armBaseFrame;
   eeFrame_withNS_ = eeFrame;
-  if (ns_ != "")
+  if (ns_ != "/")
   {
     baseFrame_withNS_ = ns_ + "/" + baseFrame;
     armBaseFrame_withNS_ = ns_ + "/" + armBaseFrame;
@@ -409,6 +410,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     setActionDRLServiceName_ = ns_ + setActionDRLServiceName_;
     setTargetDRLServiceName_ = ns_ + setTargetDRLServiceName_;
     calculateMPCTrajectoryServiceName_ = ns_ + calculateMPCTrajectoryServiceName_;
+    computeCommandServiceName_ = ns_ + computeCommandServiceName_;
     setMRTReadyServiceName_ = ns_ + setMRTReadyServiceName_;
     setMPCActionResultServiceName_ = ns_ + setMPCActionResultServiceName_;
 
@@ -433,6 +435,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
       std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] setActionDRLServiceName_: " << setActionDRLServiceName_ << std::endl;
       std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] setTargetDRLServiceName_: " << setTargetDRLServiceName_ << std::endl;
       std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] calculateMPCTrajectoryServiceName_: " << calculateMPCTrajectoryServiceName_ << std::endl;
+      std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] computeCommandServiceName_: " << computeCommandServiceName_ << std::endl;
       std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] setMRTReadyServiceName_: " << setMRTReadyServiceName_ << std::endl;
       std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] setMPCActionResultServiceName_: " << setMPCActionResultServiceName_ << std::endl;
     }
@@ -486,7 +489,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] START rosReferenceManagerPtr_" << std::endl;
   // Set ROS Reference Manager
   std::string topicPrefix = "mobile_manipulator_";
-  if (ns_ != "")
+  if (ns_ != "/")
   {
     topicPrefix = ns_ + "/";
   }
@@ -603,7 +606,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   if (printOutFlag_)
     std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface(6)] AFTER mobileManipulatorVisu_" << std::endl;
 
-  launchNodes(nodeHandle_);
+  launchNodes();
 
   //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface(6)] DEBUG INF" << std::endl;
   //while(1);
@@ -1187,7 +1190,7 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt,
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
+void MobileManipulatorInterface::launchNodes()
 {
   if (drlFlag_)
   {
@@ -1245,6 +1248,10 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
   armJointTrajectoryPub_ = nodeHandle_.advertise<trajectory_msgs::JointTrajectory>(armControlMsg_, 1);
   armJointVelocityPub_ = nodeHandle_.advertise<kinova_msgs::JointVelocity>(ns_ + "/arm_controller/velocity", 1);
 
+  // Clients
+  computeCommandClient_ = nodeHandle_.serviceClient<ocs2_msgs::calculateMPCTrajectory>(computeCommandServiceName_);
+
+  // Services
   calculateMPCTrajectoryService_ = nodeHandle_.advertiseService(calculateMPCTrajectoryServiceName_, &MobileManipulatorInterface::calculateMPCTrajectorySrv, this);
 
   //modelModeSubscriber_ = nodeHandle_.subscribe(model_mode_msg_name, 5, &MobileManipulatorInterface::modelModeCallback, this);
@@ -1252,7 +1259,6 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
   //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes::targetTrajectoriesCallback] mpcTargetMsgName_: " << mpcTargetMsgName_ << std::endl;
   // TargetTrajectories
 
-  /*
   auto targetTrajectoriesCallback = [this](const ocs2_msgs::mpc_target_trajectories::ConstPtr& msg) 
   {
     //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes::targetTrajectoriesCallback] START" << std::endl;
@@ -1260,11 +1266,9 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
 
     if (currentTarget_.size() == targetTrajectories.stateTrajectory[0].size())
     {
-      //currentTarget_ = targetTrajectories.stateTrajectory[0]; 
-      
-      //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes::targetTrajectoriesCallback] DONT FORRGET TO CHANGE IT BACKKKK!!!!" << std::endl;
-      currentTarget_.resize(7);
-      currentTarget_ << -1.0, 0.5, 1.0, 0.0, 0.0, 0.0, 1.0;
+      getEEPose(currentTarget_);
+      //currentTarget_.resize(7);
+      //currentTarget_ << -1.0, 0.5, 1.0, 0.0, 0.0, 0.0, 1.0;
     }
     else
     {
@@ -1277,7 +1281,7 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
     {
       std::cout << i << " -> " << currentTarget_[i] << std::endl;
     }
-    * /
+    */
     
     //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes::targetTrajectoriesCallback] TARGET RECEIVED!" << std::endl;
     //targetReceivedFlag_ = true;
@@ -1286,13 +1290,13 @@ void MobileManipulatorInterface::launchNodes(ros::NodeHandle& nodeHandle)
     //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes::targetTrajectoriesCallback] END" << std::endl;
   };
   targetTrajectoriesSubscriber_ = nodeHandle_.subscribe<ocs2_msgs::mpc_target_trajectories>(mpcTargetMsgName_, 5, targetTrajectoriesCallback);
-  */
 
   odomSubscriber_ = nodeHandle_.subscribe(odomMsgName_, 5, &MobileManipulatorInterface::odomCallback, this);
   jointStateSub_ = nodeHandle_.subscribe(armStateMsg_, 5, &MobileManipulatorInterface::jointStateCallback, this);
 
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes] Waiting " << odomMsgName_ << " and " << armStateMsg_ << "..." << std::endl;
   while(!initFlagBaseState_ || !initFlagArmState_){ros::spinOnce();}
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes] Received " << odomMsgName_ << " and " << armStateMsg_ << "!" << std::endl;
 
   updateStateIndexMap();
  
@@ -1446,17 +1450,45 @@ bool MobileManipulatorInterface::calculateMPCTrajectorySrv(ocs2_msgs::calculateM
 {
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectorySrv] START" << std::endl;
 
-  //drlActionContinuous_ = req.action;
-  //drlActionTimeHorizon_ = req.time_horizon;
-  //drlActionLastStepFlag_ = req.last_step_flag;
-  //drlActionLastStepDistanceThreshold_ = req.last_step_distance_threshold;
-  //res.success = true;
-
   bool useCurrentPolicyFlag = req.use_current_policy_flag;
 
-  vector_t currentInput(8);
-  currentInput.setZero();
-  SystemObservation currentObservation = getCurrentObservation(currentInput);
+  double dt = req.dt;
+  double time = req.time;
+  //std::vector<double> state;
+  //std::vector<double> full_state;
+  //std::vector<double> input;
+  
+  std::vector<double> state = req.state;
+  std::vector<double> full_state = req.full_state;
+  std::vector<double> input = req.input;
+  
+  vector_t obs_input;
+  SystemObservation currentObservation;
+  currentObservation.time = time;
+
+  obs_input.resize(input.size());
+  for (size_t i = 0; i < input.size(); i++)
+  {
+    obs_input[i] = input[i];
+  }
+
+  currentObservation.state.resize(state.size());
+  for (size_t i = 0; i < state.size(); i++)
+  {
+    currentObservation.state[i] = state[i];
+  }
+
+  currentObservation.full_state.resize(full_state.size());
+  for (size_t i = 0; i < full_state.size(); i++)
+  {
+    currentObservation.full_state[i] = full_state[i];
+  }
+  
+  currentObservation.input.resize(input.size());
+  for (size_t i = 0; i < input.size(); i++)
+  {
+    currentObservation.input[i] = input[i];
+  }
 
   tf2::Quaternion quat;
   quat.setRPY(req.target[3], req.target[4], req.target[5]);
@@ -1465,22 +1497,31 @@ bool MobileManipulatorInterface::calculateMPCTrajectorySrv(ocs2_msgs::calculateM
   //currentTarget << 2.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
   currentTarget << req.target[0], req.target[1], req.target[2], quat.x(), quat.y(), quat.z(), quat.w();
 
-  bool setMPCProblemFlag = req.mpc_problem_flag;
-  size_t modelModeInt = req.model_mode;
-  bool activateSelfCollision = req.self_collision_flag;
-  bool activateExtCollision = req.ext_collision_flag;
+  const TargetTrajectories targetTrajectories({0}, {currentTarget}, {obs_input});
+  referenceManagerPtr_->setTargetTrajectories(std::move(targetTrajectories));
 
+  /// NUA TODO: SET THE PROBLEM IF NECESSARY!
+  bool setMPCProblemFlag = req.mpc_problem_flag;
+  //size_t modelModeInt = req.model_mode;
+  //bool activateSelfCollision = req.self_collision_flag;
+  //bool activateExtCollision = req.ext_collision_flag;
+  
   std::vector<double> cmd;
   bool success = false;
 
-  success = calculateMPCTrajectory(useCurrentPolicyFlag,
-                                   currentTarget, 
-                                   currentObservation,
-                                   cmd,
-                                   setMPCProblemFlag,
-                                   modelModeInt,
-                                   activateSelfCollision,
-                                   activateExtCollision);
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectorySrv] useCurrentPolicyFlag: " << useCurrentPolicyFlag << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectorySrv] time: " << currentObservation.time << std::endl;
+
+  // CALL THE MRT SERVICE
+  success = computeCommandClient(useCurrentPolicyFlag, 
+                                 dt,
+                                 time,
+                                 state,
+                                 full_state,
+                                 input,
+                                 currentTarget,
+                                 setMPCProblemFlag,
+                                 cmd);
 
   res.cmd = cmd;
   res.success = success;
@@ -1501,7 +1542,7 @@ void MobileManipulatorInterface::runMPC()
 
   RobotModelInfo robotModelInfo;
   std::string mpcTopicPrefix = "mobile_manipulator_";
-  if (ns_ != "")
+  if (ns_ != "/")
   {
     mpcTopicPrefix = ns_ + "/";
   }
@@ -1737,12 +1778,12 @@ void MobileManipulatorInterface::runMRT()
 
   RobotModelInfo robotModelInfo;
   std::string mrtTopicPrefix = "mobile_manipulator_";
-  if (ns_ != "")
+  if (ns_ != "/")
   {
     mrtTopicPrefix = ns_ + "/";
   }
 
-  //getEEPose(currentTarget_);
+  getEEPose(currentTarget_);
 
   vector_t currentInput(8);
   currentInput.setZero();
@@ -1868,11 +1909,12 @@ void MobileManipulatorInterface::runMRT()
 
     // initial command
     //mrtTimer7_.startTimer();
-    currentTarget_.resize(7);
-    currentTarget_ << -1.0, 0.5, 1.0, 0.0, 0.0, 0.0, 1.0;
+    //currentTarget_.resize(7);
+    //currentTarget_ << -1.0, 0.5, 1.0, 0.0, 0.0, 0.0, 1.0;
 
     vector_t currentTarget;
     currentTarget = currentTarget_;
+    mrt_loop.setTargetReceivedFlag(true);
     //mrtTimer7_.endTimer();
     
     //mrtTimer1_.endTimer();
@@ -1926,8 +1968,9 @@ void MobileManipulatorInterface::runMRT()
     // Run mrt_loop
     if (mrtPrintOutFlag)
       std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::runMRT] BEFORE run" << std::endl;
-    //mrt_loop.run(currentTarget);
+    mrt_loop.run(currentTarget);
 
+    /*
     //vector_t currentInput(8);
     //currentInput.setZero();
     SystemObservation initObservation = getCurrentObservation(currentInput);
@@ -1936,9 +1979,10 @@ void MobileManipulatorInterface::runMRT()
 
     referenceManagerPtr_->setTargetTrajectories(std::move(initTargetTrajectories));
     mrt_loop.computeCommand(currentTarget, initObservation);
-    
-    currentInput = mrt_loop.getCurrentInput();
+    */
 
+    currentInput = mrt_loop.getCurrentInput(); 
+    
     //mrtExitFlag_ = true;
     setenv("mpcShutDownFlag", "true", 1);
 
@@ -1959,8 +2003,8 @@ void MobileManipulatorInterface::runMRT()
     }
     */
 
-    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::runMRT] DEBUG INF" << std::endl;
-    while(1);
+    //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::runMRT] DEBUG INF" << std::endl;
+    //while(1);
 
     mrtIter_++;
 
@@ -2030,10 +2074,98 @@ void MobileManipulatorInterface::mrtCallback(const ros::TimerEvent& event)
   //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] END" << std::endl;
 }
 
+void MobileManipulatorInterface::mpcMRTCallback(const ros::TimerEvent& event)
+{
+  bool mpcMRTPrintOutFlag = true;
+
+  /// SET MPC
+  if (mpcMRTPrintOutFlag)
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcMRTCallback] START MPC" << std::endl;
+
+  std::string topicPrefix = "mobile_manipulator_";
+  if (ns_ != "/")
+  {
+    topicPrefix = ns_ + "/";
+  }
+
+  if (mpcMRTPrintOutFlag)
+      std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcMRTCallback] BEFORE setMPCProblem" << std::endl;
+  setMPCProblem(modelModeInt_, true, false);
+  RobotModelInfo robotModelInfo = robotModelInfo_;
+
+  ocs2::GaussNewtonDDP_MPC mpc(mpcSettings_, 
+                                 ddpSettings_, 
+                                 *rolloutPtr_, 
+                                 ocp_, 
+                                 *initializerPtr_);
+  
+  mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr_);
+
+  if (mpcMRTPrintOutFlag)
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcMRTCallback] BEFORE mpc mpcNode" << std::endl;
+  MPC_ROS_Interface mpcNode(mpc, topicPrefix);
+  mpcNode.setModelModeInt(getModelModeInt(robotModelInfo));
+
+  /// SET MRT
+  if (mpcMRTPrintOutFlag)
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcMRTCallback] START MRT" << std::endl;
+
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcMRTCallback] DEBUG INF" << std::endl;
+  //while(1);
+
+  if (mpcMRTPrintOutFlag)
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcMRTCallback] BEFORE MRT_ROS_Interface" << std::endl;
+  MRT_ROS_Interface mrt(robotModelInfo, topicPrefix);
+
+  if (mpcMRTPrintOutFlag)
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcMRTCallback] BEFORE initRollout" << std::endl;
+  mrt.initRollout(&*rolloutPtr_);
+
+  if (mpcMRTPrintOutFlag)
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcMRTCallback] BEFORE mrt.launchNodes" << std::endl;
+  mrt.launchNodes(nodeHandle_);
+
+  // MRT loop
+  if (mpcMRTPrintOutFlag)
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcMRTCallback] BEFORE mrt_loop" << std::endl;
+  MRT_ROS_Gazebo_Loop mrt_loop(nodeHandle_, 
+                                mrt, 
+                                worldFrameName_,
+                                ns_,
+                                targetMsgName_,
+                                goalFrameName_,
+                                baseStateMsg_,
+                                armStateMsg_,
+                                baseControlMsg_,
+                                armControlMsg_,
+                                selfCollisionMsg_,
+                                occupancyDistanceBaseMsg_,
+                                occupancyDistanceArmMsg_,
+                                pointsOnRobotMsgName_,
+                                err_threshold_pos_,
+                                err_threshold_ori_yaw_,
+                                err_threshold_ori_quat_,
+                                mpcSettings_.mrtDesiredFrequency_, 
+                                mpcSettings_.mpcDesiredFrequency_,
+                                drlFlag_,
+                                logSavePathRel_);
+
+  if (mpcMRTPrintOutFlag)
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcMRTCallback] BEFORE subscribeObservers" << std::endl;
+  mobileManipulatorVisu_->updateModelMode(getModelModeInt(robotModelInfo));
+  mrt_loop.subscribeObservers({mobileManipulatorVisu_});
+
+  if (mpcMRTPrintOutFlag)
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcMRTCallback] BEFORE mpcNode.launchNodes" << std::endl;
+  mpcNode.launchNodes(nodeHandle_);
+
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcMRTCallback] END" << std::endl;
+}
+
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-bool MobileManipulatorInterface::calculateMPCTrajectory(bool useCurrentPolicyFlag,
+bool MobileManipulatorInterface::calculateTrajectory(bool useCurrentPolicyFlag,
                                                         vector_t& currentTarget,
                                                         SystemObservation& currentObservation,
                                                         std::vector<double>& cmd,
@@ -2042,19 +2174,19 @@ bool MobileManipulatorInterface::calculateMPCTrajectory(bool useCurrentPolicyFla
                                                         bool activateSelfCollision,
                                                         bool activateExtCollision)
 {
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] START" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] START" << std::endl;
 
   /// NUA NOTE: UPDATE IF NECESSARY!
   //RobotModelInfo robotModelInfo = robotModelInfo_;
   std::string topicPrefix = "mobile_manipulator_";
-  if (ns_ != "")
+  if (ns_ != "/")
   {
     topicPrefix = ns_ + "/";
   }
 
   // NECESSARY INPUTS:
   // modelModeInt_
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE setMPCProblem" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] BEFORE setMPCProblem" << std::endl;
   //if (setMPCProblemFlag)
   //{
   //  setMPCProblem(modelModeInt, activateSelfCollision, activateExtCollision);
@@ -2066,45 +2198,45 @@ bool MobileManipulatorInterface::calculateMPCTrajectory(bool useCurrentPolicyFla
   }
 
   /////////////////// SETTING MPC //////////// START
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE GaussNewtonDDP_MPC" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] BEFORE GaussNewtonDDP_MPC" << std::endl;
   ocs2::GaussNewtonDDP_MPC mpc(mpcSettings_,
                                ddpSettings_,
                                *rolloutPtr_,
                                ocp_,
                                *initializerPtr_);
 
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE setReferenceManager" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] BEFORE setReferenceManager" << std::endl;
   mpc.getSolverPtr()->setReferenceManager(rosReferenceManagerPtr_);
 
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE MPC_ROS_Interface" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] BEFORE MPC_ROS_Interface" << std::endl;
   MPC_ROS_Interface mpcNode(mpc, topicPrefix);
 
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE setModelModeInt" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] BEFORE setModelModeInt" << std::endl;
   mpcNode.setModelModeInt(modelModeInt_);
   
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE spin" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] BEFORE spin" << std::endl;
   //spinOnce();
 
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE currentTarget" << std::endl;
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] BEFORE currentTarget" << std::endl;
   //vector_t currentTarget(7);
   //currentTarget << 2.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
 
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE getCurrentObservation" << std::endl;
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] BEFORE getCurrentObservation" << std::endl;
   //SystemObservation currentObservation = getCurrentObservation();
 
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE TargetTrajectories" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] BEFORE TargetTrajectories" << std::endl;
   TargetTrajectories targetTrajectories({currentObservation.time}, {currentTarget}, {currentObservation.input});
 
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] currentObservation.mode: " << currentObservation.mode << std::endl;
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] currentObservation.time: " << currentObservation.time << std::endl;
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] currentObservation.state size: " << currentObservation.state.size() << std::endl << currentObservation.state << std::endl;
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] currentObservation.full_state size: " << currentObservation.full_state.size() << std::endl << currentObservation.full_state << std::endl;
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] currentObservation.input size: " << currentObservation.input.size() << std::endl << currentObservation.input << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] currentObservation.mode: " << currentObservation.mode << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] currentObservation.time: " << currentObservation.time << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] currentObservation.state size: " << currentObservation.state.size() << std::endl << currentObservation.state << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] currentObservation.full_state size: " << currentObservation.full_state.size() << std::endl << currentObservation.full_state << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] currentObservation.input size: " << currentObservation.input.size() << std::endl << currentObservation.input << std::endl;
 
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] DEBUF_INF" << std::endl;
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] DEBUF_INF" << std::endl;
   //while(1);
   //spinOnce();
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] debugCtr_: " << debugCtr_ << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] debugCtr_: " << debugCtr_ << std::endl;
   bool flag_reset = false;
   double time = 0;
   double dt = 1.0 / mpcSettings_.mrtDesiredFrequency_;
@@ -2148,13 +2280,13 @@ bool MobileManipulatorInterface::calculateMPCTrajectory(bool useCurrentPolicyFla
   /*
   for (size_t i = 0; i < 10; i++)
   {
-    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE getTargetTrajectories: " << referenceManagerPtr_->getTargetTrajectories().stateTrajectory.size() << std::endl;
-    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] BEFORE computeTraj2" << std::endl << std::endl;
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] BEFORE getTargetTrajectories: " << referenceManagerPtr_->getTargetTrajectories().stateTrajectory.size() << std::endl;
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] BEFORE computeTraj2" << std::endl << std::endl;
 
     mpcNode.computeTraj2(targetTrajectories, currentObservation, flag_reset);
-    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] AFTER getTargetTrajectories: " << referenceManagerPtr_->getTargetTrajectories().stateTrajectory.size() << std::endl;
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] AFTER getTargetTrajectories: " << referenceManagerPtr_->getTargetTrajectories().stateTrajectory.size() << std::endl;
 
-    //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] DEBUF_INF" << std::endl;
+    //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] DEBUF_INF" << std::endl;
     //while(1);
   }
   */
@@ -2162,13 +2294,13 @@ bool MobileManipulatorInterface::calculateMPCTrajectory(bool useCurrentPolicyFla
   //spinOnce();
   /////////////////// SETTING MPC //////////// END
 
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] DEBUF_INF" << std::endl;
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] DEBUF_INF" << std::endl;
   //while(1);
 
   // ---------------------------------------------------
 
   //double dt = 1.0 / mpcSettings_.mrtDesiredFrequency_;
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] dt: " << dt << std::endl;
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] dt: " << dt << std::endl;
   
   //PrimalSolution currentPolicy = mpcNode.getPolicy();
   //vector_t currentInput_ = currentPolicy.getDesiredInput(dt);
@@ -2180,7 +2312,7 @@ bool MobileManipulatorInterface::calculateMPCTrajectory(bool useCurrentPolicyFla
   //computeCommand(currentPolicy, currentObservation, cmd);
 
   /*
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] cmd:" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] cmd:" << std::endl;
   for (size_t i = 0; i < cmd.size(); i++)
   {
     std::cout << i << " -> " << cmd[i] << std::endl;
@@ -2188,10 +2320,10 @@ bool MobileManipulatorInterface::calculateMPCTrajectory(bool useCurrentPolicyFla
   */
   
 
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] DEBUG_INF" << std::endl;
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] DEBUG_INF" << std::endl;
   //while(1);
 
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectory] END" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::calculateTrajectory] END" << std::endl;
 
   debugCtr_++;
 
@@ -2736,7 +2868,7 @@ void MobileManipulatorInterface::odomCallback(const nav_msgs::Odometry::ConstPtr
   //std::cout << "[MobileManipulatorInterface::odomCallback] START " << std::endl;
   odomMsg_ = *msg;
   initFlagBaseState_ = true;
-  //std::cout << "[MobileManipulatorInterface::odomCallback] START " << std::endl;
+  //std::cout << "[MobileManipulatorInterface::odomCallback] END " << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2744,8 +2876,10 @@ void MobileManipulatorInterface::odomCallback(const nav_msgs::Odometry::ConstPtr
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {
+  //std::cout << "[MobileManipulatorInterface::jointStateCallback] START" << std::endl;
   jointStateMsg_ = *msg;
   initFlagArmState_ = true;
+  //std::cout << "[MobileManipulatorInterface::jointStateCallback] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2884,7 +3018,7 @@ void MobileManipulatorInterface::mapContinuousActionDRL(std::vector<double>& act
 //-------------------------------------------------------------------------------------------------------
 bool MobileManipulatorInterface::setMRTReady()
 {
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMRTReady] START" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMRTReady] START" << std::endl;
   bool success = false;
   ocs2_msgs::setBool srv;
   srv.request.val = true;
@@ -2901,7 +3035,7 @@ bool MobileManipulatorInterface::setMRTReady()
     success = false;
   }
 
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMRTReady] END" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMRTReady] END" << std::endl;
   
   return success;
 }
@@ -2931,6 +3065,59 @@ bool MobileManipulatorInterface::setMPCActionResult(int drlActionResult)
   }
 
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMPCActionResult] END" << std::endl;
+  
+  return success;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+bool MobileManipulatorInterface::computeCommandClient(bool& use_current_policy_flag, 
+                                                      double& dt,
+                                                      double& time,
+                                                      std::vector<double>& state,
+                                                      std::vector<double>& full_state,
+                                                      std::vector<double>& input,
+                                                      vector_t& currentTarget,
+                                                      bool& setMPCProblemFlag,
+                                                      std::vector<double>& cmd)
+{
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::computeCommandClient] START" << std::endl;
+  
+  bool success = false;
+
+  ocs2_msgs::calculateMPCTrajectory srv;
+  srv.request.use_current_policy_flag = use_current_policy_flag;
+  
+  srv.request.dt = dt;
+  srv.request.time = time;
+
+  srv.request.state = state;
+  srv.request.full_state = full_state;
+  srv.request.input = input;
+  
+  srv.request.target.resize(currentTarget.size());
+  for (size_t i = 0; i < currentTarget.size(); i++)
+  {
+    srv.request.target[i] = currentTarget[i];
+  }
+
+  srv.request.mpc_problem_flag = setMPCProblemFlag;
+
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::computeCommandClient] Waiting for the service..." << std::endl;
+  ros::service::waitForService(computeCommandServiceName_);
+  if (computeCommandClient_.call(srv))
+  {
+    success = srv.response.success;
+    cmd = srv.response.cmd;
+  }
+  else
+  {
+    ROS_ERROR("[MobileManipulatorInterface::computeCommandClient] ERROR: Failed to call service!");
+    success = false;
+  }
+
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::computeCommandClient] END" << std::endl;
   
   return success;
 }

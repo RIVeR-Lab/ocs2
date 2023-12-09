@@ -1,7 +1,23 @@
 ## Request
 bool use_current_policy_flag
+
+float64 dt
 float64 time
 
+# If model_mode is 0: [pos_x, pos_y, yaw] -> dim(3)
+# If model_mode is 1: [joint_pos_1, ..., joint_pos_6] -> dim(6)
+# If model_mode is 2: [pos_x, pos_y, yaw, joint_pos_1, ..., joint_pos_6] -> dim(9)
+float64[] state
+
+# [pos_x, pos_y, yaw, joint_pos_1, ..., joint_pos_6] -> dim(9)
+float64[] full_state
+
+# If model_mode is 0: [lat_velo, ang_velo] -> dim(2)
+# If model_mode is 1: [joint_pos_1, ..., joint_pos_6] -> dim(6)
+# If model_mode is 2: [lat_velo, ang_velo, joint_pos_1, ..., joint_pos_6] -> dim(8)
+float64[] input
+
+# [pos_x, pos_y, pos_z, quat_x, quat_y, quat_z, quat_w] -> dim(7)
 float64[] target
 
 bool mpc_problem_flag

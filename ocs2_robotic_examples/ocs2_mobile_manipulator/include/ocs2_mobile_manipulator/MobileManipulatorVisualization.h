@@ -186,6 +186,9 @@ class MobileManipulatorVisualization final : public DummyObserver
     std::string selfCollisionMsg_;
     mutable ocs2_msgs::collision_info selfCollisionInfo_;
 
+    std::string optimizedStateTrajectoryMsgName_;
+    std::string optimizedPoseTrajectoryMsgName_;
+
     //std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
     
     ocs2::benchmark::RepeatedTimer timer0_;

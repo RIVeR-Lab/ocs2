@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.08.23
+// LAST UPDATE: 2023.12.01
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -267,7 +267,7 @@ class MobileManipulatorInterface final : public RobotInterface
 
     //void modelModeCallback(const std_msgs::UInt8::ConstPtr& msg);
 
-    void launchNodes(ros::NodeHandle& nodeHandle);
+    void launchNodes();
 
     void getEEPose(vector_t& eePose);
 
@@ -288,14 +288,16 @@ class MobileManipulatorInterface final : public RobotInterface
 
     void mrtCallback(const ros::TimerEvent& event);
 
-    bool calculateMPCTrajectory(bool useCurrentPolicyFlag,
-                                vector_t& currentTarget,
-                                SystemObservation& currentObservation,
-                                std::vector<double>& cmd,
-                                bool setMPCProblemFlag=false,
-                                size_t inputModelModeInt=2, 
-                                bool activateSelfCollision=false,
-                                bool activateExtCollision=false);
+    void mpcMRTCallback(const ros::TimerEvent& event);
+
+    bool calculateTrajectory(bool useCurrentPolicyFlag,
+                             vector_t& currentTarget,
+                             SystemObservation& currentObservation,
+                             std::vector<double>& cmd,
+                             bool setMPCProblemFlag=false,
+                             size_t inputModelModeInt=2, 
+                             bool activateSelfCollision=false,
+                             bool activateExtCollision=false);
 
     void computeCommand(vector_t& currentInput,
                         vector_t& nextState,
@@ -327,6 +329,16 @@ class MobileManipulatorInterface final : public RobotInterface
     bool setMRTReady();
 
     bool setMPCActionResult(int drlActionResult);
+
+    bool computeCommandClient(bool& use_current_policy_flag, 
+                              double& dt,
+                              double& time,
+                              std::vector<double>& state,
+                              std::vector<double>& full_state,
+                              std::vector<double>& input,
+                              vector_t& currentTarget,
+                              bool& setMPCProblemFlag,
+                              std::vector<double>& cmd);
 
     struct mpcProblemSettings
     {
@@ -402,7 +414,7 @@ class MobileManipulatorInterface final : public RobotInterface
     int mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "false", 1);
     int mrtExitEnvStatus_ = setenv("mrtExitFlag", "true", 1);
 
-    bool printOutFlag_ = false;
+    bool printOutFlag_ = true;
     bool usePreComputation_;
     bool recompileLibraries_;
     bool activateSelfCollision_;
@@ -509,6 +521,7 @@ class MobileManipulatorInterface final : public RobotInterface
     std::string setActionDRLServiceName_;
     std::string setTargetDRLServiceName_;
     std::string calculateMPCTrajectoryServiceName_;
+    std::string computeCommandServiceName_;
     std::string setMRTReadyServiceName_;
     std::string setMPCActionResultServiceName_;
 
@@ -545,6 +558,7 @@ class MobileManipulatorInterface final : public RobotInterface
     ros::ServiceClient setTargetDRLClient_;
     ros::ServiceClient setMPCActionResultClient_;
     ros::ServiceClient setMRTReadyClient_;
+    ros::ServiceClient computeCommandClient_;
 
     ros::ServiceServer setActionDRLService_;
     ros::ServiceServer calculateMPCTrajectoryService_;

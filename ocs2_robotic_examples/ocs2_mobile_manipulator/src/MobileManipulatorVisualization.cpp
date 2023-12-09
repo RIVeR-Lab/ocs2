@@ -106,11 +106,17 @@ MobileManipulatorVisualization::MobileManipulatorVisualization(ros::NodeHandle& 
 {
   //std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] START" << std::endl;
 
+  /// NUA TODO: SET IN CONFIG!
+  optimizedStateTrajectoryMsgName_ = "optimizedStateTrajectory";
+  optimizedPoseTrajectoryMsgName_ = "optimizedPoseTrajectory";
+
   //std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] ns: " << ns << std::endl;
   //std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] baseFrameName: " << baseFrameName << std::endl;
-  if (ns != "")
+  if (ns_ != "/")
   {
-    baseFrameName_withNS_ = ns + "/" + baseFrameName;
+    baseFrameName_withNS_ = ns_ + "/" + baseFrameName;
+    optimizedStateTrajectoryMsgName_ = ns_ + "/" + optimizedStateTrajectoryMsgName_;
+    optimizedPoseTrajectoryMsgName_ = ns_ + "/" + optimizedPoseTrajectoryMsgName_;
   }
   //std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] baseFrameName_withNS_: " << baseFrameName_withNS_ << std::endl;
 
@@ -138,8 +144,8 @@ void MobileManipulatorVisualization::launchVisualizerNode(ros::NodeHandle& nodeH
   tfSub_ = nodeHandle.subscribe("/tf", 5, &MobileManipulatorVisualization::tfCallback, this);
 
   // Publishers
-  stateOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(ns_ + "/optimizedStateTrajectory", 1);
-  stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>(ns_ + "/optimizedPoseTrajectory", 1);
+  stateOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(optimizedStateTrajectoryMsgName_, 1);
+  stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>(optimizedPoseTrajectoryMsgName_, 1);
 
   pubSelfCollisionInfo_ = nodeHandle.advertise<ocs2_msgs::collision_info>(selfCollisionMsg_, 10, true);
   markerPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(selfCollisionMsg_ + "_visu", 10, true);

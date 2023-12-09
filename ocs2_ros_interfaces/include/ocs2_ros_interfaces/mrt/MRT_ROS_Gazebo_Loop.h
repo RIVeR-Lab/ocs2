@@ -37,6 +37,8 @@
 #include "ocs2_msgs/setInt.h"
 #include "ocs2_msgs/setTask.h"
 #include "ocs2_msgs/setSystemObservation.h"
+#include "ocs2_msgs/calculateMPCTrajectory.h"
+
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 #include "ocs2_ros_interfaces/mrt/DummyObserver.h"
@@ -157,7 +159,7 @@ class MRT_ROS_Gazebo_Loop
     void getCurrentState(vector_t& currentState);
 
     /** NUA TODO: Add decription. */
-    void computeCommand(vector_t currentTarget, SystemObservation initObservation);
+    void computeCommand(vector_t currentTarget, SystemObservation initObservation, double dt=0.0);
 
     // Filter
     double prev_lin_x = 0.0;
@@ -230,6 +232,9 @@ class MRT_ROS_Gazebo_Loop
     /** NUA TODO: Add description */
     bool setSystemObservation(const SystemObservation& currentObservation);
 
+    /** NUA TODO: Add description */
+    bool setMRTReady();
+
     // DESCRIPTION: TODO...
     //bool setTaskModeSrv(ocs2_msgs::setInt::Request &req, 
     //                    ocs2_msgs::setInt::Response &res);
@@ -237,6 +242,9 @@ class MRT_ROS_Gazebo_Loop
     // DESCRIPTION: TODO...
     bool setTaskSrv(ocs2_msgs::setTask::Request &req, 
                     ocs2_msgs::setTask::Response &res);
+
+    bool computeCommandSrv(ocs2_msgs::calculateMPCTrajectory::Request &req, 
+                           ocs2_msgs::calculateMPCTrajectory::Response &res);
 
     /** NUA TODO: Add description */
     //void publishCommand(const PrimalSolution& primalSolution);
@@ -330,6 +338,8 @@ class MRT_ROS_Gazebo_Loop
     std::vector<std::vector<double>> mpcStateTrajectory_;
     std::vector<std::vector<double>> mpcInputTrajectory_;
 
+    std::vector<double> cmd_;
+
     tf::TransformListener tfListener_;
 
     std::vector<std::shared_ptr<DummyObserver>> observers_;
@@ -408,6 +418,15 @@ class MRT_ROS_Gazebo_Loop
     ros::Subscriber pointsOnRobotSub_;
     //ros::Subscriber goalSub_;
     
+    std::string armControlVelocityMsgName_;
+    std::string linkAttacherMsgName_;
+    std::string linkDetacherMsgName_;
+    std::string setPickedFlagSrvName_;
+    std::string setSystemObservationSrvName_;
+    std::string setMRTReadySrvName_;
+    std::string setTaskSrvName_;
+    std::string computeCommandSrvName_;
+
     ros::Subscriber jointTrajectoryControllerStateSub_;
     ros::Subscriber targetTrajectoriesSubscriber_;
 
@@ -420,9 +439,11 @@ class MRT_ROS_Gazebo_Loop
     //ros::ServiceClient setTaskModeClient_;
     ros::ServiceClient setPickedFlagClient_;
     ros::ServiceClient setSystemObservationClient_;
+    ros::ServiceClient setMRTReadyClient_;
 
     //ros::ServiceServer setTaskModeService_;
     ros::ServiceServer setTaskService_;
+    ros::ServiceServer computeCommandService_;
 };
 
 }  // namespace ocs2

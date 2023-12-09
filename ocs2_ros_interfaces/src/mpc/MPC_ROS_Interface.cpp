@@ -476,7 +476,7 @@ void MPC_ROS_Interface::copyToBuffer(const SystemObservation& mpcInitObservation
 //-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg) 
 {
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START" << std::endl;
+  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START" << std::endl;
 
   // current time, state, input, and subsystem
   //const auto currentObservation = ros_msg_conversions::readObservationMsg(*msg);
@@ -616,7 +616,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
     callbackEndFlag_ = true;
   }
 
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END ctr_: " << ctr_ << std::endl;
+  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END ctr_: " << ctr_ << std::endl;
   /*
   if (ctr_ > 0)
   {

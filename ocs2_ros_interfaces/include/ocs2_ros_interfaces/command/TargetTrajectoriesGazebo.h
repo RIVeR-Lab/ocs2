@@ -244,12 +244,20 @@ class TargetTrajectoriesGazebo final
 
     bool pickedFlag_ = false;
 
-    std::string worldFrameName_ = "world";
-    std::string robotFrameName_ = "base_link"; 
-    std::string goalFrameName_ = "golazo"; 
-    std::string graspFrameName_ = "grasp"; 
-    std::string dropFrameName_ = "drop";
-    std::string eeFrame_ = "j2n6s300_end_effector";
+    std::string worldFrameName_;
+    std::string robotFrameName_; 
+    std::string goalFrameName_; 
+    std::string graspFrameName_; 
+    std::string dropFrameName_;
+    std::string eeFrameName_;
+
+    std::string modelModeMsgName_;
+    std::string goalVisuMsgName_;
+    std::string targetVisuMsgName_;
+    std::string setTaskSrvName_;
+    std::string setPickedFlagSrvName_;
+    std::string setSystemObservationSrvName_;
+    std::string setTargetDRLSrvName_;
 
     gazebo_msgs::ModelStates modelStatesMsg_;
 

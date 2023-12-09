@@ -58,12 +58,13 @@ int main(int argc, char* argv[])
   bool drlFlag, printOutFlag = false;
 
   ns = nh.getNamespace();
-  topicPrefix = "mobile_manipulator_";
-  ns += "/";
-  if (ns != "")
+  cout << "[MobileManipulatorTarget::main] ns: " << ns << endl;
+  topicPrefix = "/mobile_manipulator_";
+  if (ns != "/")
   {
     topicPrefix = ns;
   }
+  cout << "[MobileManipulatorTarget::main] topicPrefix: " << topicPrefix << endl;
 
   //pnh.param<std::string>("/world_frame_name", world_frame_name, "");
   //pnh.param<std::string>("/gz_model_msg_name", gz_model_msg_name, "");

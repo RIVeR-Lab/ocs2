@@ -51,9 +51,32 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
                                   0.0, 1.0, 0.0;
   //dropOrientationOffsetMatrix_ = graspOrientationOffsetMatrix_;
 
-  if (ns != "")
+  worldFrameName_ = "world";
+  robotFrameName_ = "base_link"; 
+  goalFrameName_ = "golazo"; 
+  graspFrameName_ = "grasp"; 
+  dropFrameName_ = "drop";
+  eeFrameName_ = "j2n6s300_end_effector";
+
+  modelModeMsgName_ = "model_mode";
+  goalVisuMsgName_ = "goal_visu";
+  targetVisuMsgName_ = "target_visu";
+  setTaskSrvName_ = "set_task";
+  setPickedFlagSrvName_ = "set_picked_flag";
+  setSystemObservationSrvName_ = "set_system_observation";
+  setTargetDRLSrvName_ = "set_target_drl";
+
+  if (ns != "/")
   {
-    goalFrameName_ = ns + goalFrameName_;
+    goalFrameName_ = ns + "/" + goalFrameName_;
+
+    modelModeMsgName_ = ns + "/" + modelModeMsgName_;
+    goalVisuMsgName_ = ns + "/" + goalVisuMsgName_;
+    targetVisuMsgName_ = ns + "/" + targetVisuMsgName_;
+    setTaskSrvName_ = ns + "/" + setTaskSrvName_;
+    setPickedFlagSrvName_ = ns + "/" + setPickedFlagSrvName_;
+    setSystemObservationSrvName_ = ns + "/" + setSystemObservationSrvName_;
+    setTargetDRLSrvName_ = ns + "/" + setTargetDRLSrvName_;
   }
 
   /*
@@ -120,19 +143,19 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
 
   /// Publishers
   targetTrajectoriesPublisherPtr_.reset(new TargetTrajectoriesRosPublisher(nodeHandle, topicPrefix));
-  modelModePublisher_ = nodeHandle.advertise<std_msgs::UInt8>(ns + "model_mode", 1, false);
-  goalMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(ns + "goal_visu", 10);
-  targetMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(ns + "target_visu", 10);
+  modelModePublisher_ = nodeHandle.advertise<std_msgs::UInt8>(modelModeMsgName_, 1, false);
+  goalMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(goalVisuMsgName_, 10);
+  targetMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(targetVisuMsgName_, 10);
 
   /// Clients
   //setTaskModeClient_ = nodeHandle.serviceClient<ocs2_msgs::setInt>("/set_task_mode");
-  setTaskClient_ = nodeHandle.serviceClient<ocs2_msgs::setTask>(ns + "set_task");
+  setTaskClient_ = nodeHandle.serviceClient<ocs2_msgs::setTask>(setTaskSrvName_);
 
   /// Services
   //setTaskModeService_ = nodeHandle.advertiseService("set_task_mode", &TargetTrajectoriesGazebo::setTaskModeSrv, this);
-  setPickedFlagService_ = nodeHandle.advertiseService(ns + "set_picked_flag", &TargetTrajectoriesGazebo::setPickedFlagSrv, this);
-  setSystemObservationService_ = nodeHandle.advertiseService(ns + "set_system_observation", &TargetTrajectoriesGazebo::setSystemObservationSrv, this);
-  setTargetDRLService_ = nodeHandle.advertiseService(ns + "set_target_drl", &TargetTrajectoriesGazebo::setTargetDRLSrv, this);
+  setPickedFlagService_ = nodeHandle.advertiseService(setPickedFlagSrvName_, &TargetTrajectoriesGazebo::setPickedFlagSrv, this);
+  setSystemObservationService_ = nodeHandle.advertiseService(setSystemObservationSrvName_, &TargetTrajectoriesGazebo::setSystemObservationSrv, this);
+  setTargetDRLService_ = nodeHandle.advertiseService(setTargetDRLSrvName_, &TargetTrajectoriesGazebo::setTargetDRLSrv, this);
 
   while(!initTFCallbackFlag_){ros::spinOnce();}
 }
@@ -589,9 +612,9 @@ void TargetTrajectoriesGazebo::tfCallback(const tf2_msgs::TFMessage::ConstPtr& m
 
   try
   {
-    if (tflistenerPtr_->waitForTransform(worldFrameName_, eeFrame_, ros::Time(0), ros::Duration(1.0)))
+    if (tflistenerPtr_->waitForTransform(worldFrameName_, eeFrameName_, ros::Time(0), ros::Duration(1.0)))
     {
-      tflistenerPtr_->lookupTransform(worldFrameName_, eeFrame_, ros::Time(0), tf_ee_wrt_world);
+      tflistenerPtr_->lookupTransform(worldFrameName_, eeFrameName_, ros::Time(0), tf_ee_wrt_world);
       tf_ee_wrt_world_ = tf_ee_wrt_world;
     }
 
