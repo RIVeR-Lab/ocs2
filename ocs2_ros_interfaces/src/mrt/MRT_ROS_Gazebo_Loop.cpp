@@ -350,12 +350,75 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
 
     currentInput_ = initObservation.input;
 
-    std::cout << "[MRT_ROS_Gazebo_Loop::run] BEFORE mrtLoop" << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::run] BEFORE mrtLoop" << std::endl;
     mrtLoop();
-    std::cout << "[MRT_ROS_Gazebo_Loop::run] AFTER mrtLoop" << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::run] AFTER mrtLoop" << std::endl;
   }
 
   std::cout << "[MRT_ROS_Gazebo_Loop::run] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+bool MRT_ROS_Gazebo_Loop::run2(vector_t initTarget) 
+{
+  std::cout << "[MRT_ROS_Gazebo_Loop::run2] START" << std::endl;
+
+  //currentTarget_ = initTarget;
+
+  std::cout << "[MRT_ROS_Gazebo_Loop::run2] Waiting for the state to be initialized..." << std::endl;
+  while(!isStateInitialized()){ros::spinOnce();}
+
+  //std::cout << ("[MRT_ROS_Gazebo_Loop::run] BEFORE getCurrentObservation") << std::endl;
+  SystemObservation initObservation = getCurrentObservation(true);
+  setSystemObservation(initObservation);
+
+  std::cout << "[MRT_ROS_Gazebo_Loop::run2] currentTarget size: " << initTarget.size() << std::endl;
+  for (size_t i = 0; i < initTarget.size(); i++)
+  {
+    std::cout << i << " -> " << initTarget[i] << std::endl;
+  }
+
+  const TargetTrajectories initTargetTrajectories({0}, {initTarget}, {initObservation.input});
+
+  // Reset MPC node
+  mrt_.resetMpcNode(initTargetTrajectories);
+
+  int initPolicyCtr = 0;
+  // Wait for the initial state and policy
+  while ( !mrt_.initialPolicyReceived() && ros::ok() && ros::master::check() ) 
+  {
+    //std::cout << "[MRT_ROS_Gazebo_Loop::run] START INIT WHILE" << std::endl;
+
+    initObservation = getCurrentObservation(true);
+
+    mrt_.setCurrentObservation(initObservation);
+
+    if (initPolicyCtr == initPolicyCtrMax_)
+    {
+      std::cout << "[MRT_ROS_Gazebo_Loop::run2] STUCK!" << std::endl;
+      return true;
+      initPolicyCtr = 0;
+    }
+
+    ros::spinOnce();
+    mrt_.spinMRT();
+
+    initPolicyCtr++;
+  }
+
+  currentInput_ = initObservation.input;
+
+  currentTarget_ = initTarget;
+
+  std::cout << "[MRT_ROS_Gazebo_Loop::run2] END" << std::endl;
+
+  return false;
+
+  //std::cout << "[MRT_ROS_Gazebo_Loop::run2] BEFORE mrtLoop" << std::endl;
+  //mrtLoop();
+  //std::cout << "[MRT_ROS_Gazebo_Loop::run2] AFTER mrtLoop" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -552,14 +615,17 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
     {
       //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START initialPolicyReceived initPolicyCtr: " << initPolicyCtr << std::endl;
 
-      mrt_.spinMRT();
-
       // Get current observation
       currentObservation = getCurrentObservation(false);
       currentStateVelocityBase = stateVelocityBase_;
 
       // Set current observation
       mrt_.setCurrentObservation(currentObservation);
+
+      if (initPolicyCtr == initPolicyCtrMax_)
+      {
+        std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] STUCK!" << std::endl;
+      }
 
       /*
       if (initPolicyCtr > initPolicyCtrMax_)
@@ -594,7 +660,9 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
         initPolicyCtr++;
       }
       */
-     initPolicyCtr++;
+
+      mrt_.spinMRT();
+      initPolicyCtr++;
     }
 
     mrt_.updatePolicy();
@@ -681,6 +749,87 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
   //while(1);
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+bool MRT_ROS_Gazebo_Loop::mrtLoop2() 
+{
+  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] START" << std::endl;
+
+  // Update the policy
+  mrt_.updatePolicy();
+  updateModelMode();
+
+  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] START while" << std::endl;
+
+  mrt_.reset();
+  int initPolicyCtr = 0;
+
+  mrt_.spinMRT();
+  
+  // Get current observation
+  SystemObservation currentObservation = getCurrentObservation(false);
+  std::vector<double> currentStateVelocityBase = stateVelocityBase_;
+
+  // Set current observation
+  mrt_.setCurrentObservation(currentObservation);
+
+  // Get Initial Policy
+  //while (!shutDownFlag_ && !mrt_.initialPolicyReceived() && ros::ok() && ros::master::check()) 
+  while (!mrt_.initialPolicyReceived() && ros::ok() && ros::master::check()) 
+  {
+    //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] START initialPolicyReceived initPolicyCtr: " << initPolicyCtr << std::endl;
+
+    // Get current observation
+    currentObservation = getCurrentObservation(false);
+    currentStateVelocityBase = stateVelocityBase_;
+
+    // Set current observation
+    mrt_.setCurrentObservation(currentObservation);
+
+    if (initPolicyCtr == initPolicyCtrMax_)
+    {
+      std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] STUCK!" << std::endl;
+      return true;
+      initPolicyCtr = 0;
+    }
+
+    mrt_.spinMRT();
+    initPolicyCtr++;
+  }
+
+  mrt_.updatePolicy();
+  updateModelMode();
+
+  PrimalSolution currentPolicy = mrt_.getPolicy();
+  currentInput_ = currentPolicy.getDesiredInput(time_);
+
+  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] START observer" << std::endl;
+  // Update observers for visualization
+  for (auto& observer : observers_) 
+  {
+    //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] OBSERVING..." << std::endl;
+    observer->update(currentObservation, currentPolicy, mrt_.getCommand(), robotModelInfo_);
+  }
+
+  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START publishCommand" << std::endl;
+  // Publish the control command 
+  publishCommand(currentPolicy, currentObservation, currentStateVelocityBase);
+
+  int ts = checkTaskStatus(drlFlag_);
+  
+  writeData();
+
+  time_ += dt_;
+
+  ros::spinOnce();
+  mrt_.spinMRT();
+
+  return false;
+
+  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------

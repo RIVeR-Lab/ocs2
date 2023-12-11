@@ -60,7 +60,7 @@ int main(int argc, char** argv)
   MobileManipulatorInterface m4_interface(nh_interface, taskFile, libFolder, urdfFile, initModelModeInt);
 
   double mpc_dt = 0.01;
-  double mrt_dt = 0.01;
+  double mrt_dt = 0.05;
 
   //std::cout << "[MobileManipulatorNode::main] BEFORE mpcTimer " << std::endl;
   //ros::Timer mpcTimer = nh_interface.createTimer(ros::Duration(mpc_dt), &MobileManipulatorInterface::mpcMRTCallback, &m4_interface);

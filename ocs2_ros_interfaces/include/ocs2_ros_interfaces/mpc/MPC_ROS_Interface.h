@@ -125,6 +125,11 @@ class MPC_ROS_Interface
     /**
      * Spins ROS.
      */
+    void singleSpin();
+
+    /**
+     * Spins ROS.
+     */
     void spin();
 
     /**
@@ -187,6 +192,8 @@ class MPC_ROS_Interface
      */
     void mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg);
 
+    void spinTimerCallback(const ros::TimerEvent& event);
+
     void writeData();
 
     void loadData();
@@ -248,6 +255,9 @@ class MPC_ROS_Interface
     std::unique_ptr<PerformanceIndex> publisherPerformanceIndicesPtr_;
 
     mutable std::mutex bufferMutex_;  // for policy variables with prefix (buffer*)
+
+    // Timers
+    ros::Timer spinTimer_;
 
     // multi-threading for publishers
     std::atomic_bool terminateThread_{false};

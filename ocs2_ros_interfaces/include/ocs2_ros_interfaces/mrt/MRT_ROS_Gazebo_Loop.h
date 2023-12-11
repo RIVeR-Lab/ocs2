@@ -153,6 +153,11 @@ class MRT_ROS_Gazebo_Loop
     //void run(const TargetTrajectories& initTargetTrajectories);
     void run(vector_t initTarget);
 
+    bool run2(vector_t initTarget);
+
+    /** NUA TODO: Add decription. */
+    bool mrtLoop2();
+
     /**
      * Subscribe a set of observers to the dummy loop. Observers are updated in the provided order at the end of each timestep.
      * The previous list of observers is overwritten.

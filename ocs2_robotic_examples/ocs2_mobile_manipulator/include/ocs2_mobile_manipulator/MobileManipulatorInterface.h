@@ -355,6 +355,8 @@ class MobileManipulatorInterface final : public RobotInterface
 
     int debugCtr_ = 0;
 
+    bool resetFlag_ = false;
+
     ros::NodeHandle nodeHandle_;
     tf::TransformListener tfListener_;
 

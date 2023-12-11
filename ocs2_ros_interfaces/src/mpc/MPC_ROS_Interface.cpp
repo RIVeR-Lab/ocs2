@@ -755,6 +755,15 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   ctr_++;
 }
 
+void MPC_ROS_Interface::spinTimerCallback(const ros::TimerEvent& event) 
+{
+  //std::cout << "[MPC_ROS_Interface::spinTimerCallback] START" << std::endl;
+
+  ros::getGlobalCallbackQueue()->callAvailable(ros::WallDuration(0.1));
+
+  //std::cout << "[MPC_ROS_Interface::spinTimerCallback] END" << std::endl;
+}
+
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -790,12 +799,26 @@ void MPC_ROS_Interface::shutdownNode()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+void MPC_ROS_Interface::singleSpin() 
+{
+  //std::cout << "[MPC_ROS_Interface::singleSpin] START" << std::endl;
+
+  ros::getGlobalCallbackQueue()->callAvailable(ros::WallDuration(0.1));
+
+  //std::cout << "[MPC_ROS_Interface::singleSpin] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::spin() 
 {
   std::cout << "[MPC_ROS_Interface::spin] Start spinning now..." << std::endl;
   // Equivalent to ros::spin() + check if master is alive
-  while (ros::ok() && ros::master::check() && !shutDownFlag_) 
+  //while (ros::ok() && ros::master::check() && !shutDownFlag_) 
+  while (ros::ok() && ros::master::check()) 
   {
+    /*
     mpcShutDownFlag_ = getenv("mpcShutDownFlag");
     //std::cout << "[MPC_ROS_Interface::spin] mpcShutDownFlag_: " << mpcShutDownFlag_ << std::endl;
 
@@ -804,9 +827,22 @@ void MPC_ROS_Interface::spin()
       //std::cout << "[MPC_ROS_Interface::spin] Shutting down..." << std::endl;
       shutDownFlag_ = true;
     }
+    */
 
     ros::getGlobalCallbackQueue()->callAvailable(ros::WallDuration(0.1));
   }
+
+  std::cout << "[MPC_ROS_Interface::spin] MPC END" << std::endl;
+  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+  
 
   //shutdownNode();
 }
@@ -816,7 +852,9 @@ void MPC_ROS_Interface::spin()
 //-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) 
 {
-  //std::cout << "[MPC_ROS_Interface::launchNodes] MPC node is setting up..." << std::endl;
+  std::cout << "[MPC_ROS_Interface::launchNodes] START" << std::endl;
+
+  std::cout << "[MPC_ROS_Interface::launchNodes] MPC node is setting up..." << std::endl;
 
   // Subscribe Observation 
   mpcObservationSubscriber_ = nodeHandle.subscribe(topicPrefix_ + "mpc_observation", 
@@ -863,7 +901,11 @@ void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
   statusModelModeMPCMsg_.data = true;
   statusModelModeMPCPublisher_.publish(statusModelModeMPCMsg_);
 
-  spin();
+  //spinTimer_ = nodeHandle.createTimer(ros::Duration(0.01), &MPC_ROS_Interface::spinTimerCallback, this);
+
+  //spin();
+
+  std::cout << "[MPC_ROS_Interface::launchNodes] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------

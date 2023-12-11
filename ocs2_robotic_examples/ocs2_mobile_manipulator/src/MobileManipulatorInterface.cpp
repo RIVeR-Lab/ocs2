@@ -626,7 +626,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   
   //mpcNode_->setModelModeInt(getModelModeInt(robotModelInfo_));
 
-  //mpcNode_->launchNodes(nodeHandle_);
+  mpcNode_->launchNodes(nodeHandle_);
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface(6)] AFTER MPC INITIALIZATION" << std::endl;
 
   //int mm = getModelModeInt(robotModelInfo_);
@@ -671,7 +671,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   currentTarget_ << 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
   
   mrt_loop_->setTargetReceivedFlag(true);
-  
+
   //mrt_loop_->run(currentTarget_);
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface(6)] BEFORE MRT INITIALIZATION" << std::endl;
 
@@ -1342,17 +1342,26 @@ void MobileManipulatorInterface::launchNodes()
     //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes::targetTrajectoriesCallback] START" << std::endl;
     auto targetTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(*msg);
 
-    mpcNode_->setTargetTrajectories(targetTrajectories);
-
     if (currentTarget_.size() == targetTrajectories.stateTrajectory[0].size())
     {
-      getEEPose(currentTarget_);
+      mpcNode_->setTargetTrajectories(targetTrajectories);
+
+      //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes::targetTrajectoriesCallback] currentTarget_.size(): " << currentTarget_.size() << std::endl;
+      for (size_t i = 0; i < currentTarget_.size(); i++)
+      {
+        //std::cout << i << " -> " << currentTarget_[i] << std::endl;
+        currentTarget_[i] = targetTrajectories.stateTrajectory[0][i];
+      }
+
+      //getEEPose(currentTarget_);
       //currentTarget_.resize(7);
       //currentTarget_ << -1.0, 0.5, 1.0, 0.0, 0.0, 0.0, 1.0;
     }
     else
     {
-      //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes::targetTrajectoriesCallback] ERROR: Size mismatch!" << std::endl;
+      std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes::targetTrajectoriesCallback] ERROR: Size mismatch!" << std::endl;
+      getEEPose(currentTarget_);
+      std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes::targetTrajectoriesCallback] currentTarget_ IS EE !!!" << std::endl;
     }
 
     /*
@@ -2128,7 +2137,7 @@ void MobileManipulatorInterface::runMRT()
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::mpcCallback(const ros::TimerEvent& event)
 {
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcCallback] START" << std::endl;
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcCallback] START" << std::endl;
 
   /*
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcCallback] Waiting for syncing mpcIter_: " << mpcIter_ << " and mrtIter_: " << mrtIter_ << "..." << std::endl;
@@ -2138,7 +2147,12 @@ void MobileManipulatorInterface::mpcCallback(const ros::TimerEvent& event)
     //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::runMPC] mrtIter_: " << mrtIter_ << std::endl;
   }
   */
-  mpcNode_->launchNodes(nodeHandle_);
+  //mpcNode_->launchNodes(nodeHandle_);
+  //mpcNode_->spin();
+
+  mpcNode_->singleSpin();
+
+  spinOnce();
 
   mpcIter_++;
 
@@ -2171,7 +2185,7 @@ void MobileManipulatorInterface::mpcCallback(const ros::TimerEvent& event)
                                         activateExtCollision);
   */
 
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcCallback] END" << std::endl;
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mpcCallback] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2179,7 +2193,7 @@ void MobileManipulatorInterface::mpcCallback(const ros::TimerEvent& event)
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::mrtCallback(const ros::TimerEvent& event)
 {
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] START" << std::endl;
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] START" << std::endl;
 
   /*
   if (mrtPrintOutFlag)
@@ -2188,15 +2202,40 @@ void MobileManipulatorInterface::mrtCallback(const ros::TimerEvent& event)
     mpcProblemReadyFlag_ = false;
   */
 
-  mrt_loop_->run(currentTarget_);
+  if (mrtIter_ == 0 || resetFlag_)
+  {
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] mrtIter_: " << mrtIter_ << std::endl;
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] resetFlag: " << resetFlag_ << std::endl;
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] currentTarget_: " << std::endl;
+    std::cout << currentTarget_ << std::endl;
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE run" << std::endl;
+    resetFlag_ = mrt_loop_->run2(currentTarget_);
+  }
 
-  mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "false", 1);
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE mrtLoop2" << std::endl;
+  if (!resetFlag_)
+  {
+    resetFlag_ = mrt_loop_->mrtLoop2();
+
+    if (resetFlag_)
+    {
+      std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] mrtLoop2 STUCK!!!" << std::endl;
+    }
+  }
+  else
+  {
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] run2 STUCK!!!" << std::endl;
+  }
+
+  spinOnce();
+
+  //mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "false", 1);
 
   mrtIter_++;
 
   //runMRT();
   
-  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] END" << std::endl;
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] END" << std::endl;
 }
 
 void MobileManipulatorInterface::mpcMRTCallback(const ros::TimerEvent& event)
