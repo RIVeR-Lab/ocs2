@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.12.01
+// LAST UPDATE: 2023.12.13
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -21,7 +21,6 @@
 #include <pinocchio/multibody/joint/joint-composite.hpp>
 #include <pinocchio/multibody/model.hpp>
 #include <cstdlib>
-//#include <voxblox/interpolator/interpolator.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/JointState.h>
 
@@ -33,8 +32,6 @@
 #include <ocs2_core/soft_constraint/StateInputSoftBoxConstraint.h>
 #include <ocs2_core/soft_constraint/StateSoftConstraint.h>
 #include <ocs2_core/dynamics/MultiModelFunctions.h>
-//#include <ocs2_core/misc/LoadData.h>
-//#include <ocs2_core/misc/LoadStdVectorOfPair.h>
 
 #include "ocs2_msgs/setDiscreteActionDRL.h"
 #include "ocs2_msgs/setContinuousActionDRL.h"
@@ -89,6 +86,7 @@ class MobileManipulatorInterface final : public RobotInterface
 {
   public:
     /**
+     * /// NUA TODO: UPDATE DESCRIPTION!
      * Constructor
      *
      * @note Creates directory for generated library into if it does not exist.
@@ -98,23 +96,12 @@ class MobileManipulatorInterface final : public RobotInterface
      * @param [in] libraryFolder: The absolute path to the directory to generate CppAD library into.
      * @param [in] urdfFile: The absolute path to the URDF file for the robot.
      */
-    MobileManipulatorInterface(const std::string& taskFile, 
-                               const std::string& libraryFolder, 
-                               const std::string& urdfFile,
-                               int initModelModeInt=2);
 
     MobileManipulatorInterface(ros::NodeHandle& nodeHandle,
                                const std::string& taskFile, 
                                const std::string& libraryFolder, 
                                const std::string& urdfFile,
                                int initModelModeInt=2);
-
-    /*
-    const vector_t& getInitialState()
-    { 
-      return initialState_;
-    }
-    */
 
     const std::string& getTaskFile() const
     { 
@@ -143,16 +130,6 @@ class MobileManipulatorInterface final : public RobotInterface
 
     const OptimalControlProblem& getOptimalControlProblem() const override 
     { 
-      /*
-      if (mpcIter_ % 2 == 0)
-      {
-        return ocp1_;
-      }
-      else
-      {
-        return ocp2_; 
-      }
-      */
       return ocp_;
     }
 
@@ -180,13 +157,6 @@ class MobileManipulatorInterface final : public RobotInterface
     { 
       return robotModelInfo_; 
     }
-
-    /*
-    std::shared_ptr<PointsOnRobot> getPointsOnRobotPtr() 
-    { 
-      return pointsOnRobotPtr_;
-    }
-    */
 
     std::string getOdomMsgName() 
     { 
@@ -232,13 +202,6 @@ class MobileManipulatorInterface final : public RobotInterface
       nodeHandle_ = nodeHandle;
     }
 
-    /*
-    void setPointsOnRobotPtr(std::shared_ptr<PointsOnRobot> newPointsOnRobotPtr) 
-    { 
-      pointsOnRobotPtr_ = newPointsOnRobotPtr;
-    }
-    */
-
     void initializePointsOnRobotPtr(std::string& collisionPointsName);
 
     void updateFullModelState(std::vector<double>& statePositionBase, 
@@ -281,30 +244,9 @@ class MobileManipulatorInterface final : public RobotInterface
     bool calculateMPCTrajectorySrv(ocs2_msgs::calculateMPCTrajectory::Request &req, 
                                    ocs2_msgs::calculateMPCTrajectory::Response &res);
 
-    void runMPC();
-
-    void setMPC();
-
-    void runMRT();
-
     void mpcCallback(const ros::TimerEvent& event);
 
     void mrtCallback(const ros::TimerEvent& event);
-
-    void mpcMRTCallback(const ros::TimerEvent& event);
-
-    bool calculateTrajectory(bool useCurrentPolicyFlag,
-                             vector_t& currentTarget,
-                             SystemObservation& currentObservation,
-                             std::vector<double>& cmd,
-                             bool setMPCProblemFlag=false,
-                             size_t inputModelModeInt=2, 
-                             bool activateSelfCollision=false,
-                             bool activateExtCollision=false);
-
-    void computeCommand(vector_t& currentInput,
-                        vector_t& nextState,
-                        std::vector<double>& cmd);
   
   private:
     std::unique_ptr<StateInputCost> getQuadraticInputCost();
@@ -353,8 +295,6 @@ class MobileManipulatorInterface final : public RobotInterface
       std::vector<bool> binarySettingValues;
     };
 
-    int debugCtr_ = 0;
-
     bool resetFlag_ = true;
 
     ros::NodeHandle nodeHandle_;
@@ -380,15 +320,12 @@ class MobileManipulatorInterface final : public RobotInterface
     const std::string libraryFolder_;
     const std::string urdfFile_;
 
-    /// NUA TODO: ADD NAMESPACE IN robotModelName_ AND ADD THAT INTO CONFIG!!!!
-    //std::string robotModelName_ = "mobile_manipulator";
-    std::string worldFrameName_ = "world";
+    std::string worldFrameName_;;
     std::string goalFrameName_;
 
     std::string modelModeMsgName_;
     std::string mpcTargetMsgName_;
     std::string targetMsgName_;
-    //std::string goalMsgName_;
 
     std::vector<std::pair<size_t, size_t>> collisionObjectPairs_;
     std::vector<std::pair<std::string, std::string>> collisionLinkPairs_;
@@ -396,12 +333,7 @@ class MobileManipulatorInterface final : public RobotInterface
     size_t initModelModeInt_ = 2;
     size_t modelModeInt_ = 2;
 
-    // 0: Go
-    // 1: Go & Pick
-    // 2: Go & Drop
-    //// NUA NOTE: For now it is fixed to 1 for drl!
-    int taskMode_ = 1;
-
+    /// NUA TODO: SET IN CONFIG!
     double err_threshold_pos_ = 0.1;
     double err_threshold_ori_yaw_ = 0.1;
     double err_threshold_ori_quat_ = 0.05;
@@ -411,13 +343,10 @@ class MobileManipulatorInterface final : public RobotInterface
 
     bool targetReceivedFlag_ = false;
     bool mpcProblemReadyFlag_ = false;
-    bool mpcExitFlag_ = true;
-    bool mrtExitFlag_ = true;
-    bool mpcLaunchReadyFlag_ = false;
 
-    int mpcShutDownEnvStatus_ = setenv("mpcShutDownFlag", "false", 1);
-    int mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "false", 1);
-    int mrtExitEnvStatus_ = setenv("mrtExitFlag", "true", 1);
+    //int mpcShutDownEnvStatus_ = setenv("mpcShutDownFlag", "false", 1);
+    //int mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "false", 1);
+    //int mrtExitEnvStatus_ = setenv("mrtExitFlag", "true", 1);
 
     bool printOutFlag_ = true;
     bool usePreComputation_;
@@ -438,19 +367,13 @@ class MobileManipulatorInterface final : public RobotInterface
     mpc::Settings mpcSettings_;
     
     OptimalControlProblem ocp_;
-    //OptimalControlProblem ocp1_;
-    //OptimalControlProblem ocp2_;
 
     std::shared_ptr<ReferenceManager> referenceManagerPtr_;
     std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr_;
     
     ocs2::rollout::Settings rolloutSettings_;
     std::unique_ptr<RolloutBase> rolloutPtr_;
-    //std::unique_ptr<RolloutBase> mpcRolloutPtr_;
-    //std::unique_ptr<RolloutBase> mrtRolloutPtr_;
-    
     std::unique_ptr<Initializer> initializerPtr_;
-
     std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
 
     /// NUA NOTE: Should it depend on model mode?
@@ -469,11 +392,10 @@ class MobileManipulatorInterface final : public RobotInterface
 
     RobotModelInfo robotModelInfo_;
 
-    /// Filter NUA TODO: CLEAN AND MOVE TO CONFIG!
-    double prev_lin_x_ = 0.0;
-    double prev_ang_z_ = 0.0;
-    double ang_z_cutoff_ = 0.02;
-    double lin_x_cutoff_ = 0.02;
+    std::shared_ptr<ocs2::GaussNewtonDDP_MPC> mpc_;
+    std::shared_ptr<MPC_ROS_Interface> mpcNode_;
+    std::shared_ptr<MRT_ROS_Interface> mrt_;
+    std::shared_ptr<MRT_ROS_Gazebo_Loop> mrt_loop_;
 
     // NUA TODO: Added to speed up the mpc problem initialization, but GET RID OF THESE ASAP!
     // -----------------
@@ -496,11 +418,6 @@ class MobileManipulatorInterface final : public RobotInterface
     std::shared_ptr<StateCost> selfCollisionConstraintPtr_mode0_;
     std::shared_ptr<StateCost> selfCollisionConstraintPtr_mode1_;
     std::shared_ptr<StateCost> selfCollisionConstraintPtr_mode2_;
-
-    /// NUA NOTE: Should it depend on model mode?
-    //std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_mode0_;
-    //std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_mode1_;
-    //std::shared_ptr<PointsOnRobot> pointsOnRobotPtr_mode2_;
 
     std::shared_ptr<StateCost> extCollisionConstraintPtr_mode0_;
     std::shared_ptr<StateCost> extCollisionConstraintPtr_mode1_;
@@ -569,18 +486,10 @@ class MobileManipulatorInterface final : public RobotInterface
     ros::ServiceServer calculateMPCTrajectoryService_;
 
     bool newMPCFlag_ = false;
-    bool mpcWaitingFlag_ = false;
     bool mrtWaitingFlag_ = false;
     
     int mpcModeChangeCtr_ = 0;
     int mrtModeChangeCtr_ = 0;
-
-
-    /// NUA TODO: MAKE THE BELOW WORK!
-    std::shared_ptr<ocs2::GaussNewtonDDP_MPC> mpc_;
-    std::shared_ptr<MPC_ROS_Interface> mpcNode_;
-    std::shared_ptr<MRT_ROS_Interface> mrt_;
-    std::shared_ptr<MRT_ROS_Gazebo_Loop> mrt_loop_;
 };
 
 }  // namespace mobile_manipulator

@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.08.09
+// LAST UPDATE: 2023.12.13
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -69,33 +69,11 @@ class MPC_ROS_Interface
     explicit MPC_ROS_Interface(std::shared_ptr<MPC_BASE> mpc, std::string topicPrefix = "anonymousRobot");
 
     /**
-     * Constructor.
-     *
-     * NUA TODO: Update description.
-     * @param [in] mpc: The underlying MPC class to be used.
-     * @param [in] mpc: The underlying MPC class to be used.
-     * @param [in] mpc: The underlying MPC class to be used.
-     * @param [in] topicPrefix: The robot's name.
-     */
-    //explicit MPC_ROS_Interface(MPC_BASE& mpc_mobileBase, 
-    //                           MPC_BASE& mpc_robotArm, 
-    //                           MPC_BASE& mpc_mobileManipulator, 
-    //                           std::string topicPrefix = "anonymousRobot");
-
-    /**
      * Destructor.
      */
     virtual ~MPC_ROS_Interface();
 
     void setMPC(std::shared_ptr<MPC_BASE> mpc);
-
-    //int getModelModeInt();
-
-    //void setModelModeInt(int modelModeInt);
-
-    //bool getMPCLaunchReadyFlag();
-
-    //void setMPCLaunchReadyFlag(bool mpcLaunchReadyFlag);
 
     /**
      * Set the Esdf Caching Server
@@ -197,8 +175,6 @@ class MPC_ROS_Interface
      */
     void mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg);
 
-    void spinTimerCallback(const ros::TimerEvent& event);
-
     void writeData();
 
     void loadData();
@@ -207,7 +183,6 @@ class MPC_ROS_Interface
     /*
     * Variables
     */
-    //MPC_BASE& mpc_;
     std::shared_ptr<MPC_BASE> mpc_;
 
     int ctr_ = 0;
@@ -219,24 +194,15 @@ class MPC_ROS_Interface
     SystemObservation testCurrentObservation_;
 
     bool shutDownFlag_ = false;
-    //bool mpcLaunchReadyFlag_ = false;
-
-    // 0: baseMotion
-    // 1: armMotion
-    // 2: wholeBodyMotion
-    //int modelModeInt_ = 2;
 
     // 0: Not Ready (In process of switching, old modelMode is in use)
     // 1: Ready
     std_msgs::Bool statusModelModeMPCMsg_;
 
-    std::string mpcShutDownFlag_;
+    //std::string mpcShutDownFlag_;
     bool internalShutDownFlag_ = false;
-    bool callbackEndFlag_ = false;
 
     std::string topicPrefix_;
-
-    //std::shared_ptr<ros::NodeHandle> nodeHandlerPtr_;
 
     //std::shared_ptr<voxblox::EsdfCachingServer> esdfCachingServerPtr_;
     //std::shared_ptr<ExtMapUtility> emuPtr_;
@@ -244,7 +210,6 @@ class MPC_ROS_Interface
     // Subscribers
     ros::Subscriber modelModeSubscriber_;
     ros::Subscriber mpcObservationSubscriber_;
-    ros::Subscriber mpcTargetTrajectoriesSubscriber_;
     
     // Publishers
     ros::Publisher mpcPolicyPublisher_;
@@ -277,7 +242,6 @@ class MPC_ROS_Interface
     // MPC reset
     std::mutex resetMutex_;
     std::atomic_bool resetRequestedEver_{false};
-    //bool resetRecievedFlag_ = false;
 };
 
 }  // namespace ocs2
