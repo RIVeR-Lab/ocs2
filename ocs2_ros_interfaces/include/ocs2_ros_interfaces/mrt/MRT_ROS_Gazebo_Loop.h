@@ -308,7 +308,7 @@ class MRT_ROS_Gazebo_Loop
 
     bool dataCollectionFlag_ = true;
 
-    double initPolicyCtrMax_ = 2000;
+    int initPolicyCtrMax_ = 2000;
 
     double err_threshold_pos_;
     double err_threshold_ori_yaw_;

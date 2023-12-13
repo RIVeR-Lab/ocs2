@@ -65,7 +65,8 @@ class MPC_ROS_Interface
      * @param [in] mpc: The underlying MPC class to be used.
      * @param [in] topicPrefix: The robot's name.
      */
-    explicit MPC_ROS_Interface(MPC_BASE& mpc, std::string topicPrefix = "anonymousRobot");
+    //explicit MPC_ROS_Interface(MPC_BASE& mpc, std::string topicPrefix = "anonymousRobot");
+    explicit MPC_ROS_Interface(std::shared_ptr<MPC_BASE> mpc, std::string topicPrefix = "anonymousRobot");
 
     /**
      * Constructor.
@@ -85,6 +86,8 @@ class MPC_ROS_Interface
      * Destructor.
      */
     virtual ~MPC_ROS_Interface();
+
+    void setMPC(std::shared_ptr<MPC_BASE> mpc);
 
     //int getModelModeInt();
 
@@ -138,6 +141,8 @@ class MPC_ROS_Interface
      * (2) The observation subscriber which gets the current measured state to invoke the MPC run routine.
      */
     void launchNodes(ros::NodeHandle& nodeHandle);
+
+    void computeTrajectory();
 
     void computeTraj2(TargetTrajectories targetTrajectories, SystemObservation currentObservation, bool flag_reset=true);
 
@@ -202,11 +207,14 @@ class MPC_ROS_Interface
     /*
     * Variables
     */
-    MPC_BASE& mpc_;
+    //MPC_BASE& mpc_;
+    std::shared_ptr<MPC_BASE> mpc_;
 
     int ctr_ = 0;
 
     TargetTrajectories currentTargetTrajectories_;
+    ocs2::SystemObservation currentObservation_;
+
     TargetTrajectories testTargetTrajectories_;
     SystemObservation testCurrentObservation_;
 
@@ -227,8 +235,6 @@ class MPC_ROS_Interface
     bool callbackEndFlag_ = false;
 
     std::string topicPrefix_;
-
-    ocs2::SystemObservation currentObservation_;
 
     //std::shared_ptr<ros::NodeHandle> nodeHandlerPtr_;
 
@@ -271,6 +277,7 @@ class MPC_ROS_Interface
     // MPC reset
     std::mutex resetMutex_;
     std::atomic_bool resetRequestedEver_{false};
+    //bool resetRecievedFlag_ = false;
 };
 
 }  // namespace ocs2

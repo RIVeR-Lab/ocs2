@@ -242,7 +242,7 @@ void MobileManipulatorVisualization::update(const SystemObservation& observation
                                             const CommandData& command,
                                             RobotModelInfo robotModelInfo) 
 {
-  //std::cout << "[MobileManipulatorVisualization::update(3)] START" << std::endl;
+  std::cout << "[MobileManipulatorVisualization::update(3)] START" << std::endl;
 
   robotModelInfo_ = robotModelInfo;
 
@@ -256,7 +256,7 @@ void MobileManipulatorVisualization::update(const SystemObservation& observation
   }
   */
 
-  //std::cout << "[MobileManipulatorVisualization::update(3)] END" << std::endl;
+  std::cout << "[MobileManipulatorVisualization::update(3)] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1152,7 +1152,9 @@ void MobileManipulatorVisualization::publishOptimizedTrajectory(const ros::Time&
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorVisualization::publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy, vector_t fullState) 
 {
-  //std::cout << "[MobileManipulatorVisualization::publishOptimizedTrajectory(3)] START" << std::endl;
+  std::cout << "[MobileManipulatorVisualization::publishOptimizedTrajectory(3)] START" << std::endl;
+
+  std::cout << "[MobileManipulatorVisualization::publishOptimizedTrajectory(3)] robotModelInfo_" << getModelModeString(robotModelInfo_) << std::endl;
 
   const scalar_t TRAJECTORYLINEWIDTH = 0.005;
   const std::array<scalar_t, 3> red{0.6350, 0.0780, 0.1840};
@@ -1211,7 +1213,7 @@ void MobileManipulatorVisualization::publishOptimizedTrajectory(const ros::Time&
   stateOptimizedPublisher_.publish(markerArray);
   stateOptimizedPosePublisher_.publish(poseArray);
 
-  //std::cout << "[MobileManipulatorVisualization::publishOptimizedTrajectory(3)] END" << std::endl;
+  std::cout << "[MobileManipulatorVisualization::publishOptimizedTrajectory(3)] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------

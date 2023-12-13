@@ -355,7 +355,7 @@ class MobileManipulatorInterface final : public RobotInterface
 
     int debugCtr_ = 0;
 
-    bool resetFlag_ = false;
+    bool resetFlag_ = true;
 
     ros::NodeHandle nodeHandle_;
     tf::TransformListener tfListener_;
@@ -567,6 +567,13 @@ class MobileManipulatorInterface final : public RobotInterface
 
     ros::ServiceServer setActionDRLService_;
     ros::ServiceServer calculateMPCTrajectoryService_;
+
+    bool newMPCFlag_ = false;
+    bool mpcWaitingFlag_ = false;
+    bool mrtWaitingFlag_ = false;
+    
+    int mpcModeChangeCtr_ = 0;
+    int mrtModeChangeCtr_ = 0;
 
 
     /// NUA TODO: MAKE THE BELOW WORK!

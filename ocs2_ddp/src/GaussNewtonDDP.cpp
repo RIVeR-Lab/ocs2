@@ -200,26 +200,31 @@ void GaussNewtonDDP::reset()
 {
   std::cout << "[GaussNewtonDDP::reset] START" << std::endl;
 
+  std::cout << "[GaussNewtonDDP::reset] BEFORE search strategy" << std::endl;
   // search strategy
   searchStrategyPtr_->reset();
 
+  std::cout << "[GaussNewtonDDP::reset] BEFORE nominalDualData_" << std::endl;
   // very important, these are variables that are carried in between iterations
   nominalDualData_.clear();
   nominalPrimalData_.clear();
   cachedDualData_.clear();
   cachedPrimalData_.clear();
 
+  std::cout << "[GaussNewtonDDP::reset] BEFORE optimized data" << std::endl;
   // optimized data
   optimizedDualSolution_.clear();
   optimizedPrimalSolution_.clear();
   optimizedProblemMetrics_.clear();
 
+  std::cout << "[GaussNewtonDDP::reset] BEFORE performance measures" << std::endl;
   // performance measures
   avgTimeStepFP_ = 0.0;
   avgTimeStepBP_ = 0.0;
   totalNumIterations_ = 0;
   performanceIndexHistory_.clear();
 
+  std::cout << "[GaussNewtonDDP::reset] BEFORE benchmarking timers" << std::endl;
   // benchmarking timers
   initializationTimer_.reset();
   linearQuadraticApproximationTimer_.reset();

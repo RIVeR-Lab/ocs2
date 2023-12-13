@@ -55,7 +55,7 @@ int main(int argc, char** argv)
   }
 
   // Robot interface
-  int initModelModeInt = 2;
+  int initModelModeInt = 1;
   //std::cout << "[MobileManipulatorNode::main] START interface" << std::endl;
   MobileManipulatorInterface m4_interface(nh_interface, taskFile, libFolder, urdfFile, initModelModeInt);
 
