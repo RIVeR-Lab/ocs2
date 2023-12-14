@@ -103,7 +103,7 @@ bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_ms
   {
     auto targetTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(req.targetTrajectories);
 
-    std::cout << "[MPC_ROS_Interface::resetMpcNode] RECEIVED targetTrajectories size: " << targetTrajectories.size() << std::endl;
+    std::cout << "[MPC_ROS_Interface::resetMpcCallback] RECEIVED targetTrajectories size: " << targetTrajectories.size() << std::endl;
     std::cout << targetTrajectories << std::endl;
 
     resetMpcNode(std::move(targetTrajectories));
@@ -332,6 +332,12 @@ void MPC_ROS_Interface::computeTrajectory()
   //std::cout << "[MPC_ROS_Interface::computeTrajectory] BEFORE currentObservation" << std::endl;
   auto currentObservation = currentObservation_;
 
+  //std::cout << "[MPC_ROS_Interface::computeTrajectory] state" << std::endl;
+  //std::cout << currentObservation.state << std::endl;
+
+  //std::cout << "[MPC_ROS_Interface::computeTrajectory] input" << std::endl;
+  //std::cout << currentObservation.input << std::endl;
+
   // measure the delay in running MPC
   mpcTimer_.startTimer();
 
@@ -405,27 +411,33 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
 
   // current time, state, input, and subsystem
   auto currentObservation = ros_msg_conversions::readObservationMsg(*msg);
-  setSystemObservation(currentObservation);
+  //setSystemObservation(currentObservation);
 
-  /*
+  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] state" << std::endl;
+  //std::cout << currentObservation.state << std::endl;
+
+  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] input" << std::endl;
+  //std::cout << currentObservation.input << std::endl;
+
   std::lock_guard<std::mutex> resetLock(resetMutex_);
 
   if (!resetRequestedEver_.load()) 
   {
-    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] MPC should be reset first. Either call MPC_ROS_Interface::reset() or use the reset service." << std::endl;
+    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] MPC should be reset first. Either call MPC_ROS_Interface::reset() or use the reset service." << std::endl;
     return;
   }
-  */
 
-  /*
   // measure the delay in running MPC
   mpcTimer_.startTimer();
 
   // run MPC
-  //bool controllerIsUpdated = mpc_.run(currentObservation.time, currentObservation.state);
   bool controllerIsUpdated;
   internalShutDownFlag_ = false;
+  mpc_->setInternalShutDownFlag(false);
+  
+  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE mpc_->run" << std::endl;
   controllerIsUpdated = mpc_->run(currentObservation.time, currentObservation.state, currentObservation.full_state);
+  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] AFTER mpc_->run" << std::endl;
 
   internalShutDownFlag_ = mpc_->getInternalShutDownFlag();
   //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
@@ -435,8 +447,6 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
     return;
   }
   copyToBuffer(currentObservation);
-  
-  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END mpc_->run" << std::endl << std::endl;
 
   // Measure the delay for sending ROS messages
   mpcTimer_.endTimer();
@@ -473,7 +483,8 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   ocs2_msgs::mpc_flattened_controller mpcPolicyMsg = createMpcPolicyMsg(*bufferPrimalSolutionPtr_, *bufferCommandPtr_, *bufferPerformanceIndicesPtr_);
   mpcPolicyPublisher_.publish(mpcPolicyMsg);
 #endif
-  */
+
+  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END" << std::endl;
 
   ctr_++;
 }
@@ -507,7 +518,7 @@ void MPC_ROS_Interface::shutdownNode()
    //std::cout << "[MPC_ROS_Interface::shutdownNode] BEFORE mpcObservationSubscriber_" << std::endl;
   mpcObservationSubscriber_.shutdown();
 
-  //std::cout << "[MPC_ROS_Interface::shutdownNode] END" << std::endl;
+  std::cout << "[MPC_ROS_Interface::shutdownNode] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------

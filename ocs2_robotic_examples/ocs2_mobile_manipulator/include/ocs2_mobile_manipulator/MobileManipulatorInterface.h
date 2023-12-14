@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.12.13
+// LAST UPDATE: 2023.12.14
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -197,10 +197,15 @@ class MobileManipulatorInterface final : public RobotInterface
     }
     */
 
-    void setNodeHandle(ros::NodeHandle& nodeHandle) 
-    { 
-      nodeHandle_ = nodeHandle;
-    }
+    void setNodeHandle(ros::NodeHandle& nodeHandle);
+
+    void initializeMPC();
+
+    void initializeMRT();
+
+    void launchMPC();
+    
+    void launchMRT();
 
     void initializePointsOnRobotPtr(std::string& collisionPointsName);
 
@@ -213,7 +218,8 @@ class MobileManipulatorInterface final : public RobotInterface
     void setMPCProblem(size_t modelModeInt=2, 
                        bool activateSelfCollision=false, 
                        bool activateExtCollision=false,
-                       bool updateMPCBaseFlag=false);
+                       bool updateMPCFlag=false,
+                       bool updateMRTFlag=false);
 
     /*
     void setEsdfCachingServerPtr(std::shared_ptr<voxblox::EsdfCachingServer> newEsdfCachingServerPtr) 
@@ -244,8 +250,38 @@ class MobileManipulatorInterface final : public RobotInterface
     bool calculateMPCTrajectorySrv(ocs2_msgs::calculateMPCTrajectory::Request &req, 
                                    ocs2_msgs::calculateMPCTrajectory::Response &res);
 
+    // DESCRIPTION: TODO...
+    bool setStopMPCFlagSrv(ocs2_msgs::setBool::Request &req, 
+                           ocs2_msgs::setBool::Response &res);
+    
+    // DESCRIPTION: TODO...
+    bool setStopMPCFlag(bool val);
+
+    // DESCRIPTION: TODO...
+    bool setMPCWaitingFlagSrv(ocs2_msgs::setBool::Request &req, 
+                              ocs2_msgs::setBool::Response &res);
+    
+    // DESCRIPTION: TODO...
+    bool setMPCWaitingFlag(bool val);
+
+    // DESCRIPTION: TODO...
+    bool setMPCReadyFlagSrv(ocs2_msgs::setBool::Request &req, 
+                            ocs2_msgs::setBool::Response &res);
+
+    // DESCRIPTION: TODO...
+    bool setMPCReadyFlag(bool val);
+
+    // DESCRIPTION: TODO...
+    bool setMRTReadyFlagSrv(ocs2_msgs::setBool::Request &req, 
+                            ocs2_msgs::setBool::Response &res);
+
+    // DESCRIPTION: TODO...
+    bool setMRTReadyFlag(bool val);
+
+    // DESCRIPTION: TODO...
     void mpcCallback(const ros::TimerEvent& event);
 
+    // DESCRIPTION: TODO...
     void mrtCallback(const ros::TimerEvent& event);
   
   private:
@@ -271,8 +307,6 @@ class MobileManipulatorInterface final : public RobotInterface
 
     void mapContinuousActionDRL(std::vector<double>& action);
 
-    bool setMRTReady();
-
     bool setMPCActionResult(int drlActionResult);
 
     bool computeCommandClient(bool& use_current_policy_flag, 
@@ -287,7 +321,7 @@ class MobileManipulatorInterface final : public RobotInterface
 
     struct mpcProblemSettings
     {
-      int modelMode = 2;
+      int modelMode;
       //std::vector<std::string> binarySettingNames = {"internalTargetCost",
       //                                               "selfCollisionConstraint",
       //                                               "externalCollisionConstraint"};
@@ -322,16 +356,22 @@ class MobileManipulatorInterface final : public RobotInterface
 
     std::string worldFrameName_;;
     std::string goalFrameName_;
+    std::string baseFrameName_;
 
     std::string modelModeMsgName_;
     std::string mpcTargetMsgName_;
     std::string targetMsgName_;
 
+    std::string collisionConstraintPoints_;
+    std::string collisionCheckPoints_;
+
     std::vector<std::pair<size_t, size_t>> collisionObjectPairs_;
     std::vector<std::pair<std::string, std::string>> collisionLinkPairs_;
 
-    size_t initModelModeInt_ = 2;
-    size_t modelModeInt_ = 2;
+    std::vector<std::string> removeJointNames_;
+
+    size_t initModelModeInt_;
+    size_t modelModeInt_;
 
     /// NUA TODO: SET IN CONFIG!
     double err_threshold_pos_ = 0.1;
@@ -444,8 +484,20 @@ class MobileManipulatorInterface final : public RobotInterface
     std::string setTargetDRLServiceName_;
     std::string calculateMPCTrajectoryServiceName_;
     std::string computeCommandServiceName_;
-    std::string setMRTReadyServiceName_;
     std::string setMPCActionResultServiceName_;
+    std::string setStopMPCFlagSrvName_;
+    std::string setMPCWaitingFlagSrvName_;
+    std::string setMPCReadyFlagSrvName_;
+    std::string setMRTReadyFlagSrvName_;
+
+    bool newMPCProblemFlag_ = false;
+    bool stopMPCFlag_ = false;
+    bool mpcWaitingFlag_ = false;
+    bool mpcReadyFlag_ = false;
+    bool mrtReadyFlag_ = false;
+    
+    int mpcModeChangeCtr_ = 0;
+    int mrtModeChangeCtr_ = 0;
 
     benchmark::RepeatedTimer mpcTimer0_;
     benchmark::RepeatedTimer mpcTimer1_;
@@ -473,23 +525,24 @@ class MobileManipulatorInterface final : public RobotInterface
     ros::Subscriber odomSubscriber_;
     ros::Subscriber jointStateSub_;
 
-    ros::Publisher baseTwistPub_;
-    ros::Publisher armJointTrajectoryPub_;
-    ros::Publisher armJointVelocityPub_;
+    //ros::Publisher baseTwistPub_;
+    //ros::Publisher armJointTrajectoryPub_;
+    //ros::Publisher armJointVelocityPub_;
 
     ros::ServiceClient setTargetDRLClient_;
     ros::ServiceClient setMPCActionResultClient_;
-    ros::ServiceClient setMRTReadyClient_;
     ros::ServiceClient computeCommandClient_;
+    ros::ServiceClient setStopMPCFlagClient_;
+    ros::ServiceClient setMPCWaitingFlagClient_;
+    ros::ServiceClient setMPCReadyFlagClient_;
+    ros::ServiceClient setMRTReadyFlagClient_;
 
     ros::ServiceServer setActionDRLService_;
     ros::ServiceServer calculateMPCTrajectoryService_;
-
-    bool newMPCFlag_ = false;
-    bool mrtWaitingFlag_ = false;
-    
-    int mpcModeChangeCtr_ = 0;
-    int mrtModeChangeCtr_ = 0;
+    ros::ServiceServer setStopMPCFlagService_;
+    ros::ServiceServer setMPCWaitingFlagService_;
+    ros::ServiceServer setMPCReadyFlagService_;
+    ros::ServiceServer setMRTReadyFlagService_;
 };
 
 }  // namespace mobile_manipulator

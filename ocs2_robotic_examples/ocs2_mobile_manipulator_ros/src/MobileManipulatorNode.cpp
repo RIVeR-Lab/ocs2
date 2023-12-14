@@ -58,6 +58,8 @@ int main(int argc, char** argv)
   int initModelModeInt = 1;
   //std::cout << "[MobileManipulatorNode::main] START interface" << std::endl;
   MobileManipulatorInterface m4_interface(nh_interface, taskFile, libFolder, urdfFile, initModelModeInt);
+  m4_interface.initializeMPC();
+  m4_interface.initializeMRT();
 
   double mpc_dt = 0.01;
   double mrt_dt = 0.05;

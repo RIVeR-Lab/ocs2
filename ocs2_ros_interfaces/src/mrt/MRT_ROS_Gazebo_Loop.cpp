@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.11.09
+// LAST UPDATE: 2023.12.14
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -153,7 +153,7 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   //setTaskModeClient_ = nh.serviceClient<ocs2_msgs::setInt>("/set_task_mode");
   setPickedFlagClient_ = nh.serviceClient<ocs2_msgs::setBool>(setPickedFlagSrvName_);
   setSystemObservationClient_ = nh.serviceClient<ocs2_msgs::setSystemObservation>(setSystemObservationSrvName_);
-  setMRTReadyClient_ = nh.serviceClient<ocs2_msgs::setBool>(setMRTReadySrvName_);
+  //setMRTReadyClient_ = nh.serviceClient<ocs2_msgs::setBool>(setMRTReadySrvName_);
 
   /// Services
   //setTaskModeService_ = nh.advertiseService("set_task_mode", &MRT_ROS_Gazebo_Loop::setTaskModeSrv, this);
@@ -389,6 +389,7 @@ bool MRT_ROS_Gazebo_Loop::run2(vector_t initTarget)
   mrt_.resetMpcNode(initTargetTrajectories);
 
   int initPolicyCtr = 0;
+  time_ = 0.0;
   // Wait for the initial state and policy
   while ( !mrt_.initialPolicyReceived() && ros::ok() && ros::master::check() ) 
   {
@@ -760,34 +761,44 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
 //-------------------------------------------------------------------------------------------------------
 bool MRT_ROS_Gazebo_Loop::mrtLoop2() 
 {
-  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] START" << std::endl;
+  bool printOutFlag = false;
+
+  if (printOutFlag)
+    std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] START" << std::endl;
 
   // Update the policy
-  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] mrt_.updatePolicy 2" << std::endl;
+  if (printOutFlag)
+    std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] mrt_.updatePolicy 2" << std::endl;
   mrt_.updatePolicy();
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] updateModelMode" << std::endl;
+  if (printOutFlag)
+    std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] updateModelMode" << std::endl;
   updateModelMode();
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] BEFORE mrt_.reset" << std::endl;
+  if (printOutFlag)
+    std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] BEFORE mrt_.reset" << std::endl;
   mrt_.reset();
   int initPolicyCtr = 0;
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] BEFORE mrt_.spinMRT" << std::endl;
+  if (printOutFlag)
+    std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] BEFORE mrt_.spinMRT" << std::endl;
   mrt_.spinMRT();
   
   // Get current observation
-  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] getCurrentObservation" << std::endl;
+  if (printOutFlag)
+    std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] getCurrentObservation" << std::endl;
   SystemObservation currentObservation = getCurrentObservation(false);
   std::vector<double> currentStateVelocityBase = stateVelocityBase_;
 
   // Set current observation
-  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] mrt_.setCurrentObservation" << std::endl;
+  if (printOutFlag)
+    std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] mrt_.setCurrentObservation" << std::endl;
   mrt_.setCurrentObservation(currentObservation);
 
   // Get Initial Policy
   //while (!shutDownFlag_ && !mrt_.initialPolicyReceived() && ros::ok() && ros::master::check()) 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] BEFORE LOOP mrt_.initialPolicyReceived" << std::endl;
+  if (printOutFlag)
+    std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] BEFORE LOOP mrt_.initialPolicyReceived" << std::endl;
   while (!mrt_.initialPolicyReceived() && ros::ok() && ros::master::check()) 
   {
     //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] START initialPolicyReceived initPolicyCtr: " << initPolicyCtr << std::endl;
@@ -803,7 +814,8 @@ bool MRT_ROS_Gazebo_Loop::mrtLoop2()
 
     if (initPolicyCtr == initPolicyCtrMax_)
     {
-      std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] LOOP STUCK!" << std::endl;
+      if (printOutFlag)
+        std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] LOOP STUCK!" << std::endl;
       initPolicyCtr = 0;
       return true;
     }
@@ -812,28 +824,35 @@ bool MRT_ROS_Gazebo_Loop::mrtLoop2()
     mrt_.spinMRT();
     initPolicyCtr++;
   }
-  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] AFTER LOOP mrt_.initialPolicyReceived" << std::endl;
+  if (printOutFlag)
+    std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] AFTER LOOP mrt_.initialPolicyReceived" << std::endl;
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] mrt_.updatePolicy 2" << std::endl;
+  if (printOutFlag)
+    std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] mrt_.updatePolicy 2" << std::endl;
   mrt_.updatePolicy();
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] updateModelMode 2" << std::endl;
+  if (printOutFlag)
+    std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] updateModelMode 2" << std::endl;
   updateModelMode();
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] getPolicy" << std::endl;
+  if (printOutFlag)
+    std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] getPolicy" << std::endl;
   PrimalSolution currentPolicy = mrt_.getPolicy();
   currentInput_ = currentPolicy.getDesiredInput(time_);
 
   // Update observers for visualization
-  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] BEFORE observer" << std::endl;
+  if (printOutFlag)
+    std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] BEFORE observer" << std::endl;
   for (auto& observer : observers_) 
   {
-    //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] OBSERVING..." << std::endl;
+    if (printOutFlag)
+      std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] OBSERVING..." << std::endl;
     observer->update(currentObservation, currentPolicy, mrt_.getCommand(), robotModelInfo_);
   }
   
   // Publish the control command 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] BEFORE publishCommand" << std::endl;
+  if (printOutFlag)
+    std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] BEFORE publishCommand" << std::endl;
   publishCommand(currentPolicy, currentObservation, currentStateVelocityBase);
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] BEFORE checkTaskStatus" << std::endl;
@@ -845,9 +864,10 @@ bool MRT_ROS_Gazebo_Loop::mrtLoop2()
   time_ += dt_;
 
   ros::spinOnce();
-  mrt_.spinMRT();
+  //mrt_.spinMRT();
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] END" << std::endl;
+  if (printOutFlag)
+    std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] END" << std::endl;
 
   return false;
 }

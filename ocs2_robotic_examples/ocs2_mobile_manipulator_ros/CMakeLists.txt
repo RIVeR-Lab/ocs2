@@ -112,6 +112,34 @@ target_link_libraries(mobile_manipulator_node
 )
 target_compile_options(mobile_manipulator_node PUBLIC ${FLAGS})
 
+# MPC node
+add_executable(mobile_manipulator_mpc_node
+  src/MobileManipulatorMPCNode.cpp
+)
+add_dependencies(mobile_manipulator_mpc_node
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(mobile_manipulator_mpc_node
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${EIGEN_LIBRARIES}
+)
+target_compile_options(mobile_manipulator_mpc_node PUBLIC ${FLAGS})
+
+# MRT node
+add_executable(mobile_manipulator_mrt_node
+  src/MobileManipulatorMRTNode.cpp
+)
+add_dependencies(mobile_manipulator_mrt_node
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(mobile_manipulator_mrt_node
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${EIGEN_LIBRARIES}
+)
+target_compile_options(mobile_manipulator_mrt_node PUBLIC ${FLAGS})
+
 # DistanceVisualization node
 add_executable(mobile_manipulator_distance_visualization
   src/MobileManipulatorDistanceVisualization.cpp
