@@ -413,6 +413,10 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
                                                          recompileLibraries_, 
                                                          printOutFlag_));
 
+  // Set initial target
+  currentTarget_.resize(7);
+  currentTarget_ << 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
+
   launchNodes();
 
   if (printOutFlag_)
@@ -568,15 +572,9 @@ void MobileManipulatorInterface::initializeMRT()
   mobileManipulatorVisu_->updateModelMode(getModelModeInt(robotModelInfo_));
   
   // Set observers of MRT ROS Gazebo Loop
-  mrt_loop_->subscribeObservers({mobileManipulatorVisu_});
-
-  // Set initial target
-  currentTarget_.resize(7);
-  currentTarget_ << 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
-  
+  mrt_loop_->subscribeObservers({mobileManipulatorVisu_});  
   mrt_loop_->setTargetReceivedFlag(true);
 
-  //mrt_loop_->run(currentTarget_);
 
   // Clients
   setStopMPCFlagClient_ = nodeHandle_.serviceClient<ocs2_msgs::setBool>(setStopMPCFlagSrvName_);
