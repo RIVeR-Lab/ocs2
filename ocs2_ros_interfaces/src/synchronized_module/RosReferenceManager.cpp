@@ -95,7 +95,7 @@ void RosReferenceManager::subscribe(ros::NodeHandle& nodeHandle)
     //std::cout << "[RosReferenceManager::subscribe::targetTrajectoriesCallback] END" << std::endl;
     //std::cout << "" << std::endl;
   };
-  targetTrajectoriesSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mpc_target_trajectories>(topicPrefix_ + "mpc_target", 1, targetTrajectoriesCallback);
+  targetTrajectoriesSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mpc_target_trajectories>("mpc_target", 1, targetTrajectoriesCallback);
 
   // ModelMode
   /*

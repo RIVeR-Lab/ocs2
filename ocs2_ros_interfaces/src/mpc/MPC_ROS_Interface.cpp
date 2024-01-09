@@ -567,7 +567,7 @@ void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
   mpcPolicyPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_flattened_controller>(topicPrefix_ + "mpc_policy", 1, true);
 
   // Publish Model Mode MPC Status
-  statusModelModeMPCPublisher_ = nodeHandle.advertise<std_msgs::Bool>(topicPrefix_ + "model_mode_mpc_status", 1, true);
+  statusModelModeMPCPublisher_ = nodeHandle.advertise<std_msgs::Bool>("model_mode_mpc_status", 1, true);
 
   // Service Server to reset MPC
   mpcResetServiceServer_ = nodeHandle.advertiseService(topicPrefix_ + "mpc_reset", &MPC_ROS_Interface::resetMpcCallback, this);

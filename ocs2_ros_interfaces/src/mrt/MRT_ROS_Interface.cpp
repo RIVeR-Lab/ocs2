@@ -334,7 +334,7 @@ void MRT_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
   mpcObservationPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_observation>(topicPrefix_ + "mpc_observation", 1);
 
   // Publish Model Mode MPC Status
-  statusModelModeMRTPublisher_ = nodeHandle.advertise<std_msgs::Bool>(topicPrefix_ + "model_mode_mrt_status", 1, true);
+  statusModelModeMRTPublisher_ = nodeHandle.advertise<std_msgs::Bool>("model_mode_mrt_status", 1, true);
 
   // Subscribe Policy
   auto ops = ros::SubscribeOptions::create<ocs2_msgs::mpc_flattened_controller>(

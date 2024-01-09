@@ -258,6 +258,11 @@ class TargetTrajectoriesGazebo final
     std::string setPickedFlagSrvName_;
     std::string setSystemObservationSrvName_;
     std::string setTargetDRLSrvName_;
+    
+    std::string mpcObservationMsgName_;
+    std::string modelModeMPCStatusMsgName_;
+    std::string modelModeMRTStatusMsgName_;
+    std::string targetTrajectoriesMsgName_;
 
     gazebo_msgs::ModelStates modelStatesMsg_;
 

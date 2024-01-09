@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.12.14
+// LAST UPDATE: 2024.01.09
 //
 // AUTHOR: Neset Unver Akmandor  (NUA)
 //
@@ -31,7 +31,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     initModelModeInt_(initModelModeInt),
     modelModeInt_(initModelModeInt)
 {
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] START" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] START" << std::endl;
 
   mpcTimer0_.reset();
   mpcTimer1_.reset();
@@ -190,8 +190,12 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     std::cout << "#### =============================================================================" << std::endl;
   }
 
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] BEFORE getNamespace" << std::endl;
   /// Add namespace
   ns_ = nodeHandle.getNamespace();
+
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] AFTER getNamespace" << std::endl;
+
   armJointFrameNames_withNS_ = armJointFrameNames;
   baseFrame_withNS_ = baseFrameName_;
   armBaseFrame_withNS_ = armBaseFrame;
@@ -485,6 +489,9 @@ void MobileManipulatorInterface::initializeMPC()
 
     //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes::targetTrajectoriesCallback] END" << std::endl;
   };
+
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes] mpcTargetMsgName_: " << mpcTargetMsgName_ << std::endl;
+
   targetTrajectoriesSubscriber_ = nodeHandle_.subscribe<ocs2_msgs::mpc_target_trajectories>(mpcTargetMsgName_, 5, targetTrajectoriesCallback);
 
   // Clients
@@ -662,10 +669,10 @@ void MobileManipulatorInterface::launchMRT()
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::initializePointsOnRobotPtr(std::string& collisionPointsName) 
 {
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::initializePointsOnRobotPtr] START" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::initializePointsOnRobotPtr] START" << std::endl;
   //PointsOnRobot::points_radii_t pointsAndRadii = std::vector<std::vector<std::pair<double, double>>>();
 
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::initializePointsOnRobotPtr] collisionPointsName: " << collisionPointsName << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::initializePointsOnRobotPtr] collisionPointsName: " << collisionPointsName << std::endl;
 
   // Get points on robot parameters
   PointsOnRobot::points_radii_t pointsAndRadii(8);
@@ -730,7 +737,7 @@ void MobileManipulatorInterface::initializePointsOnRobotPtr(std::string& collisi
     pointsOnRobotPtr_ = nullptr;
   }
 
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::initializePointsOnRobotPtr] END" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::initializePointsOnRobotPtr] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------

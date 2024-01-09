@@ -37,11 +37,11 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-TargetTrajectoriesRosPublisher::TargetTrajectoriesRosPublisher(::ros::NodeHandle& nodeHandle, const std::string& topicPrefix) 
+TargetTrajectoriesRosPublisher::TargetTrajectoriesRosPublisher(::ros::NodeHandle& nodeHandle, const std::string& targetTrajectoriesMsgName) 
 {
-  targetTrajectoriesPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_target_trajectories>(topicPrefix + "mpc_target", 1, false);
+  targetTrajectoriesPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_target_trajectories>(targetTrajectoriesMsgName, 1, false);
   ros::spinOnce();
-  ROS_INFO_STREAM("[TargetTrajectoriesRosPublisher::TargetTrajectoriesRosPublisher] The TargetTrajectories is publishing on " + topicPrefix + "mpc_target topic.");
+  ROS_INFO_STREAM("[TargetTrajectoriesRosPublisher::TargetTrajectoriesRosPublisher] The TargetTrajectories is publishing on " + targetTrajectoriesMsgName + " topic.");
 }
 
 /******************************************************************************************************/

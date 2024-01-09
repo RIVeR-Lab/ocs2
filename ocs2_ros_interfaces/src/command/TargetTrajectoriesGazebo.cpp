@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.08.31
+// LAST UPDATE: 2024.01.08
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -66,6 +66,11 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
   setSystemObservationSrvName_ = "set_system_observation";
   setTargetDRLSrvName_ = "set_target_drl";
 
+  mpcObservationMsgName_ = "mpc_observation";
+  modelModeMPCStatusMsgName_ = "model_mode_mpc_status";
+  modelModeMRTStatusMsgName_ = "model_mode_mrt_status";
+  targetTrajectoriesMsgName_ = "mpc_target";
+
   if (ns != "/")
   {
     goalFrameName_ = ns + "/" + goalFrameName_;
@@ -77,6 +82,11 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
     setPickedFlagSrvName_ = ns + "/" + setPickedFlagSrvName_;
     setSystemObservationSrvName_ = ns + "/" + setSystemObservationSrvName_;
     setTargetDRLSrvName_ = ns + "/" + setTargetDRLSrvName_;
+
+    mpcObservationMsgName_ = ns + "/" + mpcObservationMsgName_;
+    modelModeMPCStatusMsgName_ = ns + "/" + modelModeMPCStatusMsgName_;
+    modelModeMRTStatusMsgName_ = ns + "/" + modelModeMRTStatusMsgName_;
+    targetTrajectoriesMsgName_ = ns + "/" + targetTrajectoriesMsgName_;
   }
 
   /*
@@ -104,7 +114,7 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
     latestObservation_ = ros_msg_conversions::readObservationMsg(*msg);
     policyReceivedFlag_ = true;
   };
-  observationSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mpc_observation>(topicPrefix + "mpc_observation", 1, observationCallback);
+  observationSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mpc_observation>(mpcObservationMsgName_, 1, observationCallback);
 
   auto statusModelModeMPCCallback = [this](const std_msgs::Bool::ConstPtr& msg) 
   {
@@ -118,7 +128,7 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
     //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMPCCallback] END" << std::endl;
     //std::cout << "" << std::endl;
   };
-  statusModelModeMPCSubscriber_ = nodeHandle.subscribe<std_msgs::Bool>(topicPrefix + "model_mode_mpc_status", 5, statusModelModeMPCCallback);
+  statusModelModeMPCSubscriber_ = nodeHandle.subscribe<std_msgs::Bool>(modelModeMPCStatusMsgName_, 5, statusModelModeMPCCallback);
 
   auto statusModelModeMRTCallback = [this](const std_msgs::Bool::ConstPtr& msg) 
   {
@@ -132,7 +142,7 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
     //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] END" << std::endl;
     //std::cout << "" << std::endl;
   };
-  statusModelModeMRTSubscriber_ = nodeHandle.subscribe<std_msgs::Bool>(topicPrefix + "model_mode_mrt_status", 5, statusModelModeMRTCallback);
+  statusModelModeMRTSubscriber_ = nodeHandle.subscribe<std_msgs::Bool>(modelModeMRTStatusMsgName_, 5, statusModelModeMRTCallback);
 
   //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] gazeboModelMsgName: " << gazeboModelMsgName << std::endl;
   if (gazeboModelMsgName != "")
@@ -142,7 +152,7 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
   tfSubscriber_ = nodeHandle.subscribe("/tf", 5, &TargetTrajectoriesGazebo::tfCallback, this);
 
   /// Publishers
-  targetTrajectoriesPublisherPtr_.reset(new TargetTrajectoriesRosPublisher(nodeHandle, topicPrefix));
+  targetTrajectoriesPublisherPtr_.reset(new TargetTrajectoriesRosPublisher(nodeHandle, targetTrajectoriesMsgName_));
   modelModePublisher_ = nodeHandle.advertise<std_msgs::UInt8>(modelModeMsgName_, 1, false);
   goalMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(goalVisuMsgName_, 10);
   targetMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(targetVisuMsgName_, 10);
