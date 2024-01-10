@@ -419,7 +419,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
 
   // Set initial target
   currentTarget_.resize(7);
-  currentTarget_ << 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
+  currentTarget_ << 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
 
   launchNodes();
 
@@ -2332,11 +2332,11 @@ void MobileManipulatorInterface::mrtCallback(const ros::TimerEvent& event)
   //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] IF newMPCProblemFlag_: " << newMPCProblemFlag_ << std::endl;
   if (newMPCProblemFlag_)
   {
-    //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE setStopMPCFlag" << std::endl;
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE setStopMPCFlag" << std::endl;
     setStopMPCFlag(true);
     //while (!setStopMPCFlag(true)){spinOnce();}
 
-    //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] Waiting mpcWaitingFlag_" << std::endl;
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] Waiting mpcWaitingFlag_" << std::endl;
     while (!mpcWaitingFlag_){spinOnce();}
 
     //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE setMPCProblem" << std::endl;
