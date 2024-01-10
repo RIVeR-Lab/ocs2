@@ -2104,6 +2104,7 @@ void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy,
     prev_lin_x = baseTwistMsg.linear.x;
     prev_ang_z = baseTwistMsg.angular.z;
     
+    ///// NUA LEFT HEREEEE: CREATE A NEW MSG WHICH INCLUDES INIT STATE + WHOLE CMD + SEQ !!!
     
     cmd.push_back(baseTwistMsg.linear.x);
     cmd.push_back(baseTwistMsg.angular.z);
