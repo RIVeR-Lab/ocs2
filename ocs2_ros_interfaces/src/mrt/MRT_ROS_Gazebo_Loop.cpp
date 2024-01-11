@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.12.14
+// LAST UPDATE: 2024.01.10
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -88,6 +88,7 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   setMRTReadySrvName_ = "set_mrt_ready";
   setTaskSrvName_ = "set_task";
   computeCommandSrvName_ = "compute_command";
+  mpcDataMsgName_ = "mpc_data";
 
   currentStateDim_ = robotModelInfo_.modeStateDim;
 
@@ -104,6 +105,7 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
     setMRTReadySrvName_ = ns_ + "/" + setMRTReadySrvName_;
     setTaskSrvName_ = ns_ + "/" + setTaskSrvName_;
     computeCommandSrvName_ = ns_ + "/" + computeCommandSrvName_;
+    mpcDataMsgName_ = ns_ + "/" + mpcDataMsgName_;
   }
 
   dataCollectionFlag_ = (dataPathReL_ == "") ? false : true;
@@ -146,6 +148,7 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   baseTwistPub_ = nh.advertise<geometry_msgs::Twist>(baseControlMsg, 1);
   armJointTrajectoryPub_ = nh.advertise<trajectory_msgs::JointTrajectory>(armControlMsg, 1);
   armJointVelocityPub_ = nh.advertise<kinova_msgs::JointVelocity>(armControlVelocityMsgName_, 1);
+  mpcDataPub_ = nh.advertise<ocs2_msgs::mpc_data>(mpcDataMsgName_, 1);
 
   /// Clients
   attachClient_ = nh.serviceClient<gazebo_ros_link_attacher::Attach>(linkAttacherMsgName_);
@@ -2104,8 +2107,6 @@ void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy,
     prev_lin_x = baseTwistMsg.linear.x;
     prev_ang_z = baseTwistMsg.angular.z;
     
-    ///// NUA LEFT HEREEEE: CREATE A NEW MSG WHICH INCLUDES INIT STATE + WHOLE CMD + SEQ !!!
-    
     cmd.push_back(baseTwistMsg.linear.x);
     cmd.push_back(baseTwistMsg.angular.z);
   }
@@ -2162,7 +2163,6 @@ void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy,
     //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] ARM PUB" << std::endl;
     armJointTrajectoryPub_.publish(armJointTrajectoryMsg);
     armJointVelocityPub_.publish(armJointVelocityMsg);
-
   }
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] BEFORE data collection" << std::endl;
@@ -2172,6 +2172,14 @@ void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy,
   dataCommand_.push_back(cmd);
   
   cmd_ = cmd;
+
+  // 
+  ocs2_msgs::mpc_data mpcDataMsg;
+  mpcDataMsg.input_state = state_pos;
+  mpcDataMsg.cmd = cmd;
+  mpcDataMsg.seq = mpc_cmd_seq;
+  mpcDataPub_.publish(mpcDataMsg);
+  mpc_cmd_seq++;
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] DEBUG INF" << std::endl;
   //while(1);

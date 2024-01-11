@@ -21,6 +21,7 @@ add_message_files(
     lagrangian_metrics.msg
     multiplier.msg
     collision_info.msg
+    mpc_data.msg
 )
 
 add_service_files(

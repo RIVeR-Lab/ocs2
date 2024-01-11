@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.12.14
+// LAST UPDATE: 2024.01.10
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -32,6 +32,7 @@
 #include <std_msgs/Float64.h>
 #include <kinova_msgs/JointVelocity.h>
 
+#include "ocs2_msgs/mpc_data.h"
 #include "ocs2_msgs/collision_info.h"
 #include "ocs2_msgs/setBool.h"
 #include "ocs2_msgs/setInt.h"
@@ -407,25 +408,27 @@ class MRT_ROS_Gazebo_Loop
     bool initFlagExtCollisionBase_ = false;
     bool initFlagExtCollisionArm_ = false;
     bool initFlagPointsOnRobot_ = false;
-    //bool initFlagGoal_ = false;
+
     std::string selfCollisionInfoMsgName_;
     std::string extCollisionInfoBaseMsgName_;
     std::string extCollisionInfoArmMsgName_;
     std::string pointsOnRobotMsgName_;
     std::string targetMsgName_;
-    //std::string goalMsgName_;
-    //int selfColDistance_n_coeff_ = 5;
-    //int extColDistance_n_coeff_ = 2;
+
     double selfCollisionRangeMin_ = 0.02;
     double extCollisionRangeBaseMin_ = 0.01;
     double extCollisionRangeArmMin_ = 0.01;
     double rolloverRollThreshold_ = 0.2;
     double rolloverPitchThreshold_ = 0.2;
+
     ocs2_msgs::collision_info selfCollisionInfoMsg_;
     ocs2_msgs::collision_info extCollisionInfoBaseMsg_;
     ocs2_msgs::collision_info extCollisionInfoArmMsg_;
     visualization_msgs::MarkerArray pointsOnRobotMsg_;
     //visualization_msgs::MarkerArray goalMsg_;
+    
+    int mpc_cmd_seq = 0;
+
     ros::Subscriber selfCollisionInfoSub_;
     ros::Subscriber extCollisionInfoBaseSub_;
     ros::Subscriber extCollisionInfoArmSub_;
@@ -435,18 +438,20 @@ class MRT_ROS_Gazebo_Loop
     std::string armControlVelocityMsgName_;
     std::string linkAttacherMsgName_;
     std::string linkDetacherMsgName_;
+    std::string mpcDataMsgName_;
     std::string setPickedFlagSrvName_;
     std::string setSystemObservationSrvName_;
     std::string setMRTReadySrvName_;
     std::string setTaskSrvName_;
     std::string computeCommandSrvName_;
-
+    
     ros::Subscriber jointTrajectoryControllerStateSub_;
     ros::Subscriber targetTrajectoriesSubscriber_;
 
     ros::Publisher baseTwistPub_;
     ros::Publisher armJointTrajectoryPub_;
     ros::Publisher armJointVelocityPub_;
+    ros::Publisher mpcDataPub_;
 
     ros::ServiceClient attachClient_;
     ros::ServiceClient detachClient_;
