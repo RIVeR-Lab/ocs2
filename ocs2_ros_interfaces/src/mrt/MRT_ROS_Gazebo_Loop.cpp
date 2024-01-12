@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.10
+// LAST UPDATE: 2024.01.11
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -380,6 +380,9 @@ bool MRT_ROS_Gazebo_Loop::run2(vector_t initTarget)
   SystemObservation initObservation = getCurrentObservation(true);
   setSystemObservation(initObservation);
 
+  //std::cout << "[MRT_ROS_Gazebo_Loop::run2] initObservation: " << std::endl;
+  //std::cout << initObservation << std::endl;
+
   std::cout << "[MRT_ROS_Gazebo_Loop::run2] currentTarget size: " << initTarget.size() << std::endl;
   for (size_t i = 0; i < initTarget.size(); i++)
   {
@@ -389,7 +392,9 @@ bool MRT_ROS_Gazebo_Loop::run2(vector_t initTarget)
   const TargetTrajectories initTargetTrajectories({0}, {initTarget}, {initObservation.input});
 
   // Reset MPC node
+  //std::cout << "[MRT_ROS_Gazebo_Loop::run2] BEFORE resetMpcNode" << std::endl;
   mrt_.resetMpcNode(initTargetTrajectories);
+  //std::cout << "[MRT_ROS_Gazebo_Loop::run2] AFTER resetMpcNode" << std::endl;
 
   int initPolicyCtr = 0;
   time_ = 0.0;
@@ -576,6 +581,9 @@ SystemObservation MRT_ROS_Gazebo_Loop::forwardSimulation(const SystemObservation
 void MRT_ROS_Gazebo_Loop::mrtLoop() 
 {
   //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START" << std::endl;
+
+  std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] DEBUG_INF" << std::endl;
+  while(1);
 
   // Loop variables
   SystemObservation currentObservation;
@@ -1066,6 +1074,14 @@ void MRT_ROS_Gazebo_Loop::computeCommand(vector_t currentTarget, SystemObservati
   std::cout << "[MRT_ROS_Gazebo_Loop::run] //////////////////////////AFTER mrtLoop" << std::endl;
 
   std::cout << "[MRT_ROS_Gazebo_Loop::computeCommand] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+vector_t MRT_ROS_Gazebo_Loop::getCurrentTarget()
+{
+  return currentTarget_;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2034,6 +2050,7 @@ void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy,
 {
   //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] START" << std::endl;
 
+  RobotModelInfo robotModelInfo = robotModelInfo_;
   mpcTimeTrajectory_ = currentPolicy.timeTrajectory_;
   dataMPCTimeTrajectory_.push_back(mpcTimeTrajectory_);
 
@@ -2091,8 +2108,8 @@ void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy,
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] BEFORE mobile base command" << std::endl;
   // Set mobile base command
-  if (robotModelInfo_.modelMode == ModelMode::BaseMotion || 
-      robotModelInfo_.modelMode == ModelMode::WholeBodyMotion)
+  if (robotModelInfo.modelMode == ModelMode::BaseMotion || 
+      robotModelInfo.modelMode == ModelMode::WholeBodyMotion)
   {
     baseTwistMsg.linear.x = currentInput_[0];
     baseTwistMsg.angular.z = currentInput_[1];
@@ -2113,15 +2130,15 @@ void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy,
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] BEFORE arm command" << std::endl;
   // Set arm command
-  if (robotModelInfo_.modelMode == ModelMode::ArmMotion || 
-      robotModelInfo_.modelMode == ModelMode::WholeBodyMotion)
+  if (robotModelInfo.modelMode == ModelMode::ArmMotion || 
+      robotModelInfo.modelMode == ModelMode::WholeBodyMotion)
   {
     int baseOffset = 0;
-    if (robotModelInfo_.modelMode == ModelMode::WholeBodyMotion)
+    if (robotModelInfo.modelMode == ModelMode::WholeBodyMotion)
     {
-      baseOffset = robotModelInfo_.mobileBase.stateDim;
+      baseOffset = robotModelInfo.mobileBase.stateDim;
     }
-    int n_joints = robotModelInfo_.robotArm.jointNames.size();
+    int n_joints = robotModelInfo.robotArm.jointNames.size();
     armJointTrajectoryMsg.joint_names.resize(n_joints);
 
     //PrimalSolution primalSolution = mrt_.getPolicy();
@@ -2134,7 +2151,7 @@ void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy,
 
     for (int i = 0; i < n_joints; ++i)
     {
-      armJointTrajectoryMsg.joint_names[i] = robotModelInfo_.robotArm.jointNames[i];
+      armJointTrajectoryMsg.joint_names[i] = robotModelInfo.robotArm.jointNames[i];
       jtp.positions[i] = nextState[baseOffset + i];
 
       cmd.push_back(jtp.positions[i]);
@@ -2144,15 +2161,15 @@ void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy,
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] BEFORE Publish command" << std::endl;
   // Publish command
-  if (robotModelInfo_.modelMode == ModelMode::BaseMotion || 
-      robotModelInfo_.modelMode == ModelMode::WholeBodyMotion)
+  if (robotModelInfo.modelMode == ModelMode::BaseMotion || 
+      robotModelInfo.modelMode == ModelMode::WholeBodyMotion)
   {
     //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] BASE PUB" << std::endl;
     baseTwistPub_.publish(baseTwistMsg);
   }
 
-  if (robotModelInfo_.modelMode == ModelMode::ArmMotion || 
-      robotModelInfo_.modelMode == ModelMode::WholeBodyMotion)
+  if (robotModelInfo.modelMode == ModelMode::ArmMotion || 
+      robotModelInfo.modelMode == ModelMode::WholeBodyMotion)
   {
     armJointVelocityMsg.joint1 = currentInput_[2] * (180.0/M_PIf32);
     armJointVelocityMsg.joint2 = currentInput_[3] * (180.0/M_PIf32);
@@ -2176,6 +2193,7 @@ void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy,
   // 
   ocs2_msgs::mpc_data mpcDataMsg;
   mpcDataMsg.input_state = state_pos;
+  mpcDataMsg.model_mode = getModelModeInt(robotModelInfo);
   mpcDataMsg.cmd = cmd;
   mpcDataMsg.seq = mpc_cmd_seq;
   mpcDataPub_.publish(mpcDataMsg);

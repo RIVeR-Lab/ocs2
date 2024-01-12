@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.10
+// LAST UPDATE: 2024.01.12
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -93,6 +93,9 @@ class MRT_ROS_Gazebo_Loop
     {
       //std::cout << "[MRT_ROS_Gazebo_Loop::~MRT_ROS_Gazebo_Loop] SHUTTING DOWN..." << std::endl;
     }
+
+    /** NUA TODO: Add description */
+    vector_t getCurrentTarget();
 
     /** NUA TODO: Add description */
     vector_t getCurrentInput();

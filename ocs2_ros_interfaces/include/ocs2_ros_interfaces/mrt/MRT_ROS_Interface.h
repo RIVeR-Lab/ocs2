@@ -110,6 +110,9 @@ class MRT_ROS_Interface : public MRT_BASE
      */
     void spinMRT();
 
+    /// NUA TODO: ADD DESCRIPTION!
+    void updateStatusModelModeMRT(bool statusModelModeMRT);
+
     /**
      * Launches the ROS publishers and subscribers to communicate with the MPC node.
      * @param nodeHandle

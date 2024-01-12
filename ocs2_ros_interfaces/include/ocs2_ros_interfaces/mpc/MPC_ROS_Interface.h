@@ -91,6 +91,9 @@ class MPC_ROS_Interface
     /// NUA TODO: ADD DESCRIPTION!
     void setSystemObservation(SystemObservation& so);
 
+    /// NUA TODO: ADD DESCRIPTION!
+    void updateStatusModelModeMPC(bool statusModelModeMPC);
+
     /**
      * Resets the class to its instantiation state.
      *

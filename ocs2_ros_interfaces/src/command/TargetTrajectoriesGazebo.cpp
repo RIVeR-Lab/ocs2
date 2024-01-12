@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.08
+// LAST UPDATE: 2024.01.12
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -1021,7 +1021,7 @@ void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
 //-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::updateTarget(const Eigen::Vector3d& targetPos, const Eigen::Quaterniond& targetOri)
 {
-  std::cout << "[TargetTrajectoriesGazebo::updateTarget(2)] START" << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::updateTarget(2)] START" << std::endl;
 
   currentTargetPosition_ = targetPos;
   currentTargetOrientation_ = targetOri;
@@ -1031,7 +1031,7 @@ void TargetTrajectoriesGazebo::updateTarget(const Eigen::Vector3d& targetPos, co
 
   targetReadyFlag_ = true;
   
-  std::cout << "[TargetTrajectoriesGazebo::updateTarget(2)] END" << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::updateTarget(2)] END" << std::endl;
 }
 
 void TargetTrajectoriesGazebo::updateGraspPose()
@@ -2218,7 +2218,7 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
 //-------------------------------------------------------------------------------------------------------
 bool TargetTrajectoriesGazebo::setTask(int taskMode, geometry_msgs::Pose targetPose)
 {
-  std::cout << "[TargetTrajectoriesGazebo::setTask] START" << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::setTask] START" << std::endl;
 
   bool success = false;
   ocs2_msgs::setTask srv;
@@ -2236,7 +2236,7 @@ bool TargetTrajectoriesGazebo::setTask(int taskMode, geometry_msgs::Pose targetP
     success = false;
   }
 
-  std::cout << "[TargetTrajectoriesGazebo::setTask] END" << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::setTask] END" << std::endl;
   
   return success;
 }
