@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.11.02
+// LAST UPDATE: 2024.01.13
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -137,6 +137,10 @@ int main(int argc, char** argv)
       std::cout << "[" << element.first << ", " << element.second << "]" << std::endl;
     }
   }
+
+  /// NUA TODO: SET THEM IN CONFIG!
+  // Set object names
+  std::vector<std::string> obj_octomap_names = {"oct_conveyor"};
   
   // Adding namespace
   ns = nodeHandle.getNamespace();
@@ -173,6 +177,11 @@ int main(int argc, char** argv)
     pointsOnRobotMsg = ns + pointsOnRobotMsg;
     octomapMsg = ns + octomapMsg;
 
+    for (size_t i = 0; i < obj_octomap_names.size(); i++)
+    {
+      obj_octomap_names[i] = ns + "/" + obj_octomap_names[i];
+    }
+    
     if (printOutFlag)
     {
       std::cout << "[MobileManipulatorDistanceVisualization::main] baseFrame_withNS: " << baseFrame_withNS << std::endl;
@@ -328,7 +337,7 @@ int main(int argc, char** argv)
 
   if (printOutFlag)
     std::cout << "[MobileManipulatorDistanceVisualization::main] BEFORE subscribeObjectsOctMsg" << std::endl;
-  std::vector<std::string> obj_octomap_names = {"oct_conveyor"};
+  
   for (size_t i = 0; i < obj_octomap_names.size(); i++)
   {
     emuPtr->subscribeObjectsOctMsg(obj_octomap_names[i]);

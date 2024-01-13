@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.11.02
+// LAST UPDATE: 2024.01.13
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -18,6 +18,7 @@ ExtMapUtility::ExtMapUtility()
 {
   //std::cout << "[ExtMapUtility::ExtMapUtility] START" << std::endl;
 
+  ns_ = nh_.getNamespace();
   tflistener = new tf::TransformListener;
   world_frame_name = "";
   map_name = "";
@@ -45,6 +46,45 @@ ExtMapUtility::ExtMapUtility()
   pc_msg.header.frame_id = world_frame_name;
   pc2_msg.header.frame_id = world_frame_name;
 
+  if (ns_ != "/")
+  {
+    obj_name_conveyor_ = ns_ + "/" + obj_name_conveyor_;
+    obj_name_normal_pkg_ = ns_ + "/" + obj_name_normal_pkg_;
+    obj_name_long_pkg_ = ns_ + "/" + obj_name_long_pkg_;
+    obj_name_longwide_pkg_ = ns_ + "/" + obj_name_longwide_pkg_;
+    obj_name_red_cube_ = ns_ + "/" + obj_name_red_cube_;
+    obj_name_green_cube_ = ns_ + "/" + obj_name_green_cube_;
+    obj_name_blue_cube_ = ns_ + "/" + obj_name_blue_cube_;
+    obj_name_actor0_ = ns_ + "/" + obj_name_actor0_;
+    obj_name_actor1_ = ns_ + "/" + obj_name_actor1_;
+    obj_name_bin_ = ns_ + "/" + obj_name_bin_;
+
+
+    pc2_msg_name_conveyor_ = ns_ + "/" + pc2_msg_name_conveyor_;
+    pc2_msg_name_normal_pkg_ = ns_ + "/" + pc2_msg_name_normal_pkg_;
+    pc2_msg_name_long_pkg_ = ns_ + "/" + pc2_msg_name_long_pkg_;
+    pc2_msg_name_longwide_pkg_ = ns_ + "/" + pc2_msg_name_longwide_pkg_;
+    pc2_msg_name_red_cube_ = ns_ + "/" + pc2_msg_name_red_cube_;
+    pc2_msg_name_green_cube_ = ns_ + "/" + pc2_msg_name_green_cube_;
+    pc2_msg_name_blue_cube_ = ns_ + "/" + pc2_msg_name_blue_cube_;
+    pc2_msg_name_actor0_ = ns_ + "/" + pc2_msg_name_actor0_;
+    pc2_msg_name_actor1_ = ns_ + "/" + pc2_msg_name_actor1_;
+    pc2_msg_name_bin_ = ns_ + "/" + pc2_msg_name_bin_;
+
+    oct_msg_name_conveyor_ = ns_ + "/" + oct_msg_name_conveyor_;
+    oct_msg_name_normal_pkg_ = ns_ + "/" + oct_msg_name_normal_pkg_;
+    oct_msg_name_long_pkg_ = ns_ + "/" + oct_msg_name_long_pkg_;
+    oct_msg_name_longwide_pkg_ = ns_ + "/" + oct_msg_name_longwide_pkg_;
+    oct_msg_name_red_cube_ = ns_ + "/" + oct_msg_name_red_cube_;
+    oct_msg_name_green_cube_ = ns_ + "/" + oct_msg_name_green_cube_;
+    oct_msg_name_blue_cube_ = ns_ + "/" + oct_msg_name_blue_cube_;
+    oct_msg_name_actor0_ = ns_ + "/" + oct_msg_name_actor0_;
+    oct_msg_name_actor1_ = ns_ + "/" + oct_msg_name_actor1_;
+    oct_msg_name_bin_ = ns_ + "/" + oct_msg_name_bin_;
+
+    oct_msg_name_ = ns_ + "/" + oct_msg_name_;
+  }
+
   //std::cout << "[ExtMapUtility::ExtMapUtility] END" << std::endl;
 }
 
@@ -56,11 +96,51 @@ ExtMapUtility::ExtMapUtility(ros::NodeHandle& nh,
                              string pub_name_oct_msg)
 {
   nh_ = nh;
+  ns_ = nh_.getNamespace();
 
   sub_oct_msg_ = nh.subscribe(oct_msg_name, 5, &ExtMapUtility::octMsgCallback, this);
   //sub_map = nh.subscribe(robot_param.local_map_msg, 5, &Tentabot::mapCallback, this);
 
   nh.advertise<octomap_msgs::Octomap>(pub_name_oct_msg, 10);
+
+  if (ns_ != "/")
+  {
+    obj_name_conveyor_ = ns_ + "/" + obj_name_conveyor_;
+    obj_name_normal_pkg_ = ns_ + "/" + obj_name_normal_pkg_;
+    obj_name_long_pkg_ = ns_ + "/" + obj_name_long_pkg_;
+    obj_name_longwide_pkg_ = ns_ + "/" + obj_name_longwide_pkg_;
+    obj_name_red_cube_ = ns_ + "/" + obj_name_red_cube_;
+    obj_name_green_cube_ = ns_ + "/" + obj_name_green_cube_;
+    obj_name_blue_cube_ = ns_ + "/" + obj_name_blue_cube_;
+    obj_name_actor0_ = ns_ + "/" + obj_name_actor0_;
+    obj_name_actor1_ = ns_ + "/" + obj_name_actor1_;
+    obj_name_bin_ = ns_ + "/" + obj_name_bin_;
+
+
+    pc2_msg_name_conveyor_ = ns_ + "/" + pc2_msg_name_conveyor_;
+    pc2_msg_name_normal_pkg_ = ns_ + "/" + pc2_msg_name_normal_pkg_;
+    pc2_msg_name_long_pkg_ = ns_ + "/" + pc2_msg_name_long_pkg_;
+    pc2_msg_name_longwide_pkg_ = ns_ + "/" + pc2_msg_name_longwide_pkg_;
+    pc2_msg_name_red_cube_ = ns_ + "/" + pc2_msg_name_red_cube_;
+    pc2_msg_name_green_cube_ = ns_ + "/" + pc2_msg_name_green_cube_;
+    pc2_msg_name_blue_cube_ = ns_ + "/" + pc2_msg_name_blue_cube_;
+    pc2_msg_name_actor0_ = ns_ + "/" + pc2_msg_name_actor0_;
+    pc2_msg_name_actor1_ = ns_ + "/" + pc2_msg_name_actor1_;
+    pc2_msg_name_bin_ = ns_ + "/" + pc2_msg_name_bin_;
+
+    oct_msg_name_conveyor_ = ns_ + "/" + oct_msg_name_conveyor_;
+    oct_msg_name_normal_pkg_ = ns_ + "/" + oct_msg_name_normal_pkg_;
+    oct_msg_name_long_pkg_ = ns_ + "/" + oct_msg_name_long_pkg_;
+    oct_msg_name_longwide_pkg_ = ns_ + "/" + oct_msg_name_longwide_pkg_;
+    oct_msg_name_red_cube_ = ns_ + "/" + oct_msg_name_red_cube_;
+    oct_msg_name_green_cube_ = ns_ + "/" + oct_msg_name_green_cube_;
+    oct_msg_name_blue_cube_ = ns_ + "/" + oct_msg_name_blue_cube_;
+    oct_msg_name_actor0_ = ns_ + "/" + oct_msg_name_actor0_;
+    oct_msg_name_actor1_ = ns_ + "/" + oct_msg_name_actor1_;
+    oct_msg_name_bin_ = ns_ + "/" + oct_msg_name_bin_;
+
+    oct_msg_name_ = ns_ + "/" + oct_msg_name_;
+  }
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -77,6 +157,7 @@ ExtMapUtility::ExtMapUtility(NodeHandle& nh,
                              double map_resolution)
 {
   nh_ = nh;
+  ns_ = nh_.getNamespace();
   tflistener = new tf::TransformListener;
 
   //esdf_server_ptr_.reset(new voxblox::EsdfServer(nh, pnh));
@@ -92,6 +173,45 @@ ExtMapUtility::ExtMapUtility(NodeHandle& nh,
 
   map_resolution_ = map_resolution;
   oct = std::make_shared<octomap::ColorOcTree>(map_resolution_);
+
+  if (ns_ != "/")
+  {
+    obj_name_conveyor_ = ns_ + "/" + obj_name_conveyor_;
+    obj_name_normal_pkg_ = ns_ + "/" + obj_name_normal_pkg_;
+    obj_name_long_pkg_ = ns_ + "/" + obj_name_long_pkg_;
+    obj_name_longwide_pkg_ = ns_ + "/" + obj_name_longwide_pkg_;
+    obj_name_red_cube_ = ns_ + "/" + obj_name_red_cube_;
+    obj_name_green_cube_ = ns_ + "/" + obj_name_green_cube_;
+    obj_name_blue_cube_ = ns_ + "/" + obj_name_blue_cube_;
+    obj_name_actor0_ = ns_ + "/" + obj_name_actor0_;
+    obj_name_actor1_ = ns_ + "/" + obj_name_actor1_;
+    obj_name_bin_ = ns_ + "/" + obj_name_bin_;
+
+
+    pc2_msg_name_conveyor_ = ns_ + "/" + pc2_msg_name_conveyor_;
+    pc2_msg_name_normal_pkg_ = ns_ + "/" + pc2_msg_name_normal_pkg_;
+    pc2_msg_name_long_pkg_ = ns_ + "/" + pc2_msg_name_long_pkg_;
+    pc2_msg_name_longwide_pkg_ = ns_ + "/" + pc2_msg_name_longwide_pkg_;
+    pc2_msg_name_red_cube_ = ns_ + "/" + pc2_msg_name_red_cube_;
+    pc2_msg_name_green_cube_ = ns_ + "/" + pc2_msg_name_green_cube_;
+    pc2_msg_name_blue_cube_ = ns_ + "/" + pc2_msg_name_blue_cube_;
+    pc2_msg_name_actor0_ = ns_ + "/" + pc2_msg_name_actor0_;
+    pc2_msg_name_actor1_ = ns_ + "/" + pc2_msg_name_actor1_;
+    pc2_msg_name_bin_ = ns_ + "/" + pc2_msg_name_bin_;
+
+    oct_msg_name_conveyor_ = ns_ + "/" + oct_msg_name_conveyor_;
+    oct_msg_name_normal_pkg_ = ns_ + "/" + oct_msg_name_normal_pkg_;
+    oct_msg_name_long_pkg_ = ns_ + "/" + oct_msg_name_long_pkg_;
+    oct_msg_name_longwide_pkg_ = ns_ + "/" + oct_msg_name_longwide_pkg_;
+    oct_msg_name_red_cube_ = ns_ + "/" + oct_msg_name_red_cube_;
+    oct_msg_name_green_cube_ = ns_ + "/" + oct_msg_name_green_cube_;
+    oct_msg_name_blue_cube_ = ns_ + "/" + oct_msg_name_blue_cube_;
+    oct_msg_name_actor0_ = ns_ + "/" + oct_msg_name_actor0_;
+    oct_msg_name_actor1_ = ns_ + "/" + oct_msg_name_actor1_;
+    oct_msg_name_bin_ = ns_ + "/" + oct_msg_name_bin_;
+
+    oct_msg_name_ = ns_ + "/" + oct_msg_name_;
+  }
 
   // Subscribers
   sub_gz_model_ = nh_.subscribe(gz_model_msg, 5, &ExtMapUtility::gazeboModelCallback, this);
@@ -109,7 +229,7 @@ ExtMapUtility::ExtMapUtility(NodeHandle& nh,
   pub_pc2_msg_gz_pkg_man_longwide_pkg_ = nh_.advertise<sensor_msgs::PointCloud2>("pc2_scan_longwide_pkg", 10);
 
   pub_occ_distance_visu_ = nh_.advertise<visualization_msgs::Marker>("occupancy_distance", 10);
-  pub_occ_distance_array_visu_ = nh_.advertise<visualization_msgs::MarkerArray>("occupancy_distance_array_visu", 100);
+  pub_occ_distance_array_visu_ = nh_.advertise<visualization_msgs::MarkerArray>("occupancy_distance_array_visu", 10);
   pub_occ_distance_array_visu2_ = nh_.advertise<visualization_msgs::MarkerArray>("occupancy_distance_array_visu", 10);
 }
 
@@ -122,6 +242,7 @@ ExtMapUtility::ExtMapUtility(NodeHandle& nh,
                        string new_sensor_laser_msg_name)
 {
   nh_ = nh;
+  ns_ = nh_.getNamespace();
   tflistener = new tf::TransformListener;
 
   map_name = new_map_name;
@@ -157,6 +278,45 @@ ExtMapUtility::ExtMapUtility(NodeHandle& nh,
   pc_msg.header.frame_id = world_frame_name;
   pc2_msg.header.frame_id = world_frame_name;
 
+  if (ns_ != "/")
+  {
+    obj_name_conveyor_ = ns_ + "/" + obj_name_conveyor_;
+    obj_name_normal_pkg_ = ns_ + "/" + obj_name_normal_pkg_;
+    obj_name_long_pkg_ = ns_ + "/" + obj_name_long_pkg_;
+    obj_name_longwide_pkg_ = ns_ + "/" + obj_name_longwide_pkg_;
+    obj_name_red_cube_ = ns_ + "/" + obj_name_red_cube_;
+    obj_name_green_cube_ = ns_ + "/" + obj_name_green_cube_;
+    obj_name_blue_cube_ = ns_ + "/" + obj_name_blue_cube_;
+    obj_name_actor0_ = ns_ + "/" + obj_name_actor0_;
+    obj_name_actor1_ = ns_ + "/" + obj_name_actor1_;
+    obj_name_bin_ = ns_ + "/" + obj_name_bin_;
+
+
+    pc2_msg_name_conveyor_ = ns_ + "/" + pc2_msg_name_conveyor_;
+    pc2_msg_name_normal_pkg_ = ns_ + "/" + pc2_msg_name_normal_pkg_;
+    pc2_msg_name_long_pkg_ = ns_ + "/" + pc2_msg_name_long_pkg_;
+    pc2_msg_name_longwide_pkg_ = ns_ + "/" + pc2_msg_name_longwide_pkg_;
+    pc2_msg_name_red_cube_ = ns_ + "/" + pc2_msg_name_red_cube_;
+    pc2_msg_name_green_cube_ = ns_ + "/" + pc2_msg_name_green_cube_;
+    pc2_msg_name_blue_cube_ = ns_ + "/" + pc2_msg_name_blue_cube_;
+    pc2_msg_name_actor0_ = ns_ + "/" + pc2_msg_name_actor0_;
+    pc2_msg_name_actor1_ = ns_ + "/" + pc2_msg_name_actor1_;
+    pc2_msg_name_bin_ = ns_ + "/" + pc2_msg_name_bin_;
+
+    oct_msg_name_conveyor_ = ns_ + "/" + oct_msg_name_conveyor_;
+    oct_msg_name_normal_pkg_ = ns_ + "/" + oct_msg_name_normal_pkg_;
+    oct_msg_name_long_pkg_ = ns_ + "/" + oct_msg_name_long_pkg_;
+    oct_msg_name_longwide_pkg_ = ns_ + "/" + oct_msg_name_longwide_pkg_;
+    oct_msg_name_red_cube_ = ns_ + "/" + oct_msg_name_red_cube_;
+    oct_msg_name_green_cube_ = ns_ + "/" + oct_msg_name_green_cube_;
+    oct_msg_name_blue_cube_ = ns_ + "/" + oct_msg_name_blue_cube_;
+    oct_msg_name_actor0_ = ns_ + "/" + oct_msg_name_actor0_;
+    oct_msg_name_actor1_ = ns_ + "/" + oct_msg_name_actor1_;
+    oct_msg_name_bin_ = ns_ + "/" + oct_msg_name_bin_;
+
+    oct_msg_name_ = ns_ + "/" + oct_msg_name_;
+  }
+
   // SUBSCRIBE TO THE OCCUPANCY SENSOR DATA (PointCloud2)
   sub_pc2 = nh.subscribe(sensor_pc2_msg_name, 5, &ExtMapUtility::pc2Callback, this);
 
@@ -179,6 +339,7 @@ ExtMapUtility::ExtMapUtility(NodeHandle& nh,
 ExtMapUtility::ExtMapUtility(const ExtMapUtility& mu)
 {
   nh_ = mu.nh_;
+  ns_ = mu.ns_;
   tflistener = mu.tflistener;
   world_frame_name = mu.world_frame_name;
   map_name = mu.map_name;
@@ -239,9 +400,10 @@ ExtMapUtility::~ExtMapUtility()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-ExtMapUtility& ExtMapUtility::operator = (const ExtMapUtility& mu) 
+ExtMapUtility& ExtMapUtility::operator=(const ExtMapUtility& mu) 
 {
   nh_ = mu.nh_;
+  ns_ = mu.ns_;
   tflistener = mu.tflistener;
   world_frame_name = mu.world_frame_name;
   map_name = mu.map_name;
@@ -2517,52 +2679,52 @@ void ExtMapUtility::subscribeOctMsg(string oct_msg_name)
 //-------------------------------------------------------------------------------------------------------
 void ExtMapUtility::subscribeObjectsOctMsg(string obj_oct_msg_name)
 {
-  if (obj_oct_msg_name == "oct_conveyor")
+  if (obj_oct_msg_name == oct_msg_name_conveyor_)
   {
     //std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
     sub_oct_msg_conveyor_ = nh_.subscribe(obj_oct_msg_name, 10, &ExtMapUtility::conveyorOctMsgCallback, this);
   }
-  else if (obj_oct_msg_name == "oct_normal_pkg")
+  else if (obj_oct_msg_name == oct_msg_name_normal_pkg_)
   {
     //std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
     sub_oct_msg_normal_pkg_ = nh_.subscribe(obj_oct_msg_name, 10, &ExtMapUtility::normalPkgOctMsgCallback, this);
   }
-  else if (obj_oct_msg_name == "oct_long_pkg")
+  else if (obj_oct_msg_name == oct_msg_name_long_pkg_)
   {
     //std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
     sub_oct_msg_long_pkg_ = nh_.subscribe(obj_oct_msg_name, 10, &ExtMapUtility::longPkgOctMsgCallback, this);
   }
-  else if (obj_oct_msg_name == "oct_longwide_pkg")
+  else if (obj_oct_msg_name == oct_msg_name_longwide_pkg_)
   {
     //std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
     sub_oct_msg_longwide_pkg_ = nh_.subscribe(obj_oct_msg_name, 10, &ExtMapUtility::longwidePkgOctMsgCallback, this);
   }
-  else if (obj_oct_msg_name == "oct_red_cube")
+  else if (obj_oct_msg_name == oct_msg_name_red_cube_)
   {
     //std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
     sub_oct_msg_red_cube_ = nh_.subscribe(obj_oct_msg_name, 10, &ExtMapUtility::redCubeOctMsgCallback, this);
   }
-  else if (obj_oct_msg_name == "oct_green_cube")
+  else if (obj_oct_msg_name == oct_msg_name_green_cube_)
   {
     //std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
     sub_oct_msg_green_cube_ = nh_.subscribe(obj_oct_msg_name, 10, &ExtMapUtility::greenCubeOctMsgCallback, this);
   }
-  else if (obj_oct_msg_name == "oct_blue_cube")
+  else if (obj_oct_msg_name == oct_msg_name_blue_cube_)
   {
     //std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
     sub_oct_msg_blue_cube_ = nh_.subscribe(obj_oct_msg_name, 10, &ExtMapUtility::blueCubeOctMsgCallback, this);
   }
-  else if (obj_oct_msg_name == "oct_actor0")
+  else if (obj_oct_msg_name == oct_msg_name_actor0_)
   {
     //std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
     sub_oct_msg_actor0_ = nh_.subscribe(obj_oct_msg_name, 10, &ExtMapUtility::actor0OctMsgCallback, this);
   }
-  else if (obj_oct_msg_name == "oct_actor1")
+  else if (obj_oct_msg_name == oct_msg_name_actor1_)
   {
     //std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
     sub_oct_msg_actor1_ = nh_.subscribe(obj_oct_msg_name, 10, &ExtMapUtility::actor1OctMsgCallback, this);
   }
-  else if (obj_oct_msg_name == "oct_bin")
+  else if (obj_oct_msg_name == oct_msg_name_bin_)
   {
     //std::cout << "[ExtMapUtility::subscribeObjectsOctMsg] oct_msg_name: " << obj_oct_msg_name << std::endl;
     sub_oct_msg_bin_ = nh_.subscribe(obj_oct_msg_name, 10, &ExtMapUtility::binOctMsgCallback, this);
@@ -3748,70 +3910,73 @@ void ExtMapUtility::getNearestOccupancyDist(std::string octMsgName,
                                             bool& col_status,
                                             bool normalize_flag) const
 {
-  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] START" << std::endl;
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] START" << std::endl;
 
   col_status = false;
 
   Eigen::Affine3d world_transform_eigen, query_tranform_eigen;
   world_transform_eigen.setIdentity();
   query_tranform_eigen.setIdentity();
-
+  
   fcl::Transform3d world_transform_fcl, query_tranform_fcl;
   robot_collision_checking::FCLInterface::transform2fcl(world_transform_eigen, world_transform_fcl);
 
-  if (octMsgName == "oct_conveyor")
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] oct_msg_name_conveyor_: " << oct_msg_name_conveyor_ << std::endl;
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] ns_: " << ns_ << std::endl;
+
+  if (octMsgName == oct_msg_name_conveyor_)
   {
-    //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] worldFCLCollisionGeometryPtr_ conveyor" << std::endl;
+    //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] worldFCLCollisionGeometryPtr_ conveyor" << std::endl;
     worldFCLCollisionGeometryPtr_ = robot_collision_checking::FCLInterface::createCollisionGeometry(oct_msg_conveyor_);
   }
-  else if (octMsgName == "oct_normal_pkg")
+  else if (octMsgName == oct_msg_name_normal_pkg_)
   {
-    //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] worldFCLCollisionGeometryPtr_ normal_pkg" << std::endl;
+    //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] worldFCLCollisionGeometryPtr_ normal_pkg" << std::endl;
     worldFCLCollisionGeometryPtr_ = robot_collision_checking::FCLInterface::createCollisionGeometry(oct_msg_normal_pkg_);
   }
-  else if (octMsgName == "oct_long_pkg")
+  else if (octMsgName == oct_msg_name_long_pkg_)
   {
-    //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] worldFCLCollisionGeometryPtr_ long_pkg" << std::endl;
+    //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] worldFCLCollisionGeometryPtr_ long_pkg" << std::endl;
     worldFCLCollisionGeometryPtr_ = robot_collision_checking::FCLInterface::createCollisionGeometry(oct_msg_long_pkg_);
   }
-  else if (octMsgName == "oct_longwide_pkg")
+  else if (octMsgName == oct_msg_name_longwide_pkg_)
   {
-    //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] worldFCLCollisionGeometryPtr_ longwide_pkg" << std::endl;
+    //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] worldFCLCollisionGeometryPtr_ longwide_pkg" << std::endl;
     worldFCLCollisionGeometryPtr_ = robot_collision_checking::FCLInterface::createCollisionGeometry(oct_msg_longwide_pkg_);
   }
-  else if (octMsgName == "oct_red_cube")
+  else if (octMsgName == oct_msg_name_red_cube_)
   {
-    //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] worldFCLCollisionGeometryPtr_ red_cube" << std::endl;
+    //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] worldFCLCollisionGeometryPtr_ red_cube" << std::endl;
     worldFCLCollisionGeometryPtr_ = robot_collision_checking::FCLInterface::createCollisionGeometry(oct_msg_red_cube_);
   }
-  else if (octMsgName == "oct_green_cube")
+  else if (octMsgName == oct_msg_name_green_cube_)
   {
-    //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] worldFCLCollisionGeometryPtr_ green_cube" << std::endl;
+    //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] worldFCLCollisionGeometryPtr_ green_cube" << std::endl;
     worldFCLCollisionGeometryPtr_ = robot_collision_checking::FCLInterface::createCollisionGeometry(oct_msg_green_cube_);
   }
-  else if (octMsgName == "oct_blue_cube")
+  else if (octMsgName == oct_msg_name_blue_cube_)
   {
-    //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] worldFCLCollisionGeometryPtr_ blue_cube" << std::endl;
+    //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] worldFCLCollisionGeometryPtr_ blue_cube" << std::endl;
     worldFCLCollisionGeometryPtr_ = robot_collision_checking::FCLInterface::createCollisionGeometry(oct_msg_blue_cube_);
   }
-  else if (octMsgName == "oct_actor0")
+  else if (octMsgName == oct_msg_name_actor0_)
   {
-    //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] worldFCLCollisionGeometryPtr_ actor0" << std::endl;
+    //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] worldFCLCollisionGeometryPtr_ actor0" << std::endl;
     worldFCLCollisionGeometryPtr_ = robot_collision_checking::FCLInterface::createCollisionGeometry(oct_msg_actor0_);
   }
-  else if (octMsgName == "oct_actor1")
+  else if (octMsgName == oct_msg_name_actor1_)
   {
-    //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] worldFCLCollisionGeometryPtr_ actor1" << std::endl;
+    //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] worldFCLCollisionGeometryPtr_ actor1" << std::endl;
     worldFCLCollisionGeometryPtr_ = robot_collision_checking::FCLInterface::createCollisionGeometry(oct_msg_actor1_);
   }
-  else if (octMsgName == "oct_bin")
+  else if (octMsgName == oct_msg_name_bin_)
   {
-    //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] worldFCLCollisionGeometryPtr_ bin" << std::endl;
+    //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] worldFCLCollisionGeometryPtr_ bin" << std::endl;
     worldFCLCollisionGeometryPtr_ = robot_collision_checking::FCLInterface::createCollisionGeometry(oct_msg_bin_);
   }
   else
   {
-    std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] ERROR: Invalid octMsgName!" << std::endl;
+    std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] ERROR: Invalid octMsgName: " << octMsgName << std::endl;
   }
 
   worldFCLCollisionObjectPtr_ = std::make_shared<fcl::CollisionObjectd>(worldFCLCollisionGeometryPtr_, world_transform_fcl);
@@ -3855,22 +4020,22 @@ void ExtMapUtility::getNearestOccupancyDist(std::string octMsgName,
   min_dist = dist_result.min_distance;
   //double min_dist = dist_result.min_distance - radii(i);
 
-  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] radii(i): " << radii(i) << std::endl;
-  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] min_dist: " << min_dist << std::endl;
-  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] max_dist: " << max_dist << std::endl;
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] radii(i): " << radii(i) << std::endl;
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] min_dist: " << min_dist << std::endl;
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] max_dist: " << max_dist << std::endl;
   
   /*
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] min_p.x: " << min_p.x << std::endl;
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] position(0): " << position(0) << std::endl;
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] min_p.x: " << min_p.x << std::endl;
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] position(0): " << position(0) << std::endl;
 
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] min_p.y: " << min_p.y << std::endl;
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] position(1): " << position(1) << std::endl;
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] min_p.y: " << min_p.y << std::endl;
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] position(1): " << position(1) << std::endl;
 
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] min_p.z: " << min_p.z << std::endl;
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] position(2): " << position(2) << std::endl;
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] min_p.z: " << min_p.z << std::endl;
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] position(2): " << position(2) << std::endl;
   */
 
-  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] 1) min_dist: " << min_dist << std::endl;
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] 1) min_dist: " << min_dist << std::endl;
   
   if (min_dist < 0)
   {
@@ -3890,7 +4055,7 @@ void ExtMapUtility::getNearestOccupancyDist(std::string octMsgName,
     min_dist = max_dist;
   }
 
-  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] 2) min_dist: " << min_dist << std::endl;
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] 2) min_dist: " << min_dist << std::endl;
 
   if (normalize_flag)
   {
@@ -3898,22 +4063,22 @@ void ExtMapUtility::getNearestOccupancyDist(std::string octMsgName,
   }
 
   /*
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] world_min_p.x(): " << min_p.x << std::endl;
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] position(0): " << position(0) << std::endl;
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] world_min_p.x(): " << min_p.x << std::endl;
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] position(0): " << position(0) << std::endl;
 
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] world_min_p.y(): " << min_p.y << std::endl;
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] position(1): " << position(1) << std::endl;
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] world_min_p.y(): " << min_p.y << std::endl;
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] position(1): " << position(1) << std::endl;
 
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] world_min_p.z(): " << min_p.z << std::endl;
-  std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] position(2): " << position(2) << std::endl << std::endl;
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] world_min_p.z(): " << min_p.z << std::endl;
+  std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] position(2): " << position(2) << std::endl << std::endl;
   */
 
-  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] 3) min_dist: " << min_dist << std::endl;
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] 3) min_dist: " << min_dist << std::endl;
 
-  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] DEBUG INF" << std::endl << std::endl;
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] DEBUG INF" << std::endl << std::endl;
   //while(1);
 
-  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(7.2)] END" << std::endl << std::endl;
+  //std::cout << "[ExtMapUtility::getNearestOccupancyDist(8)] END" << std::endl << std::endl;
 }
 
 /*

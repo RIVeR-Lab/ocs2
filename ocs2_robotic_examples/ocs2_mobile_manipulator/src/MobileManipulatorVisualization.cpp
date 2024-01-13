@@ -784,8 +784,6 @@ void MobileManipulatorVisualization::updateExtCollisionDistances(bool normalize_
   transformPointFromWorldtoBase(p0_vec_, p0_vec_wrt_base_);
   transformPointFromWorldtoBase(p1_vec_, p1_vec_wrt_base_);
 
-  //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] collision: " << collision << std::endl;
-
   //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START fillOccDistanceArrayVisu" << std::endl;
   timer4_.startTimer();
   emuPtr_->fillCollisionInfoArm(baseFrameName_withNS_, col_status_arm_, dist_, p0_vec_, p1_vec_wrt_base_, col_dist_thresh_arm_);
@@ -813,6 +811,8 @@ void MobileManipulatorVisualization::updateExtCollisionDistances(bool normalize_
   for (size_t i = 0; i < objOctomapNames_.size(); i++)
   {
     p0_vec2_.push_back(p0);
+
+    //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] " << i << ": " << objOctomapNames_[i] << std::endl;
 
     bool cs;
     geometry_msgs::Point p1;
