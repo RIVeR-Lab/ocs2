@@ -156,7 +156,7 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   //setTaskModeClient_ = nh.serviceClient<ocs2_msgs::setInt>("/set_task_mode");
   setPickedFlagClient_ = nh.serviceClient<ocs2_msgs::setBool>(setPickedFlagSrvName_);
   setSystemObservationClient_ = nh.serviceClient<ocs2_msgs::setSystemObservation>(setSystemObservationSrvName_);
-  //setMRTReadyClient_ = nh.serviceClient<ocs2_msgs::setBool>(setMRTReadySrvName_);
+  setMRTReadyClient_ = nh.serviceClient<ocs2_msgs::setBool>(setMRTReadySrvName_);
 
   /// Services
   //setTaskModeService_ = nh.advertiseService("set_task_mode", &MRT_ROS_Gazebo_Loop::setTaskModeSrv, this);
@@ -1907,12 +1907,12 @@ bool MRT_ROS_Gazebo_Loop::setSystemObservation(const SystemObservation& currentO
 //-------------------------------------------------------------------------------------------------------
 bool MRT_ROS_Gazebo_Loop::setMRTReady()
 {
-  //std::cout << "[" << ns_ <<  "][MRT_ROS_Gazebo_Loop::setMRTReady] START" << std::endl;
+  std::cout << "[" << ns_ <<  "][MRT_ROS_Gazebo_Loop::setMRTReady] START" << std::endl;
   bool success = false;
   ocs2_msgs::setBool srv;
   srv.request.val = true;
 
-  //std::cout << "[" << ns_ <<  "][MRT_ROS_Gazebo_Loop::setMRTReady] Waiting for the service..." << std::endl;
+  std::cout << "[" << ns_ <<  "][MRT_ROS_Gazebo_Loop::setMRTReady] Waiting for the service " << setMRTReadySrvName_ << "..." << std::endl;
   ros::service::waitForService(setMRTReadySrvName_);
   if (setMRTReadyClient_.call(srv))
   {
@@ -1924,7 +1924,7 @@ bool MRT_ROS_Gazebo_Loop::setMRTReady()
     success = false;
   }
 
-  //std::cout << "[" << ns_ <<  "][MRT_ROS_Gazebo_Loop::setMRTReady] END" << std::endl;
+  std::cout << "[" << ns_ <<  "][MRT_ROS_Gazebo_Loop::setMRTReady] END" << std::endl;
   
   return success;
 }

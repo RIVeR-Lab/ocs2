@@ -388,20 +388,23 @@ class MobileManipulatorInterface final : public RobotInterface
     //int mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "false", 1);
     //int mrtExitEnvStatus_ = setenv("mrtExitFlag", "true", 1);
 
-    bool printOutFlag_ = true;
+    bool printOutFlag_ = false;
     bool usePreComputation_;
     bool recompileLibraries_;
     bool activateSelfCollision_;
     bool activateExtCollision_;
     
-    bool drlFlag_ = false;
-    int drlActionType_ = 1;
+    bool drlFlag_ ;
+    int drlActionType_;
+
+    /// NUA NOTE: DEPRECATED? ----- START
     int drlActionDiscrete_;
     std::vector<double> drlActionContinuous_;
     double drlActionTimeHorizon_;
     bool drlActionLastStepFlag_;
     double drlActionLastStepDistanceThreshold_;
     mpcProblemSettings mpcProblemSettings_;
+    /// NUA NOTE: DEPRECATED? ----- END
 
     ddp::Settings ddpSettings_;
     mpc::Settings mpcSettings_;

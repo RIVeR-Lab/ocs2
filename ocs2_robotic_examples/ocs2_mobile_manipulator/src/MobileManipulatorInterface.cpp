@@ -297,8 +297,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     std::cout << "\n #### Model Settings:";
     std::cout << "\n #### =============================================================================\n";
   }
-    loadData::loadPtreeValue(pt, drlFlag_, "model_settings.drlFlag", printOutFlag_);
-    loadData::loadPtreeValue(pt, drlActionType_, "model_settings.drlActionType", printOutFlag_);
+    //loadData::loadPtreeValue(pt, drlFlag_, "model_settings.drlFlag", printOutFlag_);
+    //loadData::loadPtreeValue(pt, drlActionType_, "model_settings.drlActionType", printOutFlag_);
     loadData::loadPtreeValue(pt, usePreComputation_, "model_settings.usePreComputation", printOutFlag_);
     loadData::loadPtreeValue(pt, recompileLibraries_, "model_settings.recompileLibraries", printOutFlag_);
     loadData::loadPtreeValue(pt, activateSelfCollision_, "selfCollision.activate", printOutFlag_);
@@ -307,6 +307,19 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   {
     std::cout << " #### =============================================================================\n";
   }
+
+  /// Get ROS Parameters
+  nodeHandle_.getParam("/flag_drl", drlFlag_);
+  nodeHandle_.getParam("/drl_action_type", drlActionType_);
+
+  if (printOutFlag_)
+  {
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] drlFlag_: " << drlFlag_ << std::endl;
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] drlActionType_: " << drlActionType_ << std::endl;
+  }
+
+  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] DEBUG_INF" << std::endl;
+  //while(1);
 
   /// Set DDP-MPC settings
   ddpSettings_ = ddp::loadSettings(taskFile_, "ddp", printOutFlag_);
@@ -500,7 +513,7 @@ void MobileManipulatorInterface::initializeMPC()
 
   /// Services
   setStopMPCFlagService_ = nodeHandle_.advertiseService(setStopMPCFlagSrvName_, &MobileManipulatorInterface::setStopMPCFlagSrv, this);
-  setMRTReadyFlagService_ = nodeHandle_.advertiseService(setMRTReadyFlagSrvName_, &MobileManipulatorInterface::setMRTReadyFlagSrv, this);
+  //setMRTReadyFlagService_ = nodeHandle_.advertiseService(setMRTReadyFlagSrvName_, &MobileManipulatorInterface::setMRTReadyFlagSrv, this);
 
   //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::initializeMPC] DEBUG INF" << std::endl;
   //while(1);
@@ -1240,7 +1253,6 @@ void MobileManipulatorInterface::launchNodes()
 {
   if (drlFlag_)
   {
-    /*
     if (drlActionType_ == 0)
     {
       //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes] DISCRETE ACTION" << std::endl;
@@ -1251,7 +1263,6 @@ void MobileManipulatorInterface::launchNodes()
       //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::launchNodes] CONTINUOUS ACTION" << std::endl;
       setActionDRLService_ = nodeHandle_.advertiseService(setActionDRLServiceName_, &MobileManipulatorInterface::setContinuousActionDRLSrv, this);
     }
-    */
 
     //setTargetDRLClient_ = nodeHandle_.serviceClient<ocs2_msgs::setTask>(setTargetDRLServiceName_);
     //setMRTReadyClient_ = nodeHandle_.serviceClient<ocs2_msgs::setBool>(setMRTReadyServiceName_);
@@ -1367,6 +1378,9 @@ bool MobileManipulatorInterface::setContinuousActionDRLSrv(ocs2_msgs::setContinu
   drlActionLastStepFlag_ = req.last_step_flag;
   drlActionLastStepDistanceThreshold_ = req.last_step_distance_threshold;
   res.success = true;
+
+  mpcProblemReadyFlag_ = false;
+  newMPCProblemFlag_ = true;
 
   mapContinuousActionDRL(drlActionContinuous_);
 
@@ -2275,16 +2289,16 @@ bool MobileManipulatorInterface::setMRTReadyFlagSrv(ocs2_msgs::setBool::Request 
 //-------------------------------------------------------------------------------------------------------
 bool MobileManipulatorInterface::setMRTReadyFlag(bool val)
 {
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] START" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] START" << std::endl;
   bool success = false;
   ocs2_msgs::setBool srv;
   srv.request.val = val;
 
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] Waiting for the service..." << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] Waiting for the service " << setMRTReadyFlagSrvName_ << "..." << std::endl;
   ros::service::waitForService(setMRTReadyFlagSrvName_);
   if (setMRTReadyFlagClient_.call(srv))
   {
-    //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] DONE!" << std::endl;
+    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] DONE!" << std::endl;
     success = srv.response.success;
   }
   else
@@ -2293,7 +2307,7 @@ bool MobileManipulatorInterface::setMRTReadyFlag(bool val)
     success = false;
   }
 
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] END" << std::endl;
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] END" << std::endl;
   
   return success;
 }
@@ -2346,12 +2360,18 @@ void MobileManipulatorInterface::mrtCallback(const ros::TimerEvent& event)
   {
     //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] FIRST TIMER mrt_loop_->run2..." << std::endl;
     resetFlag_ = mrt_loop_->run2(currentTarget_);
+
+    if (!resetFlag_)
+    {
+      setMRTReadyFlag(true);
+    }
   }
 
   //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] IF newMPCProblemFlag_: " << newMPCProblemFlag_ << std::endl;
   if (newMPCProblemFlag_)
   {
     mrt_->updateStatusModelModeMRT(false);
+    setMRTReadyFlag(false);
 
     std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE setStopMPCFlag" << std::endl;
     setStopMPCFlag(true);
@@ -2369,6 +2389,11 @@ void MobileManipulatorInterface::mrtCallback(const ros::TimerEvent& event)
 
     mrt_->updateStatusModelModeMRT(true);
     resetFlag_ = mrt_loop_->run2(currentTarget_);
+
+    if (!resetFlag_)
+    {
+      setMRTReadyFlag(true);
+    }
 
     // Reset flags
     mpcWaitingFlag_ = false;

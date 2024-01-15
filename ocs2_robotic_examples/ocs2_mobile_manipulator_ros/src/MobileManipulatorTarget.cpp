@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
   std::string ns, topicPrefix, taskFile, world_frame_name, gz_model_msg_name, robot_name, drop_target_name;
   std::vector<std::string> name_pkgs_ign, name_pkgs_man, scan_data_path_pkgs_ign, scan_data_path_pkgs_man, target_names;
   double map_resolution, dummy_goal_pos_x, dummy_goal_pos_y, dummy_goal_pos_z, dummy_goal_ori_r, dummy_goal_ori_p, dummy_goal_ori_y;
-  bool drlFlag, printOutFlag = false;
+  bool drlFlag, printOutFlag = true;
 
   ns = nh.getNamespace();
   cout << "[MobileManipulatorTarget::main] ns: " << ns << endl;
@@ -66,8 +66,6 @@ int main(int argc, char* argv[])
   }
   cout << "[MobileManipulatorTarget::main] topicPrefix: " << topicPrefix << endl;
 
-  //pnh.param<std::string>("/world_frame_name", world_frame_name, "");
-  //pnh.param<std::string>("/gz_model_msg_name", gz_model_msg_name, "");
   robot_name = "mobiman";
   target_names = {"red_cube"};
   drop_target_name = "bin_4_dropping_task";
@@ -83,17 +81,21 @@ int main(int argc, char* argv[])
   nh.getParam("dummy_goal_ori_r", dummy_goal_ori_r);
   nh.getParam("dummy_goal_ori_p", dummy_goal_ori_p);
   nh.getParam("dummy_goal_ori_y", dummy_goal_ori_y);
+  nh.getParam("flag_drl", drlFlag);
 
   // read the task file
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile, pt);
 
   loadData::loadPtreeValue(pt, world_frame_name, "model_information.worldFrame", printOutFlag);
-  loadData::loadPtreeValue(pt, drlFlag, "model_settings.drlFlag", printOutFlag);
+  //loadData::loadPtreeValue(pt, drlFlag, "model_settings.drlFlag", printOutFlag);
 
-  //cout << "[MobileManipulatorTarget::main] world_frame_name: " << world_frame_name << endl;
-  //cout << "[MobileManipulatorTarget::main] drlFlag: " << drlFlag << endl;
-  //cout << "[MobileManipulatorTarget::main] gz_model_msg_name: " << gz_model_msg_name << endl;
+  if (printOutFlag)
+  {
+    cout << "[MobileManipulatorTarget::main] world_frame_name: " << world_frame_name << endl;
+    cout << "[MobileManipulatorTarget::main] gz_model_msg_name: " << gz_model_msg_name << endl;
+    cout << "[MobileManipulatorTarget::main] drlFlag: " << drlFlag << endl;
+  }
   
   // Set TargetTrajectoriesGazebo
   TargetTrajectoriesGazebo gu(nh, ns, topicPrefix, gz_model_msg_name, robot_name, target_names, drop_target_name, &goalPoseToTargetTrajectories);
