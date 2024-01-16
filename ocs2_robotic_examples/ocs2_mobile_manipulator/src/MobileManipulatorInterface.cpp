@@ -593,8 +593,7 @@ void MobileManipulatorInterface::initializeMRT()
   
   // Set observers of MRT ROS Gazebo Loop
   mrt_loop_->subscribeObservers({mobileManipulatorVisu_});  
-  mrt_loop_->setTargetReceivedFlag(true);
-
+  //mrt_loop_->setTargetReceivedFlag(true);
 
   // Clients
   setStopMPCFlagClient_ = nodeHandle_.serviceClient<ocs2_msgs::setBool>(setStopMPCFlagSrvName_);
@@ -1924,6 +1923,9 @@ bool MobileManipulatorInterface::setTargetDRL(double x, double y, double z, doub
 {
   std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setTargetDRL] START" << std::endl;
 
+  std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::setTargetDRL] DEBUG_INF" << std::endl;
+  while(1);
+
   bool success = false;
   ocs2_msgs::setTask srv;
   srv.request.targetPose.position.x = x;
@@ -2356,72 +2358,88 @@ void MobileManipulatorInterface::mrtCallback(const ros::TimerEvent& event)
 {
   //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] START" << std::endl;
 
-  if (mrtIter_ == 0)
+  if (targetReceivedFlag_)
   {
-    //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] FIRST TIMER mrt_loop_->run2..." << std::endl;
-    resetFlag_ = mrt_loop_->run2(currentTarget_);
+    //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE getCurrentTarget" << std::endl;
+    vector_t currentTarget = mrt_loop_->getCurrentTarget();
 
-    if (!resetFlag_)
+    if (mrtIter_ == 0)
     {
-      setMRTReadyFlag(true);
-    }
-  }
+      //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] FIRST TIMER mrt_loop_->run2..." << std::endl;
+      resetFlag_ = mrt_loop_->run2(currentTarget);
 
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] IF newMPCProblemFlag_: " << newMPCProblemFlag_ << std::endl;
-  if (newMPCProblemFlag_)
-  {
-    mrt_->updateStatusModelModeMRT(false);
-    setMRTReadyFlag(false);
-
-    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE setStopMPCFlag" << std::endl;
-    setStopMPCFlag(true);
-    //while (!setStopMPCFlag(true)){spinOnce();}
-
-    std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] Waiting mpcWaitingFlag_" << std::endl;
-    while (!mpcWaitingFlag_){spinOnce();}
-
-    //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE setMPCProblem" << std::endl;
-    setMPCProblem(modelModeInt_, false, false, false, true);
-    //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] AFTER setMPCProblem" << std::endl;
-
-    //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] Waiting mpcReadyFlag_" << std::endl;
-    while (!mpcReadyFlag_){spinOnce();}
-
-    mrt_->updateStatusModelModeMRT(true);
-    resetFlag_ = mrt_loop_->run2(currentTarget_);
-
-    if (!resetFlag_)
-    {
-      setMRTReadyFlag(true);
+      if (!resetFlag_ && drlFlag_)
+      {
+        setMRTReadyFlag(true);
+      }
     }
 
-    // Reset flags
-    mpcWaitingFlag_ = false;
-    mpcReadyFlag_ = false;
-    newMPCProblemFlag_ = false;
-
-    mrtModeChangeCtr_++;
-  }
-
-  //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] IF mrtLoop2" << std::endl;
-  if (!resetFlag_)
-  {
-    //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE mrtLoop2" << std::endl;
-    resetFlag_ = mrt_loop_->mrtLoop2();
-
-    if (resetFlag_)
+    //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] IF newMPCProblemFlag_: " << newMPCProblemFlag_ << std::endl;
+    if (newMPCProblemFlag_)
     {
-      std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] CALL AMBULANCE!" << std::endl;
       mrt_->updateStatusModelModeMRT(false);
-      newMPCProblemFlag_ = true;
+      
+      if (drlFlag_)
+      {
+        setMRTReadyFlag(false);
+      }
+
+      std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE setStopMPCFlag" << std::endl;
+      setStopMPCFlag(true);
+      //while (!setStopMPCFlag(true)){spinOnce();}
+
+      std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] Waiting mpcWaitingFlag_" << std::endl;
+      while (!mpcWaitingFlag_){spinOnce();}
+
+      //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE setMPCProblem" << std::endl;
+      setMPCProblem(modelModeInt_, false, false, false, true);
+      //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] AFTER setMPCProblem" << std::endl;
+
+      //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] Waiting mpcReadyFlag_" << std::endl;
+      while (!mpcReadyFlag_){spinOnce();}
+
+      mrt_->updateStatusModelModeMRT(true);
+      resetFlag_ = mrt_loop_->run2(currentTarget);
+
+      if (!resetFlag_ && drlFlag_)
+      {
+        setMRTReadyFlag(true);
+      }
+
+      // Reset flags
+      mpcWaitingFlag_ = false;
+      mpcReadyFlag_ = false;
+      newMPCProblemFlag_ = false;
+
+      mrtModeChangeCtr_++;
     }
+
+    //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] IF mrtLoop2" << std::endl;
+    if (!resetFlag_)
+    {
+      //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE mrtLoop2" << std::endl;
+      resetFlag_ = mrt_loop_->mrtLoop2();
+
+      if (resetFlag_)
+      {
+        std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] CALL AMBULANCE!" << std::endl;
+        mrt_->updateStatusModelModeMRT(false);
+        newMPCProblemFlag_ = true;
+      }
+    }
+
+    currentTarget_ = mrt_loop_->getCurrentTarget();
+
+    //spinOnce();
+
+    mrtIter_++;
   }
-
-  currentTarget_ = mrt_loop_->getCurrentTarget();
-
-  //spinOnce();
-
-  mrtIter_++;
+  else
+  {
+    //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE targetReceivedFlag_: " << targetReceivedFlag_ << std::endl;
+    targetReceivedFlag_ = mrt_loop_->getTargetReceivedFlag();
+    //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] AFTER targetReceivedFlag_: " << targetReceivedFlag_ << std::endl;
+  }
   
   //std::cout << "[" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] END" << std::endl;
 }

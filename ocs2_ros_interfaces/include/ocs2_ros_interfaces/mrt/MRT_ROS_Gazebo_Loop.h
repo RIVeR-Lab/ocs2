@@ -101,6 +101,9 @@ class MRT_ROS_Gazebo_Loop
     vector_t getCurrentInput();
 
     /** NUA TODO: Add description */
+    bool getTargetReceivedFlag();
+
+    /** NUA TODO: Add description */
     int getDRLActionResult();
 
     /** NUA TODO: Add description */
