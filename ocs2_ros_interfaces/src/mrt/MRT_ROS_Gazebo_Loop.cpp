@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.11
+// LAST UPDATE: 2024.01.15
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -180,11 +180,13 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   updateStateIndexMap(updateIndexMapFlag_);
   timer2_.endTimer();
 
+  /*
   if (drlFlag_)
   {
     std::cout << "[MRT_ROS_Gazebo_Loop::updateStateIndexMap] BEFORE setMRTReady" << std::endl;
     setMRTReady();
   }
+  */
 
   timer1_.endTimer();
 

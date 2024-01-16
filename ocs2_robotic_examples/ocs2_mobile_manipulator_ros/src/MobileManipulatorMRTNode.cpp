@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.12.13
+// LAST UPDATE: 2024.01.16
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -45,9 +45,9 @@ int main(int argc, char** argv)
 
   // Robot interface
   int initModelModeInt = 2;
-  
+  std::string interfaceName = "MRT";
   std::cout << "[MobileManipulatorMRTNode::main] START MobileManipulatorInterface" << std::endl;
-  MobileManipulatorInterface m4_interface(nh, taskFile, libFolder, urdfFile, initModelModeInt);
+  MobileManipulatorInterface m4_interface(nh, taskFile, libFolder, urdfFile, initModelModeInt, interfaceName, printOutFlag);
 
   std::cout << "[MobileManipulatorMRTNode::main] BEFORE initializeMRT" << std::endl;
   m4_interface.initializeMRT();

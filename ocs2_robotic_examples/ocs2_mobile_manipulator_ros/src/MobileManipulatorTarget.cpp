@@ -75,13 +75,13 @@ int main(int argc, char* argv[])
   //while(1);
 
   nh.getParam("/taskFile", taskFile);
-  nh.getParam("dummy_goal_pos_x", dummy_goal_pos_x);
-  nh.getParam("dummy_goal_pos_y", dummy_goal_pos_y);
-  nh.getParam("dummy_goal_pos_z", dummy_goal_pos_z);
-  nh.getParam("dummy_goal_ori_r", dummy_goal_ori_r);
-  nh.getParam("dummy_goal_ori_p", dummy_goal_ori_p);
-  nh.getParam("dummy_goal_ori_y", dummy_goal_ori_y);
-  nh.getParam("flag_drl", drlFlag);
+  nh.getParam("/dummy_goal_pos_x", dummy_goal_pos_x);
+  nh.getParam("/dummy_goal_pos_y", dummy_goal_pos_y);
+  nh.getParam("/dummy_goal_pos_z", dummy_goal_pos_z);
+  nh.getParam("/dummy_goal_ori_r", dummy_goal_ori_r);
+  nh.getParam("/dummy_goal_ori_p", dummy_goal_ori_p);
+  nh.getParam("/dummy_goal_ori_y", dummy_goal_ori_y);
+  nh.getParam("/flag_drl", drlFlag);
 
   // read the task file
   boost::property_tree::ptree pt;
@@ -96,19 +96,19 @@ int main(int argc, char* argv[])
     cout << "[MobileManipulatorTarget::main] gz_model_msg_name: " << gz_model_msg_name << endl;
     cout << "[MobileManipulatorTarget::main] drlFlag: " << drlFlag << endl;
   }
-  
+
   // Set TargetTrajectoriesGazebo
   TargetTrajectoriesGazebo gu(nh, ns, topicPrefix, gz_model_msg_name, robot_name, target_names, drop_target_name, &goalPoseToTargetTrajectories);
   gu.updateDummyGoal(dummy_goal_pos_x, dummy_goal_pos_y, dummy_goal_pos_z, dummy_goal_ori_r, dummy_goal_ori_p, dummy_goal_ori_y);
 
   if (drlFlag)
   {
-    //cout << "[MobileManipulatorTarget::main] DRL MODE IS ON!" << endl;
+    cout << "[MobileManipulatorTarget::main] DRL MODE IS ON!" << endl;
     gu.setTaskMode(1);
   }
   else
   {
-    //cout << "[MobileManipulatorTarget::main] MANUAL MODE IS ON!" << endl;
+    cout << "[MobileManipulatorTarget::main] MANUAL MODE IS ON!" << endl;
     gu.initializeInteractiveMarkerTarget();
     gu.initializeInteractiveMarkerAutoTarget();
     gu.initializeInteractiveMarkerModelMode();

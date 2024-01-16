@@ -101,7 +101,9 @@ class MobileManipulatorInterface final : public RobotInterface
                                const std::string& taskFile, 
                                const std::string& libraryFolder, 
                                const std::string& urdfFile,
-                               int initModelModeInt=2);
+                               int initModelModeInt=2,
+                               std::string interfaceName="",
+                               bool printOutFlag=false);
 
     const std::string& getTaskFile() const
     { 
@@ -198,6 +200,8 @@ class MobileManipulatorInterface final : public RobotInterface
     */
 
     void setNodeHandle(ros::NodeHandle& nodeHandle);
+
+    void setPrintOutFlag(bool printOutFlag);
 
     void initializeMPC();
 
@@ -388,6 +392,7 @@ class MobileManipulatorInterface final : public RobotInterface
     //int mrtShutDownEnvStatus_ = setenv("mrtShutDownFlag", "false", 1);
     //int mrtExitEnvStatus_ = setenv("mrtExitFlag", "true", 1);
 
+    std::string interfaceName_;
     bool printOutFlag_ = false;
     bool usePreComputation_;
     bool recompileLibraries_;

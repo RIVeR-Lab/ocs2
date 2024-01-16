@@ -1026,6 +1026,15 @@ void TargetTrajectoriesGazebo::updateTarget(const Eigen::Vector3d& targetPos, co
   currentTargetPosition_ = targetPos;
   currentTargetOrientation_ = targetOri;
 
+  std::cout << "[TargetTrajectoriesGazebo::updateTarget] x: " << targetPos[0] << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::updateTarget] y: " << targetPos[1] << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::updateTarget] z: " << targetPos[2] << std::endl;
+
+  std::cout << "[TargetTrajectoriesGazebo::updateTarget] qx: " << targetPos[1] << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::updateTarget] qy: " << targetPos[2] << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::updateTarget] qz: " << targetPos[3] << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::updateTarget] qw: " << targetPos[0] << std::endl;
+
   fillTargetVisu();
   //publishTargetVisu();
 
@@ -2190,11 +2199,22 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
 {
   std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] START" << std::endl;
 
+  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] taskMode_: " << taskMode_ << std::endl;
+
   geometry_msgs::Pose targetPose = req.targetPose;
   res.success = true;
 
   Eigen::Vector3d targetPos(targetPose.position.x, targetPose.position.y, targetPose.position.z);
   Eigen::Quaterniond targetOri(targetPose.orientation.w, targetPose.orientation.x, targetPose.orientation.y, targetPose.orientation.z);
+
+  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] x: " << targetPos[0] << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] y: " << targetPos[1] << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] z: " << targetPos[2] << std::endl;
+
+  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] qx: " << targetPos[1] << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] qy: " << targetPos[2] << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] qz: " << targetPos[3] << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] qw: " << targetPos[0] << std::endl;
 
   updateTarget(targetPos, targetOri);
 
@@ -2207,7 +2227,7 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
   target.orientation.y = targetPose.orientation.y;
   target.orientation.z = targetPose.orientation.z;
   target.orientation.w = targetPose.orientation.w;
-  //bool taskModeSuccess = setTask(taskMode_, target);
+  bool taskModeSuccess = setTask(taskMode_, target);
   
   std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] END" << std::endl;
   return res.success;
@@ -2219,6 +2239,9 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
 bool TargetTrajectoriesGazebo::setTask(int taskMode, geometry_msgs::Pose targetPose)
 {
   //std::cout << "[TargetTrajectoriesGazebo::setTask] START" << std::endl;
+
+  //std::cout << "[TargetTrajectoriesGazebo::setTask] DEBUG_INF" << std::endl;
+  //while(1);
 
   bool success = false;
   ocs2_msgs::setTask srv;

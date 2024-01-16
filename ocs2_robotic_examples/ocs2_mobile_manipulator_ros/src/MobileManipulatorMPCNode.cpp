@@ -45,8 +45,9 @@ int main(int argc, char** argv)
 
   // Robot interface
   int initModelModeInt = 2;
+  std::string interfaceName = "MPC";
   std::cout << "[MobileManipulatorMPCNode::main] BEFORE MobileManipulatorInterface" << std::endl;
-  MobileManipulatorInterface m4_interface(nh, taskFile, libFolder, urdfFile, initModelModeInt);
+  MobileManipulatorInterface m4_interface(nh, taskFile, libFolder, urdfFile, initModelModeInt, interfaceName, printOutFlag);
   
   std::cout << "[MobileManipulatorMPCNode::main] BEFORE initializeMPC" << std::endl;
   m4_interface.initializeMPC();

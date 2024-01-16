@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.12
+// LAST UPDATE: 2024.01.16
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -415,7 +415,7 @@ void MRT_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
   ROS_INFO_STREAM("[MRT_ROS_Interface::launchNodes] MRT node is ready.");
   */
  
-  updateStatusModelModeMRT(true);
+  //updateStatusModelModeMRT(true);
   /*
   statusModelModeMRTMsg_.data = true;
   statusModelModeMRTPublisher_.publish(statusModelModeMRTMsg_);
