@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.12.14
+// LAST UPDATE: 2024.01.16
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -245,8 +245,15 @@ class MobileManipulatorInterface final : public RobotInterface
 
     void getEEPose(vector_t& eePose);
 
+    bool setDiscreteActionDRL(int drlActionDiscrete, double drlActionTimeHorizon);
+
     bool setDiscreteActionDRLSrv(ocs2_msgs::setDiscreteActionDRL::Request &req, 
                                  ocs2_msgs::setDiscreteActionDRL::Response &res);
+
+    bool setContinuousActionDRL(std::vector<double> drlActionContinuous, 
+                                double drlActionTimeHorizon, 
+                                bool drlActionLastStepFlag,
+                                double drlActionLastStepDistanceThreshold);
 
     bool setContinuousActionDRLSrv(ocs2_msgs::setContinuousActionDRL::Request &req, 
                                    ocs2_msgs::setContinuousActionDRL::Response &res);
@@ -488,12 +495,13 @@ class MobileManipulatorInterface final : public RobotInterface
     
     vector_t currentTarget_;
 
-    std::string setActionDRLServiceName_;
+    std::string setActionDRLMPCServiceName_;
+    std::string setActionDRLMRTServiceName_;
     std::string setTargetDRLServiceName_;
-    std::string calculateMPCTrajectoryServiceName_;
-    std::string computeCommandServiceName_;
+    //std::string calculateMPCTrajectoryServiceName_;
+    //std::string computeCommandServiceName_;
     std::string setMPCActionResultServiceName_;
-    std::string setStopMPCFlagSrvName_;
+    //std::string setStopMPCFlagSrvName_;
     std::string setMPCWaitingFlagSrvName_;
     std::string setMPCReadyFlagSrvName_;
     std::string setMRTReadyFlagSrvName_;
@@ -537,17 +545,19 @@ class MobileManipulatorInterface final : public RobotInterface
     //ros::Publisher armJointTrajectoryPub_;
     //ros::Publisher armJointVelocityPub_;
 
+    ros::ServiceClient setActionDRLMPCClient_;
     ros::ServiceClient setTargetDRLClient_;
     ros::ServiceClient setMPCActionResultClient_;
-    ros::ServiceClient computeCommandClient_;
-    ros::ServiceClient setStopMPCFlagClient_;
+    //ros::ServiceClient computeCommandClient_;
+    //ros::ServiceClient setStopMPCFlagClient_;
     ros::ServiceClient setMPCWaitingFlagClient_;
     ros::ServiceClient setMPCReadyFlagClient_;
     ros::ServiceClient setMRTReadyFlagClient_;
 
-    ros::ServiceServer setActionDRLService_;
-    ros::ServiceServer calculateMPCTrajectoryService_;
-    ros::ServiceServer setStopMPCFlagService_;
+    ros::ServiceServer setActionDRLMPCService_;
+    ros::ServiceServer setActionDRLMRTService_;
+    //ros::ServiceServer calculateMPCTrajectoryService_;
+    //ros::ServiceServer setStopMPCFlagService_;
     ros::ServiceServer setMPCWaitingFlagService_;
     ros::ServiceServer setMPCReadyFlagService_;
     ros::ServiceServer setMRTReadyFlagService_;
