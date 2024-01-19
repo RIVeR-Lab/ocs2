@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.10.17
+// LAST UPDATE: 2024.01.18
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -90,10 +90,16 @@ int main(int argc, char* argv[])
   loadData::loadPtreeValue(pt, world_frame_name, "model_information.worldFrame", printOutFlag);
   //loadData::loadPtreeValue(pt, drlFlag, "model_settings.drlFlag", printOutFlag);
 
+  /// NUA NOTE: LEFT HEREEEEEEEEE: CHECK IF DUMMY GOAL COMES RIGHT, ALSO SET THE GOAL TO RED CUBE!!!
   if (printOutFlag)
   {
     cout << "[MobileManipulatorTarget::main] world_frame_name: " << world_frame_name << endl;
-    cout << "[MobileManipulatorTarget::main] gz_model_msg_name: " << gz_model_msg_name << endl;
+    cout << "[MobileManipulatorTarget::main] dummy_goal_pos_x: " << dummy_goal_pos_x << endl;
+    cout << "[MobileManipulatorTarget::main] dummy_goal_pos_y: " << dummy_goal_pos_y << endl;
+    cout << "[MobileManipulatorTarget::main] dummy_goal_pos_z: " << dummy_goal_pos_z << endl;
+    cout << "[MobileManipulatorTarget::main] dummy_goal_ori_r: " << dummy_goal_ori_r << endl;
+    cout << "[MobileManipulatorTarget::main] dummy_goal_ori_p: " << dummy_goal_ori_p << endl;
+    cout << "[MobileManipulatorTarget::main] dummy_goal_ori_y: " << dummy_goal_ori_y << endl;
     cout << "[MobileManipulatorTarget::main] drlFlag: " << drlFlag << endl;
   }
 

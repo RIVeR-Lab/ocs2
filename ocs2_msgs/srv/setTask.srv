@@ -6,6 +6,7 @@ int8 taskMode
 string targetName
 string targetAttachLinkName
 geometry_msgs/Pose targetPose
+float32 time_horizon
 ---
 # Result
 bool success

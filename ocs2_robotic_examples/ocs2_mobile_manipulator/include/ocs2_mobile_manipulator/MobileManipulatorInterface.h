@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.16
+// LAST UPDATE: 2024.01.17
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -207,10 +207,6 @@ class MobileManipulatorInterface final : public RobotInterface
 
     void initializeMRT();
 
-    void launchMPC();
-    
-    void launchMRT();
-
     void initializePointsOnRobotPtr(std::string& collisionPointsName);
 
     void updateFullModelState(std::vector<double>& statePositionBase, 
@@ -245,49 +241,61 @@ class MobileManipulatorInterface final : public RobotInterface
 
     void getEEPose(vector_t& eePose);
 
-    bool setDiscreteActionDRL(int drlActionDiscrete, double drlActionTimeHorizon);
+    bool setDiscreteActionDRLMPC(int drlActionDiscrete, double drlActionTimeHorizon);
 
-    bool setDiscreteActionDRLSrv(ocs2_msgs::setDiscreteActionDRL::Request &req, 
-                                 ocs2_msgs::setDiscreteActionDRL::Response &res);
+    bool setDiscreteActionDRLMPCSrv(ocs2_msgs::setDiscreteActionDRL::Request &req, 
+                                    ocs2_msgs::setDiscreteActionDRL::Response &res);
 
-    bool setContinuousActionDRL(std::vector<double> drlActionContinuous, 
-                                double drlActionTimeHorizon, 
-                                bool drlActionLastStepFlag,
-                                double drlActionLastStepDistanceThreshold);
+    bool setDiscreteActionDRLMRTSrv(ocs2_msgs::setDiscreteActionDRL::Request &req, 
+                                    ocs2_msgs::setDiscreteActionDRL::Response &res);
 
-    bool setContinuousActionDRLSrv(ocs2_msgs::setContinuousActionDRL::Request &req, 
-                                   ocs2_msgs::setContinuousActionDRL::Response &res);
+    bool setContinuousActionDRLMPC(std::vector<double>& drlActionContinuous, 
+                                   double& drlActionTimeHorizon, 
+                                   bool& drlActionLastStepFlag,
+                                   double& drlActionLastStepDistanceThreshold);
 
-    bool calculateMPCTrajectorySrv(ocs2_msgs::calculateMPCTrajectory::Request &req, 
-                                   ocs2_msgs::calculateMPCTrajectory::Response &res);
+    bool setContinuousActionDRLMPCSrv(ocs2_msgs::setContinuousActionDRL::Request &req, 
+                                      ocs2_msgs::setContinuousActionDRL::Response &res);
 
-    // DESCRIPTION: TODO...
-    bool setStopMPCFlagSrv(ocs2_msgs::setBool::Request &req, 
-                           ocs2_msgs::setBool::Response &res);
-    
+    bool setContinuousActionDRLMRTSrv(ocs2_msgs::setContinuousActionDRL::Request &req, 
+                                      ocs2_msgs::setContinuousActionDRL::Response &res);
+
+    //bool calculateMPCTrajectorySrv(ocs2_msgs::calculateMPCTrajectory::Request &req, 
+    //                               ocs2_msgs::calculateMPCTrajectory::Response &res);
+
     // DESCRIPTION: TODO...
     bool setStopMPCFlag(bool val);
 
     // DESCRIPTION: TODO...
-    bool setMPCWaitingFlagSrv(ocs2_msgs::setBool::Request &req, 
-                              ocs2_msgs::setBool::Response &res);
-    
+    bool setStopMPCFlagSrv(ocs2_msgs::setBool::Request &req, 
+                           ocs2_msgs::setBool::Response &res);
+
     // DESCRIPTION: TODO...
     bool setMPCWaitingFlag(bool val);
+
+    // DESCRIPTION: TODO...
+    bool setMPCWaitingFlagSrv(ocs2_msgs::setBool::Request &req, 
+                              ocs2_msgs::setBool::Response &res);
+
+    // DESCRIPTION: TODO...
+    bool setMPCReadyFlag(bool val);
 
     // DESCRIPTION: TODO...
     bool setMPCReadyFlagSrv(ocs2_msgs::setBool::Request &req, 
                             ocs2_msgs::setBool::Response &res);
 
     // DESCRIPTION: TODO...
-    bool setMPCReadyFlag(bool val);
+    bool setMRTReadyFlag(bool val);
 
     // DESCRIPTION: TODO...
     bool setMRTReadyFlagSrv(ocs2_msgs::setBool::Request &req, 
                             ocs2_msgs::setBool::Response &res);
 
     // DESCRIPTION: TODO...
-    bool setMRTReadyFlag(bool val);
+    void launchMPC();
+    
+    // DESCRIPTION: TODO...
+    void launchMRT();
 
     // DESCRIPTION: TODO...
     void mpcCallback(const ros::TimerEvent& event);
@@ -312,11 +320,11 @@ class MobileManipulatorInterface final : public RobotInterface
 
     void jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 
-    bool setTargetDRL(double x, double y, double z, double roll, double pitch, double yaw);
+    bool setTargetDRL(double x, double y, double z, double roll, double pitch, double yaw, double time_horizon=0.0);
 
     void mapDiscreteActionDRL(int action);
 
-    void mapContinuousActionDRL(std::vector<double>& action);
+    void mapContinuousActionDRL(bool setTargetDRLFlag=true);
 
     bool setMPCActionResult(int drlActionResult);
 
@@ -406,7 +414,7 @@ class MobileManipulatorInterface final : public RobotInterface
     bool activateSelfCollision_;
     bool activateExtCollision_;
     
-    bool drlFlag_ ;
+    bool drlFlag_;
     int drlActionType_;
 
     /// NUA NOTE: DEPRECATED? ----- START
@@ -495,13 +503,15 @@ class MobileManipulatorInterface final : public RobotInterface
     
     vector_t currentTarget_;
 
-    std::string setActionDRLMPCServiceName_;
-    std::string setActionDRLMRTServiceName_;
+    std::string setDiscreteActionDRLMPCServiceName_;
+    std::string setDiscreteActionDRLMRTServiceName_;
+    std::string setContinuousActionDRLMPCServiceName_;
+    std::string setContinuousActionDRLMRTServiceName_;
     std::string setTargetDRLServiceName_;
     //std::string calculateMPCTrajectoryServiceName_;
     //std::string computeCommandServiceName_;
     std::string setMPCActionResultServiceName_;
-    //std::string setStopMPCFlagSrvName_;
+    std::string setStopMPCFlagSrvName_;
     std::string setMPCWaitingFlagSrvName_;
     std::string setMPCReadyFlagSrvName_;
     std::string setMRTReadyFlagSrvName_;
@@ -545,19 +555,22 @@ class MobileManipulatorInterface final : public RobotInterface
     //ros::Publisher armJointTrajectoryPub_;
     //ros::Publisher armJointVelocityPub_;
 
-    ros::ServiceClient setActionDRLMPCClient_;
+    ros::ServiceClient setDiscreteActionDRLMPCClient_;
+    ros::ServiceClient setContinuousActionDRLMPCClient_;
     ros::ServiceClient setTargetDRLClient_;
     ros::ServiceClient setMPCActionResultClient_;
     //ros::ServiceClient computeCommandClient_;
-    //ros::ServiceClient setStopMPCFlagClient_;
+    ros::ServiceClient setStopMPCFlagClient_;
     ros::ServiceClient setMPCWaitingFlagClient_;
     ros::ServiceClient setMPCReadyFlagClient_;
     ros::ServiceClient setMRTReadyFlagClient_;
 
-    ros::ServiceServer setActionDRLMPCService_;
-    ros::ServiceServer setActionDRLMRTService_;
+    ros::ServiceServer setDiscreteActionDRLMPCService_;
+    ros::ServiceServer setDiscreteActionDRLMRTService_;
+    ros::ServiceServer setContinuousActionDRLMPCService_;
+    ros::ServiceServer setContinuousActionDRLMRTService_;
     //ros::ServiceServer calculateMPCTrajectoryService_;
-    //ros::ServiceServer setStopMPCFlagService_;
+    ros::ServiceServer setStopMPCFlagService_;
     ros::ServiceServer setMPCWaitingFlagService_;
     ros::ServiceServer setMPCReadyFlagService_;
     ros::ServiceServer setMRTReadyFlagService_;

@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.08.11
+// LAST UPDATE: 2024.01.18
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -211,7 +211,7 @@ class TargetTrajectoriesGazebo final
     //bool setTaskMode(int val);
 
     // DESCRIPTION: TODO...
-    bool setTask(int taskMode, geometry_msgs::Pose target);
+    bool setTask(int taskMode, geometry_msgs::Pose target, double time_horizon=0.0);
 
     // DESCRIPTION: TODO...
     //bool setTaskModeSrv(ocs2_msgs::setInt::Request &req, 

@@ -371,16 +371,16 @@ void MRT_ROS_Gazebo_Loop::run(vector_t initTarget)
 //-------------------------------------------------------------------------------------------------------
 bool MRT_ROS_Gazebo_Loop::run2(vector_t initTarget) 
 {
-  std::cout << "[MRT_ROS_Gazebo_Loop::run2] START" << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::run2] START" << std::endl;
 
   //currentTarget_ = initTarget;
 
-  std::cout << "[MRT_ROS_Gazebo_Loop::run2] Waiting for the state to be initialized..." << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::run2] Waiting for the state to be initialized..." << std::endl;
   while(!isStateInitialized()){ros::spinOnce();}
 
-  std::cout << "[MRT_ROS_Gazebo_Loop::run2] BEFORE getCurrentObservation" << std::endl;
-  std::cout << "[MRT_ROS_Gazebo_Loop::run2] getModelModeString: " << getModelModeString(robotModelInfo_) << std::endl;
-  std::cout << "[MRT_ROS_Gazebo_Loop::run2] getModeInputDim: " << getModeInputDim(robotModelInfo_) << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::run2] BEFORE getCurrentObservation" << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::run2] getModelModeString: " << getModelModeString(robotModelInfo_) << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::run2] getModeInputDim: " << getModeInputDim(robotModelInfo_) << std::endl;
   
   SystemObservation initObservation = getCurrentObservation(true);
   setSystemObservation(initObservation);
@@ -388,11 +388,13 @@ bool MRT_ROS_Gazebo_Loop::run2(vector_t initTarget)
   //std::cout << "[MRT_ROS_Gazebo_Loop::run2] initObservation: " << std::endl;
   //std::cout << initObservation << std::endl;
 
+  /*
   std::cout << "[MRT_ROS_Gazebo_Loop::run2] currentTarget size: " << initTarget.size() << std::endl;
   for (size_t i = 0; i < initTarget.size(); i++)
   {
     std::cout << i << " -> " << initTarget[i] << std::endl;
   }
+  */
 
   const TargetTrajectories initTargetTrajectories({0}, {initTarget}, {initObservation.input});
 
@@ -415,7 +417,7 @@ bool MRT_ROS_Gazebo_Loop::run2(vector_t initTarget)
 
     if (initPolicyCtr == initPolicyCtrMax_)
     {
-      std::cout << "[MRT_ROS_Gazebo_Loop::run2] STUCK!" << std::endl;
+      //std::cout << "[MRT_ROS_Gazebo_Loop::run2] STUCK!" << std::endl;
       return true;
       initPolicyCtr = 0;
     }
@@ -430,7 +432,7 @@ bool MRT_ROS_Gazebo_Loop::run2(vector_t initTarget)
 
   currentTarget_ = initTarget;
 
-  std::cout << "[MRT_ROS_Gazebo_Loop::run2] END" << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::run2] END" << std::endl;
 
   return false;
 
@@ -597,7 +599,7 @@ void MRT_ROS_Gazebo_Loop::mrtLoop()
   PrimalSolution currentPolicy;
 
   shutDownFlag_ = false;
-  drlActionResult_ = 0;
+  //drlActionResult_ = 0;
 
   // Update the policy
   mrt_.updatePolicy();
@@ -872,7 +874,10 @@ bool MRT_ROS_Gazebo_Loop::mrtLoop2()
   publishCommand(currentPolicy, currentObservation, currentStateVelocityBase);
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] BEFORE checkTaskStatus" << std::endl;
-  //int ts = checkTaskStatus(drlFlag_);
+  if (drlFlag_)
+  {
+    drlActionResult_ = checkTaskStatus(false);
+  }
   
   //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop2] BEFORE writeData" << std::endl;
   //writeData();
@@ -894,6 +899,9 @@ bool MRT_ROS_Gazebo_Loop::mrtLoop2()
 void MRT_ROS_Gazebo_Loop::computeCommand(vector_t currentTarget, SystemObservation initObservation, double dt)
 {
   std::cout << "[MRT_ROS_Gazebo_Loop::computeCommand] START" << std::endl;
+
+  std::cout << "[MRT_ROS_Gazebo_Loop::computeCommand] DEBUG_INF" << std::endl;
+  while(1);
 
   setSystemObservation(initObservation);
 
@@ -939,8 +947,8 @@ void MRT_ROS_Gazebo_Loop::computeCommand(vector_t currentTarget, SystemObservati
   //SystemObservation targetObservation;
   PrimalSolution currentPolicy;
 
-  shutDownFlag_ = false;
-  drlActionResult_ = 0;
+  //shutDownFlag_ = false;
+  //drlActionResult_ = 0;
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::computeCommand] BEFORE updatePolicy" << std::endl;
   // Update the policy
@@ -1977,6 +1985,10 @@ bool MRT_ROS_Gazebo_Loop::setTaskSrv(ocs2_msgs::setTask::Request &req,
   currentTarget_(4) = req.targetPose.orientation.y;
   currentTarget_(5) = req.targetPose.orientation.z;
   currentTarget_(6) = req.targetPose.orientation.w;
+
+  /// NUA TODO: LEFT HEREEEEEEEEEE !!!!
+  drlActionTimeHorizon_ = req.time_horizon;
+
   res.success = true;
 
   std::cout << "[MRT_ROS_Gazebo_Loop::setTaskSrv] currentTarget_(0): " << currentTarget_(0) << std::endl;
@@ -2320,8 +2332,8 @@ bool MRT_ROS_Gazebo_Loop::checkCollision(bool enableShutDownFlag)
     //if (selfCollisionInfoMsg.distance[i] < selfCollisionRangeMin_)
     if (selfCollisionInfoMsg.status[i])
     {
-      drlActionResult_ = 1;
-      shutDownFlag_ = enableShutDownFlag;
+      //drlActionResult_ = 1;
+      //shutDownFlag_ = enableShutDownFlag;
       //std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] SELF COLLISION! dist: " << selfCollisionInfoMsg.distance[i] << std::endl;
       return true;
     }
@@ -2348,8 +2360,8 @@ bool MRT_ROS_Gazebo_Loop::checkCollision(bool enableShutDownFlag)
     //if (extCollisionInfoBaseMsg.distance[i] < extCollisionRangeBaseMin_)
     if (extCollisionInfoBaseMsg.status[i])
     {
-      drlActionResult_ = 1;
-      shutDownFlag_ = enableShutDownFlag;
+      //drlActionResult_ = 1;
+      //shutDownFlag_ = enableShutDownFlag;
       //std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] EXT COLLISION BASE! dist: " << extCollisionInfoBaseMsg.distance[i] << std::endl;
       return true;
     }
@@ -2376,8 +2388,8 @@ bool MRT_ROS_Gazebo_Loop::checkCollision(bool enableShutDownFlag)
     //if (extCollisionInfoArmMsg.distance[i] < extCollisionRangeArmMin_)
     if (extCollisionInfoArmMsg.status[i])
     {
-      drlActionResult_ = 1;
-      shutDownFlag_ = enableShutDownFlag;
+      //drlActionResult_ = 1;
+      //shutDownFlag_ = enableShutDownFlag;
       //std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] EXT COLLISION ARM! dist: " << extCollisionInfoArmMsg.distance[i] << std::endl;
       return true;
     }
@@ -2389,8 +2401,8 @@ bool MRT_ROS_Gazebo_Loop::checkCollision(bool enableShutDownFlag)
   {
     if (pointsOnRobotMsg.markers[i].pose.position.z < extCollisionRangeBaseMin_)
     {
-      drlActionResult_ = 1;
-      shutDownFlag_ = enableShutDownFlag;
+      //drlActionResult_ = 1;
+      //shutDownFlag_ = enableShutDownFlag;
       //std::cout << "[MRT_ROS_Gazebo_Loop::checkCollision] GROUND COLLISION!" << pointsOnRobotMsg.markers[i].pose.position.z << std::endl;
       return true;
     }
@@ -2428,7 +2440,7 @@ bool MRT_ROS_Gazebo_Loop::checkRollover(bool enableShutDownFlag)
 
   if (roll_robot_wrt_world > rolloverRollThreshold_)
   {
-    drlActionResult_ = 2;
+    //drlActionResult_ = 2;
     shutDownFlag_ = enableShutDownFlag;
     //std::cout << "[MRT_ROS_Gazebo_Loop::checkRollover] ROLL ROLLOVER!" << std::endl;
     return true;
@@ -2436,7 +2448,7 @@ bool MRT_ROS_Gazebo_Loop::checkRollover(bool enableShutDownFlag)
 
   if (pitch_robot_wrt_world > rolloverPitchThreshold_)
   {
-    drlActionResult_ = 2;
+    //drlActionResult_ = 2;
     shutDownFlag_ = enableShutDownFlag;
     //std::cout << "[MRT_ROS_Gazebo_Loop::checkRollover] PITCH ROLLOVER!" << std::endl;
     return true;
@@ -2476,7 +2488,7 @@ bool MRT_ROS_Gazebo_Loop::checkGoal(bool enableShutDownFlag)
 
   if ((err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_quat_))
   {
-    drlActionResult_ = 3;
+    //drlActionResult_ = 3;
     shutDownFlag_ = enableShutDownFlag;
 
     //std::cout << "[MRT_ROS_Gazebo_Loop::checkGoal] REACHED GOAL!" << std::endl;
@@ -2611,7 +2623,7 @@ bool MRT_ROS_Gazebo_Loop::checkTarget(bool enableShutDownFlag)
       if ((err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_yaw_))
       {
         //std::cout << "[MRT_ROS_Gazebo_Loop::checkGoal] REACHED TO THE TARGET with modelModeInt: " << modelModeInt << std::endl;
-        drlActionResult_ = 4;
+        //drlActionResult_ = 4;
         shutDownFlag_ = enableShutDownFlag;
         //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END true" << std::endl;
         
@@ -2629,7 +2641,7 @@ bool MRT_ROS_Gazebo_Loop::checkTarget(bool enableShutDownFlag)
       if ((err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_quat_))
       {
         //std::cout << "[MRT_ROS_Gazebo_Loop::checkGoal] REACHED TO THE TARGET with modelModeInt: " << modelModeInt << std::endl;
-        drlActionResult_ = 4;
+        //drlActionResult_ = 4;
         shutDownFlag_ = enableShutDownFlag;
         //std::cout << "[MRT_ROS_Gazebo_Loop::checkTarget] END true" << std::endl;
         return true;
@@ -2683,21 +2695,25 @@ int MRT_ROS_Gazebo_Loop::checkTaskStatus(bool enableShutDownFlag)
     if (checkCollision(enableShutDownFlag))
     {
       std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] checkTaskStatus: COLLISION!" << std::endl;
+      targetReceivedFlag_ = false;
       return 1;
     }
     else if (checkRollover(enableShutDownFlag))
     {
       std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] checkTaskStatus: ROLLOVER!" << std::endl;
+      targetReceivedFlag_ = false;
       return 2;
     }
     else if (checkGoal(enableShutDownFlag))
     {
       std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] checkTaskStatus: REACHED GOAL!" << std::endl;
+      targetReceivedFlag_ = false;
       return 3;
     }
     else if (checkTarget(enableShutDownFlag))
     {
       std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] checkTaskStatus: REACHED TARGET!" << std::endl;
+      targetReceivedFlag_ = false;
       return 4;
     }
     else if (time_ > drlActionTimeHorizon_)
@@ -2706,8 +2722,9 @@ int MRT_ROS_Gazebo_Loop::checkTaskStatus(bool enableShutDownFlag)
       std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] drlActionTimeHorizon_: " << drlActionTimeHorizon_ << std::endl;
       std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] END OF ACTION HORIZON!" << std::endl;
       
-      shutDownFlag_ = enableShutDownFlag;
-      drlActionResult_ = 5;
+      //shutDownFlag_ = enableShutDownFlag;
+      //drlActionResult_ = 5;
+      targetReceivedFlag_ = false;
       return 5;
     }
   }
