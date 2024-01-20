@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.17
+// LAST UPDATE: 2024.01.20
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -413,6 +413,8 @@ class MobileManipulatorInterface final : public RobotInterface
     bool recompileLibraries_;
     bool activateSelfCollision_;
     bool activateExtCollision_;
+    bool initActivateSelfCollision_;
+    bool initActivateExtCollision_;
     
     bool drlFlag_;
     int drlActionType_;
@@ -524,6 +526,7 @@ class MobileManipulatorInterface final : public RobotInterface
     
     int mpcModeChangeCtr_ = 0;
     int mrtModeChangeCtr_ = 0;
+    int mrtStuckCtr_ = 0;
 
     benchmark::RepeatedTimer mpcTimer0_;
     benchmark::RepeatedTimer mpcTimer1_;

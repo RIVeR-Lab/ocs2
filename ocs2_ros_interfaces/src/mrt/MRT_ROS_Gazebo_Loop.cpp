@@ -404,6 +404,11 @@ bool MRT_ROS_Gazebo_Loop::run2(vector_t initTarget)
   //std::cout << "[MRT_ROS_Gazebo_Loop::run2] AFTER resetMpcNode" << std::endl;
 
   int initPolicyCtr = 0;
+  
+  if (drlFlag_ && !timerStartedFlag_)
+  {
+    startTimer();
+  }
   time_ = 0.0;
   // Wait for the initial state and policy
   while ( !mrt_.initialPolicyReceived() && ros::ok() && ros::master::check() ) 
@@ -1220,6 +1225,39 @@ void MRT_ROS_Gazebo_Loop::setDRLActionLastStepDistanceThreshold(double drlAction
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::setTimerStartedFlag(bool timerStartedFlag)
+{
+  timerStartedFlag_ = timerStartedFlag;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::startTimer()
+{
+  startTime_ = std::chrono::steady_clock::now();
+  //start_time = std::chrono::high_resolution_clock::now();
+  timerStartedFlag_ = true;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+bool MRT_ROS_Gazebo_Loop::checkTimer(double& duration)
+{
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTimer] START" << std::endl;
+  auto currentTime = std::chrono::steady_clock::now();
+  double currentDuration = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime_).count() * 0.001;
+  
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTimer] currentDuration: " << currentDuration  << " s" << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkTimer] END" << std::endl;
+  
+  return (currentDuration > duration);
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MRT_ROS_Gazebo_Loop::updateModelMode()
 {
   //std::cout << "[MRT_ROS_Gazebo_Loop::updateModelMode] START" << std::endl;
@@ -1974,6 +2012,10 @@ bool MRT_ROS_Gazebo_Loop::setTaskSrv(ocs2_msgs::setTask::Request &req,
                                      ocs2_msgs::setTask::Response &res)
 {
   //std::cout << "[MRT_ROS_Gazebo_Loop::setTaskSrv] START" << std::endl;
+  
+  //std::cout << "[MRT_ROS_Gazebo_Loop::setTaskSrv] DEBUG_INF" << std::endl;
+  //while(1);
+  
   taskMode_ = req.taskMode;
   currentTargetName_ = req.targetName;
   currentTargetAttachLinkName_ = req.targetAttachLinkName;
@@ -2715,6 +2757,7 @@ int MRT_ROS_Gazebo_Loop::checkTaskStatus(bool enableShutDownFlag)
       targetReceivedFlag_ = false;
       return 4;
     }
+    /*
     else if (time_ > drlActionTimeHorizon_)
     {
       //std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] time_: " << time_ << std::endl;
@@ -2726,6 +2769,7 @@ int MRT_ROS_Gazebo_Loop::checkTaskStatus(bool enableShutDownFlag)
       targetReceivedFlag_ = false;
       return 5;
     }
+    */
   }
   else
   {

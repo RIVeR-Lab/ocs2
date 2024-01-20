@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.12
+// LAST UPDATE: 2024.01.20
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -141,6 +141,15 @@ class MRT_ROS_Gazebo_Loop
 
     /** NUA TODO: Add description */
     void setDRLActionLastStepDistanceThreshold(double drlActionLastStepDistanceThreshold);
+
+    /** NUA TODO: Add description */
+    void setTimerStartedFlag(bool timerStartedFlag);
+
+    /** NUA TODO: Add description */
+    void startTimer();
+
+    /** NUA TODO: Add description */
+    bool checkTimer(double& duration);
 
     /** NUA TODO: Add description */
     void updateModelMode();
@@ -402,7 +411,10 @@ class MRT_ROS_Gazebo_Loop
     benchmark::RepeatedTimer timer1_;
     benchmark::RepeatedTimer timer2_;
 
-    ros::Timer updateTimer_;
+    //ros::Timer updateTimer_;
+
+    bool timerStartedFlag_ = false;
+    std::chrono::steady_clock::time_point startTime_;
 
     ros::Subscriber tfSub_;
     ros::Subscriber odometrySub_;
