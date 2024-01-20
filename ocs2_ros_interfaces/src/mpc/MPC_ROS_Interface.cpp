@@ -75,8 +75,10 @@ void MPC_ROS_Interface::setSystemObservation(SystemObservation& so)
 //-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::updateStatusModelModeMPC(bool statusModelModeMPC)
 {
+  //std::cout << "[MPC_ROS_Interface::updateStatusModelModeMPC] START" << std::endl;
   statusModelModeMPCMsg_.data = statusModelModeMPC;
   statusModelModeMPCPublisher_.publish(statusModelModeMPCMsg_);
+  //std::cout << "[MPC_ROS_Interface::updateStatusModelModeMPC] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -116,20 +118,22 @@ bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_ms
 
   if (static_cast<bool>(req.reset)) 
   {
-    std::cout << "[MPC_ROS_Interface::resetMpcNode] BEFORE readTargetTrajectoriesMsg" << std::endl;
+    //std::cout << "[MPC_ROS_Interface::resetMpcNode] BEFORE readTargetTrajectoriesMsg" << std::endl;
     auto targetTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(req.targetTrajectories);
 
-    std::cout << "[MPC_ROS_Interface::resetMpcCallback] RECEIVED targetTrajectories size: " << targetTrajectories.size() << std::endl;
-    std::cout << targetTrajectories << std::endl;
+    //std::cout << "[MPC_ROS_Interface::resetMpcCallback] RECEIVED targetTrajectories size: " << targetTrajectories.size() << std::endl;
+    //std::cout << targetTrajectories << std::endl;
 
     resetMpcNode(std::move(targetTrajectories));
     res.done = static_cast<uint8_t>(true);
 
+    /*
     std::cout << "\n#####################################################"
               << "\n#####################################################"
               << "\n#################  MPC is reset.  ###################"
               << "\n#####################################################"
               << "\n#####################################################\n";
+    */
     return true;
   } 
   else 
@@ -461,13 +465,13 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
 
   if (!resetRequestedEver_.load()) 
   {
-    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] MPC should be reset first. Either call MPC_ROS_Interface::reset() or use the reset service." << std::endl;
+    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] MPC should be reset first. Either call MPC_ROS_Interface::reset() or use the reset service." << std::endl;
     return;
   }
 
   if (internalShutDownFlag_) 
   {
-    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] internalShutDownFlag_ is ON! MPC should be reset first!" << std::endl;
+    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] internalShutDownFlag_ is ON! MPC should be reset first!" << std::endl;
     return;
   }
 
@@ -487,7 +491,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE terminateThread_: " << terminateThread_ << std::endl;
   if (internalShutDownFlag_)
   {
-    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
+    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
     terminateThread_ = true;
   }
   //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] AFTER terminateThread_: " << terminateThread_ << std::endl;
@@ -511,7 +515,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
 
   if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) 
   {
-    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] WARNING: The solution time window might be shorter than the MPC delay!" << std::endl;
+    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] WARNING: The solution time window might be shorter than the MPC delay!" << std::endl;
   }
 
   // Display time benchmarks
@@ -624,12 +628,12 @@ void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
   mpcPolicyPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_flattened_controller>(topicPrefix_ + "mpc_policy", 1, true);
 
   // Publish Model Mode MPC Status
-  statusModelModeMPCPublisher_ = nodeHandle.advertise<std_msgs::Bool>("model_mode_mpc_status", 1, true);
+  statusModelModeMPCPublisher_ = nodeHandle.advertise<std_msgs::Bool>("model_mode_mpc_status", 5, true);
 
   // Service Server to reset MPC
   mpcResetServiceServer_ = nodeHandle.advertiseService(topicPrefix_ + "mpc_reset", &MPC_ROS_Interface::resetMpcCallback, this);
  
-  updateStatusModelModeMPC(true);
+  //updateStatusModelModeMPC(true);
   /*
   statusModelModeMPCMsg_.data = true;
   statusModelModeMPCPublisher_.publish(statusModelModeMPCMsg_);

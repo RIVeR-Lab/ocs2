@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.18
+// LAST UPDATE: 2024.01.19
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -57,15 +57,6 @@ int main(int argc, char* argv[])
   double map_resolution, dummy_goal_pos_x, dummy_goal_pos_y, dummy_goal_pos_z, dummy_goal_ori_r, dummy_goal_ori_p, dummy_goal_ori_y;
   bool drlFlag, printOutFlag = true;
 
-  ns = nh.getNamespace();
-  cout << "[MobileManipulatorTarget::main] ns: " << ns << endl;
-  topicPrefix = "/mobile_manipulator_";
-  if (ns != "/")
-  {
-    topicPrefix = ns;
-  }
-  cout << "[MobileManipulatorTarget::main] topicPrefix: " << topicPrefix << endl;
-
   robot_name = "mobiman";
   target_names = {"red_cube"};
   drop_target_name = "bin_4_dropping_task";
@@ -74,25 +65,28 @@ int main(int argc, char* argv[])
   //cout << "[MobileManipulatorTarget::main] DEBUG INF" << endl;
   //while(1);
 
-  nh.getParam("/taskFile", taskFile);
-  nh.getParam("/dummy_goal_pos_x", dummy_goal_pos_x);
-  nh.getParam("/dummy_goal_pos_y", dummy_goal_pos_y);
-  nh.getParam("/dummy_goal_pos_z", dummy_goal_pos_z);
-  nh.getParam("/dummy_goal_ori_r", dummy_goal_ori_r);
-  nh.getParam("/dummy_goal_ori_p", dummy_goal_ori_p);
-  nh.getParam("/dummy_goal_ori_y", dummy_goal_ori_y);
-  nh.getParam("/flag_drl", drlFlag);
+  if (!pnh.getParam("/dummy_goal_pos_y", dummy_goal_pos_z))
+  {
+    ROS_ERROR("Failed to get parameter from server.");
+  }
+
+  pnh.param<std::string>("/taskFile", taskFile, "");
+  pnh.param<double>("/dummy_goal_pos_x", dummy_goal_pos_x, 0.0);
+  pnh.param<double>("/dummy_goal_pos_y", dummy_goal_pos_y, 0.0);
+  pnh.param<double>("/dummy_goal_pos_z", dummy_goal_pos_z, 0.0);
+  pnh.param<double>("/dummy_goal_ori_r", dummy_goal_ori_r, 0.0);
+  pnh.param<double>("/dummy_goal_ori_p", dummy_goal_ori_p, 0.0);
+  pnh.param<double>("/dummy_goal_ori_y", dummy_goal_ori_y, 0.0);
+  pnh.param<bool>("/flag_drl", drlFlag, false);
 
   // read the task file
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile, pt);
-
   loadData::loadPtreeValue(pt, world_frame_name, "model_information.worldFrame", printOutFlag);
-  //loadData::loadPtreeValue(pt, drlFlag, "model_settings.drlFlag", printOutFlag);
 
-  /// NUA NOTE: LEFT HEREEEEEEEEE: CHECK IF DUMMY GOAL COMES RIGHT, ALSO SET THE GOAL TO RED CUBE!!!
   if (printOutFlag)
   {
+    cout << "[MobileManipulatorTarget::main] taskFile: " << taskFile << endl;
     cout << "[MobileManipulatorTarget::main] world_frame_name: " << world_frame_name << endl;
     cout << "[MobileManipulatorTarget::main] dummy_goal_pos_x: " << dummy_goal_pos_x << endl;
     cout << "[MobileManipulatorTarget::main] dummy_goal_pos_y: " << dummy_goal_pos_y << endl;
@@ -103,8 +97,24 @@ int main(int argc, char* argv[])
     cout << "[MobileManipulatorTarget::main] drlFlag: " << drlFlag << endl;
   }
 
+  ns = nh.getNamespace();
+  cout << "[MobileManipulatorTarget::main] ns: " << ns << endl;
+  topicPrefix = "/mobile_manipulator_";
+  if (ns != "/")
+  {
+    topicPrefix = ns;
+
+    for (size_t i = 0; i < target_names.size(); i++)
+    {
+      target_names[i] = ns + "/" + target_names[i];
+      drop_target_name = ns + "/" + drop_target_name;
+    }
+    
+  }
+  cout << "[MobileManipulatorTarget::main] topicPrefix: " << topicPrefix << endl;
+
   // Set TargetTrajectoriesGazebo
-  TargetTrajectoriesGazebo gu(nh, ns, topicPrefix, gz_model_msg_name, robot_name, target_names, drop_target_name, &goalPoseToTargetTrajectories);
+  TargetTrajectoriesGazebo gu(nh, ns, topicPrefix, gz_model_msg_name, robot_name, target_names, drop_target_name, &goalPoseToTargetTrajectories, drlFlag);
   gu.updateDummyGoal(dummy_goal_pos_x, dummy_goal_pos_y, dummy_goal_pos_z, dummy_goal_ori_r, dummy_goal_ori_p, dummy_goal_ori_y);
 
   if (drlFlag)

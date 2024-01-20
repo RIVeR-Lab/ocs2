@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.18
+// LAST UPDATE: 2024.01.19
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -23,7 +23,8 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
                                                    std::string robotName,
                                                    std::vector<std::string>& targetNames,
                                                    std::string dropTargetName,
-                                                   GoalPoseToTargetTrajectories goalPoseToTargetTrajectories)
+                                                   GoalPoseToTargetTrajectories goalPoseToTargetTrajectories,
+                                                   bool drlFlag)
   : targetServer_("target_marker"), 
     autoTargetServer_("auto_target_marker"), 
     dropTargetServer_("drop_target_marker"), 
@@ -31,17 +32,21 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
     robotName_(robotName), 
     targetNames_(targetNames), 
     dropTargetName_(dropTargetName),
-    goalPoseToTargetTrajectories_(std::move(goalPoseToTargetTrajectories)) 
+    goalPoseToTargetTrajectories_(std::move(goalPoseToTargetTrajectories)),
+    drlFlag_(drlFlag)
 {
   tflistenerPtr_ = new tf::TransformListener;
 
   /// NUA TODO: SET THIS IN CONFIG!
   graspPositionOffset_.x() = 0;
-  graspPositionOffset_.y() = 0.2;
+  graspPositionOffset_.y() = -0.2;
   graspPositionOffset_.z() = 0;
+  //graspOrientationOffsetMatrix_ <<  1.0, 0.0, 0.0,
+  //                                  0.0, 0.0, -1.0,
+  //                                  0.0, 1.0, 0.0;
   graspOrientationOffsetMatrix_ <<  1.0, 0.0, 0.0,
-                                    0.0, 0.0, -1.0,
-                                    0.0, 1.0, 0.0;
+                                    0.0, 1.0, 0.0,
+                                    0.0, 0.0, 1.0;
 
   dropPositionOffset_.x() = 0;
   dropPositionOffset_.y() = 0.2;
@@ -74,6 +79,9 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
   if (ns != "/")
   {
     goalFrameName_ = ns + "/" + goalFrameName_;
+    graspFrameName_ = ns + "/" + graspFrameName_;
+    dropFrameName_ = ns + "/" + dropFrameName_;
+    eeFrameName_ = ns + "/" + eeFrameName_;
 
     modelModeMsgName_ = ns + "/" + modelModeMsgName_;
     goalVisuMsgName_ = ns + "/" + goalVisuMsgName_;
@@ -90,14 +98,14 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
   }
 
   /*
-  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMPCCallback] targetNames_: " << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] targetNames_: " << std::endl;
   for (size_t i = 0; i < targetNames_.size(); i++)
   {
     std::cout << i << " -> " << targetNames_[i] << std::endl;
   }
   */
-  
-  //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMPCCallback] DEBUG INF" << std::endl;
+
+  //std::cout << "[TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] DEBUG_INF" << std::endl;
   //while(1);
 
   /// Interactive Marker
@@ -116,33 +124,8 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
   };
   observationSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mpc_observation>(mpcObservationMsgName_, 1, observationCallback);
 
-  auto statusModelModeMPCCallback = [this](const std_msgs::Bool::ConstPtr& msg) 
-  {
-    //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMPCCallback] START" << std::endl;
-
-    statusModelModeMPC_ = msg->data;
-    //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMPCCallback] modelModeInt: " << statusModelModeMPC_ << std::endl;
-
-    initializeInteractiveMarkerModelMode();
-
-    //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMPCCallback] END" << std::endl;
-    //std::cout << "" << std::endl;
-  };
-  statusModelModeMPCSubscriber_ = nodeHandle.subscribe<std_msgs::Bool>(modelModeMPCStatusMsgName_, 5, statusModelModeMPCCallback);
-
-  auto statusModelModeMRTCallback = [this](const std_msgs::Bool::ConstPtr& msg) 
-  {
-    //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] START" << std::endl;
-
-    statusModelModeMRT_ = msg->data;
-    //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] modelModeInt: " << statusModelModeMRT_ << std::endl;
-    
-    initializeInteractiveMarkerModelMode();
-
-    //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] END" << std::endl;
-    //std::cout << "" << std::endl;
-  };
-  statusModelModeMRTSubscriber_ = nodeHandle.subscribe<std_msgs::Bool>(modelModeMRTStatusMsgName_, 5, statusModelModeMRTCallback);
+  statusModelModeMPCSubscriber_ = nodeHandle.subscribe<std_msgs::Bool>(modelModeMPCStatusMsgName_, 5, &TargetTrajectoriesGazebo::statusModelModeMPCCallback, this);
+  statusModelModeMRTSubscriber_ = nodeHandle.subscribe<std_msgs::Bool>(modelModeMRTStatusMsgName_, 5, &TargetTrajectoriesGazebo::statusModelModeMRTCallback, this);
 
   //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] gazeboModelMsgName: " << gazeboModelMsgName << std::endl;
   if (gazeboModelMsgName != "")
@@ -689,6 +672,44 @@ void TargetTrajectoriesGazebo::tfCallback(const tf2_msgs::TFMessage::ConstPtr& m
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::statusModelModeMPCCallback(const std_msgs::Bool::ConstPtr& msg)
+{
+  //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMPCCallback] START" << std::endl;
+
+  statusModelModeMPC_ = msg->data;
+  //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMPCCallback] modelModeInt: " << statusModelModeMPC_ << std::endl;
+
+  if (!drlFlag_)
+  {
+    initializeInteractiveMarkerModelMode();
+  }
+
+  //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMPCCallback] END" << std::endl;
+  //std::cout << "" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::statusModelModeMRTCallback(const std_msgs::Bool::ConstPtr& msg)
+{
+  //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] START" << std::endl;
+
+  statusModelModeMRT_ = msg->data;
+  //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] modelModeInt: " << statusModelModeMRT_ << std::endl;
+  
+  if (!drlFlag_)
+  {
+    initializeInteractiveMarkerModelMode();
+  }
+  
+  //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] END" << std::endl;
+  //std::cout << "" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::updateTargetInfo()
 {
   gazebo_msgs::ModelStates ms = modelStatesMsg_;
@@ -1034,6 +1055,7 @@ void TargetTrajectoriesGazebo::updateTarget(const Eigen::Vector3d& targetPos, co
   currentTargetPosition_ = targetPos;
   currentTargetOrientation_ = targetOri;
 
+  /*
   std::cout << "[TargetTrajectoriesGazebo::updateTarget] x: " << targetPos[0] << std::endl;
   std::cout << "[TargetTrajectoriesGazebo::updateTarget] y: " << targetPos[1] << std::endl;
   std::cout << "[TargetTrajectoriesGazebo::updateTarget] z: " << targetPos[2] << std::endl;
@@ -1042,6 +1064,7 @@ void TargetTrajectoriesGazebo::updateTarget(const Eigen::Vector3d& targetPos, co
   std::cout << "[TargetTrajectoriesGazebo::updateTarget] qy: " << targetPos[2] << std::endl;
   std::cout << "[TargetTrajectoriesGazebo::updateTarget] qz: " << targetPos[3] << std::endl;
   std::cout << "[TargetTrajectoriesGazebo::updateTarget] qw: " << targetPos[0] << std::endl;
+  */
 
   fillTargetVisu();
   //publishTargetVisu();

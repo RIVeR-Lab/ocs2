@@ -56,7 +56,8 @@ class TargetTrajectoriesGazebo final
                              std::string robotName,
                              std::vector<std::string>& targetNames,
                              std::string dropTargetName,
-                             GoalPoseToTargetTrajectories goalPoseToTargetTrajectories);
+                             GoalPoseToTargetTrajectories goalPoseToTargetTrajectories,
+                             bool drlFlag=false);
 
     // DESCRIPTION: TODO...
     ~TargetTrajectoriesGazebo();
@@ -154,6 +155,12 @@ class TargetTrajectoriesGazebo final
     void tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg);
 
     // DESCRIPTION: TODO...
+    void statusModelModeMPCCallback(const std_msgs::Bool::ConstPtr& msg);
+
+    // DESCRIPTION: TODO...
+    void statusModelModeMRTCallback(const std_msgs::Bool::ConstPtr& msg);
+
+    // DESCRIPTION: TODO...
     void updateGoal(const Eigen::Vector3d& goalPos, const Eigen::Quaterniond& goalOri);
 
     // DESCRIPTION: TODO...
@@ -233,6 +240,8 @@ class TargetTrajectoriesGazebo final
     bool initCallbackFlag_ = false;
     bool initTFCallbackFlag_ = false;
     bool initMenuModelModeFlag_ = false;
+
+    bool drlFlag_;
 
     //bool graspFrameReadyFlag_ = false;
     //bool dropFrameReadyFlag_ = false;

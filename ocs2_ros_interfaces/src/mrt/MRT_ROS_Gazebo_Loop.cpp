@@ -1243,7 +1243,7 @@ void MRT_ROS_Gazebo_Loop::updateModelMode()
     currentStateDim_ = stateDim;
     bool updateModelModeFlag = updateModelModeByState(robotModelInfo_, stateDim);
 
-    std::cout << "[MRT_ROS_Gazebo_Loop::updateModelMode] UPDATED MODE to " << getModelModeString(robotModelInfo_) << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::updateModelMode] UPDATED MODE to " << getModelModeString(robotModelInfo_) << std::endl;
   }
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::updateModelMode] modelModeInt: " << getModelModeInt(robotModelInfo_) << std::endl;
@@ -1973,7 +1973,7 @@ bool MRT_ROS_Gazebo_Loop::setTaskModeSrv(ocs2_msgs::setInt::Request &req,
 bool MRT_ROS_Gazebo_Loop::setTaskSrv(ocs2_msgs::setTask::Request &req, 
                                      ocs2_msgs::setTask::Response &res)
 {
-  std::cout << "[MRT_ROS_Gazebo_Loop::setTaskSrv] START" << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::setTaskSrv] START" << std::endl;
   taskMode_ = req.taskMode;
   currentTargetName_ = req.targetName;
   currentTargetAttachLinkName_ = req.targetAttachLinkName;
@@ -1986,20 +1986,19 @@ bool MRT_ROS_Gazebo_Loop::setTaskSrv(ocs2_msgs::setTask::Request &req,
   currentTarget_(5) = req.targetPose.orientation.z;
   currentTarget_(6) = req.targetPose.orientation.w;
 
-  /// NUA TODO: LEFT HEREEEEEEEEEE !!!!
   drlActionTimeHorizon_ = req.time_horizon;
 
   res.success = true;
 
-  std::cout << "[MRT_ROS_Gazebo_Loop::setTaskSrv] currentTarget_(0): " << currentTarget_(0) << std::endl;
-  std::cout << "[MRT_ROS_Gazebo_Loop::setTaskSrv] currentTarget_(1): " << currentTarget_(1) << std::endl;
-  std::cout << "[MRT_ROS_Gazebo_Loop::setTaskSrv] currentTarget_(2): " << currentTarget_(2) << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::setTaskSrv] currentTarget_(0): " << currentTarget_(0) << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::setTaskSrv] currentTarget_(1): " << currentTarget_(1) << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::setTaskSrv] currentTarget_(2): " << currentTarget_(2) << std::endl;
 
   taskEndFlag_ = false;
   targetReceivedFlag_ = true;
 
-  std::cout << "[MRT_ROS_Gazebo_Loop::setTaskSrv] taskMode_: " << taskMode_ << std::endl;
-  std::cout << "[MRT_ROS_Gazebo_Loop::setTaskSrv] END" << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::setTaskSrv] taskMode_: " << taskMode_ << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::setTaskSrv] END" << std::endl;
   return res.success;
 }
 
@@ -2694,32 +2693,32 @@ int MRT_ROS_Gazebo_Loop::checkTaskStatus(bool enableShutDownFlag)
 
     if (checkCollision(enableShutDownFlag))
     {
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] checkTaskStatus: COLLISION!" << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] COLLISION!" << std::endl;
       targetReceivedFlag_ = false;
       return 1;
     }
     else if (checkRollover(enableShutDownFlag))
     {
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] checkTaskStatus: ROLLOVER!" << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] ROLLOVER!" << std::endl;
       targetReceivedFlag_ = false;
       return 2;
     }
     else if (checkGoal(enableShutDownFlag))
     {
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] checkTaskStatus: REACHED GOAL!" << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] REACHED GOAL!" << std::endl;
       targetReceivedFlag_ = false;
       return 3;
     }
     else if (checkTarget(enableShutDownFlag))
     {
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] checkTaskStatus: REACHED TARGET!" << std::endl;
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] REACHED TARGET!" << std::endl;
       targetReceivedFlag_ = false;
       return 4;
     }
     else if (time_ > drlActionTimeHorizon_)
     {
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] time_: " << time_ << std::endl;
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] drlActionTimeHorizon_: " << drlActionTimeHorizon_ << std::endl;
+      //std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] time_: " << time_ << std::endl;
+      //std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] drlActionTimeHorizon_: " << drlActionTimeHorizon_ << std::endl;
       std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] END OF ACTION HORIZON!" << std::endl;
       
       //shutDownFlag_ = enableShutDownFlag;

@@ -550,6 +550,9 @@ void MobileManipulatorInterface::initializeMPC()
   else
   {
     setStopMPCFlagService_ = nodeHandle_.advertiseService(setStopMPCFlagSrvName_, &MobileManipulatorInterface::setStopMPCFlagSrv, this);
+    
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::initializeMPC] BEFORE updateStatusModelModeMPC" << std::endl;
+    mpcNode_->updateStatusModelModeMPC(true);
   }
 
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::initializeMPC] DEBUG INF" << std::endl;
@@ -674,9 +677,13 @@ void MobileManipulatorInterface::initializeMRT()
 
     setMRTReadyFlag(true);
   }
+  else
+  {
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::initializeMRT] BEFORE updateStatusModelModeMRT" << std::endl;
+    mrt_->updateStatusModelModeMRT(true);
+  }
 
   newMPCProblemFlag_ = true;
-  mrt_->updateStatusModelModeMRT(true);
 
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::initializeMRT] END" << std::endl;
 }
@@ -1197,7 +1204,7 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt,
   // Update MPC
   if (updateMPCFlag)
   {
-    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] UPDATE MPC" << std::endl;
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] UPDATE MPC" << std::endl;
     // Update MPC
     mpc_->initializeMPC(mpcSettings_, 
                         ddpSettings_, 
@@ -1211,7 +1218,7 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt,
   // Update MRT
   if (updateMRTFlag)
   {
-    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] UPDATE MRT" << std::endl;
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] UPDATE MRT" << std::endl;
 
     mrt_loop_->setRobotModelInfo(robotModelInfo_);
     mobileManipulatorVisu_->updateModelMode(getModelModeInt(robotModelInfo_));
@@ -1407,7 +1414,7 @@ bool MobileManipulatorInterface::setContinuousActionDRLMPC(std::vector<double>& 
                                                            bool& drlActionLastStepFlag,
                                                            double& drlActionLastStepDistanceThreshold)
 {
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPC] START" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPC] START" << std::endl;
 
   bool success;
 
@@ -1417,7 +1424,7 @@ bool MobileManipulatorInterface::setContinuousActionDRLMPC(std::vector<double>& 
   srv.request.last_step_flag = drlActionLastStepFlag;
   srv.request.last_step_distance_threshold = drlActionLastStepDistanceThreshold;
 
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPC] Waiting for the service " << setContinuousActionDRLMPCServiceName_ << "..." << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPC] Waiting for the service " << setContinuousActionDRLMPCServiceName_ << "..." << std::endl;
   ros::service::waitForService(setContinuousActionDRLMPCServiceName_);
   if (setContinuousActionDRLMPCClient_.call(srv))
   {
@@ -1438,7 +1445,7 @@ bool MobileManipulatorInterface::setContinuousActionDRLMPC(std::vector<double>& 
 bool MobileManipulatorInterface::setContinuousActionDRLMPCSrv(ocs2_msgs::setContinuousActionDRL::Request &req, 
                                                               ocs2_msgs::setContinuousActionDRL::Response &res)
 {
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] START" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] START" << std::endl;
 
   drlActionContinuous_ = req.action;
   drlActionTimeHorizon_ = req.time_horizon;
@@ -1446,15 +1453,17 @@ bool MobileManipulatorInterface::setContinuousActionDRLMPCSrv(ocs2_msgs::setCont
   drlActionLastStepDistanceThreshold_ = req.last_step_distance_threshold;
   res.success = true;
 
+  /*
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionContinuous_:" << std::endl;
   for (size_t i = 0; i < drlActionContinuous_.size(); i++)
   {
     std::cout << drlActionContinuous_[i] << std::endl;
   }
+  */
   
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionTimeHorizon_: " << drlActionTimeHorizon_ << std::endl;
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionLastStepFlag_: " << drlActionLastStepFlag_ << std::endl;
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionLastStepDistanceThreshold_: " << drlActionLastStepDistanceThreshold_ << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionTimeHorizon_: " << drlActionTimeHorizon_ << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionLastStepFlag_: " << drlActionLastStepFlag_ << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionLastStepDistanceThreshold_: " << drlActionLastStepDistanceThreshold_ << std::endl;
 
   mpcProblemReadyFlag_ = false;
   newMPCProblemFlag_ = true;
@@ -1462,7 +1471,7 @@ bool MobileManipulatorInterface::setContinuousActionDRLMPCSrv(ocs2_msgs::setCont
 
   mapContinuousActionDRL(false);
 
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] END" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] END" << std::endl;
   return res.success;
 }
 
@@ -1472,13 +1481,14 @@ bool MobileManipulatorInterface::setContinuousActionDRLMPCSrv(ocs2_msgs::setCont
 bool MobileManipulatorInterface::setContinuousActionDRLMRTSrv(ocs2_msgs::setContinuousActionDRL::Request &req, 
                                                               ocs2_msgs::setContinuousActionDRL::Response &res)
 {
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] START" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] START" << std::endl;
   drlActionContinuous_ = req.action;
   drlActionTimeHorizon_ = req.time_horizon;
   drlActionLastStepFlag_ = req.last_step_flag;
   drlActionLastStepDistanceThreshold_ = req.last_step_distance_threshold;
   res.success = true;
 
+  /*
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionContinuous_:" << std::endl;
   for (size_t i = 0; i < drlActionContinuous_.size(); i++)
   {
@@ -1488,13 +1498,14 @@ bool MobileManipulatorInterface::setContinuousActionDRLMRTSrv(ocs2_msgs::setCont
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionTimeHorizon_: " << drlActionTimeHorizon_ << std::endl;
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionLastStepFlag_: " << drlActionLastStepFlag_ << std::endl;
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionLastStepDistanceThreshold_: " << drlActionLastStepDistanceThreshold_ << std::endl;
+  */
 
   mapContinuousActionDRL(true);
 
   mpcProblemReadyFlag_ = false;
   newMPCProblemFlag_ = true;
 
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] END" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] END" << std::endl;
   return res.success;
 }
 
@@ -2037,7 +2048,7 @@ void MobileManipulatorInterface::jointStateCallback(const sensor_msgs::JointStat
 //-------------------------------------------------------------------------------------------------------
 bool MobileManipulatorInterface::setTargetDRL(double x, double y, double z, double roll, double pitch, double yaw, double time_horizon)
 {
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setTargetDRL] START" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setTargetDRL] START" << std::endl;
 
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setTargetDRL] DEBUG_INF" << std::endl;
   //while(1);
@@ -2062,6 +2073,11 @@ bool MobileManipulatorInterface::setTargetDRL(double x, double y, double z, doub
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setTargetDRL] x: " << x << std::endl;
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setTargetDRL] y: " << y << std::endl;
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setTargetDRL] z: " << z << std::endl;
+
+  /*
+  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setTargetDRL] x: " << x << std::endl;
+  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setTargetDRL] y: " << y << std::endl;
+  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setTargetDRL] z: " << z << std::endl;
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setTargetDRL] roll: " << roll << std::endl;
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setTargetDRL] pitch: " << pitch << std::endl;
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setTargetDRL] yaw: " << yaw << std::endl;
@@ -2069,8 +2085,9 @@ bool MobileManipulatorInterface::setTargetDRL(double x, double y, double z, doub
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setTargetDRL] qy: " << quat.y() << std::endl;
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setTargetDRL] qz: " << quat.z() << std::endl;
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setTargetDRL] qw: " << quat.w() << std::endl;
+  */
 
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::computeCommandClient] Waiting for the service " << setTargetDRLServiceName_ << "..." << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::computeCommandClient] Waiting for the service " << setTargetDRLServiceName_ << "..." << std::endl;
   ros::service::waitForService(setTargetDRLServiceName_);
   if (setTargetDRLClient_.call(srv))
   {
@@ -2084,7 +2101,7 @@ bool MobileManipulatorInterface::setTargetDRL(double x, double y, double z, doub
 
   //targetReceivedFlag_ = true;
 
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setTargetDRL] END" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setTargetDRL] END" << std::endl;
   
   return success;
 }
@@ -2134,7 +2151,7 @@ void MobileManipulatorInterface::mapDiscreteActionDRL(int action)
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::mapContinuousActionDRL(bool setTargetDRLFlag)
 {
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] START" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] START" << std::endl;
 
   double modelModeProb = drlActionContinuous_[0];
   double constraintProb = drlActionContinuous_[1];
@@ -2148,7 +2165,11 @@ void MobileManipulatorInterface::mapContinuousActionDRL(bool setTargetDRLFlag)
   // Set Model Mode
   if (modelModeProb <= 0.3)
   {
-    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] BASE MOTION" << std::endl;
+    if (setTargetDRLFlag)
+    {
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] BASE MOTION" << std::endl;
+    }
+    
     target_roll = 0.0;
     target_pitch = 0.0;
     target_z = 0.12;
@@ -2156,16 +2177,24 @@ void MobileManipulatorInterface::mapContinuousActionDRL(bool setTargetDRLFlag)
   }
   else if (modelModeProb > 0.6)
   {
-    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] WHOLE-BODY MOTION" << std::endl;
+    if (setTargetDRLFlag)
+    {
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] WHOLE-BODY MOTION" << std::endl;
+    }
+    
     modelModeInt_ = 2;
   }
   else
   {
-    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] ARM MOTION" << std::endl;
+    if (setTargetDRLFlag)
+    {
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] ARM MOTION" << std::endl;
+    }
+    
     modelModeInt_ = 1;
   }
 
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] modelModeInt_: " << modelModeInt_ << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] modelModeInt_: " << modelModeInt_ << std::endl;
 
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] DEBUG_INF" << std::endl;
   //while(1);
@@ -2186,7 +2215,7 @@ void MobileManipulatorInterface::mapContinuousActionDRL(bool setTargetDRLFlag)
     setTargetDRL(target_x, target_y, target_z, target_roll, target_pitch, target_yaw, drlActionTimeHorizon_);
   }
 
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] END" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2194,14 +2223,14 @@ void MobileManipulatorInterface::mapContinuousActionDRL(bool setTargetDRLFlag)
 //-------------------------------------------------------------------------------------------------------
 bool MobileManipulatorInterface::setMPCActionResult(int drlActionResult)
 {
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCActionResult] START" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCActionResult] START" << std::endl;
   bool success = false;
   ocs2_msgs::setMPCActionResult srv;
   srv.request.action_result = drlActionResult;
   srv.request.model_mode = modelModeInt_;
 
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCActionResult] drlActionResult: " << drlActionResult << std::endl;
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCActionResult] modelModeInt_: " << modelModeInt_ << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCActionResult] drlActionResult: " << drlActionResult << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCActionResult] modelModeInt_: " << modelModeInt_ << std::endl;
 
   if (setMPCActionResultClient_.call(srv))
   {
@@ -2213,7 +2242,7 @@ bool MobileManipulatorInterface::setMPCActionResult(int drlActionResult)
     success = false;
   }
 
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCActionResult] END" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCActionResult] END" << std::endl;
   
   return success;
 }
@@ -2314,7 +2343,7 @@ bool MobileManipulatorInterface::setStopMPCFlag(bool val)
 bool MobileManipulatorInterface::setStopMPCFlagSrv(ocs2_msgs::setBool::Request &req, 
                                                    ocs2_msgs::setBool::Response &res)
 {
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlagSrv] START" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlagSrv] START" << std::endl;
 
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlagSrv] DEBUG_INF" << std::endl;
   //while(1);
@@ -2325,7 +2354,7 @@ bool MobileManipulatorInterface::setStopMPCFlagSrv(ocs2_msgs::setBool::Request &
 
   res.success = true;
 
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlagSrv] END" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlagSrv] END" << std::endl;
   return res.success;
 }
 
@@ -2425,16 +2454,16 @@ bool MobileManipulatorInterface::setMPCReadyFlagSrv(ocs2_msgs::setBool::Request 
 //-------------------------------------------------------------------------------------------------------
 bool MobileManipulatorInterface::setMRTReadyFlag(bool val)
 {
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] START" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] START" << std::endl;
   bool success = false;
   ocs2_msgs::setBool srv;
   srv.request.val = val;
 
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] Waiting for the service " << setMRTReadyFlagSrvName_ << "..." << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] Waiting for the service " << setMRTReadyFlagSrvName_ << "..." << std::endl;
   ros::service::waitForService(setMRTReadyFlagSrvName_);
   if (setMRTReadyFlagClient_.call(srv))
   {
-    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] DONE!" << std::endl;
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] DONE!" << std::endl;
     success = srv.response.success;
   }
   else
@@ -2443,7 +2472,7 @@ bool MobileManipulatorInterface::setMRTReadyFlag(bool val)
     success = false;
   }
 
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] END" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] END" << std::endl;
   
   return success;
 }
@@ -2473,6 +2502,8 @@ void MobileManipulatorInterface::launchMPC()
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] START" << std::endl;
   //mpcNode_->spin();
   
+  mpcNode_->updateStatusModelModeMPC(true);
+
   while (ros::ok() && ros::master::check()) 
   {
     //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] IF stopMPCFlag_" << std::endl;
@@ -2625,7 +2656,7 @@ void MobileManipulatorInterface::mrtCallback(const ros::TimerEvent& event)
       
       if (drlFlag_)
       {
-        std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE setContinuousActionDRLMPC" << std::endl;
+        //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE setContinuousActionDRLMPC" << std::endl;
         setContinuousActionDRLMPC(drlActionContinuous_, 
                                   drlActionTimeHorizon_, 
                                   drlActionLastStepFlag_,
@@ -2633,14 +2664,14 @@ void MobileManipulatorInterface::mrtCallback(const ros::TimerEvent& event)
       }
       else
       {
-        std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE setStopMPCFlag" << std::endl;
+        //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE setStopMPCFlag" << std::endl;
         setStopMPCFlag(true);
         //while (!setStopMPCFlag(true)){spinOnce();}
       }
 
       //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] Waiting mpcWaitingFlag_" << std::endl;
       while (!mpcWaitingFlag_){spinOnce();}
-
+      
       //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] modelModeInt_: " << modelModeInt_ << std::endl;
       //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE setMPCProblem" << std::endl;
       setMPCProblem(modelModeInt_, false, false, false, true);
@@ -2684,8 +2715,10 @@ void MobileManipulatorInterface::mrtCallback(const ros::TimerEvent& event)
           //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] DONE drlActionResult: " << drlActionResult << std::endl;
           setMPCActionResult(drlActionResult);
           targetReceivedFlag_ = false;
-          setMRTReadyFlag(true);
+          //setMRTReadyFlag(true);
 
+          std::cout << "[" << interfaceName_ << "][" << ns_ <<  "----------------------------END OF MPC ACTION SEQUENCE----------------------------" << std::endl;
+          std::cout << "" << std::endl;
           //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] DEBUG_INF" << std::endl;
           //while(1);
         }
