@@ -261,7 +261,7 @@ void SLQ::calculateControllerWorker(size_t timeIndex, const PrimalDataContainer&
 /***************************************************************************************************** */
 scalar_t SLQ::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticApproximation& finalValueFunction) 
 {
-  //std::cout << "[SLQ::solveSequentialRiccatiEquations] START" << std::endl;
+  std::cout << "[SLQ::solveSequentialRiccatiEquations] START" << std::endl;
 
   // fully compute the riccatiModifications and projected modelData
   // number of the intermediate LQ variables
@@ -279,7 +279,7 @@ scalar_t SLQ::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticAppro
       int timeIndex;
       const matrix_t SmDummy = matrix_t::Zero(0, 0);
 
-      //std::cout << "[SLQ::solveSequentialRiccatiEquations] BEFORE computeProjectionAndRiccatiModification" << std::endl;
+      std::cout << "[SLQ::solveSequentialRiccatiEquations] BEFORE computeProjectionAndRiccatiModification N: " << N << std::endl;
       // get next time index is atomic
       while ((timeIndex = nextTimeIndex_++) < N) 
       {
@@ -288,12 +288,12 @@ scalar_t SLQ::solveSequentialRiccatiEquations(const ScalarFunctionQuadraticAppro
                                                 nominalDualData_.projectedModelDataTrajectory[timeIndex],
                                                 nominalDualData_.riccatiModificationTrajectory[timeIndex]);
       }
-      //std::cout << "[SLQ::solveSequentialRiccatiEquations] AFTER computeProjectionAndRiccatiModification" << std::endl;
+      std::cout << "[SLQ::solveSequentialRiccatiEquations] AFTER computeProjectionAndRiccatiModification" << std::endl;
     };
     runParallel(task, settings().nThreads_);
   }
 
-  //std::cout << "[SLQ::solveSequentialRiccatiEquations] END" << std::endl;
+  std::cout << "[SLQ::solveSequentialRiccatiEquations] END" << std::endl;
 
   return solveSequentialRiccatiEquationsImpl(finalValueFunction);
 }

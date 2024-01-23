@@ -249,10 +249,11 @@ class MobileManipulatorInterface final : public RobotInterface
     bool setDiscreteActionDRLMRTSrv(ocs2_msgs::setDiscreteActionDRL::Request &req, 
                                     ocs2_msgs::setDiscreteActionDRL::Response &res);
 
-    bool setContinuousActionDRLMPC(std::vector<double>& drlActionContinuous, 
-                                   double& drlActionTimeHorizon, 
-                                   bool& drlActionLastStepFlag,
-                                   double& drlActionLastStepDistanceThreshold);
+    bool setContinuousActionDRLMPC(int drlActionId,
+                                   std::vector<double> drlActionContinuous, 
+                                   double drlActionTimeHorizon, 
+                                   bool drlActionLastStepFlag,
+                                   double drlActionLastStepDistanceThreshold);
 
     bool setContinuousActionDRLMPCSrv(ocs2_msgs::setContinuousActionDRL::Request &req, 
                                       ocs2_msgs::setContinuousActionDRL::Response &res);
@@ -421,6 +422,7 @@ class MobileManipulatorInterface final : public RobotInterface
 
     /// NUA NOTE: DEPRECATED? ----- START
     int drlActionDiscrete_;
+    int drlActionId_;
     std::vector<double> drlActionContinuous_;
     double drlActionTimeHorizon_;
     bool drlActionLastStepFlag_;

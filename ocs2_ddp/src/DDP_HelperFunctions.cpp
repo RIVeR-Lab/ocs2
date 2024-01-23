@@ -353,8 +353,13 @@ scalar_t rolloutTrajectory(RolloutBase& rollout,
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void projectLQ(const ModelData& modelData, const matrix_t& constraintRangeProjector, const matrix_t& constraintNullProjector,
-               ModelData& projectedModelData) {
+void projectLQ(const ModelData& modelData, 
+               const matrix_t& constraintRangeProjector, 
+               const matrix_t& constraintNullProjector,
+               ModelData& projectedModelData) 
+{
+  std::cout << "[DDP_HelperFunctions::projectLQ] START" << std::endl;
+
   // dimensions and time
   projectedModelData.time = modelData.time;
   projectedModelData.stateDim = modelData.stateDim;
@@ -363,7 +368,10 @@ void projectLQ(const ModelData& modelData, const matrix_t& constraintRangeProjec
   // unhandled constraints
   projectedModelData.stateEqConstraint.f = vector_t();
 
-  if (modelData.stateInputEqConstraint.f.rows() == 0) {
+  if (modelData.stateInputEqConstraint.f.rows() == 0) 
+  {
+    std::cout << "[DDP_HelperFunctions::projectLQ] IN IF" << std::endl;
+
     // Change of variables u = Pu * tilde{u}
     // Pu = constraintNullProjector;
 
@@ -374,6 +382,7 @@ void projectLQ(const ModelData& modelData, const matrix_t& constraintRangeProjec
 
     // dynamics
     projectedModelData.dynamics = modelData.dynamics;
+    std::cout << "[DDP_HelperFunctions::projectLQ] BEFORE changeOfInputVariables 1" << std::endl;
     changeOfInputVariables(projectedModelData.dynamics, constraintNullProjector);
 
     // dynamics bias
@@ -381,9 +390,14 @@ void projectLQ(const ModelData& modelData, const matrix_t& constraintRangeProjec
 
     // cost
     projectedModelData.cost = modelData.cost;
+    std::cout << "[DDP_HelperFunctions::projectLQ] BEFORE changeOfInputVariables 2" << std::endl;
     changeOfInputVariables(projectedModelData.cost, constraintNullProjector);
 
-  } else {
+  } 
+  else 
+  {
+    std::cout << "[DDP_HelperFunctions::projectLQ] IN ELSE" << std::endl;
+
     // Change of variables u = Pu * tilde{u} + Px * x + u0
     // Pu = constraintNullProjector;
     // Px (= -CmProjected) = -constraintRangeProjector * C
@@ -401,6 +415,7 @@ void projectLQ(const ModelData& modelData, const matrix_t& constraintRangeProjec
 
     // dynamics
     projectedModelData.dynamics = modelData.dynamics;
+    std::cout << "[DDP_HelperFunctions::projectLQ] BEFORE changeOfInputVariables 1" << std::endl;
     changeOfInputVariables(projectedModelData.dynamics, Pu, Px, u0);
 
     // dynamics bias
@@ -409,8 +424,11 @@ void projectLQ(const ModelData& modelData, const matrix_t& constraintRangeProjec
 
     // cost
     projectedModelData.cost = modelData.cost;
+    std::cout << "[DDP_HelperFunctions::projectLQ] BEFORE changeOfInputVariables 2" << std::endl;
     changeOfInputVariables(projectedModelData.cost, Pu, Px, u0);
   }
+
+  std::cout << "[DDP_HelperFunctions::projectLQ] END" << std::endl;
 }
 
 /******************************************************************************************************/

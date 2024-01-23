@@ -44,6 +44,17 @@ MPC_ROS_Interface::~MPC_ROS_Interface()
   shutdownNode();
 }
 
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+bool MPC_ROS_Interface::getMPCReadyFlag()
+{
+  return mpcReadyFlag_;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::setMPC(std::shared_ptr<MPC_BASE> mpc)
 {
   mpc_ = mpc;
@@ -475,15 +486,17 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
     return;
   }
 
+  mpcReadyFlag_ = false;
+
   // measure the delay in running MPC
   mpcTimer_.startTimer();
 
   // run MPC
   bool controllerIsUpdated;
   
-  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE mpc_->run" << std::endl;
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE mpc_->run" << std::endl;
   controllerIsUpdated = mpc_->run(currentObservation.time, currentObservation.state, currentObservation.full_state);
-  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] AFTER mpc_->run" << std::endl;
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] AFTER mpc_->run" << std::endl;
 
   internalShutDownFlag_ = mpc_->getInternalShutDownFlag();
 
@@ -491,7 +504,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE terminateThread_: " << terminateThread_ << std::endl;
   if (internalShutDownFlag_)
   {
-    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
+    std::cout << "[MPC_ROS_Interface::mpcObservationCallback] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
     terminateThread_ = true;
   }
   //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] AFTER terminateThread_: " << terminateThread_ << std::endl;
@@ -538,6 +551,8 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   ocs2_msgs::mpc_flattened_controller mpcPolicyMsg = createMpcPolicyMsg(*bufferPrimalSolutionPtr_, *bufferCommandPtr_, *bufferPerformanceIndicesPtr_);
   mpcPolicyPublisher_.publish(mpcPolicyMsg);
 #endif
+
+  mpcReadyFlag_ = true;
 
   //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END" << std::endl;
 

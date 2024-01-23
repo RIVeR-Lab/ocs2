@@ -97,7 +97,7 @@ class LineSearchStrategy final : public SearchStrategyBase {
   void computeRiccatiModification(const ModelData& projectedModelData, matrix_t& deltaQm, vector_t& deltaGv,
                                   matrix_t& deltaGm) const override;
 
-  matrix_t augmentHamiltonianHessian(const ModelData& /*modelData*/, const matrix_t& Hm) const override { return Hm; }
+  matrix_t augmentHamiltonianHessian(const ModelData& modelData, const matrix_t& Hm) const override { return Hm; }
 
  private:
   struct LineSearchInputRef {

@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.12.13
+// LAST UPDATE: 2024.01.22
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -72,6 +72,8 @@ class MPC_ROS_Interface
      * Destructor.
      */
     virtual ~MPC_ROS_Interface();
+
+    bool getMPCReadyFlag();
 
     void setMPC(std::shared_ptr<MPC_BASE> mpc);
 
@@ -202,7 +204,7 @@ class MPC_ROS_Interface
     // 1: Ready
     std_msgs::Bool statusModelModeMPCMsg_;
 
-    //std::string mpcShutDownFlag_;
+    bool mpcReadyFlag_ = true;
     bool internalShutDownFlag_ = false;
 
     std::string topicPrefix_;
