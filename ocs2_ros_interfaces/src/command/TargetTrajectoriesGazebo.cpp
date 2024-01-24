@@ -1591,6 +1591,11 @@ void TargetTrajectoriesGazebo::publishTargetTrajectories()
   //std::cout << "[TargetTrajectoriesGazebo::publishTargetTrajectories] END" << std::endl;
 }
 
+void TargetTrajectoriesGazebo::publishMobimanGoalObs()
+{
+  ocs2_msgs::MobimanGoalObservation mgo;
+}
+
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -1614,19 +1619,53 @@ void TargetTrajectoriesGazebo::publishTargetTrajectories(Eigen::Vector3d& positi
   targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
 }
 
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::updateCallback(const ros::TimerEvent& event)
 {
   //std::cout << "[TargetTrajectoriesGazebo::updateCallback] START" << std::endl;
 
   updateGoal(true);
+
   publishTargetTrajectories();
+  publishMobimanGoalObs();
+
   publishGoalVisu();
   publishTargetVisu();
+
   publishGoalFrame();
   publishGraspFrame();
   publishDropFrame();
 
   //std::cout << "[TargetTrajectoriesGazebo::updateCallback] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::goalTrajectoryTimerCallback(const ros::TimerEvent& event)
+{
+  //std::cout << "[TargetTrajectoriesGazebo::goalTrajectoryTimerCallback] START" << std::endl;
+
+  /// NUA NOTE: LEFT HEREEEEEE! COMPLETE GETTING GOAL TRAJECTORIES THEN PUBLISH OBSERVATIONS BASED ON THE dt!!!
+  std::vector<double> goalTrajectory;
+
+  double roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world;
+  tf::Quaternion quatBase(goalOrientation_.x(), goalOrientation_.y(), goalOrientation_.z(), goalOrientation_.w());
+  tf::Matrix3x3 matBase(quatBase);
+  matBase.getRPY(roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world);
+
+  goalTrajectory = {goalPosition_.x(), goalPosition_.y(), goalPosition_.z(), 
+                    roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world};
+  goalTrajectory_.push_back(goalTrajectory);
+
+  if (goalTrajectory.size() )
+  {
+    
+  }
+
+  //std::cout << "[TargetTrajectoriesGazebo::goalTrajectoryTimerCallback] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------

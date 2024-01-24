@@ -153,6 +153,9 @@ int main(int argc, char* argv[])
   double update_dt = 0.01;
   ros::Timer updateTimer = nh.createTimer(ros::Duration(update_dt), &TargetTrajectoriesGazebo::updateCallback, &gu);
 
+  double goal_traj_dt = 0.1;
+  ros::Timer goalTrajectoryTimer = nh.createTimer(ros::Duration(goal_traj_dt), &TargetTrajectoriesGazebo::goalTrajectoryTimerCallback, &gu);
+
   spinner.spin();
 
   // Interactive Marker

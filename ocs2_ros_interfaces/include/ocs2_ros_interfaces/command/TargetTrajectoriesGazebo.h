@@ -11,6 +11,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <queue>
 
 #include <std_msgs/Bool.h>
 #include <std_msgs/UInt8.h>
@@ -26,6 +27,7 @@
 #include "ocs2_msgs/setInt.h"
 #include "ocs2_msgs/setTask.h"
 #include "ocs2_msgs/setSystemObservation.h"
+#include "ocs2_msgs/MobimanGoalObservation.h"
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_ros_interfaces/command/TargetTrajectoriesRosPublisher.h>
 
@@ -122,8 +124,13 @@ class TargetTrajectoriesGazebo final
     // DESCRIPTION: TODO...
     void publishTargetTrajectories(Eigen::Vector3d& position, Eigen::Quaterniond& orientation);
 
+    void publishMobimanGoalObs();
+
     // DESCRIPTION: TODO...
     void updateCallback(const ros::TimerEvent& event);
+
+    // DESCRIPTION: TODO...
+    void goalTrajectoryTimerCallback(const ros::TimerEvent& event);
 
   private:
     /// FUNCTIONS:
@@ -319,6 +326,8 @@ class TargetTrajectoriesGazebo final
     bool statusModelModeMRT_ = false;
     ros::Subscriber statusModelModeMPCSubscriber_;
     ros::Subscriber statusModelModeMRTSubscriber_;
+
+    std::vector<std::vector<double>> goalTrajectory_;
 
     std::unique_ptr<TargetTrajectoriesRosPublisher> targetTrajectoriesPublisherPtr_;
     ros::Publisher modelModePublisher_;
