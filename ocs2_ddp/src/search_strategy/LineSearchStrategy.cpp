@@ -611,7 +611,7 @@ void LineSearchStrategy::computeRiccatiModification(const ModelData& projectedMo
                                                     vector_t& deltaGv,
                                                     matrix_t& deltaGm) const 
 {
-  std::cout << "[LineSearchStrategy::computeRiccatiModification] START" << std::endl;
+  //std::cout << "[LineSearchStrategy::computeRiccatiModification] START" << std::endl;
 
   const auto& QmProjected = projectedModelData.cost.dfdxx;
   const auto& PmProjected = projectedModelData.cost.dfdux;
@@ -622,7 +622,7 @@ void LineSearchStrategy::computeRiccatiModification(const ModelData& projectedMo
 
   // deltaQm
   deltaQm = Q_minus_PTRinvP;
-  std::cout << "[LineSearchStrategy::computeRiccatiModification] BEFORE shiftHessian" << std::endl;
+  //std::cout << "[LineSearchStrategy::computeRiccatiModification] BEFORE shiftHessian" << std::endl;
   hessian_correction::shiftHessian(settings_.hessianCorrectionStrategy, deltaQm, settings_.hessianCorrectionMultiple);
   deltaQm -= Q_minus_PTRinvP;
 
@@ -631,7 +631,7 @@ void LineSearchStrategy::computeRiccatiModification(const ModelData& projectedMo
   deltaGv.setZero(projectedInputDim, 1);
   deltaGm.setZero(projectedInputDim, projectedModelData.stateDim);
 
-  std::cout << "[LineSearchStrategy::computeRiccatiModification] END" << std::endl;
+  //std::cout << "[LineSearchStrategy::computeRiccatiModification] END" << std::endl;
 }
 
 /******************************************************************************************************/

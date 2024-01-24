@@ -1010,7 +1010,7 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt,
                                                bool updateMPCFlag,
                                                bool updateMRTFlag)
 {
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] START" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] START" << std::endl;
 
   mpcTimer0_.startTimer();
 
@@ -1229,7 +1229,7 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt,
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] DEBUG INF" << std::endl;
   //while(1);
 
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] END" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2084,7 +2084,7 @@ bool MobileManipulatorInterface::setTargetDRL(double x, double y, double z, doub
   */
 
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::computeCommandClient] Waiting for the service " << setTargetDRLServiceName_ << "..." << std::endl;
-  ros::service::waitForService(setTargetDRLServiceName_);
+  //ros::service::waitForService(setTargetDRLServiceName_);
   if (setTargetDRLClient_.call(srv))
   {
     success = srv.response.success;
@@ -2516,33 +2516,33 @@ void MobileManipulatorInterface::launchMPC()
     //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] IF stopMPCFlag_" << std::endl;
     if (stopMPCFlag_)
     {
-      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] stopMPCFlag_ true" << std::endl;
-      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] modelModeInt_: " << modelModeInt_ << std::endl;
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] stopMPCFlag_ true" << std::endl;
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] modelModeInt_: " << modelModeInt_ << std::endl;
 
-      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] BEFORE updateStatusModelModeMPC" << std::endl;
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] BEFORE updateStatusModelModeMPC" << std::endl;
       mpcNode_->updateStatusModelModeMPC(false);
 
       //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] DEBUG_INF" << std::endl;
       //while(1);
       
-      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] Waiting mpcReadyFlag..." << std::endl;
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] Waiting mpcReadyFlag..." << std::endl;
       while(!mpcNode_->getMPCReadyFlag()){spinOnce();}
 
-      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] BEFORE setMPCWaitingFlag" << std::endl;
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] BEFORE setMPCWaitingFlag" << std::endl;
       setMPCWaitingFlag(true);
 
-      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] BEFORE setMPCProblem" << std::endl;
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] BEFORE setMPCProblem" << std::endl;
       setMPCProblem(modelModeInt_, activateSelfCollision_, activateExtCollision_, true, false);
-      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] AFTER setMPCProblem" << std::endl;
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] AFTER setMPCProblem" << std::endl;
 
-      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] BEFORE setMPCReadyFlag" << std::endl;
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] BEFORE setMPCReadyFlag" << std::endl;
       setMPCReadyFlag(true);
 
       // Reset flags
       stopMPCFlag_ = false;
-      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] BEFORE updateStatusModelModeMPC" << std::endl;
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] BEFORE updateStatusModelModeMPC" << std::endl;
       mpcNode_->updateStatusModelModeMPC(true);
-      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] AFTER updateStatusModelModeMPC" << std::endl;
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] AFTER updateStatusModelModeMPC" << std::endl;
 
       //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] DEBUG_INF" << std::endl;
       //while(1);
