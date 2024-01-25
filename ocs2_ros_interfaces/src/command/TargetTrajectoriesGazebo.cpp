@@ -75,6 +75,7 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
   modelModeMPCStatusMsgName_ = "model_mode_mpc_status";
   modelModeMRTStatusMsgName_ = "model_mode_mrt_status";
   targetTrajectoriesMsgName_ = "mpc_target";
+  mobimanGoalObsMsgName_ = "mobiman_goal_obs";
 
   if (ns != "/")
   {
@@ -95,6 +96,7 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
     modelModeMPCStatusMsgName_ = ns + "/" + modelModeMPCStatusMsgName_;
     modelModeMRTStatusMsgName_ = ns + "/" + modelModeMRTStatusMsgName_;
     targetTrajectoriesMsgName_ = ns + "/" + targetTrajectoriesMsgName_;
+    mobimanGoalObsMsgName_ = ns + "/" + mobimanGoalObsMsgName_;
   }
 
   /*
@@ -139,6 +141,7 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
   modelModePublisher_ = nodeHandle.advertise<std_msgs::UInt8>(modelModeMsgName_, 1, false);
   goalMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(goalVisuMsgName_, 10);
   targetMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(targetVisuMsgName_, 10);
+  mobimanGoalObsPublisher_ = nodeHandle.advertise<ocs2_msgs::MobimanGoalObservation>(mobimanGoalObsMsgName_, 10);
 
   /// Clients
   //setTaskModeClient_ = nodeHandle.serviceClient<ocs2_msgs::setInt>("/set_task_mode");
@@ -247,6 +250,15 @@ TargetTrajectoriesGazebo& TargetTrajectoriesGazebo::operator=(const TargetTrajec
   latestObservation_ = ttg.latestObservation_;
 
   return *this;
+}
+
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::setGoalTrajectoryQueueDt(double goalTrajectoryQueueDt)
+{
+  goalTrajectoryQueueDt_ = goalTrajectoryQueueDt;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1591,9 +1603,56 @@ void TargetTrajectoriesGazebo::publishTargetTrajectories()
   //std::cout << "[TargetTrajectoriesGazebo::publishTargetTrajectories] END" << std::endl;
 }
 
-void TargetTrajectoriesGazebo::publishMobimanGoalObs()
+void TargetTrajectoriesGazebo::publishMobimanGoalObs(bool onlyPosFlag)
 {
-  ocs2_msgs::MobimanGoalObservation mgo;
+  //std::cout << "[TargetTrajectoriesGazebo::publishMobimanGoalObs] START" << std::endl;
+
+  std::deque<std::vector<double>> goalTrajectoryQueue = goalTrajectoryQueue_;
+  int qsize = goalTrajectoryQueue.size();
+  int minSize = (mobimanGoalObsTrajSampleNum_-1) * mobimanGoalObsTrajSampleFreq_;
+
+  //std::cout << "[TargetTrajectoriesGazebo::publishMobimanGoalObs] qsize: " << qsize << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::publishMobimanGoalObs] minSize: " << minSize << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::publishMobimanGoalObs] goalTrajectoryQueueDt_: " << goalTrajectoryQueueDt_ << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::publishMobimanGoalObs] mobimanGoalObsTrajSampleNum_: " << mobimanGoalObsTrajSampleNum_ << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::publishMobimanGoalObs] mobimanGoalObsTrajSampleFreq_: " << mobimanGoalObsTrajSampleFreq_ << std::endl;
+
+  if (qsize > minSize && goalTrajectoryQueueDt_ > 0)
+  {
+    std::vector<double> goalTrajectory;
+    int idx;
+    int posOffset = 0;
+    if (onlyPosFlag)
+    {
+      posOffset = 3;
+    }
+
+    for (size_t i = 0; i < mobimanGoalObsTrajSampleNum_; i++)
+    {
+      idx = (qsize - 1) - (i * mobimanGoalObsTrajSampleFreq_);
+      goalTrajectory.insert(goalTrajectory.end(), goalTrajectoryQueue[idx].begin(), goalTrajectoryQueue[idx].end()-posOffset); 
+    }
+
+    /*
+    std::cout << "[TargetTrajectoriesGazebo::publishMobimanGoalObs] goalTrajectory size: " << goalTrajectory.size() << std::endl;
+    for (size_t i = 0; i < goalTrajectory.size(); i++)
+    {
+      std::cout << i << " -> " << goalTrajectory[i] << std::endl;
+    }
+    */
+
+    ocs2_msgs::MobimanGoalObservation mgo;
+    mgo.header.seq = mobimanGoalObsSeq_;
+    mgo.header.frame_id = worldFrameName_;
+    mgo.header.stamp = ros::Time::now();
+    mgo.dt = goalTrajectoryQueueDt_ * mobimanGoalObsTrajSampleFreq_;
+    mgo.obs = goalTrajectory;
+    mobimanGoalObsPublisher_.publish(mgo);
+
+    mobimanGoalObsSeq_++;
+  }
+
+  //std::cout << "[TargetTrajectoriesGazebo::publishTargetTrajectories] END" << std::endl << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1648,24 +1707,24 @@ void TargetTrajectoriesGazebo::goalTrajectoryTimerCallback(const ros::TimerEvent
 {
   //std::cout << "[TargetTrajectoriesGazebo::goalTrajectoryTimerCallback] START" << std::endl;
 
-  /// NUA NOTE: LEFT HEREEEEEE! COMPLETE GETTING GOAL TRAJECTORIES THEN PUBLISH OBSERVATIONS BASED ON THE dt!!!
-  std::vector<double> goalTrajectory;
-
   double roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world;
   tf::Quaternion quatBase(goalOrientation_.x(), goalOrientation_.y(), goalOrientation_.z(), goalOrientation_.w());
   tf::Matrix3x3 matBase(quatBase);
   matBase.getRPY(roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world);
 
-  goalTrajectory = {goalPosition_.x(), goalPosition_.y(), goalPosition_.z(), 
+  std::vector<double> goalTrajectory = {goalPosition_.x(), goalPosition_.y(), goalPosition_.z(), 
                     roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world};
-  goalTrajectory_.push_back(goalTrajectory);
 
-  if (goalTrajectory.size() )
+  goalTrajectoryQueue_.push_back(goalTrajectory);
+  if (goalTrajectoryQueue_.size() >= goalTrajectoryQueueSize_)
   {
-    
+    goalTrajectoryQueue_.pop_front();
   }
 
-  //std::cout << "[TargetTrajectoriesGazebo::goalTrajectoryTimerCallback] END" << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::goalTrajectoryTimerCallback] DEBUG_INF" << std::endl;
+  //while (1);
+
+  //std::cout << "[TargetTrajectoriesGazebo::goalTrajectoryTimerCallback] END" << std::endl << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------

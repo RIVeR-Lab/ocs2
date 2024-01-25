@@ -12,6 +12,7 @@
 #include <memory>
 #include <mutex>
 #include <queue>
+#include <deque>
 
 #include <std_msgs/Bool.h>
 #include <std_msgs/UInt8.h>
@@ -71,6 +72,9 @@ class TargetTrajectoriesGazebo final
   	TargetTrajectoriesGazebo& operator=(const TargetTrajectoriesGazebo& ttg);
 
     // DESCRIPTION: TODO...
+    void setGoalTrajectoryQueueDt(double goalTrajectoryQueueDt);
+
+    // DESCRIPTION: TODO...
     void updateDummyGoal(double x, double y, double z, double roll, double pitch, double yaw);
 
     // DESCRIPTION: TODO...
@@ -124,7 +128,8 @@ class TargetTrajectoriesGazebo final
     // DESCRIPTION: TODO...
     void publishTargetTrajectories(Eigen::Vector3d& position, Eigen::Quaterniond& orientation);
 
-    void publishMobimanGoalObs();
+    // DESCRIPTION: TODO...
+    void publishMobimanGoalObs(bool onlyPosFlag=true);
 
     // DESCRIPTION: TODO...
     void updateCallback(const ros::TimerEvent& event);
@@ -279,6 +284,7 @@ class TargetTrajectoriesGazebo final
     std::string modelModeMPCStatusMsgName_;
     std::string modelModeMRTStatusMsgName_;
     std::string targetTrajectoriesMsgName_;
+    std::string mobimanGoalObsMsgName_;
 
     gazebo_msgs::ModelStates modelStatesMsg_;
 
@@ -327,7 +333,14 @@ class TargetTrajectoriesGazebo final
     ros::Subscriber statusModelModeMPCSubscriber_;
     ros::Subscriber statusModelModeMRTSubscriber_;
 
-    std::vector<std::vector<double>> goalTrajectory_;
+    /// NUA TODO: SET THIS IN CONFIG!
+    int goalTrajectoryQueueSize_ = 10000;
+    double goalTrajectoryQueueDt_ = 0;
+    std::deque<std::vector<double>> goalTrajectoryQueue_;
+    int mobimanGoalObsTrajSampleNum_ = 1;
+    int mobimanGoalObsTrajSampleFreq_ = 5;
+    int mobimanGoalObsSeq_ = 0;
+    ros::Publisher mobimanGoalObsPublisher_;
 
     std::unique_ptr<TargetTrajectoriesRosPublisher> targetTrajectoriesPublisherPtr_;
     ros::Publisher modelModePublisher_;
