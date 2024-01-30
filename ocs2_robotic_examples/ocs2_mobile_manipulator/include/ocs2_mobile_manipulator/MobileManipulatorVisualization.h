@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.09.18
+// LAST UPDATE: 2024.01.30
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -21,6 +21,8 @@
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_core/dynamics/MultiModelFunctions.h>
 #include <ocs2_msgs/collision_info.h>
+#include "ocs2_msgs/MobimanGoalObservation.h"
+#include <ocs2_msgs/MobimanOccupancyObservation.h>
 #include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 #include "ocs2_mobile_manipulator/MobileManipulatorPinocchioMapping.h"
 #include <ocs2_self_collision_visualization/GeometryInterfaceVisualization.h>
@@ -56,6 +58,20 @@ class MobileManipulatorVisualization final : public DummyObserver
 
     void setObjOctomapNames(std::vector<std::string>& objOctomapNames);
 
+    void setGoalFrameName(std::string goalFrameName);
+
+    void setGoalTrajectoryFrameName(std::string goalTrajectoryFrameName);
+
+    void setGoalTrajectoryQueueDt(double goalTrajectoryQueueDt);
+
+    void setMobimanOccObsNames(std::vector<std::string>& mobimanOccObsNames);
+
+    void setOccupancyInfoFrameName(std::string occupancyInfoFrameName);
+
+    void setOccupancyInfoQueueDt(double occupancyInfoQueueDt);
+
+    bool isTrue(std::vector<bool>& bvec);
+
     void updateModelMode(size_t modelModeInt);
 
     void update(const SystemObservation& observation, const PrimalSolution& policy);
@@ -74,18 +90,27 @@ class MobileManipulatorVisualization final : public DummyObserver
 
     void updateState();
 
+    void updateMobimanGoalObs(bool onlyPosFlag=true);
+
+    void updateMobimanOccupancyObs(bool onlyPosFlag=true);
+
     void updateExtCollisionDistances(bool normalize_flag);
 
     void updateOctCallback(const ros::TimerEvent& event);
 
     void distanceVisualizationCallback(const ros::TimerEvent& event);
 
-  private:
+    void occupancyInfoTimerCallback(const ros::TimerEvent& event);
+
     void launchVisualizerNode(ros::NodeHandle& nodeHandle);
+
+  private:
 
     void tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg);
 
     void jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
+
+    bool getTransform(std::string frame_from, std::string frame_to, tf::StampedTransform& stf);
 
     void transformPoint(std::string& frame_from,
                         std::string& frame_to,
@@ -127,6 +152,9 @@ class MobileManipulatorVisualization final : public DummyObserver
     std::string ns_;
     std::string baseFrameName_;
     std::string baseFrameName_withNS_;
+    std::string occupancyInfoFrameName_;
+
+    std::vector<std::string> objOctomapNames_;
     
     RobotModelInfo robotModelInfo_;
 
@@ -157,13 +185,36 @@ class MobileManipulatorVisualization final : public DummyObserver
     vector_t fullState_;
     std::vector<geometry_msgs::Point> jointPos_;
 
-    std::vector<std::string> objOctomapNames_;
+    std::string goalFrameName_;
+    std::string goalTrajectoryFrameName_;
+    std::string mobimanGoalObsMsgName_;
+    ros::Publisher mobimanGoalObsPublisher_;
+    tf::StampedTransform mobimanGoalTF_;
+    std::deque<std::vector<double>> goalTrajectoryQueue_;
+    int goalTrajectoryQueueSize_ = 10000;
+    double goalTrajectoryQueueDt_ = 0;
+    int mobimanGoalObsTrajSampleNum_ = 3;
+    int mobimanGoalObsTrajSampleFreq_ = 5;
+    int mobimanGoalObsSeq_ = 0;
+
+    std::vector<std::string> mobimanOccObsNames_;
+    std::string mobimanOccupancyObsMsgName_;
+    ros::Publisher mobimanOccupancyObsPublisher_;
+    std::vector<tf::StampedTransform> occupancyInfoTFs_;
+    std::vector<std::deque<std::vector<double>>> occupancyInfoQueue_;
+    int occupancyInfoQueueSize_ = 10000;
+    double occupancyInfoQueueDt_ = 0;
+    int mobimanOccupancyObsSampleNum_ = 2;
+    int mobimanOccupancyObsSampleFreq_ = 5;
+    int mobimanOccupancyObsSeq_ = 0;
 
     bool printOutFlag_ = false;
     bool initTFTransformFlag_ = false;
     bool initJointStateFlag_ = false;
-    bool selfCollisionFlag_; 
-    bool extCollisionFlag_; 
+    bool selfCollisionFlag_;
+    bool extCollisionFlag_;
+    bool goalTFInitFlag_ = false;
+    std::vector<bool> occupancyInfoTFInitFlags_;
 
     PinocchioInterface pinocchioInterface_;
     PinocchioInterface pinocchioInterfaceInternal_;
@@ -191,6 +242,8 @@ class MobileManipulatorVisualization final : public DummyObserver
 
     //std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
     
+    std::chrono::steady_clock::time_point startTime_;
+
     ocs2::benchmark::RepeatedTimer timer0_;
     ocs2::benchmark::RepeatedTimer timer1_;
     ocs2::benchmark::RepeatedTimer timer2_;

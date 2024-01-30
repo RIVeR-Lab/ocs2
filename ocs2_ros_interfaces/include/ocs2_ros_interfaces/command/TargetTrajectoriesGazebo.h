@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.18
+// LAST UPDATE: 2024.01.30
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -28,7 +28,7 @@
 #include "ocs2_msgs/setInt.h"
 #include "ocs2_msgs/setTask.h"
 #include "ocs2_msgs/setSystemObservation.h"
-#include "ocs2_msgs/MobimanGoalObservation.h"
+//#include "ocs2_msgs/MobimanGoalObservation.h"
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_ros_interfaces/command/TargetTrajectoriesRosPublisher.h>
 
@@ -72,7 +72,10 @@ class TargetTrajectoriesGazebo final
   	TargetTrajectoriesGazebo& operator=(const TargetTrajectoriesGazebo& ttg);
 
     // DESCRIPTION: TODO...
-    void setGoalTrajectoryQueueDt(double goalTrajectoryQueueDt);
+    //void setGoalTrajectoryFrameName(std::string goalTrajectoryFrameName);
+
+    // DESCRIPTION: TODO...
+    //void setGoalTrajectoryQueueDt(double goalTrajectoryQueueDt);
 
     // DESCRIPTION: TODO...
     void updateDummyGoal(double x, double y, double z, double roll, double pitch, double yaw);
@@ -129,16 +132,20 @@ class TargetTrajectoriesGazebo final
     void publishTargetTrajectories(Eigen::Vector3d& position, Eigen::Quaterniond& orientation);
 
     // DESCRIPTION: TODO...
-    void publishMobimanGoalObs(bool onlyPosFlag=true);
+    //void publishMobimanGoalObs(bool onlyPosFlag=true);
 
     // DESCRIPTION: TODO...
     void updateCallback(const ros::TimerEvent& event);
 
     // DESCRIPTION: TODO...
-    void goalTrajectoryTimerCallback(const ros::TimerEvent& event);
+    //void goalTrajectoryTimerCallback(const ros::TimerEvent& event);
 
   private:
-    /// FUNCTIONS:
+    /// FUNCTIONS
+
+    // DESCRIPTION: TODO...
+    bool getTransform(std::string frame_from, std::string frame_to, tf::StampedTransform& stf);
+
     // DESCRIPTION: TODO...
     void transformPose(std::string& frame_from,
                        std::string& frame_to,
@@ -284,7 +291,7 @@ class TargetTrajectoriesGazebo final
     std::string modelModeMPCStatusMsgName_;
     std::string modelModeMRTStatusMsgName_;
     std::string targetTrajectoriesMsgName_;
-    std::string mobimanGoalObsMsgName_;
+    //std::string mobimanGoalObsMsgName_;
 
     gazebo_msgs::ModelStates modelStatesMsg_;
 
@@ -297,6 +304,8 @@ class TargetTrajectoriesGazebo final
 
     Eigen::Vector3d goalPosition_;
     Eigen::Quaterniond goalOrientation_;
+    //Eigen::Vector3d goalPositionWrtRobot_;
+    //Eigen::Quaterniond goalOrientationWrtRobot_;
     visualization_msgs::MarkerArray goalMarkerArray_;
     ros::Publisher goalMarkerArrayPublisher_;
 
@@ -307,6 +316,8 @@ class TargetTrajectoriesGazebo final
     std::string currentTargetName_;
     Eigen::Vector3d currentTargetPosition_;
     Eigen::Quaterniond currentTargetOrientation_;
+    //Eigen::Vector3d currentTargetPositionWrtRobot_;
+    //Eigen::Quaterniond currentTargetOrientationWrtRobot_;
     visualization_msgs::MarkerArray targetMarkerArray_;
     ros::Publisher targetMarkerArrayPublisher_;
     
@@ -325,6 +336,8 @@ class TargetTrajectoriesGazebo final
     std::vector<std::string> currentTargetNames_;
     std::vector<Eigen::Vector3d> currentTargetPositions_;
     std::vector<Eigen::Quaterniond> currentTargetOrientations_;
+    //std::vector<Eigen::Vector3d> currentTargetPositionsWrtRobot_;
+    //std::vector<Eigen::Quaterniond> currentTargetOrientationsWrtRobot_;
 
     GoalPoseToTargetTrajectories goalPoseToTargetTrajectories_;
 
@@ -333,14 +346,16 @@ class TargetTrajectoriesGazebo final
     ros::Subscriber statusModelModeMPCSubscriber_;
     ros::Subscriber statusModelModeMRTSubscriber_;
 
-    /// NUA TODO: SET THIS IN CONFIG!
-    int goalTrajectoryQueueSize_ = 10000;
-    double goalTrajectoryQueueDt_ = 0;
-    std::deque<std::vector<double>> goalTrajectoryQueue_;
-    int mobimanGoalObsTrajSampleNum_ = 1;
-    int mobimanGoalObsTrajSampleFreq_ = 5;
-    int mobimanGoalObsSeq_ = 0;
-    ros::Publisher mobimanGoalObsPublisher_;
+    //std::string goalTrajectoryFrameName_;
+    //int goalTrajectoryQueueSize_ = 10000;
+    //double goalTrajectoryQueueDt_ = 0;
+    //std::deque<std::vector<double>> goalTrajectoryQueue_;
+    //int mobimanGoalObsTrajSampleNum_ = 1;
+    //int mobimanGoalObsTrajSampleFreq_ = 5;
+    //int mobimanGoalObsSeq_ = 0;
+    //ros::Publisher mobimanGoalObsPublisher_;
+
+    std::chrono::steady_clock::time_point startTime_;
 
     std::unique_ptr<TargetTrajectoriesRosPublisher> targetTrajectoriesPublisherPtr_;
     ros::Publisher modelModePublisher_;

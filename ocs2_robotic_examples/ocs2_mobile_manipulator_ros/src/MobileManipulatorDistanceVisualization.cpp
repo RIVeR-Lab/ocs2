@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.13
+// LAST UPDATE: 2024.01.30
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -37,7 +37,7 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "distance_visualization");
   ros::NodeHandle nodeHandle;
 
-  //ros::MultiThreadedSpinner spinner(0);
+  ros::MultiThreadedSpinner spinner(4);
   //ros::AsyncSpinner spinner(0);
   //spinner.start();
   
@@ -63,7 +63,7 @@ int main(int argc, char** argv)
   bool recompileLibraries;
 
   /// NUA TODO: READ THIS IN CONFIG!
-  bool printOutFlag = false;
+  bool printOutFlag = true;
 
   // Read parameters from task file
   loadData::loadPtreeValue<std::string>(pt, sim, "model_information.sim", printOutFlag);
@@ -138,10 +138,32 @@ int main(int argc, char** argv)
     }
   }
 
-  /// NUA TODO: SET THEM IN CONFIG!
   // Set object names
-  std::vector<std::string> obj_octomap_names = {"oct_conveyor"};
+  std::string goal_frame_name;
+  std::vector<std::string> obj_octomap_names;
+  std::vector<std::string> mobiman_occ_obs_names;
   
+  //nodeHandle.param<std::vector<std::string>>("/obj_octomap_names", obj_octomap_names, "");
+  nodeHandle.getParam("/goal_frame_name", goal_frame_name);
+  nodeHandle.getParam("/obj_octomap_names", obj_octomap_names);
+  nodeHandle.getParam("/mobiman_occ_obs_names", mobiman_occ_obs_names);
+
+  std::cout << "[MobileManipulatorDistanceVisualization::main] goal_frame_name: " << goal_frame_name << std::endl;
+  std::cout << "[MobileManipulatorDistanceVisualization::main] obj_octomap_names size: " << obj_octomap_names.size() << std::endl;
+  for (size_t i = 0; i < obj_octomap_names.size(); i++)
+  {
+    std::cout << i << " -> " << obj_octomap_names[i] << std::endl;
+  }
+
+  std::cout << "[MobileManipulatorDistanceVisualization::main] mobiman_occ_obs_names size: " << mobiman_occ_obs_names.size() << std::endl;
+  for (size_t i = 0; i < mobiman_occ_obs_names.size(); i++)
+  {
+    std::cout << i << " -> " << mobiman_occ_obs_names[i] << std::endl;
+  }
+  
+  //std::cout << "[MobileManipulatorDistanceVisualization::main] DEBUG_VISU" << std::endl;
+  //while(1);
+
   // Adding namespace
   ns = nodeHandle.getNamespace();
   std::vector<std::string> armJointFrameNames_withNS_ = armJointFrameNames;
@@ -153,6 +175,7 @@ int main(int argc, char** argv)
     baseFrame_withNS = ns + "/" + baseFrameName;
     armBaseFrame_withNS = ns + "/" + armBaseFrame;
     eeFrame_withNS = ns + "/" + eeFrame;
+    goal_frame_name = ns + "/" + goal_frame_name;
 
     if (printOutFlag)
     {
@@ -181,12 +204,18 @@ int main(int argc, char** argv)
     {
       obj_octomap_names[i] = ns + "/" + obj_octomap_names[i];
     }
+
+    for (size_t i = 0; i < mobiman_occ_obs_names.size(); i++)
+    {
+      mobiman_occ_obs_names[i] = ns + "/" + mobiman_occ_obs_names[i];
+    }
     
     if (printOutFlag)
     {
       std::cout << "[MobileManipulatorDistanceVisualization::main] baseFrame_withNS: " << baseFrame_withNS << std::endl;
       std::cout << "[MobileManipulatorDistanceVisualization::main] armBaseFrame_withNS: " << armBaseFrame_withNS << std::endl;
       std::cout << "[MobileManipulatorDistanceVisualization::main] eeFrame_withNS: " << eeFrame_withNS << std::endl;
+      std::cout << "[MobileManipulatorDistanceVisualization::main] goal_frame_name: " << goal_frame_name << std::endl;
       std::cout << "[MobileManipulatorDistanceVisualization::main] armStateMsg: " << armStateMsg << std::endl;
       std::cout << "[MobileManipulatorDistanceVisualization::main] baseControlMsg: " << baseControlMsg << std::endl;
       std::cout << "[MobileManipulatorDistanceVisualization::main] armControlMsg: " << armControlMsg << std::endl;
@@ -195,6 +224,18 @@ int main(int argc, char** argv)
       std::cout << "[MobileManipulatorDistanceVisualization::main] occupancyDistanceArmMsg: " << occupancyDistanceArmMsg << std::endl;
       std::cout << "[MobileManipulatorDistanceVisualization::main] pointsOnRobotMsgName: " << pointsOnRobotMsg << std::endl;
       std::cout << "[MobileManipulatorDistanceVisualization::main] octomapMsg: " << octomapMsg << std::endl;
+    
+      std::cout << "[MobileManipulatorDistanceVisualization::main] obj_octomap_names size: " << obj_octomap_names.size() << std::endl;
+      for (size_t i = 0; i < obj_octomap_names.size(); i++)
+      {
+        std::cout << i << " -> " << obj_octomap_names[i] << std::endl;
+      }
+
+      std::cout << "[MobileManipulatorDistanceVisualization::main] mobiman_occ_obs_names size: " << mobiman_occ_obs_names.size() << std::endl;
+      for (size_t i = 0; i < mobiman_occ_obs_names.size(); i++)
+      {
+        std::cout << i << " -> " << mobiman_occ_obs_names[i] << std::endl;
+      }
     }
   }
 
@@ -321,20 +362,6 @@ int main(int argc, char** argv)
   emuPtr->setNodeHandle(nodeHandle);
   emuPtr->subscribeOctMsg(octomapMsg);
 
-  /// NUA TODO: GENERALIZE AND READ FROM CONFIG!
-  /*
-  { 
-    "oct_conveyor", 
-    "oct_normal_pkg",
-    "oct_long_pkg",
-    "oct_longwide_pkg",
-    "oct_red_cube",
-    "oct_green_cube",
-    "oct_blue_cube",
-    "oct_bin"
-  }
-  */
-
   if (printOutFlag)
     std::cout << "[MobileManipulatorDistanceVisualization::main] BEFORE subscribeObjectsOctMsg" << std::endl;
   
@@ -376,7 +403,15 @@ int main(int argc, char** argv)
     std::cout << "[MobileManipulatorDistanceVisualization::main] AFTER mobileManipulatorVisu_" << std::endl; 
 
   mobileManipulatorVisu.setObjOctomapNames(obj_octomap_names);
+  mobileManipulatorVisu.setMobimanOccObsNames(mobiman_occ_obs_names);
   mobileManipulatorVisu.updateStateIndexMap();
+  mobileManipulatorVisu.setGoalFrameName(goal_frame_name);
+  mobileManipulatorVisu.setGoalTrajectoryFrameName(baseFrame_withNS);
+  mobileManipulatorVisu.setOccupancyInfoFrameName(baseFrame_withNS);
+
+  if (printOutFlag)
+    std::cout << "[MobileManipulatorDistanceVisualization::main] BEFORE launchVisualizerNode" << std::endl;
+  mobileManipulatorVisu.launchVisualizerNode(nodeHandle);
 
   //double emu_dt = 0.01;
   //ros::Timer octUpdateTimer = nodeHandle.createTimer(ros::Duration(emu_dt), &MobileManipulatorVisualization::updateOctCallback, &mobileManipulatorVisu);
@@ -384,16 +419,23 @@ int main(int argc, char** argv)
   //std::cout << "[MobileManipulatorDistanceVisualization::main] DEBUG_VISU" << std::endl; 
   //while(1);
 
-  double dist_dt = 0.001;
   if (printOutFlag)
-    std::cout << "[MobileManipulatorDistanceVisualization::main] BEFORE createTimer" << std::endl; 
-  ros::Timer distanceTimer = nodeHandle.createTimer(ros::Duration(dist_dt), &MobileManipulatorVisualization::distanceVisualizationCallback, &mobileManipulatorVisu);
-  
+    std::cout << "[MobileManipulatorDistanceVisualization::main] BEFORE distanceVisualizationCallback" << std::endl; 
+  double dist_dt = 0.001;
+  ros::Timer mainTimer = nodeHandle.createTimer(ros::Duration(dist_dt), &MobileManipulatorVisualization::distanceVisualizationCallback, &mobileManipulatorVisu);
+
+  if (printOutFlag)
+    std::cout << "[MobileManipulatorDistanceVisualization::main] BEFORE occupancyInfoTimerCallback" << std::endl;
+  double occ_info_dt = 0.1;
+  mobileManipulatorVisu.setGoalTrajectoryQueueDt(occ_info_dt);
+  mobileManipulatorVisu.setOccupancyInfoQueueDt(occ_info_dt);
+  ros::Timer occupancyInfoTimer = nodeHandle.createTimer(ros::Duration(occ_info_dt), &MobileManipulatorVisualization::occupancyInfoTimerCallback, &mobileManipulatorVisu);
+
   if (printOutFlag)
     std::cout << "[MobileManipulatorDistanceVisualization::main] END" << std::endl;
 
-  //spinner.spin();
-  ros::spin();
+  spinner.spin();
+  //ros::spin();
 
   return 0;
 }

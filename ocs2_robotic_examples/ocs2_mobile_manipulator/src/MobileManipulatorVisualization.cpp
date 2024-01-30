@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.09.11
+// LAST UPDATE: 2024.01.30
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -109,6 +109,8 @@ MobileManipulatorVisualization::MobileManipulatorVisualization(ros::NodeHandle& 
   /// NUA TODO: SET IN CONFIG!
   optimizedStateTrajectoryMsgName_ = "optimizedStateTrajectory";
   optimizedPoseTrajectoryMsgName_ = "optimizedPoseTrajectory";
+  mobimanGoalObsMsgName_ = "mobiman_goal_obs";
+  mobimanOccupancyObsMsgName_ = "mobiman_occupancy_obs";
 
   //std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] ns: " << ns << std::endl;
   //std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] baseFrameName: " << baseFrameName << std::endl;
@@ -117,10 +119,14 @@ MobileManipulatorVisualization::MobileManipulatorVisualization(ros::NodeHandle& 
     baseFrameName_withNS_ = ns_ + "/" + baseFrameName;
     optimizedStateTrajectoryMsgName_ = ns_ + "/" + optimizedStateTrajectoryMsgName_;
     optimizedPoseTrajectoryMsgName_ = ns_ + "/" + optimizedPoseTrajectoryMsgName_;
+    mobimanGoalObsMsgName_ = ns_ + "/" + mobimanGoalObsMsgName_;
+    mobimanOccupancyObsMsgName_ = ns_ + "/" + mobimanOccupancyObsMsgName_;
   }
   //std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] baseFrameName_withNS_: " << baseFrameName_withNS_ << std::endl;
 
-  launchVisualizerNode(nodeHandle);
+  startTime_ = std::chrono::steady_clock::now();
+
+  //launchVisualizerNode(nodeHandle);
   //std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] END" << std::endl;
 }
 
@@ -130,6 +136,77 @@ MobileManipulatorVisualization::MobileManipulatorVisualization(ros::NodeHandle& 
 void MobileManipulatorVisualization::setObjOctomapNames(std::vector<std::string>& objOctomapNames)
 {
   objOctomapNames_ = objOctomapNames;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::setGoalFrameName(std::string goalFrameName)
+{
+  goalFrameName_ = goalFrameName;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::setGoalTrajectoryFrameName(std::string goalTrajectoryFrameName)
+{
+  goalTrajectoryFrameName_ = goalTrajectoryFrameName;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::setGoalTrajectoryQueueDt(double goalTrajectoryQueueDt)
+{
+  goalTrajectoryQueueDt_ = goalTrajectoryQueueDt;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::setMobimanOccObsNames(std::vector<std::string>& mobimanOccObsNames)
+{
+  mobimanOccObsNames_ = mobimanOccObsNames;
+
+  for (size_t i = 0; i < mobimanOccObsNames_.size(); i++)
+  {
+    occupancyInfoTFInitFlags_.push_back(false);
+  }
+
+  occupancyInfoTFs_.resize(mobimanOccObsNames_.size());
+  occupancyInfoQueue_.resize(mobimanOccObsNames_.size());
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::setOccupancyInfoFrameName(std::string occupancyInfoFrameName)
+{
+  occupancyInfoFrameName_ = occupancyInfoFrameName;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::setOccupancyInfoQueueDt(double occupancyInfoQueueDt)
+{
+  occupancyInfoQueueDt_ = occupancyInfoQueueDt;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+bool MobileManipulatorVisualization::isTrue(std::vector<bool>& bvec)
+{
+  for (size_t i = 0; i < bvec.size(); i++)
+  {
+    if (!bvec[i])
+    {
+      return false;
+    }
+  }
+  return true;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -146,7 +223,8 @@ void MobileManipulatorVisualization::launchVisualizerNode(ros::NodeHandle& nodeH
   // Publishers
   stateOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(optimizedStateTrajectoryMsgName_, 1);
   stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>(optimizedPoseTrajectoryMsgName_, 1);
-
+  mobimanGoalObsPublisher_ = nodeHandle.advertise<ocs2_msgs::MobimanGoalObservation>(mobimanGoalObsMsgName_, 10);
+  mobimanOccupancyObsPublisher_ = nodeHandle.advertise<ocs2_msgs::MobimanOccupancyObservation>(mobimanOccupancyObsMsgName_, 10);
   pubSelfCollisionInfo_ = nodeHandle.advertise<ocs2_msgs::collision_info>(selfCollisionMsg_, 10, true);
   markerPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(selfCollisionMsg_ + "_visu", 10, true);
 
@@ -166,7 +244,7 @@ void MobileManipulatorVisualization::launchVisualizerNode(ros::NodeHandle& nodeH
 
   //std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] jointStateMsgName_: " << jointStateMsgName_ << std::endl;
   //std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] Waiting for initTFTransformFlag_ and initJointStateFlag_..." << std::endl;
-  while(!initTFTransformFlag_ || !initJointStateFlag_){ros::spinOnce();}
+  while(!initTFTransformFlag_ || !initJointStateFlag_ || !goalTFInitFlag_ || !isTrue(occupancyInfoTFInitFlags_)){ros::spinOnce();}
 
   //std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] END" << std::endl;
 }
@@ -178,6 +256,39 @@ void MobileManipulatorVisualization::tfCallback(const tf2_msgs::TFMessage::Const
 {
   //std::cout << "[MobileManipulatorVisualization::tfCallback] START " << std::endl;
 
+  tf::StampedTransform stf_robot;
+  if (getTransform(worldFrameName_, baseFrameName_withNS_, stf_robot))
+  {
+    tf_robot_wrt_world_ = stf_robot;
+    initTFTransformFlag_ = true;
+  }
+
+  tf::StampedTransform stf_goal;
+  if (getTransform(goalTrajectoryFrameName_, goalFrameName_, stf_goal))
+  {
+    mobimanGoalTF_ = stf_goal;
+    goalTFInitFlag_ = true;
+  }
+
+  for (size_t i = 0; i < mobimanOccObsNames_.size(); i++)
+  {
+    //std::cout << "[MobileManipulatorVisualization::tfCallback] mobimanOccObsName: " << mobimanOccObsNames_[i] << std::endl;
+    tf::StampedTransform stf_occupancy;
+    if (getTransform(occupancyInfoFrameName_, mobimanOccObsNames_[i], stf_occupancy))
+    {
+      //std::cout << "[MobileManipulatorVisualization::tfCallback] getTransform true" << std::endl;
+      occupancyInfoTFs_[i] = stf_occupancy;
+
+      if (occupancyInfoTFInitFlags_[i] == false)
+      {
+        //std::cout << "[MobileManipulatorVisualization::tfCallback] occupancyInfoTFInitFlags_ true i: " << i << std::endl;
+        occupancyInfoTFInitFlags_[i] = true;
+      }
+    }
+  }
+  
+  /// NUA NOTE: BELOW DEPRECATED!
+  /*
   try
   {
     tfListener_.waitForTransform(worldFrameName_, baseFrameName_withNS_, ros::Time::now(), ros::Duration(1.0));
@@ -190,7 +301,7 @@ void MobileManipulatorVisualization::tfCallback(const tf2_msgs::TFMessage::Const
     std::cout << "[MobileManipulatorVisualization::tfCallback] pos x: " << tf_robot_wrt_world_.getOrigin().x() << std::endl;
     std::cout << "[MobileManipulatorVisualization::tfCallback] pos y: " << tf_robot_wrt_world_.getOrigin().y() << std::endl;
     std::cout << "[MobileManipulatorVisualization::tfCallback] pos z: " << tf_robot_wrt_world_.getOrigin().z() << std::endl;
-    */
+    * /
    
     initTFTransformFlag_ = true;
   }
@@ -199,8 +310,45 @@ void MobileManipulatorVisualization::tfCallback(const tf2_msgs::TFMessage::Const
     ROS_INFO("[MobileManipulatorVisualization::tfCallback] ERROR: Couldn't get transform!");
     ROS_ERROR("%s", ex.what());
   }
+  */
 
   //std::cout << "[MobileManipulatorVisualization::tfCallback] END " << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+bool MobileManipulatorVisualization::getTransform(std::string frame_from, std::string frame_to, tf::StampedTransform& stf)
+{
+  //std::cout << "[MobileManipulatorVisualization::getTransform] START " << std::endl;
+
+  bool success = false;
+  try
+  {
+    tfListener_.waitForTransform(frame_from, frame_to, ros::Time::now(), ros::Duration(1.0));
+    tfListener_.lookupTransform(frame_from, frame_to, ros::Time(0), stf);
+
+    /*
+    std::cout << "[MobileManipulatorVisualization::getTransform] worldFrameName_: " << worldFrameName_ << std::endl;
+    std::cout << "[MobileManipulatorVisualization::getTransform] baseFrameName_: " << baseFrameName_ << std::endl;
+
+    std::cout << "[MobileManipulatorVisualization::getTransform] pos x: " << tf_robot_wrt_world_.getOrigin().x() << std::endl;
+    std::cout << "[MobileManipulatorVisualization::getTransform] pos y: " << tf_robot_wrt_world_.getOrigin().y() << std::endl;
+    std::cout << "[MobileManipulatorVisualization::getTransform] pos z: " << tf_robot_wrt_world_.getOrigin().z() << std::endl;
+    */
+   success = true;
+  }
+  catch (tf::TransformException ex)
+  {
+    std::cout << "[MobileManipulatorVisualization::getTransform] ERROR: Couldn't get transform!" << std::endl;
+    std::cout << "[MobileManipulatorVisualization::getTransform] frame_from: " << frame_from << std::endl;
+    std::cout << "[MobileManipulatorVisualization::getTransform] frame_to: " << frame_to << std::endl;
+    //ROS_ERROR("%s", ex.what());
+  }
+
+  return success;
+
+  //std::cout << "[MobileManipulatorVisualization::getTransform] END " << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -743,6 +891,158 @@ void MobileManipulatorVisualization::updateState()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::updateMobimanGoalObs(bool onlyPosFlag)
+{
+  //std::cout << "[MobileManipulatorVisualization::updateMobimanGoalObs] START" << std::endl;
+
+  std::deque<std::vector<double>> goalTrajectoryQueue = goalTrajectoryQueue_;
+  int qsize = goalTrajectoryQueue.size();
+  int minSize = (mobimanGoalObsTrajSampleNum_-1) * mobimanGoalObsTrajSampleFreq_;
+
+  //std::cout << "[MobileManipulatorVisualization::updateMobimanGoalObs] qsize: " << qsize << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::updateMobimanGoalObs] minSize: " << minSize << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::updateMobimanGoalObs] goalTrajectoryQueueDt_: " << goalTrajectoryQueueDt_ << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::updateMobimanGoalObs] mobimanGoalObsTrajSampleNum_: " << mobimanGoalObsTrajSampleNum_ << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::updateMobimanGoalObs] mobimanGoalObsTrajSampleFreq_: " << mobimanGoalObsTrajSampleFreq_ << std::endl;
+
+  if (qsize > minSize && goalTrajectoryQueueDt_ > 0)
+  {
+    std::vector<double> goalTrajectory;
+    int idx;
+    int dim_dt = 6;
+    int posOffset = 0;
+    if (onlyPosFlag)
+    {
+      posOffset = 3;
+      dim_dt = 3;
+    }
+
+    for (size_t i = 0; i < mobimanGoalObsTrajSampleNum_; i++)
+    {
+      idx = (qsize - 1) - (i * mobimanGoalObsTrajSampleFreq_);
+      goalTrajectory.insert(goalTrajectory.end(), goalTrajectoryQueue[idx].begin(), goalTrajectoryQueue[idx].end()-posOffset); 
+    }
+
+    /*
+    std::cout << "[MobileManipulatorVisualization::updateMobimanGoalObs] goalTrajectory size: " << goalTrajectory.size() << std::endl;
+    for (size_t i = 0; i < goalTrajectory.size(); i++)
+    {
+      std::cout << i << " -> " << goalTrajectory[i] << std::endl;
+    }
+    */
+
+    ocs2_msgs::MobimanGoalObservation mgo;
+    mgo.header.seq = mobimanGoalObsSeq_;
+    mgo.header.frame_id = goalTrajectoryFrameName_;
+    mgo.header.stamp = ros::Time::now();
+    mgo.dim_dt = dim_dt;
+    mgo.dt = goalTrajectoryQueueDt_ * mobimanGoalObsTrajSampleFreq_;
+    mgo.obs = goalTrajectory;
+    mobimanGoalObsPublisher_.publish(mgo);
+
+    if (mobimanGoalObsSeq_ >= INT_MAX)
+    {
+      mobimanGoalObsSeq_ = 0;
+    }
+    else
+    {
+      mobimanGoalObsSeq_++;
+    }
+  }
+
+  //std::cout << "[MobileManipulatorVisualization::publishTargetTrajectories] END" << std::endl << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::updateMobimanOccupancyObs(bool onlyPosFlag)
+{
+  //std::cout << "[TargetTrajectoriesGazebo::updateMobimanOccupancyObs] START" << std::endl;
+
+  std::vector<std::deque<std::vector<double>>> occupancyInfoQueue = occupancyInfoQueue_;
+
+  std::vector<double> occupancyInfo;
+  int idx;
+  int dim_dt = 6;
+  int posOffset = 0;
+  if (onlyPosFlag)
+  {
+    posOffset = 3;
+    dim_dt = 3;
+  }
+  int updateCtr = 0;
+
+  for (size_t j = 0; j < occupancyInfoQueue.size(); j++)
+  {
+    int qsize = occupancyInfoQueue[j].size();
+    int minSize = (mobimanOccupancyObsSampleNum_-1) * mobimanOccupancyObsSampleFreq_;
+
+    /*
+    std::cout << "[TargetTrajectoriesGazebo::updateMobimanOccupancyObs] qsize: " << qsize << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::updateMobimanOccupancyObs] minSize: " << minSize << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::updateMobimanOccupancyObs] occupancyInfoQueueDt_: " << occupancyInfoQueueDt_ << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::updateMobimanOccupancyObs] mobimanOccupancyObsSampleNum_: " << mobimanOccupancyObsSampleNum_ << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::updateMobimanOccupancyObs] mobimanOccupancyObsSampleFreq_: " << mobimanOccupancyObsSampleFreq_ << std::endl;
+    */
+
+    if (qsize > minSize && occupancyInfoQueueDt_ > 0)
+    {
+      for (size_t i = 0; i < mobimanOccupancyObsSampleNum_; i++)
+      {
+        idx = (qsize - 1) - (i * mobimanOccupancyObsSampleFreq_);
+        occupancyInfo.insert(occupancyInfo.end(), occupancyInfoQueue[j][idx].begin(), occupancyInfoQueue[j][idx].end()-posOffset); 
+      }
+
+      /*
+      std::cout << "[TargetTrajectoriesGazebo::updateMobimanOccupancyObs] mobimanOccObsName: " << mobimanOccObsNames_[i] << std::endl;
+      std::cout << "[TargetTrajectoriesGazebo::updateMobimanOccupancyObs] occupancyInfo size: " << occupancyInfo.size() << std::endl;
+      for (size_t i = 0; i < occupancyInfo.size(); i++)
+      {
+        std::cout << i << " -> " << occupancyInfo[i] << std::endl;
+      }
+      */
+
+      updateCtr++;
+    }
+  }
+
+  if (updateCtr == occupancyInfoQueue.size())
+  {
+    /*
+    std::cout << "[TargetTrajectoriesGazebo::updateMobimanOccupancyObs] mobimanOccupancyObsSeq_: " << mobimanOccupancyObsSeq_ << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::updateMobimanOccupancyObs] occupancyInfo size: " << occupancyInfo.size() << std::endl;
+    for (size_t i = 0; i < occupancyInfo.size(); i++)
+    {
+      std::cout << i << " -> " << occupancyInfo[i] << std::endl;
+    }
+    */
+
+    ocs2_msgs::MobimanOccupancyObservation moo;
+    moo.header.seq = mobimanOccupancyObsSeq_;
+    moo.header.frame_id = occupancyInfoFrameName_;
+    moo.header.stamp = ros::Time::now();
+    moo.dim_dt = dim_dt;
+    moo.dt = occupancyInfoQueueDt_ * mobimanOccupancyObsSampleFreq_;
+    moo.obs = occupancyInfo;
+    mobimanOccupancyObsPublisher_.publish(moo);
+
+    if (mobimanOccupancyObsSeq_ == INT_MAX)
+    {
+      mobimanOccupancyObsSeq_ = 0;
+    }
+    else
+    {
+      mobimanOccupancyObsSeq_++;
+    }
+  }
+
+  //std::cout << "[TargetTrajectoriesGazebo::updateMobimanOccupancyObs] END" << std::endl << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MobileManipulatorVisualization::updateExtCollisionDistances(bool normalize_flag)
 {
   //std::cout << "[MobileManipulatorVisualization::updateExtCollisionDistances] START" << std::endl;
@@ -914,10 +1214,17 @@ void MobileManipulatorVisualization::distanceVisualizationCallback(const ros::Ti
   updateState();
   timer1_.endTimer();
 
-  //std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] BEFORE updateExtCollisionDistances" << std::endl;
-  updateExtCollisionDistances(false);
-
+  //std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] BEFORE publishSelfCollisionDistances" << std::endl;
   publishSelfCollisionDistances();
+
+  //std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] BEFORE updateMobimanOccupancyObs" << std::endl;
+  updateMobimanGoalObs();
+
+  //std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] BEFORE updateMobimanOccupancyObs" << std::endl;
+  updateMobimanOccupancyObs();
+
+  //std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] BEFORE updateExtCollisionDistances" << std::endl;
+  //updateExtCollisionDistances(false);
 
   /*
   std::cout << "### MPC_ROS Benchmarking timer1_ updateState:" << std::endl;
@@ -927,6 +1234,72 @@ void MobileManipulatorVisualization::distanceVisualizationCallback(const ros::Ti
   */
 
   //std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::occupancyInfoTimerCallback(const ros::TimerEvent& event)
+{
+  //std::cout << "[TargetTrajectoriesGazebo::occupancyInfoTimerCallback] START" << std::endl;
+
+  /*
+  auto currentTime = std::chrono::steady_clock::now();
+  double currentDuration = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime_).count() * 0.001;
+  startTime_ = currentTime;
+  std::cout << "[TargetTrajectoriesGazebo::occupancyInfoTimerCallback] currentDuration: " << currentDuration << std::endl;
+  */
+
+  // Update goalTrajectoryQueue_
+
+  tf::StampedTransform mobimanGoalTF = mobimanGoalTF_;
+
+  double roll, pitch, yaw;
+
+  tf::Quaternion mobimanGoalQuatBase(mobimanGoalTF.getRotation().x(), mobimanGoalTF.getRotation().y(), mobimanGoalTF.getRotation().z(), mobimanGoalTF.getRotation().w());
+  tf::Matrix3x3 mobimanGoalMatBase(mobimanGoalQuatBase);
+  mobimanGoalMatBase.getRPY(roll, pitch, yaw);
+
+  std::vector<double> goalTrajectory = {mobimanGoalTF.getOrigin().x(), mobimanGoalTF.getOrigin().y(), mobimanGoalTF.getOrigin().z(), roll, pitch, yaw};
+
+  goalTrajectoryQueue_.push_back(goalTrajectory);
+  if (goalTrajectoryQueue_.size() >= goalTrajectoryQueueSize_)
+  {
+    goalTrajectoryQueue_.pop_front();
+  }
+
+  // Update occupancyInfoQueue_
+  std::vector<tf::StampedTransform> occupancyInfoTFs = occupancyInfoTFs_;
+    
+  //double roll, pitch, yaw;
+
+  for (size_t i = 0; i < occupancyInfoTFs.size(); i++)
+  {
+    //tf::StampedTransform stf = occupancyInfoTFs[i];
+
+    tf::Quaternion quatBase(occupancyInfoTFs[i].getRotation().x(), occupancyInfoTFs[i].getRotation().y(), occupancyInfoTFs[i].getRotation().z(), occupancyInfoTFs[i].getRotation().w());
+    tf::Matrix3x3 matBase(quatBase);
+    matBase.getRPY(roll, pitch, yaw);
+
+    /*
+    std::cout << "[TargetTrajectoriesGazebo::occupancyInfoTimerCallback] mobimanOccObsName: " << mobimanOccObsNames_[i] << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::occupancyInfoTimerCallback] x: " << occupancyInfoTFs[i].getOrigin().x() << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::occupancyInfoTimerCallback] y: " << occupancyInfoTFs[i].getOrigin().y() << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::occupancyInfoTimerCallback] z: " << occupancyInfoTFs[i].getOrigin().z() << std::endl;
+    */
+    std::vector<double> occInfo = {occupancyInfoTFs[i].getOrigin().x(), occupancyInfoTFs[i].getOrigin().y(), occupancyInfoTFs[i].getOrigin().z(), roll, pitch, yaw};
+
+    occupancyInfoQueue_[i].push_back(occInfo);
+    if (occupancyInfoQueue_[i].size() >= occupancyInfoQueueSize_)
+    {
+      occupancyInfoQueue_[i].pop_front();
+    }
+  }
+
+  //std::cout << "[TargetTrajectoriesGazebo::occupancyInfoTimerCallback] DEBUG_INF" << std::endl;
+  //while (1);
+
+  //std::cout << "[TargetTrajectoriesGazebo::occupancyInfoTimerCallback] END" << std::endl << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -964,10 +1337,11 @@ void MobileManipulatorVisualization::transformPoint(std::string& frame_from,
 void MobileManipulatorVisualization::transformPointFromWorldtoBase(vector<geometry_msgs::Point>& p_from, vector<geometry_msgs::Point>& p_to)
 {
   p_to.clear();
+  tf::StampedTransform tf_robot_wrt_world = tf_robot_wrt_world_;
   for (size_t i = 0; i < p_from.size(); i++)
   {
     tf::Vector3 point_from(p_from[i].x, p_from[i].y, p_from[i].z);
-    tf::Vector3 point_to = tf_robot_wrt_world_.inverse() * point_from;
+    tf::Vector3 point_to = tf_robot_wrt_world.inverse() * point_from;
 
     geometry_msgs::Point pto;
     pto.x = point_to.x();

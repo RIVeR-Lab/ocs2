@@ -37,7 +37,7 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
 {
   tflistenerPtr_ = new tf::TransformListener;
 
-  /// NUA TODO: SET THIS IN CONFIG!
+  /// NUA TODO: SET BELOW IN CONFIG!
   graspPositionOffset_.x() = 0;
   graspPositionOffset_.y() = -0.2;
   graspPositionOffset_.z() = 0;
@@ -75,10 +75,11 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
   modelModeMPCStatusMsgName_ = "model_mode_mpc_status";
   modelModeMRTStatusMsgName_ = "model_mode_mrt_status";
   targetTrajectoriesMsgName_ = "mpc_target";
-  mobimanGoalObsMsgName_ = "mobiman_goal_obs";
+  //mobimanGoalObsMsgName_ = "mobiman_goal_obs";
 
   if (ns != "/")
   {
+    robotFrameName_ = ns + "/" + robotFrameName_;
     goalFrameName_ = ns + "/" + goalFrameName_;
     graspFrameName_ = ns + "/" + graspFrameName_;
     dropFrameName_ = ns + "/" + dropFrameName_;
@@ -96,8 +97,11 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
     modelModeMPCStatusMsgName_ = ns + "/" + modelModeMPCStatusMsgName_;
     modelModeMRTStatusMsgName_ = ns + "/" + modelModeMRTStatusMsgName_;
     targetTrajectoriesMsgName_ = ns + "/" + targetTrajectoriesMsgName_;
-    mobimanGoalObsMsgName_ = ns + "/" + mobimanGoalObsMsgName_;
+    //mobimanGoalObsMsgName_ = ns + "/" + mobimanGoalObsMsgName_;
   }
+
+  //setGoalTrajectoryFrameName(robotFrameName_);
+  /// NUA TODO: SET ABOVE IN CONFIG!
 
   /*
   std::cout << "[TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] targetNames_: " << std::endl;
@@ -141,7 +145,7 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
   modelModePublisher_ = nodeHandle.advertise<std_msgs::UInt8>(modelModeMsgName_, 1, false);
   goalMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(goalVisuMsgName_, 10);
   targetMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(targetVisuMsgName_, 10);
-  mobimanGoalObsPublisher_ = nodeHandle.advertise<ocs2_msgs::MobimanGoalObservation>(mobimanGoalObsMsgName_, 10);
+  //mobimanGoalObsPublisher_ = nodeHandle.advertise<ocs2_msgs::MobimanGoalObservation>(mobimanGoalObsMsgName_, 10);
 
   /// Clients
   //setTaskModeClient_ = nodeHandle.serviceClient<ocs2_msgs::setInt>("/set_task_mode");
@@ -189,6 +193,8 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(const TargetTrajectoriesGazeb
   currentTargetNames_ = ttg.currentTargetNames_;
   currentTargetPositions_ = ttg.currentTargetPositions_;
   currentTargetOrientations_ = ttg.currentTargetOrientations_;
+  //currentTargetPositionsWrtRobot_ = ttg.currentTargetPositionsWrtRobot_;
+  //currentTargetOrientationsWrtRobot_ = ttg.currentTargetOrientationsWrtRobot_;
 
   dummyGoalPosition_ = ttg.dummyGoalPosition_;
   dummyGoalOrientation_ = ttg.dummyGoalOrientation_;
@@ -231,6 +237,8 @@ TargetTrajectoriesGazebo& TargetTrajectoriesGazebo::operator=(const TargetTrajec
   currentTargetNames_ = ttg.currentTargetNames_;
   currentTargetPositions_ = ttg.currentTargetPositions_;
   currentTargetOrientations_ = ttg.currentTargetOrientations_;
+  //currentTargetPositionsWrtRobot_ = ttg.currentTargetPositionsWrtRobot_;
+  //currentTargetOrientationsWrtRobot_ = ttg.currentTargetOrientationsWrtRobot_;
 
   dummyGoalPosition_ = ttg.dummyGoalPosition_;
   dummyGoalOrientation_ = ttg.dummyGoalOrientation_;
@@ -252,6 +260,14 @@ TargetTrajectoriesGazebo& TargetTrajectoriesGazebo::operator=(const TargetTrajec
   return *this;
 }
 
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+/*
+void TargetTrajectoriesGazebo::setGoalTrajectoryFrameName(std::string goalTrajectoryFrameName)
+{
+  goalTrajectoryFrameName_ = goalTrajectoryFrameName;
+}
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -260,6 +276,7 @@ void TargetTrajectoriesGazebo::setGoalTrajectoryQueueDt(double goalTrajectoryQue
 {
   goalTrajectoryQueueDt_ = goalTrajectoryQueueDt;
 }
+*/
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -449,6 +466,42 @@ void TargetTrajectoriesGazebo::initializeInteractiveMarkerModelMode()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+bool TargetTrajectoriesGazebo::getTransform(std::string frame_from, std::string frame_to, tf::StampedTransform& stf)
+{
+  //std::cout << "[TargetTrajectoriesGazebo::getTransform] START " << std::endl;
+
+  bool success = false;
+  try
+  {
+    tflistenerPtr_->waitForTransform(frame_from, frame_to, ros::Time::now(), ros::Duration(1.0));
+    tflistenerPtr_->lookupTransform(frame_from, frame_to, ros::Time(0), stf);
+
+    /*
+    std::cout << "[TargetTrajectoriesGazebo::getTransform] worldFrameName_: " << worldFrameName_ << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::getTransform] baseFrameName_: " << baseFrameName_ << std::endl;
+
+    std::cout << "[TargetTrajectoriesGazebo::getTransform] pos x: " << tf_robot_wrt_world_.getOrigin().x() << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::getTransform] pos y: " << tf_robot_wrt_world_.getOrigin().y() << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::getTransform] pos z: " << tf_robot_wrt_world_.getOrigin().z() << std::endl;
+    */
+   success = true;
+  }
+  catch (tf::TransformException ex)
+  {
+    std::cout << "[TargetTrajectoriesGazebo::getTransform] ERROR: Couldn't get transform!" << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::getTransform] frame_from: " << frame_from << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::getTransform] frame_to: " << frame_to << std::endl;
+    //ROS_ERROR("%s", ex.what());
+  }
+
+  return success;
+
+  //std::cout << "[TargetTrajectoriesGazebo::getTransform] END " << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::transformPose(std::string& frame_from,
                                              std::string& frame_to,
                                              geometry_msgs::Pose& p_from,
@@ -612,16 +665,19 @@ void TargetTrajectoriesGazebo::gazeboModelStatesCallback(const gazebo_msgs::Mode
 //-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg)
 {
-  //std::cout << "[TargetTrajectoriesGazebo::gazeboModelStatesCallback] Incoming..." << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::tfCallback] Incoming..." << std::endl;
 
   tf::StampedTransform tf_ee_wrt_world;
   tf::StampedTransform tf_robot_wrt_world;
   tf::StampedTransform tf_target_wrt_world;
+  tf::StampedTransform tf_target_wrt_robot;
 
   geometry_msgs::Pose robotPose;
   std::vector<std::string> currentTargetNames;
   std::vector<Eigen::Vector3d> currentTargetPositions;
   std::vector<Eigen::Quaterniond> currentTargetOrientations;
+  //std::vector<Eigen::Vector3d> currentTargetPositionsWrtRobot;
+  //std::vector<Eigen::Quaterniond> currentTargetOrientationsWrtRobot;
 
   try
   {
@@ -643,14 +699,20 @@ void TargetTrajectoriesGazebo::tfCallback(const tf2_msgs::TFMessage::ConstPtr& m
       robotPose.orientation.y = tf_robot_wrt_world.getRotation().y();
       robotPose.orientation.z = tf_robot_wrt_world.getRotation().z();
       robotPose.orientation.w = tf_robot_wrt_world.getRotation().w();
+
+      robotPose_ = robotPose;
     }
 
+    bool updateFlag = false;
     for (size_t i = 0; i < targetNames_.size(); i++)
     {
       if(tflistenerPtr_->frameExists(targetNames_[i]))
       {
         tflistenerPtr_->waitForTransform(worldFrameName_, targetNames_[i], ros::Time(0), ros::Duration(1.0));
         tflistenerPtr_->lookupTransform(worldFrameName_, targetNames_[i], ros::Time(0), tf_target_wrt_world);
+
+        tflistenerPtr_->waitForTransform(robotFrameName_, targetNames_[i], ros::Time(0), ros::Duration(1.0));
+        tflistenerPtr_->lookupTransform(robotFrameName_, targetNames_[i], ros::Time(0), tf_target_wrt_robot);
 
         currentTargetNames.push_back(targetNames_[i]);
 
@@ -664,19 +726,38 @@ void TargetTrajectoriesGazebo::tfCallback(const tf2_msgs::TFMessage::ConstPtr& m
         quat.z() = tf_target_wrt_world.getRotation().z();
         quat.w() = tf_target_wrt_world.getRotation().w();
         currentTargetOrientations.push_back(quat);
+
+        /*
+        Eigen::Vector3d pos_wrt_robot;
+        pos_wrt_robot << tf_target_wrt_robot.getOrigin().x(), tf_target_wrt_robot.getOrigin().y(), tf_target_wrt_robot.getOrigin().z();
+        currentTargetPositionsWrtRobot.push_back(pos_wrt_robot);
+
+        Eigen::Quaterniond quat_wrt_robot;
+        quat_wrt_robot.x() = tf_target_wrt_robot.getRotation().x();
+        quat_wrt_robot.y() = tf_target_wrt_robot.getRotation().y();
+        quat_wrt_robot.z() = tf_target_wrt_robot.getRotation().z();
+        quat_wrt_robot.w() = tf_target_wrt_robot.getRotation().w();
+        currentTargetOrientationsWrtRobot.push_back(quat_wrt_robot);
+        */
+
+        updateFlag = true;
       }
     }
     
-    robotPose_ = robotPose;
-    currentTargetNames_ = currentTargetNames;
-    currentTargetPositions_ = currentTargetPositions;
-    currentTargetOrientations_ = currentTargetOrientations;
+    if (updateFlag)
+    {
+      currentTargetNames_ = currentTargetNames;
+      currentTargetPositions_ = currentTargetPositions;
+      currentTargetOrientations_ = currentTargetOrientations;
+      //currentTargetPositionsWrtRobot_ = currentTargetPositionsWrtRobot;
+      //currentTargetOrientationsWrtRobot_ = currentTargetOrientationsWrtRobot;
 
-    initTFCallbackFlag_ = true;
+      initTFCallbackFlag_ = true;
+    }
   }
   catch (tf::TransformException ex)
   {
-    ROS_INFO("[TargetTrajectoriesGazebo::getEEPose] ERROR: Couldn't get transform!");
+    ROS_INFO("[TargetTrajectoriesGazebo::tfCallback] ERROR: Couldn't get transform!");
     ROS_ERROR("%s", ex.what());
   }
 }
@@ -724,6 +805,11 @@ void TargetTrajectoriesGazebo::statusModelModeMRTCallback(const std_msgs::Bool::
 //-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::updateTargetInfo()
 {
+  std::cout << "[TargetTrajectoriesGazebo::updateTargetInfo] START" << std::endl;
+
+  std::cout << "[TargetTrajectoriesGazebo::updateTargetInfo] DEBUG_INF" << std::endl;
+  while(1);
+
   gazebo_msgs::ModelStates ms = modelStatesMsg_;
 
   geometry_msgs::Pose robotPose;
@@ -759,6 +845,8 @@ void TargetTrajectoriesGazebo::updateTargetInfo()
   currentTargetNames_ = currentTargetNames;
   currentTargetPositions_ = currentTargetPositions;
   currentTargetOrientations_ = currentTargetOrientations;
+
+  std::cout << "[TargetTrajectoriesGazebo::updateTargetInfo] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -771,6 +859,9 @@ void TargetTrajectoriesGazebo::updateGoal(bool autoFlag)
   Eigen::Vector3d goalPos;
   Eigen::Quaterniond goalOri;
 
+  //Eigen::Vector3d goalPosWrtRobot;
+  //Eigen::Quaterniond goalOriWrtRobot;
+
   //std::cout << "[TargetTrajectoriesGazebo::updateGoal] taskMode_: " << taskMode_ << std::endl;
 
   if (taskMode_ == 1)
@@ -782,6 +873,8 @@ void TargetTrajectoriesGazebo::updateGoal(bool autoFlag)
     std::vector<std::string> currentTargetNames = currentTargetNames_;
     std::vector<Eigen::Vector3d> targetPositions = currentTargetPositions_;
     std::vector<Eigen::Quaterniond> targetOrientations = currentTargetOrientations_;
+    //std::vector<Eigen::Vector3d> targetPositionsWrtRobot = currentTargetPositionsWrtRobot_;
+    //std::vector<Eigen::Quaterniond> targetOrientationsWrtRobot = currentTargetOrientationsWrtRobot_;
 
     if (currentTargetNames_.size() > 0)
     {
@@ -796,6 +889,9 @@ void TargetTrajectoriesGazebo::updateGoal(bool autoFlag)
 
         goalPos = targetPositions[idx];
         goalOri = targetOrientations[idx];
+
+        //goalPosWrtRobot = targetPositionsWrtRobot[idx];
+        //goalOriWrtRobot = targetOrientationsWrtRobot[idx];
       }
       else
       {
@@ -818,12 +914,18 @@ void TargetTrajectoriesGazebo::updateGoal(bool autoFlag)
         goalPos = targetPositions[closest_p.second];
         goalOri = targetOrientations[closest_p.second];
 
+        //goalPosWrtRobot = targetPositionsWrtRobot[closest_p.second];
+        //goalOriWrtRobot = targetOrientationsWrtRobot[closest_p.second];
+
         //std::cout << "[TargetTrajectoriesGazebo::updateGoal] closest_p.second: " << closest_p.second << std::endl;
         //std::cout << "[TargetTrajectoriesGazebo::updateGoal] currentTargetName_: " << currentTargetName_ << std::endl;
       }
 
       goalPosition_ = goalPos;
       goalOrientation_ = goalOri;
+
+      //goalPositionWrtRobot_ = goalPosWrtRobot;
+      //goalOrientationWrtRobot_ = goalOriWrtRobot;
 
       if (autoFlag)
       {
@@ -851,6 +953,10 @@ void TargetTrajectoriesGazebo::updateGoal(bool autoFlag)
   }
   else if (taskMode_ == 2)
   {
+    /// NUA NOTE: ADD WRT ROBOT POSE OF THE DROP TARGET!!!
+    std::cout << "[TargetTrajectoriesGazebo::updateGoal] DEBUG_INF" << std::endl;
+    while(1);
+
     //std::cout << "[TargetTrajectoriesGazebo::updateGoal] taskMode_: 2" << std::endl;
     gazebo_msgs::ModelStates ms = modelStatesMsg_;
 
@@ -913,7 +1019,10 @@ void TargetTrajectoriesGazebo::updateGoal(bool autoFlag)
 //-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::updateGoal(const Eigen::Vector3d& goalPos, const Eigen::Quaterniond& goalOri)
 {
-  //std::cout << "[TargetTrajectoriesGazebo::updateGoal(2)] START" << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::updateGoal(2)] START" << std::endl;
+
+  std::cout << "[TargetTrajectoriesGazebo::updateGoal(2)] DEBUG INF" << std::endl;
+  while(1);
 
   goalPosition_ = goalPos;
   goalOrientation_ = goalOri;
@@ -921,7 +1030,7 @@ void TargetTrajectoriesGazebo::updateGoal(const Eigen::Vector3d& goalPos, const 
   fillGoalVisu();
   //publishTargetVisu();
   
-  //std::cout << "[TargetTrajectoriesGazebo::updateGoal(2)] END" << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::updateGoal(2)] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -934,6 +1043,9 @@ void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
   Eigen::Vector3d targetPos;
   Eigen::Quaterniond targetOri;
 
+  //Eigen::Vector3d targetPosWrtRobot;
+  //Eigen::Quaterniond targetOriWrtRobot;
+
   //std::cout << "[TargetTrajectoriesGazebo::updateTarget] taskMode_: " << taskMode_ << std::endl;
 
   if (taskMode_ == 1)
@@ -945,6 +1057,8 @@ void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
     std::vector<std::string> currentTargetNames = currentTargetNames_;
     std::vector<Eigen::Vector3d> targetPositions = currentTargetPositions_;
     std::vector<Eigen::Quaterniond> targetOrientations = currentTargetOrientations_;
+    //std::vector<Eigen::Vector3d> targetPositionsWrtRobot = currentTargetPositionsWrtRobot_;
+    //std::vector<Eigen::Quaterniond> targetOrientationsWrtRobot = currentTargetOrientationsWrtRobot_;
 
     if (currentTargetNames_.size() > 0)
     {
@@ -959,6 +1073,9 @@ void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
 
         targetPos = targetPositions[idx];
         targetOri = targetOrientations[idx];
+
+        //targetPosWrtRobot = targetPositionsWrtRobot[idx];
+        //targetOriWrtRobot = targetOrientationsWrtRobot[idx];
       }
       else
       {
@@ -979,12 +1096,18 @@ void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
         targetPos = targetPositions[closest_p.second];
         targetOri = targetOrientations[closest_p.second];
 
+        //targetPosWrtRobot = targetPositionsWrtRobot[closest_p.second];
+        //targetOriWrtRobot = targetOrientationsWrtRobot[closest_p.second];
+
         //std::cout << "[TargetTrajectoriesGazebo::updateTarget] closest_p.second: " << closest_p.second << std::endl;
         //std::cout << "[TargetTrajectoriesGazebo::updateTarget] currentTargetName_: " << currentTargetName_ << std::endl;
       }
 
       currentTargetPosition_ = targetPos;
       currentTargetOrientation_ = targetOri;
+
+      //currentTargetPositionWrtRobot_ = targetPosWrtRobot;
+      //currentTargetOrientationWrtRobot_ = targetOriWrtRobot;
 
       if (autoFlag)
       {
@@ -1005,6 +1128,10 @@ void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
   }
   else if (taskMode_ == 2)
   {
+    /// NUA NOTE: ADD WRT ROBOT POSE OF THE DROP TARGET!!!
+    std::cout << "[TargetTrajectoriesGazebo::updateTarget] DEBUG_INF" << std::endl;
+    while(1);
+
     gazebo_msgs::ModelStates ms = modelStatesMsg_;
 
     for (size_t i = 0; i < ms.name.size(); i++)
@@ -1020,9 +1147,9 @@ void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
         targetOri.z() = ms.pose[i].orientation.z;
         targetOri.w() = ms.pose[i].orientation.w;
 
-        //std::cout << "[TargetTrajectoriesGazebo::updateDropTarget] targetPos.x(): " << targetPos.x() << std::endl;
-        //std::cout << "[TargetTrajectoriesGazebo::updateDropTarget] targetPos.y(): " << targetPos.y() << std::endl;
-        //std::cout << "[TargetTrajectoriesGazebo::updateDropTarget] targetPos.z(): " << targetPos.z() << std::endl;
+        //std::cout << "[TargetTrajectoriesGazebo::updateTarget] targetPos.x(): " << targetPos.x() << std::endl;
+        //std::cout << "[TargetTrajectoriesGazebo::updateTarget] targetPos.y(): " << targetPos.y() << std::endl;
+        //std::cout << "[TargetTrajectoriesGazebo::updateTarget] targetPos.z(): " << targetPos.z() << std::endl;
 
         break;
       }
@@ -1603,6 +1730,10 @@ void TargetTrajectoriesGazebo::publishTargetTrajectories()
   //std::cout << "[TargetTrajectoriesGazebo::publishTargetTrajectories] END" << std::endl;
 }
 
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+/*
 void TargetTrajectoriesGazebo::publishMobimanGoalObs(bool onlyPosFlag)
 {
   //std::cout << "[TargetTrajectoriesGazebo::publishMobimanGoalObs] START" << std::endl;
@@ -1621,10 +1752,12 @@ void TargetTrajectoriesGazebo::publishMobimanGoalObs(bool onlyPosFlag)
   {
     std::vector<double> goalTrajectory;
     int idx;
+    int dim_dt = 6;
     int posOffset = 0;
     if (onlyPosFlag)
     {
       posOffset = 3;
+      dim_dt = 3;
     }
 
     for (size_t i = 0; i < mobimanGoalObsTrajSampleNum_; i++)
@@ -1639,21 +1772,30 @@ void TargetTrajectoriesGazebo::publishMobimanGoalObs(bool onlyPosFlag)
     {
       std::cout << i << " -> " << goalTrajectory[i] << std::endl;
     }
-    */
+    * /
 
     ocs2_msgs::MobimanGoalObservation mgo;
     mgo.header.seq = mobimanGoalObsSeq_;
-    mgo.header.frame_id = worldFrameName_;
+    mgo.header.frame_id = goalTrajectoryFrameName_;
     mgo.header.stamp = ros::Time::now();
+    mgo.dim_dt = dim_dt;
     mgo.dt = goalTrajectoryQueueDt_ * mobimanGoalObsTrajSampleFreq_;
     mgo.obs = goalTrajectory;
     mobimanGoalObsPublisher_.publish(mgo);
 
-    mobimanGoalObsSeq_++;
+    if (mobimanGoalObsSeq_ >= INT_MAX)
+    {
+      mobimanGoalObsSeq_ = 0;
+    }
+    else
+    {
+      mobimanGoalObsSeq_++;
+    }
   }
 
   //std::cout << "[TargetTrajectoriesGazebo::publishTargetTrajectories] END" << std::endl << std::endl;
 }
+*/
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -1688,7 +1830,7 @@ void TargetTrajectoriesGazebo::updateCallback(const ros::TimerEvent& event)
   updateGoal(true);
 
   publishTargetTrajectories();
-  publishMobimanGoalObs();
+  //publishMobimanGoalObs();
 
   publishGoalVisu();
   publishTargetVisu();
@@ -1703,17 +1845,38 @@ void TargetTrajectoriesGazebo::updateCallback(const ros::TimerEvent& event)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+/*
 void TargetTrajectoriesGazebo::goalTrajectoryTimerCallback(const ros::TimerEvent& event)
 {
   //std::cout << "[TargetTrajectoriesGazebo::goalTrajectoryTimerCallback] START" << std::endl;
 
-  double roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world;
-  tf::Quaternion quatBase(goalOrientation_.x(), goalOrientation_.y(), goalOrientation_.z(), goalOrientation_.w());
-  tf::Matrix3x3 matBase(quatBase);
-  matBase.getRPY(roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world);
+  /*
+  auto currentTime = std::chrono::steady_clock::now();
+  double currentDuration = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime_).count() * 0.001;
+  startTime_ = currentTime;
+  std::cout << "[TargetTrajectoriesGazebo::goalTrajectoryTimerCallback] currentDuration: " << currentDuration << std::endl;
+  * /
 
-  std::vector<double> goalTrajectory = {goalPosition_.x(), goalPosition_.y(), goalPosition_.z(), 
-                    roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world};
+  double roll, pitch, yaw;
+  Eigen::Vector3d goalPosition;
+  Eigen::Quaterniond goalOrientation;
+
+  if (goalTrajectoryFrameName_ == robotFrameName_)
+  {
+    goalPosition = goalPositionWrtRobot_;
+    goalOrientation = goalOrientationWrtRobot_;
+  }
+  else
+  {
+    goalPosition = goalPosition_;
+    goalOrientation = goalOrientation_;
+  }
+
+  tf::Quaternion quatBase(goalOrientation.x(), goalOrientation.y(), goalOrientation.z(), goalOrientation.w());
+  tf::Matrix3x3 matBase(quatBase);
+  matBase.getRPY(roll, pitch, yaw);
+
+  std::vector<double> goalTrajectory = {goalPosition.x(), goalPosition.y(), goalPosition.z(), roll, pitch, yaw};
 
   goalTrajectoryQueue_.push_back(goalTrajectory);
   if (goalTrajectoryQueue_.size() >= goalTrajectoryQueueSize_)
@@ -1726,6 +1889,7 @@ void TargetTrajectoriesGazebo::goalTrajectoryTimerCallback(const ros::TimerEvent
 
   //std::cout << "[TargetTrajectoriesGazebo::goalTrajectoryTimerCallback] END" << std::endl << std::endl;
 }
+*/
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -1733,7 +1897,7 @@ void TargetTrajectoriesGazebo::goalTrajectoryTimerCallback(const ros::TimerEvent
 visualization_msgs::InteractiveMarker TargetTrajectoriesGazebo::createInteractiveMarkerTarget() const 
 {
   visualization_msgs::InteractiveMarker interactiveMarker;
-  interactiveMarker.header.frame_id = "world";
+  interactiveMarker.header.frame_id = worldFrameName_;
   interactiveMarker.header.stamp = ros::Time::now();
   interactiveMarker.name = "Target";
   interactiveMarker.scale = 0.2;

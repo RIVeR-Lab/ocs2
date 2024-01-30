@@ -638,6 +638,7 @@ void MobileManipulatorInterface::initializeMRT()
 
   // Set model mode of MobileManipulatorVisualization
   mobileManipulatorVisu_->updateModelMode(getModelModeInt(robotModelInfo_));
+  mobileManipulatorVisu_->launchVisualizerNode(nodeHandle_);
   
   // Set observers of MRT ROS Gazebo Loop
   mrt_loop_->subscribeObservers({mobileManipulatorVisu_});  
