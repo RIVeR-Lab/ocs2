@@ -137,10 +137,10 @@ class MRT_ROS_Gazebo_Loop
     void setDRLActionTimeHorizon(double drlActionTimeHorizon);
 
     /** NUA TODO: Add description */
-    void setDRLActionLastStepFlag(double drlActionLastStepFlag);
+    //void setDRLActionLastStepFlag(double drlActionLastStepFlag);
 
     /** NUA TODO: Add description */
-    void setDRLActionLastStepDistanceThreshold(double drlActionLastStepDistanceThreshold);
+    //void setDRLActionLastStepDistanceThreshold(double drlActionLastStepDistanceThreshold);
 
     /** NUA TODO: Add description */
     void setTimerStartedFlag(bool timerStartedFlag);
@@ -394,8 +394,8 @@ class MRT_ROS_Gazebo_Loop
 
     bool drlFlag_ = false;
     double drlActionTimeHorizon_;
-    bool drlActionLastStepFlag_;
-    double drlActionLastStepDistanceThreshold_;
+    //bool drlActionLastStepFlag_;
+    //double drlActionLastStepDistanceThreshold_;
 
     // 0: MPC/MRT Failure
     // 1: Collision

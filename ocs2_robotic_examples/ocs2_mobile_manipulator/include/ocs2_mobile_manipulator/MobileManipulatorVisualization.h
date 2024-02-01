@@ -193,7 +193,7 @@ class MobileManipulatorVisualization final : public DummyObserver
     std::deque<std::vector<double>> goalTrajectoryQueue_;
     int goalTrajectoryQueueSize_ = 10000;
     double goalTrajectoryQueueDt_ = 0;
-    int mobimanGoalObsTrajSampleNum_ = 3;
+    int mobimanGoalObsTrajSampleNum_ = 1;
     int mobimanGoalObsTrajSampleFreq_ = 5;
     int mobimanGoalObsSeq_ = 0;
 
@@ -204,7 +204,7 @@ class MobileManipulatorVisualization final : public DummyObserver
     std::vector<std::deque<std::vector<double>>> occupancyInfoQueue_;
     int occupancyInfoQueueSize_ = 10000;
     double occupancyInfoQueueDt_ = 0;
-    int mobimanOccupancyObsSampleNum_ = 2;
+    int mobimanOccupancyObsSampleNum_ = 1;
     int mobimanOccupancyObsSampleFreq_ = 5;
     int mobimanOccupancyObsSeq_ = 0;
 

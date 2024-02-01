@@ -1206,6 +1206,7 @@ void MRT_ROS_Gazebo_Loop::setDRLActionTimeHorizon(double drlActionTimeHorizon)
   drlActionTimeHorizon_ = drlActionTimeHorizon;
 }
 
+/*
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -1221,6 +1222,7 @@ void MRT_ROS_Gazebo_Loop::setDRLActionLastStepDistanceThreshold(double drlAction
 {
   drlActionLastStepDistanceThreshold_ = drlActionLastStepDistanceThreshold;
 }
+*/
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -2781,6 +2783,7 @@ int MRT_ROS_Gazebo_Loop::checkTaskStatus(bool enableShutDownFlag)
       return 3;
     }
   }
+
   return -1;
 }
 

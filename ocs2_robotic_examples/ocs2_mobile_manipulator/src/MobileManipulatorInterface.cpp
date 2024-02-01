@@ -1405,9 +1405,7 @@ bool MobileManipulatorInterface::setDiscreteActionDRLMRTSrv(ocs2_msgs::setDiscre
 //-------------------------------------------------------------------------------------------------------
 bool MobileManipulatorInterface::setContinuousActionDRLMPC(int drlActionId,
                                                            std::vector<double> drlActionContinuous, 
-                                                           double drlActionTimeHorizon, 
-                                                           bool drlActionLastStepFlag,
-                                                           double drlActionLastStepDistanceThreshold)
+                                                           double drlActionTimeHorizon)
 {
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPC] START" << std::endl;
 
@@ -1417,8 +1415,8 @@ bool MobileManipulatorInterface::setContinuousActionDRLMPC(int drlActionId,
   srv.request.id = drlActionId;
   srv.request.action = drlActionContinuous;
   srv.request.time_horizon = drlActionTimeHorizon;
-  srv.request.last_step_flag = drlActionLastStepFlag;
-  srv.request.last_step_distance_threshold = drlActionLastStepDistanceThreshold;
+  //srv.request.last_step_flag = drlActionLastStepFlag;
+  //srv.request.last_step_distance_threshold = drlActionLastStepDistanceThreshold;
 
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPC] Waiting for the service " << setContinuousActionDRLMPCServiceName_ << "..." << std::endl;
   ros::service::waitForService(setContinuousActionDRLMPCServiceName_);
@@ -1447,8 +1445,8 @@ bool MobileManipulatorInterface::setContinuousActionDRLMPCSrv(ocs2_msgs::setCont
   drlActionId_ = req.id;
   drlActionContinuous_ = req.action;
   drlActionTimeHorizon_ = req.time_horizon;
-  drlActionLastStepFlag_ = req.last_step_flag;
-  drlActionLastStepDistanceThreshold_ = req.last_step_distance_threshold;
+  //drlActionLastStepFlag_ = req.last_step_flag;
+  //drlActionLastStepDistanceThreshold_ = req.last_step_distance_threshold;
   res.success = true;
 
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionId_: " << drlActionId_ << std::endl;
@@ -1459,8 +1457,8 @@ bool MobileManipulatorInterface::setContinuousActionDRLMPCSrv(ocs2_msgs::setCont
   }
   
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionTimeHorizon_: " << drlActionTimeHorizon_ << std::endl;
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionLastStepFlag_: " << drlActionLastStepFlag_ << std::endl;
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionLastStepDistanceThreshold_: " << drlActionLastStepDistanceThreshold_ << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionLastStepFlag_: " << drlActionLastStepFlag_ << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionLastStepDistanceThreshold_: " << drlActionLastStepDistanceThreshold_ << std::endl;
 
   mapContinuousActionDRL(false);
 
@@ -1482,8 +1480,8 @@ bool MobileManipulatorInterface::setContinuousActionDRLMRTSrv(ocs2_msgs::setCont
   drlActionId_ = req.id;
   drlActionContinuous_ = req.action;
   drlActionTimeHorizon_ = req.time_horizon;
-  drlActionLastStepFlag_ = req.last_step_flag;
-  drlActionLastStepDistanceThreshold_ = req.last_step_distance_threshold;
+  //drlActionLastStepFlag_ = req.last_step_flag;
+  //drlActionLastStepDistanceThreshold_ = req.last_step_distance_threshold;
   res.success = true;
 
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionId_: " << drlActionId_ << std::endl;
@@ -1494,8 +1492,8 @@ bool MobileManipulatorInterface::setContinuousActionDRLMRTSrv(ocs2_msgs::setCont
   }
   
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionTimeHorizon_: " << drlActionTimeHorizon_ << std::endl;
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionLastStepFlag_: " << drlActionLastStepFlag_ << std::endl;
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionLastStepDistanceThreshold_: " << drlActionLastStepDistanceThreshold_ << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionLastStepFlag_: " << drlActionLastStepFlag_ << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionLastStepDistanceThreshold_: " << drlActionLastStepDistanceThreshold_ << std::endl;
 
   mapContinuousActionDRL(true);
 
@@ -2659,9 +2657,7 @@ void MobileManipulatorInterface::mrtCallback(const ros::TimerEvent& event)
         //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE setContinuousActionDRLMPC" << std::endl;
         setContinuousActionDRLMPC(drlActionId_,
                                   drlActionContinuous_, 
-                                  drlActionTimeHorizon_, 
-                                  drlActionLastStepFlag_,
-                                  drlActionLastStepDistanceThreshold_);
+                                  drlActionTimeHorizon_);
         //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] AFTER setContinuousActionDRLMPC" << std::endl;
       }
       else

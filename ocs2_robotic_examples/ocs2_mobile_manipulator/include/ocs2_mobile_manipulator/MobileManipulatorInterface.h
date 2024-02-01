@@ -251,9 +251,7 @@ class MobileManipulatorInterface final : public RobotInterface
 
     bool setContinuousActionDRLMPC(int drlActionId,
                                    std::vector<double> drlActionContinuous, 
-                                   double drlActionTimeHorizon, 
-                                   bool drlActionLastStepFlag,
-                                   double drlActionLastStepDistanceThreshold);
+                                   double drlActionTimeHorizon);
 
     bool setContinuousActionDRLMPCSrv(ocs2_msgs::setContinuousActionDRL::Request &req, 
                                       ocs2_msgs::setContinuousActionDRL::Response &res);
@@ -425,8 +423,8 @@ class MobileManipulatorInterface final : public RobotInterface
     int drlActionId_;
     std::vector<double> drlActionContinuous_;
     double drlActionTimeHorizon_;
-    bool drlActionLastStepFlag_;
-    double drlActionLastStepDistanceThreshold_;
+    //bool drlActionLastStepFlag_;
+    //double drlActionLastStepDistanceThreshold_;
     mpcProblemSettings mpcProblemSettings_;
     /// NUA NOTE: DEPRECATED? ----- END
 
