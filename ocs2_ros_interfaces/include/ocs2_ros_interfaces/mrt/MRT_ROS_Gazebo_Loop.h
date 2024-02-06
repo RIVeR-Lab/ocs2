@@ -284,6 +284,9 @@ class MRT_ROS_Gazebo_Loop
     bool checkPickDrop();
 
     /** NUA TODO: Add description */
+    bool checkMapBoundary();
+
+    /** NUA TODO: Add description */
     bool checkCollision(bool enableShutDownFlag=false);
 
     /** NUA TODO: Add description */
@@ -394,6 +397,13 @@ class MRT_ROS_Gazebo_Loop
 
     bool drlFlag_ = false;
     double drlActionTimeHorizon_;
+
+    double drlMapRangeMinX_;
+    double drlMapRangeMinY_;
+    double drlMapRangeMinZ_;
+    double drlMapRangeMaxX_;
+    double drlMapRangeMaxY_;
+    double drlMapRangeMaxZ_;
     //bool drlActionLastStepFlag_;
     //double drlActionLastStepDistanceThreshold_;
 

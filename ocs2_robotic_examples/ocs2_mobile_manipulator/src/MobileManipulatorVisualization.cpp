@@ -1224,7 +1224,7 @@ void MobileManipulatorVisualization::distanceVisualizationCallback(const ros::Ti
   updateMobimanOccupancyObs();
 
   //std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] BEFORE updateExtCollisionDistances" << std::endl;
-  //updateExtCollisionDistances(false);
+  updateExtCollisionDistances(false);
 
   /*
   std::cout << "### MPC_ROS Benchmarking timer1_ updateState:" << std::endl;

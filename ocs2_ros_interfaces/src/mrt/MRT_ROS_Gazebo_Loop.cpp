@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.15
+// LAST UPDATE: 2024.03.06
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -79,6 +79,20 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
       break;
   }
 
+  nh.getParam("/world_range_x_min", drlMapRangeMinX_);
+  nh.getParam("/world_range_x_max", drlMapRangeMaxX_);
+  nh.getParam("/world_range_y_min", drlMapRangeMinY_);
+  nh.getParam("/world_range_y_max", drlMapRangeMaxY_);
+  nh.getParam("/world_range_z_min", drlMapRangeMinZ_);
+  nh.getParam("/world_range_z_max", drlMapRangeMaxZ_);
+  
+  std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] drlMapRangeMinX_: " << drlMapRangeMinX_ << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] drlMapRangeMaxX_: " << drlMapRangeMaxX_ << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] drlMapRangeMinY_: " << drlMapRangeMinY_ << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] drlMapRangeMaxY_: " << drlMapRangeMaxY_ << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] drlMapRangeMinZ_: " << drlMapRangeMinZ_ << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] drlMapRangeMaxZ_: " << drlMapRangeMaxZ_ << std::endl;
+
   /// NUA TODO: SET THIS IN CONFIG!
   armControlVelocityMsgName_ = "arm_controller/velocity";
   linkAttacherMsgName_ = "link_attacher_node/attach";
@@ -111,8 +125,6 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   dataCollectionFlag_ = (dataPathReL_ == "") ? false : true;
   
   // Subscribers
-  //// NUA TODO: Consider localization error
-  //odometrySub_ = nh.subscribe("/jackal_velocity_controller/odom", 5, &MRT_ROS_Gazebo_Loop::odometryCallback, this);
   if (baseStateMsg == "")
   {
     //std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] DEFAULT: Base state info is acquired by /tf msg." << std::endl;
@@ -122,17 +134,20 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   else
   {
     linkStateSub_ = nh.subscribe(baseStateMsg, 5, &MRT_ROS_Gazebo_Loop::linkStateCallback, this);
+    
+    /// NUA TODO: Consider localization error
+    //odometrySub_ = nh.subscribe("/jackal_velocity_controller/odom", 5, &MRT_ROS_Gazebo_Loop::odometryCallback, this);
   }
   
   //std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] armStateMsg: " << armStateMsg << std::endl;
   jointStateSub_ = nh.subscribe(armStateMsg, 5, &MRT_ROS_Gazebo_Loop::jointStateCallback, this);
   //jointTrajectoryControllerStateSub_ = nh.subscribe(armStateMsg, 5, &MRT_ROS_Gazebo_Loop::jointTrajectoryControllerStateCallback, this);
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting to subscribe selfCollisionInfoMsgName_: " << selfCollisionInfoMsgName_ << std::endl;
-  //std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting to subscribe extCollisionInfoBaseMsgName_: " << extCollisionInfoBaseMsgName_ << std::endl;
-  //std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting to subscribe extCollisionInfoArmMsgName_: " << extCollisionInfoArmMsgName_ << std::endl;
-  //std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting to subscribe pointsOnRobotMsgName_: " << pointsOnRobotMsgName_ << std::endl;
-  //std::cout << "[MRT_ROS_Gazebo_Loop::run] Waiting to subscribe goalMsgName_: "<< goalMsgName_ << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] Waiting to subscribe selfCollisionInfoMsgName_: " << selfCollisionInfoMsgName_ << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] Waiting to subscribe extCollisionInfoBaseMsgName_: " << extCollisionInfoBaseMsgName_ << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] Waiting to subscribe extCollisionInfoArmMsgName_: " << extCollisionInfoArmMsgName_ << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] Waiting to subscribe pointsOnRobotMsgName_: " << pointsOnRobotMsgName_ << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop] Waiting to subscribe goalMsgName_: "<< goalMsgName_ << std::endl;
   selfCollisionInfoSub_ = nh.subscribe(selfCollisionInfoMsgName_, 5, &MRT_ROS_Gazebo_Loop::selfCollisionInfoCallback, this);
   extCollisionInfoBaseSub_ = nh.subscribe(extCollisionInfoBaseMsgName_, 5, &MRT_ROS_Gazebo_Loop::extCollisionInfoBaseCallback, this);
   extCollisionInfoArmSub_ = nh.subscribe(extCollisionInfoArmMsgName_, 5, &MRT_ROS_Gazebo_Loop::extCollisionInfoArmCallback, this);
@@ -373,8 +388,6 @@ bool MRT_ROS_Gazebo_Loop::run2(vector_t initTarget)
 {
   //std::cout << "[MRT_ROS_Gazebo_Loop::run2] START" << std::endl;
 
-  //currentTarget_ = initTarget;
-
   //std::cout << "[MRT_ROS_Gazebo_Loop::run2] Waiting for the state to be initialized..." << std::endl;
   while(!isStateInitialized()){ros::spinOnce();}
 
@@ -436,6 +449,8 @@ bool MRT_ROS_Gazebo_Loop::run2(vector_t initTarget)
   currentInput_ = initObservation.input;
 
   currentTarget_ = initTarget;
+
+  mpc_cmd_seq = 0;
 
   //std::cout << "[MRT_ROS_Gazebo_Loop::run2] END" << std::endl;
 
@@ -2038,6 +2053,11 @@ bool MRT_ROS_Gazebo_Loop::setTaskSrv(ocs2_msgs::setTask::Request &req,
   //std::cout << "[MRT_ROS_Gazebo_Loop::setTaskSrv] currentTarget_(1): " << currentTarget_(1) << std::endl;
   //std::cout << "[MRT_ROS_Gazebo_Loop::setTaskSrv] currentTarget_(2): " << currentTarget_(2) << std::endl;
 
+  //std::cout << "[MRT_ROS_Gazebo_Loop::setTaskSrv] currentTarget_(3): " << currentTarget_(3) << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::setTaskSrv] currentTarget_(4): " << currentTarget_(4) << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::setTaskSrv] currentTarget_(5): " << currentTarget_(5) << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::setTaskSrv] currentTarget_(6): " << currentTarget_(6) << std::endl;
+
   taskEndFlag_ = false;
   targetReceivedFlag_ = true;
 
@@ -2267,6 +2287,11 @@ void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy,
   mpcDataPub_.publish(mpcDataMsg);
   mpc_cmd_seq++;
 
+  if (mpc_cmd_seq > INT_MAX)
+  {
+    mpc_cmd_seq = 0;
+  }
+
   //std::cout << "[MRT_ROS_Gazebo_Loop::publishCommand] DEBUG INF" << std::endl;
   //while(1);
 
@@ -2279,11 +2304,11 @@ void MRT_ROS_Gazebo_Loop::publishCommand(const PrimalSolution& currentPolicy,
 bool MRT_ROS_Gazebo_Loop::checkPickDrop()
 {
   int taskMode = taskMode_;
-  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] taskMode: " << taskMode << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkPickDrop] taskMode: " << taskMode << std::endl;
 
   if (isPickDropPoseReached(taskMode))
   {
-    //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] START PICK/DROP" << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::checkPickDrop] START PICK/DROP" << std::endl;
     
     gazebo_ros_link_attacher::Attach srv;
     srv.request.model_name_1 = robotModelInfo_.robotName;
@@ -2291,48 +2316,108 @@ bool MRT_ROS_Gazebo_Loop::checkPickDrop()
     srv.request.model_name_2 = currentTargetName_;
     srv.request.link_name_2 = currentTargetAttachLinkName_;
 
-    //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] taskMode: " << taskMode << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::checkPickDrop] taskMode: " << taskMode << std::endl;
     if (taskMode == 1)
     {
       if (attachClient_.call(srv))
       {
-        //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] response: " << srv.response.ok << std::endl;
+        //std::cout << "[MRT_ROS_Gazebo_Loop::checkPickDrop] response: " << srv.response.ok << std::endl;
         taskMode = 2;
         pickedFlag_ = true;
         taskEndFlag_ = true;
         bool taskModeSuccess = setPickedFlag(pickedFlag_);
-        //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] taskModeSuccess: " << taskModeSuccess << std::endl;
+        //std::cout << "[MRT_ROS_Gazebo_Loop::checkPickDrop] taskModeSuccess: " << taskModeSuccess << std::endl;
         ros::spinOnce();
       }
       else
       {
-        ROS_ERROR("[MRT_ROS_Gazebo_Loop::mrtLoop] ERROR: Failed to call service!");
+        ROS_ERROR("[MRT_ROS_Gazebo_Loop::checkPickDrop] ERROR: Failed to call service!");
       }
     }
     else if (taskMode == 2)
     {
-      //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] DROP" << std::endl;
+      //std::cout << "[MRT_ROS_Gazebo_Loop::checkPickDrop] DROP" << std::endl;
       if (detachClient_.call(srv))
       {
-        //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] response: " << srv.response.ok << std::endl;
+        //std::cout << "[MRT_ROS_Gazebo_Loop::checkPickDrop] response: " << srv.response.ok << std::endl;
         taskMode = 1;
         pickedFlag_ = false;
         taskEndFlag_ = true;
         bool taskModeSuccess = setPickedFlag(pickedFlag_);
-        //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] taskModeSuccess: " << taskModeSuccess << std::endl;
+        //std::cout << "[MRT_ROS_Gazebo_Loop::checkPickDrop] taskModeSuccess: " << taskModeSuccess << std::endl;
         ros::spinOnce();
       }
       else
       {
-        ROS_ERROR("[MRT_ROS_Gazebo_Loop::mrtLoop] ERROR: Failed to call service!");
+        ROS_ERROR("[MRT_ROS_Gazebo_Loop::checkPickDrop] ERROR: Failed to call service!");
       }
     }
 
-    //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] END PICK/DROP" << std::endl;
+    //std::cout << "[MRT_ROS_Gazebo_Loop::checkPickDrop] END PICK/DROP" << std::endl;
     return true;
   }
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::mrtLoop] END PICK/DROP" << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkPickDrop] END" << std::endl;
+  return false;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+bool MRT_ROS_Gazebo_Loop::checkMapBoundary()
+{
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkMapBoundary] START" << std::endl;
+
+  tf::StampedTransform tf_robot_wrt_world = tf_robot_wrt_world_;
+
+  bool c1 = tf_robot_wrt_world.getOrigin().x() < drlMapRangeMinX_;
+  bool c2 = tf_robot_wrt_world.getOrigin().x() > drlMapRangeMaxX_;
+  bool c3 = tf_robot_wrt_world.getOrigin().y() < drlMapRangeMinY_;
+  bool c4 = tf_robot_wrt_world.getOrigin().y() > drlMapRangeMaxY_;
+  bool c5 = tf_robot_wrt_world.getOrigin().z() < drlMapRangeMinZ_;
+  bool c6 = tf_robot_wrt_world.getOrigin().z() > drlMapRangeMaxZ_;
+
+  /*
+  std::cout << "[MRT_ROS_Gazebo_Loop::checkMapBoundary] robotBasePoseMsg.position.x: " << tf_robot_wrt_world.getOrigin().x() << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::checkMapBoundary] robotBasePoseMsg.position.y: " << tf_robot_wrt_world.getOrigin().y() << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::checkMapBoundary] robotBasePoseMsg.position.z: " << tf_robot_wrt_world.getOrigin().z() << std::endl;
+  std::cout << "---" << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::checkMapBoundary] CHECK MAP BOUNDARY!" << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::checkMapBoundary] c1: " << c1 << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::checkMapBoundary] c2: " << c2 << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::checkMapBoundary] c3: " << c3 << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::checkMapBoundary] c4: " << c4 << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::checkMapBoundary] c5: " << c5 << std::endl;
+  std::cout << "[MRT_ROS_Gazebo_Loop::checkMapBoundary] c6: " << c6 << std::endl;
+  */
+
+  if (c1 || c2 || c3 || c4 || c5 || c6)
+  {
+    /*
+    std::cout << "-----------------------------------------------" << std::endl;
+    std::cout << "-----------------------------------------------" << std::endl;
+    std::cout << "-----------------------------------------------" << std::endl;
+    std::cout << "-----------------------------------------------" << std::endl;
+    std::cout << "-----------------------------------------------" << std::endl;
+    std::cout << "[MRT_ROS_Gazebo_Loop::checkMapBoundary] OUT OF MAP BOUNDARY!" << std::endl;
+    std::cout << "[MRT_ROS_Gazebo_Loop::checkMapBoundary] x < c1: " << c1 << std::endl;
+    std::cout << "[MRT_ROS_Gazebo_Loop::checkMapBoundary] x < c2: " << c2 << std::endl;
+    std::cout << "[MRT_ROS_Gazebo_Loop::checkMapBoundary] x < c3: " << c3 << std::endl;
+    std::cout << "[MRT_ROS_Gazebo_Loop::checkMapBoundary] x < c4: " << c4 << std::endl;
+    std::cout << "[MRT_ROS_Gazebo_Loop::checkMapBoundary] x < c5: " << c5 << std::endl;
+    std::cout << "[MRT_ROS_Gazebo_Loop::checkMapBoundary] x < c6: " << c6 << std::endl;
+    std::cout << "-----------------------------------------------" << std::endl;
+    std::cout << "-----------------------------------------------" << std::endl;
+    std::cout << "-----------------------------------------------" << std::endl;
+    std::cout << "-----------------------------------------------" << std::endl;
+    std::cout << "-----------------------------------------------" << std::endl;
+    */
+
+    return true;
+  }
+
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkMapBoundary] END" << std::endl;
+
   return false;
 }
 
@@ -2461,16 +2546,17 @@ bool MRT_ROS_Gazebo_Loop::checkCollision(bool enableShutDownFlag)
 //-------------------------------------------------------------------------------------------------------
 bool MRT_ROS_Gazebo_Loop::checkRollover(bool enableShutDownFlag)
 {
-  tf::StampedTransform tf_robot_wrt_world = tf_robot_wrt_world_;
-  geometry_msgs::Pose robotBasePoseMsg = robotBasePoseMsg_;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkRollover] START" << std::endl;
 
   tf::Matrix3x3 matrix_robot_wrt_world;
   if (tfFlag_)
   {
+    tf::StampedTransform tf_robot_wrt_world = tf_robot_wrt_world_;
     matrix_robot_wrt_world = tf::Matrix3x3(tf_robot_wrt_world.getRotation());
   }
   else
   {
+    geometry_msgs::Pose robotBasePoseMsg = robotBasePoseMsg_;
     tf::Quaternion quat_robot_wrt_world(robotBasePoseMsg.orientation.x, 
                                         robotBasePoseMsg.orientation.y, 
                                         robotBasePoseMsg.orientation.z, 
@@ -2496,6 +2582,8 @@ bool MRT_ROS_Gazebo_Loop::checkRollover(bool enableShutDownFlag)
     //std::cout << "[MRT_ROS_Gazebo_Loop::checkRollover] PITCH ROLLOVER!" << std::endl;
     return true;
   }
+
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkRollover] END" << std::endl;
 
   return false;
 }
@@ -2735,7 +2823,13 @@ int MRT_ROS_Gazebo_Loop::checkTaskStatus(bool enableShutDownFlag)
     }
     */
 
-    if (checkCollision(enableShutDownFlag))
+    if (checkMapBoundary())
+    {
+      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] OUT OF BOUNDARY!" << std::endl;
+      targetReceivedFlag_ = false;
+      return 0;
+    }
+    else if (checkCollision(enableShutDownFlag))
     {
       std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] COLLISION!" << std::endl;
       targetReceivedFlag_ = false;

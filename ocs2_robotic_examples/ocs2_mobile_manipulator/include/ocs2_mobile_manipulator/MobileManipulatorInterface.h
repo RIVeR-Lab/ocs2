@@ -319,7 +319,20 @@ class MobileManipulatorInterface final : public RobotInterface
 
     void jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 
-    bool setTargetDRL(double x, double y, double z, double roll, double pitch, double yaw, double time_horizon=0.0);
+    /*
+    DESCRIPTION: TODO...Maps a value from the range [-1, 1] to a new range specified by the user.
+    
+    Args:
+        val (double): The value to be mapped (within the range [-1, 1]).
+        minVal (double): The minimum value of the new range.
+        maxVal (double): The maximum value of the new range.
+    
+    Returns:
+        double: The mapped value.
+    */
+    double mapActionTarget(double val, double minVal, double maxVal);
+
+    bool setTargetDRL(string targetName, double x, double y, double z, double roll, double pitch, double yaw, double time_horizon=0.0);
 
     void mapDiscreteActionDRL(int action);
 
@@ -421,12 +434,25 @@ class MobileManipulatorInterface final : public RobotInterface
     /// NUA NOTE: DEPRECATED? ----- START
     int drlActionDiscrete_;
     int drlActionId_;
-    std::vector<double> drlActionContinuous_;
-    double drlActionTimeHorizon_;
-    //bool drlActionLastStepFlag_;
-    //double drlActionLastStepDistanceThreshold_;
     mpcProblemSettings mpcProblemSettings_;
     /// NUA NOTE: DEPRECATED? ----- END
+
+    std::vector<double> drlActionContinuous_;
+    double drlActionTimeHorizon_;
+    double drlTargetRangeMinX_;
+    double drlTargetRangeMinY_;
+    double drlTargetRangeMinZ_;
+    double drlTargetRangeMaxX_;
+    double drlTargetRangeMaxY_;
+    double drlTargetRangeMaxZ_;
+    double drlGoalRangeMinX_;
+    double drlGoalRangeMinY_;
+    double drlGoalRangeMinZ_;
+    double drlGoalRangeMaxX_;
+    double drlGoalRangeMaxY_;
+    double drlGoalRangeMaxZ_;
+    //bool drlActionLastStepFlag_;
+    //double drlActionLastStepDistanceThreshold_;
 
     ddp::Settings ddpSettings_;
     mpc::Settings mpcSettings_;
@@ -523,6 +549,7 @@ class MobileManipulatorInterface final : public RobotInterface
     bool mpcWaitingFlag_ = false;
     bool mpcReadyFlag_ = false;
     bool mrtReadyFlag_ = false;
+    bool setMPCResultFlag_ = false;
     
     int mpcModeChangeCtr_ = 0;
     int mrtModeChangeCtr_ = 0;

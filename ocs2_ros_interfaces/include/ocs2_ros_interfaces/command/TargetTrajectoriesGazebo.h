@@ -302,6 +302,7 @@ class TargetTrajectoriesGazebo final
     std::string robotName_;
     geometry_msgs::Pose robotPose_;
 
+    bool targetIsGoalFlag_ = false;
     Eigen::Vector3d goalPosition_;
     Eigen::Quaterniond goalOrientation_;
     //Eigen::Vector3d goalPositionWrtRobot_;
@@ -326,6 +327,7 @@ class TargetTrajectoriesGazebo final
     Eigen::Matrix3d graspOrientationOffsetMatrix_;
     Eigen::Vector3d currentGraspPosition_;
     Eigen::Quaterniond currentGraspOrientation_;
+    Eigen::Vector3d graspPositionEstimated_;
 
     bool dropReadyFlag_ = false;
     Eigen::Vector3d dropPositionOffset_;
