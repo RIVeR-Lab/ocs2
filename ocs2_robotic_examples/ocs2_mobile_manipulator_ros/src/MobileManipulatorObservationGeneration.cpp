@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.30
+// LAST UPDATE: 2024.02.12
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -31,7 +31,7 @@ using namespace mobile_manipulator;
 
 int main(int argc, char** argv) 
 {
-  //std::cout << "[MobileManipulatorDistanceVisualization::main] START" << std::endl;
+  //std::cout << "[MobileManipulatorObservationGeneration::main] START" << std::endl;
 
   // Initialize ros node
   ros::init(argc, argv, "distance_visualization");
@@ -95,43 +95,43 @@ int main(int argc, char** argv)
   // Print out parameter values
   if (printOutFlag)
   {
-    std::cout << "[MobileManipulatorDistanceVisualization::main] sim: " << sim << std::endl;
-    std::cout << "[MobileManipulatorDistanceVisualization::main] robotModelType: " << static_cast<int>(robotModelType) << std::endl;
-    std::cout << "[MobileManipulatorDistanceVisualization::main] worldFrameName: " << worldFrameName << std::endl;
-    std::cout << "[MobileManipulatorDistanceVisualization::main] robotName: " << robotName << std::endl;
-    std::cout << "[MobileManipulatorDistanceVisualization::main] baseFrame: " << baseFrameName << std::endl;
-    std::cout << "[MobileManipulatorDistanceVisualization::main] armBaseFrame: " << armBaseFrame << std::endl;
-    std::cout << "[MobileManipulatorDistanceVisualization::main] eeFrame: " << eeFrame << std::endl;
-    std::cout << "[MobileManipulatorDistanceVisualization::main] baseStateMsg: " << baseStateMsg << std::endl;
-    std::cout << "[MobileManipulatorDistanceVisualization::main] armStateMsg: " << armStateMsg << std::endl;
-    std::cout << "[MobileManipulatorDistanceVisualization::main] baseControlMsg: " << baseControlMsg << std::endl;
-    std::cout << "[MobileManipulatorDistanceVisualization::main] armControlMsg: " << armControlMsg << std::endl;
-    std::cout << "[MobileManipulatorDistanceVisualization::main] selfCollisionMsg: " << selfCollisionMsg << std::endl;
-    std::cout << "[MobileManipulatorDistanceVisualization::main] occupancyDistanceBaseMsg: " << occupancyDistanceBaseMsg << std::endl;
-    std::cout << "[MobileManipulatorDistanceVisualization::main] occupancyDistanceArmMsg: " << occupancyDistanceArmMsg << std::endl;
-    std::cout << "[MobileManipulatorDistanceVisualization::main] pointsOnRobotMsg: " << pointsOnRobotMsg << std::endl;
-    std::cout << "[MobileManipulatorDistanceVisualization::main] octomapMsg: " << octomapMsg << std::endl;
-    std::cout << "[MobileManipulatorDistanceVisualization::main] removeJoints: " << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] sim: " << sim << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] robotModelType: " << static_cast<int>(robotModelType) << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] worldFrameName: " << worldFrameName << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] robotName: " << robotName << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] baseFrame: " << baseFrameName << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] armBaseFrame: " << armBaseFrame << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] eeFrame: " << eeFrame << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] baseStateMsg: " << baseStateMsg << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] armStateMsg: " << armStateMsg << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] baseControlMsg: " << baseControlMsg << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] armControlMsg: " << armControlMsg << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] selfCollisionMsg: " << selfCollisionMsg << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] occupancyDistanceBaseMsg: " << occupancyDistanceBaseMsg << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] occupancyDistanceArmMsg: " << occupancyDistanceArmMsg << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] pointsOnRobotMsg: " << pointsOnRobotMsg << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] octomapMsg: " << octomapMsg << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] removeJoints: " << std::endl;
     for (const auto& name : removeJointNames) 
     {
       std::cout << name << std::endl;
     }
-    std::cout << "[MobileManipulatorDistanceVisualization::main] armJointFrameNames:" << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] armJointFrameNames:" << std::endl;
     for (const auto& name : armJointFrameNames) 
     {
       std::cout << name << std::endl;
     }
-    std::cout << "[MobileManipulatorDistanceVisualization::main] jointNames: ";
+    std::cout << "[MobileManipulatorObservationGeneration::main] jointNames: ";
     for (const auto& name : armJointNames) 
     {
       std::cout << name << std::endl;
     }
-    std::cout << "[MobileManipulatorDistanceVisualization::main] selfCollisionObjectPairs:" << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] selfCollisionObjectPairs:" << std::endl;
     for (const auto& element : selfCollisionObjectPairs) 
     {
       std::cout << "[" << element.first << ", " << element.second << "]" << std::endl;
     }
-    std::cout << "[MobileManipulatorDistanceVisualization::main] selfCollisionLinkPairs:" << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] selfCollisionLinkPairs:" << std::endl;
     for (const auto& element : selfCollisionLinkPairs) 
     {
       std::cout << "[" << element.first << ", " << element.second << "]" << std::endl;
@@ -148,20 +148,20 @@ int main(int argc, char** argv)
   nodeHandle.getParam("/obj_octomap_names", obj_octomap_names);
   nodeHandle.getParam("/mobiman_occ_obs_names", mobiman_occ_obs_names);
 
-  std::cout << "[MobileManipulatorDistanceVisualization::main] goal_frame_name: " << goal_frame_name << std::endl;
-  std::cout << "[MobileManipulatorDistanceVisualization::main] obj_octomap_names size: " << obj_octomap_names.size() << std::endl;
+  std::cout << "[MobileManipulatorObservationGeneration::main] goal_frame_name: " << goal_frame_name << std::endl;
+  std::cout << "[MobileManipulatorObservationGeneration::main] obj_octomap_names size: " << obj_octomap_names.size() << std::endl;
   for (size_t i = 0; i < obj_octomap_names.size(); i++)
   {
     std::cout << i << " -> " << obj_octomap_names[i] << std::endl;
   }
 
-  std::cout << "[MobileManipulatorDistanceVisualization::main] mobiman_occ_obs_names size: " << mobiman_occ_obs_names.size() << std::endl;
+  std::cout << "[MobileManipulatorObservationGeneration::main] mobiman_occ_obs_names size: " << mobiman_occ_obs_names.size() << std::endl;
   for (size_t i = 0; i < mobiman_occ_obs_names.size(); i++)
   {
     std::cout << i << " -> " << mobiman_occ_obs_names[i] << std::endl;
   }
   
-  //std::cout << "[MobileManipulatorDistanceVisualization::main] DEBUG_VISU" << std::endl;
+  //std::cout << "[MobileManipulatorObservationGeneration::main] DEBUG_VISU" << std::endl;
   //while(1);
 
   // Adding namespace
@@ -179,8 +179,8 @@ int main(int argc, char** argv)
 
     if (printOutFlag)
     {
-      std::cout << "[MobileManipulatorDistanceVisualization::main] ns: " << ns << std::endl;
-      std::cout << "[MobileManipulatorDistanceVisualization::main] armJointFrameNames_withNS_: " << std::endl;
+      std::cout << "[MobileManipulatorObservationGeneration::main] ns: " << ns << std::endl;
+      std::cout << "[MobileManipulatorObservationGeneration::main] armJointFrameNames_withNS_: " << std::endl;
     }
     for (auto& name : armJointFrameNames_withNS_) 
     {
@@ -212,26 +212,26 @@ int main(int argc, char** argv)
     
     if (printOutFlag)
     {
-      std::cout << "[MobileManipulatorDistanceVisualization::main] baseFrame_withNS: " << baseFrame_withNS << std::endl;
-      std::cout << "[MobileManipulatorDistanceVisualization::main] armBaseFrame_withNS: " << armBaseFrame_withNS << std::endl;
-      std::cout << "[MobileManipulatorDistanceVisualization::main] eeFrame_withNS: " << eeFrame_withNS << std::endl;
-      std::cout << "[MobileManipulatorDistanceVisualization::main] goal_frame_name: " << goal_frame_name << std::endl;
-      std::cout << "[MobileManipulatorDistanceVisualization::main] armStateMsg: " << armStateMsg << std::endl;
-      std::cout << "[MobileManipulatorDistanceVisualization::main] baseControlMsg: " << baseControlMsg << std::endl;
-      std::cout << "[MobileManipulatorDistanceVisualization::main] armControlMsg: " << armControlMsg << std::endl;
-      std::cout << "[MobileManipulatorDistanceVisualization::main] selfCollisionMsg: " << selfCollisionMsg << std::endl;
-      std::cout << "[MobileManipulatorDistanceVisualization::main] occupancyDistanceBaseMsg: " << occupancyDistanceBaseMsg << std::endl;
-      std::cout << "[MobileManipulatorDistanceVisualization::main] occupancyDistanceArmMsg: " << occupancyDistanceArmMsg << std::endl;
-      std::cout << "[MobileManipulatorDistanceVisualization::main] pointsOnRobotMsgName: " << pointsOnRobotMsg << std::endl;
-      std::cout << "[MobileManipulatorDistanceVisualization::main] octomapMsg: " << octomapMsg << std::endl;
+      std::cout << "[MobileManipulatorObservationGeneration::main] baseFrame_withNS: " << baseFrame_withNS << std::endl;
+      std::cout << "[MobileManipulatorObservationGeneration::main] armBaseFrame_withNS: " << armBaseFrame_withNS << std::endl;
+      std::cout << "[MobileManipulatorObservationGeneration::main] eeFrame_withNS: " << eeFrame_withNS << std::endl;
+      std::cout << "[MobileManipulatorObservationGeneration::main] goal_frame_name: " << goal_frame_name << std::endl;
+      std::cout << "[MobileManipulatorObservationGeneration::main] armStateMsg: " << armStateMsg << std::endl;
+      std::cout << "[MobileManipulatorObservationGeneration::main] baseControlMsg: " << baseControlMsg << std::endl;
+      std::cout << "[MobileManipulatorObservationGeneration::main] armControlMsg: " << armControlMsg << std::endl;
+      std::cout << "[MobileManipulatorObservationGeneration::main] selfCollisionMsg: " << selfCollisionMsg << std::endl;
+      std::cout << "[MobileManipulatorObservationGeneration::main] occupancyDistanceBaseMsg: " << occupancyDistanceBaseMsg << std::endl;
+      std::cout << "[MobileManipulatorObservationGeneration::main] occupancyDistanceArmMsg: " << occupancyDistanceArmMsg << std::endl;
+      std::cout << "[MobileManipulatorObservationGeneration::main] pointsOnRobotMsgName: " << pointsOnRobotMsg << std::endl;
+      std::cout << "[MobileManipulatorObservationGeneration::main] octomapMsg: " << octomapMsg << std::endl;
     
-      std::cout << "[MobileManipulatorDistanceVisualization::main] obj_octomap_names size: " << obj_octomap_names.size() << std::endl;
+      std::cout << "[MobileManipulatorObservationGeneration::main] obj_octomap_names size: " << obj_octomap_names.size() << std::endl;
       for (size_t i = 0; i < obj_octomap_names.size(); i++)
       {
         std::cout << i << " -> " << obj_octomap_names[i] << std::endl;
       }
 
-      std::cout << "[MobileManipulatorDistanceVisualization::main] mobiman_occ_obs_names size: " << mobiman_occ_obs_names.size() << std::endl;
+      std::cout << "[MobileManipulatorObservationGeneration::main] mobiman_occ_obs_names size: " << mobiman_occ_obs_names.size() << std::endl;
       for (size_t i = 0; i < mobiman_occ_obs_names.size(); i++)
       {
         std::cout << i << " -> " << mobiman_occ_obs_names[i] << std::endl;
@@ -239,17 +239,17 @@ int main(int argc, char** argv)
     }
   }
 
-  //std::cout << "[MobileManipulatorDistanceVisualization::main] DEBUG_VISU" << std::endl; 
+  //std::cout << "[MobileManipulatorObservationGeneration::main] DEBUG_VISU" << std::endl; 
   //while(1);
 
   if (printOutFlag)
-    std::cout << "[MobileManipulatorDistanceVisualization::main] BEFORE createPinocchioInterface" << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] BEFORE createPinocchioInterface" << std::endl;
   // Create pinocchio interface
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr;
   pinocchioInterfacePtr.reset(new PinocchioInterface(ocs2::mobile_manipulator::createPinocchioInterface(urdfFile, robotModelType, removeJointNames, worldFrameName, baseFrame_withNS)));
 
   if (printOutFlag)
-    std::cout << "[MobileManipulatorDistanceVisualization::main] BEFORE createRobotModelInfo" << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] BEFORE createRobotModelInfo" << std::endl;
   // Set Robot Model Info
   RobotModelInfo robotModelInfo = createRobotModelInfo(robotName,
                                                        robotModelType,
@@ -259,7 +259,7 @@ int main(int argc, char** argv)
                                                        armJointFrameNames,
                                                        armJointNames);
 
-  //std::cout << "[MobileManipulatorDistanceVisualization::main] DEBUG_VISU" << std::endl; 
+  //std::cout << "[MobileManipulatorObservationGeneration::main] DEBUG_VISU" << std::endl; 
   //while(1);
 
   //std::shared_ptr<PinocchioGeometryInterface> geometryInterfacePtr;
@@ -269,7 +269,7 @@ int main(int argc, char** argv)
   //visualizationInterfacePtr.reset(new GeometryInterfaceVisualization(*pinocchioInterfacePtr, *geometryInterfacePtr, nodeHandle, baseFrameName));
 
   if (printOutFlag)
-    std::cout << "[MobileManipulatorDistanceVisualization::main] BEFORE pointsAndRadii" << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] BEFORE pointsAndRadii" << std::endl;
   //// NUA TODO: GET INFO FROM TASK FILE AND INIT IN MobileManipulatorInterface!
   // Get points on robot parameters
   PointsOnRobot::points_radii_t pointsAndRadii(8);
@@ -281,18 +281,18 @@ int main(int argc, char** argv)
 
     if (collisionPoints.getType() != XmlRpc::XmlRpcValue::TypeArray) 
     {
-      std::cout << "[MobileManipulatorDistanceVisualization::main] collision_points parameter is not of type array." << std::endl;
+      std::cout << "[MobileManipulatorObservationGeneration::main] collision_points parameter is not of type array." << std::endl;
     }
     
     //// NUA TODO: Get the point and radii info from task file! Also seperate base and arm!
     if (printOutFlag)
-      std::cout << "[MobileManipulatorDistanceVisualization::main] pointsAndRadii:" << std::endl;
+      std::cout << "[MobileManipulatorObservationGeneration::main] pointsAndRadii:" << std::endl;
     for (int i = 0; i < collisionPoints.size(); i++) 
     {
       if (collisionPoints.getType() != XmlRpc::XmlRpcValue::TypeArray) 
       {
         if (printOutFlag)
-          std::cout << "[MobileManipulatorDistanceVisualization::main] collision_points[" << i << "] parameter is not of type array." << std::endl;
+          std::cout << "[MobileManipulatorObservationGeneration::main] collision_points[" << i << "] parameter is not of type array." << std::endl;
       }
 
       for (int j = 0; j < collisionPoints[i].size(); j++) 
@@ -300,30 +300,30 @@ int main(int argc, char** argv)
         if (collisionPoints[j].getType() != XmlRpc::XmlRpcValue::TypeArray) 
         {
           if (printOutFlag)
-            std::cout << "[MobileManipulatorDistanceVisualization::main] collision_points[" << i << "][" << j << "] parameter is not of type array." << std::endl;
+            std::cout << "[MobileManipulatorObservationGeneration::main] collision_points[" << i << "][" << j << "] parameter is not of type array." << std::endl;
         }
 
         if (collisionPoints[i][j].size() != 2) 
         {
           if (printOutFlag)
-            std::cout << "[MobileManipulatorDistanceVisualization::main] collision_points[" << i << "][" << j << "] does not have 2 elements." << std::endl;
+            std::cout << "[MobileManipulatorObservationGeneration::main] collision_points[" << i << "][" << j << "] does not have 2 elements." << std::endl;
         }
 
         double segmentId = collisionPoints[i][j][0];
         double radius = collisionPoints[i][j][1];
         pointsAndRadii[i].push_back(pair_t(segmentId, radius));
         if (printOutFlag)
-          std::cout << "[MobileManipulatorDistanceVisualization::main] segment=" << i << ". relative pos on segment:" << segmentId << ". radius:" << radius << std::endl;
+          std::cout << "[MobileManipulatorObservationGeneration::main] segment=" << i << ". relative pos on segment:" << segmentId << ". radius:" << radius << std::endl;
       }
     }
   }
   else
   {
-    std::cout << "[MobileManipulatorDistanceVisualization::main] ERROR: collision_points is not defined!" << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] ERROR: collision_points is not defined!" << std::endl;
   }
 
   if (printOutFlag)
-    std::cout << "[MobileManipulatorDistanceVisualization::main] BEFORE PointsOnRobot" << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] BEFORE PointsOnRobot" << std::endl;
   // Set PointsOnRobot object
   std::shared_ptr<PointsOnRobot> pointsOnRobotPtr;
   pointsOnRobotPtr.reset(new PointsOnRobot(pointsAndRadii));
@@ -346,11 +346,11 @@ int main(int argc, char** argv)
     pointsOnRobotPtr = nullptr;
   }
 
-  //std::cout << "[MobileManipulatorDistanceVisualization::main] DEBUG_VISU" << std::endl; 
+  //std::cout << "[MobileManipulatorObservationGeneration::main] DEBUG_VISU" << std::endl; 
   //while(1);
 
   if (printOutFlag)
-    std::cout << "[MobileManipulatorDistanceVisualization::main] BEFORE ExtMapUtility" << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] BEFORE ExtMapUtility" << std::endl;
   // Set ExtMapUtility object
   std::shared_ptr<ExtMapUtility> emuPtr;
   emuPtr.reset(new ExtMapUtility());
@@ -363,7 +363,7 @@ int main(int argc, char** argv)
   emuPtr->subscribeOctMsg(octomapMsg);
 
   if (printOutFlag)
-    std::cout << "[MobileManipulatorDistanceVisualization::main] BEFORE subscribeObjectsOctMsg" << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] BEFORE subscribeObjectsOctMsg" << std::endl;
   
   for (size_t i = 0; i < obj_octomap_names.size(); i++)
   {
@@ -380,7 +380,7 @@ int main(int argc, char** argv)
   maxDistance = 5;
 
   if (printOutFlag)
-    std::cout << "[MobileManipulatorDistanceVisualization::main] BEFORE mobileManipulatorVisu_" << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] BEFORE mobileManipulatorVisu_" << std::endl;
   MobileManipulatorVisualization mobileManipulatorVisu(nodeHandle, 
                                                        *pinocchioInterfacePtr,
                                                        worldFrameName,
@@ -400,7 +400,7 @@ int main(int argc, char** argv)
                                                        maxDistance);
 
   if (printOutFlag)
-    std::cout << "[MobileManipulatorDistanceVisualization::main] AFTER mobileManipulatorVisu_" << std::endl; 
+    std::cout << "[MobileManipulatorObservationGeneration::main] AFTER mobileManipulatorVisu_" << std::endl; 
 
   mobileManipulatorVisu.setObjOctomapNames(obj_octomap_names);
   mobileManipulatorVisu.setMobimanOccObsNames(mobiman_occ_obs_names);
@@ -410,33 +410,31 @@ int main(int argc, char** argv)
   mobileManipulatorVisu.setOccupancyInfoFrameName(baseFrame_withNS);
 
   if (printOutFlag)
-    std::cout << "[MobileManipulatorDistanceVisualization::main] BEFORE launchVisualizerNode" << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] BEFORE launchVisualizerNode" << std::endl;
   mobileManipulatorVisu.launchVisualizerNode(nodeHandle);
-  mobileManipulatorVisu.launchSubscriberMobimanGoalObsTraj(nodeHandle);
-  mobileManipulatorVisu.launchSubscriberMobimanOccupancyObsTraj(nodeHandle);
 
   //double emu_dt = 0.01;
   //ros::Timer octUpdateTimer = nodeHandle.createTimer(ros::Duration(emu_dt), &MobileManipulatorVisualization::updateOctCallback, &mobileManipulatorVisu);
   
-  //std::cout << "[MobileManipulatorDistanceVisualization::main] DEBUG_VISU" << std::endl; 
+  //std::cout << "[MobileManipulatorObservationGeneration::main] DEBUG_VISU" << std::endl; 
   //while(1);
-
-  if (printOutFlag)
-    std::cout << "[MobileManipulatorDistanceVisualization::main] BEFORE distanceVisualizationCallback" << std::endl; 
-  double dist_dt = 0.001;
-  ros::Timer mainTimer = nodeHandle.createTimer(ros::Duration(dist_dt), &MobileManipulatorVisualization::distanceVisualizationCallback, &mobileManipulatorVisu);
 
   /*
   if (printOutFlag)
-    std::cout << "[MobileManipulatorDistanceVisualization::main] BEFORE mobimanObservationTimerCallback" << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] BEFORE distanceVisualizationCallback" << std::endl; 
+  double dist_dt = 0.001;
+  ros::Timer mainTimer = nodeHandle.createTimer(ros::Duration(dist_dt), &MobileManipulatorVisualization::distanceVisualizationCallback, &mobileManipulatorVisu);
+  */
+
+  if (printOutFlag)
+    std::cout << "[MobileManipulatorObservationGeneration::main] BEFORE mobimanObservationTimerCallback" << std::endl;
   double occ_info_dt = 0.1;
   mobileManipulatorVisu.setGoalTrajectoryQueueDt(occ_info_dt);
   mobileManipulatorVisu.setOccupancyInfoQueueDt(occ_info_dt);
   ros::Timer occupancyInfoTimer = nodeHandle.createTimer(ros::Duration(occ_info_dt), &MobileManipulatorVisualization::mobimanObservationTimerCallback, &mobileManipulatorVisu);
-  */
 
   if (printOutFlag)
-    std::cout << "[MobileManipulatorDistanceVisualization::main] END" << std::endl;
+    std::cout << "[MobileManipulatorObservationGeneration::main] END" << std::endl;
 
   spinner.spin();
   //ros::spin();

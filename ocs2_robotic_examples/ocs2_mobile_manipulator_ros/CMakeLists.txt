@@ -154,6 +154,20 @@ target_link_libraries(mobile_manipulator_distance_visualization
 )
 target_compile_options(mobile_manipulator_distance_visualization PUBLIC ${FLAGS})
 
+# Observation Generation node
+add_executable(mobile_manipulator_observation_generation
+  src/MobileManipulatorObservationGeneration.cpp
+)
+add_dependencies(mobile_manipulator_observation_generation
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(mobile_manipulator_observation_generation
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${EIGEN_LIBRARIES}
+)
+target_compile_options(mobile_manipulator_observation_generation PUBLIC ${FLAGS})
+
 # Target node
 add_executable(mobile_manipulator_target
   src/MobileManipulatorTarget.cpp

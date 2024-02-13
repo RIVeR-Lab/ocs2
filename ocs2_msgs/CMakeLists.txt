@@ -22,6 +22,7 @@ add_message_files(
     multiplier.msg
     collision_info.msg
     mpc_data.msg
+    MobimanObservationTraj.msg
     MobimanOccupancyObservation.msg
     MobimanGoalObservation.msg
 )

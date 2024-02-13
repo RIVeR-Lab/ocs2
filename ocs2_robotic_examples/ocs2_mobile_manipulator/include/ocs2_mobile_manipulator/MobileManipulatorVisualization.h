@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.30
+// LAST UPDATE: 2024.02.12
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -22,6 +22,7 @@
 #include <ocs2_core/dynamics/MultiModelFunctions.h>
 #include <ocs2_msgs/collision_info.h>
 #include "ocs2_msgs/MobimanGoalObservation.h"
+#include "ocs2_msgs/MobimanObservationTraj.h"
 #include <ocs2_msgs/MobimanOccupancyObservation.h>
 #include <ocs2_ros_interfaces/mrt/DummyObserver.h>
 #include "ocs2_mobile_manipulator/MobileManipulatorPinocchioMapping.h"
@@ -100,15 +101,23 @@ class MobileManipulatorVisualization final : public DummyObserver
 
     void distanceVisualizationCallback(const ros::TimerEvent& event);
 
-    void occupancyInfoTimerCallback(const ros::TimerEvent& event);
+    void mobimanObservationTimerCallback(const ros::TimerEvent& event);
 
     void launchVisualizerNode(ros::NodeHandle& nodeHandle);
+
+    void launchSubscriberMobimanGoalObsTraj(ros::NodeHandle& nodeHandle);
+
+    void launchSubscriberMobimanOccupancyObsTraj(ros::NodeHandle& nodeHandle);
 
   private:
 
     void tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg);
 
     void jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
+
+    void mobimanGoalTrajCallback(const ocs2_msgs::MobimanObservationTraj::ConstPtr& msg);
+
+    void mobimanOccupancyTrajCallback(const ocs2_msgs::MobimanObservationTraj::ConstPtr& msg);
 
     bool getTransform(std::string frame_from, std::string frame_to, tf::StampedTransform& stf);
 
@@ -185,28 +194,37 @@ class MobileManipulatorVisualization final : public DummyObserver
     vector_t fullState_;
     std::vector<geometry_msgs::Point> jointPos_;
 
+    ocs2_msgs::MobimanObservationTraj mobimanGoalTrajMsg_;
     std::string goalFrameName_;
     std::string goalTrajectoryFrameName_;
+    std::string mobimanGoalTrajMsgName_;
     std::string mobimanGoalObsMsgName_;
-    ros::Publisher mobimanGoalObsPublisher_;
     tf::StampedTransform mobimanGoalTF_;
     std::deque<std::vector<double>> goalTrajectoryQueue_;
-    int goalTrajectoryQueueSize_ = 10000;
+    int goalTrajectoryQueueSize_ = 100;
     double goalTrajectoryQueueDt_ = 0;
     int mobimanGoalObsTrajSampleNum_ = 1;
     int mobimanGoalObsTrajSampleFreq_ = 5;
+    int mobimanObsSeq_ = 0;
     int mobimanGoalObsSeq_ = 0;
+    ros::Subscriber mobimanGoalObsTrajSubscriber_;
+    ros::Publisher mobimanGoalObsTrajPublisher_;
+    ros::Publisher mobimanGoalObsPublisher_;
 
+    ocs2_msgs::MobimanObservationTraj mobimanOccupancyTrajMsg_;
     std::vector<std::string> mobimanOccObsNames_;
+    std::string mobimanOccupancyTrajMsgName_;
     std::string mobimanOccupancyObsMsgName_;
-    ros::Publisher mobimanOccupancyObsPublisher_;
     std::vector<tf::StampedTransform> occupancyInfoTFs_;
     std::vector<std::deque<std::vector<double>>> occupancyInfoQueue_;
-    int occupancyInfoQueueSize_ = 10000;
+    int occupancyInfoQueueSize_ = 100;
     double occupancyInfoQueueDt_ = 0;
     int mobimanOccupancyObsSampleNum_ = 1;
     int mobimanOccupancyObsSampleFreq_ = 5;
     int mobimanOccupancyObsSeq_ = 0;
+    ros::Subscriber mobimanOccupancyObsTrajSubscriber_;
+    ros::Publisher mobimanOccupancyObsTrajPublisher_;
+    ros::Publisher mobimanOccupancyObsPublisher_;
 
     bool printOutFlag_ = false;
     bool initTFTransformFlag_ = false;
