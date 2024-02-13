@@ -412,8 +412,8 @@ int main(int argc, char** argv)
   if (printOutFlag)
     std::cout << "[MobileManipulatorDistanceVisualization::main] BEFORE launchVisualizerNode" << std::endl;
   mobileManipulatorVisu.launchVisualizerNode(nodeHandle);
-  mobileManipulatorVisu.launchSubscriberMobimanGoalObsTraj(nodeHandle);
-  mobileManipulatorVisu.launchSubscriberMobimanOccupancyObsTraj(nodeHandle);
+  //mobileManipulatorVisu.launchSubscriberMobimanGoalObsTraj(nodeHandle);
+  //mobileManipulatorVisu.launchSubscriberMobimanOccupancyObsTraj(nodeHandle);
 
   //double emu_dt = 0.01;
   //ros::Timer octUpdateTimer = nodeHandle.createTimer(ros::Duration(emu_dt), &MobileManipulatorVisualization::updateOctCallback, &mobileManipulatorVisu);

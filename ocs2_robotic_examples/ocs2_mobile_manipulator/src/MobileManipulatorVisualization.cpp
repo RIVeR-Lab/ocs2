@@ -473,7 +473,7 @@ void MobileManipulatorVisualization::update(const SystemObservation& observation
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorVisualization::publishSelfCollisionDistances() 
 {
-  std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances] START" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances] START" << std::endl;
 
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
@@ -486,7 +486,7 @@ void MobileManipulatorVisualization::publishSelfCollisionDistances()
   timer6_.startTimer();
   
   timer7_.startTimer();
-  std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances] BEFORE MobileManipulatorPinocchioMapping" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances] BEFORE MobileManipulatorPinocchioMapping" << std::endl;
   ocs2::mobile_manipulator::MobileManipulatorPinocchioMapping pinocchioMapping(robotModelInfo);
   const vector_t q = pinocchioMapping.getPinocchioJointPosition(state, fullState);
   pinocchio::forwardKinematics(model, data, q);
@@ -512,7 +512,7 @@ void MobileManipulatorVisualization::publishSelfCollisionDistances()
 
   //std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances] results.size(): " << results.size() << std::endl;
 
-  std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances] BEFORE FOR" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances] BEFORE FOR" << std::endl;
   for (size_t i = 0; i < results.size(); ++i) 
   {
     // I apologize for the magic numbers, it's mostly just visualization numbers(so 0.02 scale corresponds rougly to 0.02 cm)
@@ -589,7 +589,7 @@ void MobileManipulatorVisualization::publishSelfCollisionDistances()
   markerPublisher_.publish(markerArray);
   timer9_.endTimer();
 
-  std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances] BEFORE publishSelfCollisionInfo" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances] BEFORE publishSelfCollisionInfo" << std::endl;
   publishSelfCollisionInfo(self_col_status_, self_col_dist_, self_p0_, self_p1_, self_col_dist_thresh_);
 
   timer6_.endTimer();
@@ -616,7 +616,7 @@ void MobileManipulatorVisualization::publishSelfCollisionDistances()
   std::cout << "###   Latest  : " << timer9_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
   */
 
-  std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances] END" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::publishSelfCollisionDistances] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1357,22 +1357,22 @@ void MobileManipulatorVisualization::updateOctCallback(const ros::TimerEvent& ev
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorVisualization::distanceVisualizationCallback(const ros::TimerEvent& event)
 {
-  std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] START" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] START" << std::endl;
 
   timer1_.startTimer();
   updateState();
   timer1_.endTimer();
 
-  std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] BEFORE publishSelfCollisionDistances" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] BEFORE publishSelfCollisionDistances" << std::endl;
   publishSelfCollisionDistances();
 
-  std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] BEFORE updateMobimanGoalObs" << std::endl;
-  updateMobimanGoalObs();
+  //std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] BEFORE updateMobimanGoalObs" << std::endl;
+  //updateMobimanGoalObs();
 
-  std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] BEFORE updateMobimanOccupancyObs" << std::endl;
-  updateMobimanOccupancyObs();
+  //std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] BEFORE updateMobimanOccupancyObs" << std::endl;
+  //updateMobimanOccupancyObs();
 
-  std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] BEFORE updateExtCollisionDistances" << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] BEFORE updateExtCollisionDistances" << std::endl;
   updateExtCollisionDistances(false);
 
   /*
@@ -1382,7 +1382,7 @@ void MobileManipulatorVisualization::distanceVisualizationCallback(const ros::Ti
   std::cout << "###   Latest  : " << timer1_.getLastIntervalInMilliseconds() << "[ms]" << std::endl;
   */
 
-  std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] END" << std::endl << std::endl;
+  //std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] END" << std::endl << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
