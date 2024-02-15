@@ -1682,7 +1682,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 /******************************************************************************************************/
 void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const vector_t& initFullState, scalar_t finalTime) 
 {
-  //std::cout << "[GaussNewtonDDP::runImpl(4)] START" << std::endl;
+  std::cout << "[GaussNewtonDDP::runImpl(4)] START" << std::endl;
 
   if (ddpSettings_.displayInfo_) 
   {
@@ -1772,7 +1772,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const
   // DDP main loop
   while (true) 
   {
-    //std::cout << "[GaussNewtonDDP::runImpl(4)] START DDP LOOP" << std::endl;
+    std::cout << "[GaussNewtonDDP::runImpl(4)] START DDP LOOP" << std::endl;
 
     if (ddpSettings_.displayInfo_)
     {
@@ -1797,12 +1797,12 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const
 
     //std::cout << "[GaussNewtonDDP::runImpl(4)] targetTrajectories 0 size:" << this->getReferenceManager().getTargetTrajectories().stateTrajectory.size() << std::endl;
 
-    //std::cout << "[GaussNewtonDDP::runImpl(4)] START calculateController" << std::endl;
+    std::cout << "[GaussNewtonDDP::runImpl(4)] START calculateController" << std::endl;
     // calculate controller and store the result in unoptimizedController_
     computeControllerTimer_.startTimer();
     calculateController();
     computeControllerTimer_.endTimer();
-    //std::cout << "[GaussNewtonDDP::runImpl(4)] END calculateController" << std::endl;
+    std::cout << "[GaussNewtonDDP::runImpl(4)] END calculateController" << std::endl;
     
     //std::cout << "[GaussNewtonDDP::runImpl(4)] targetTrajectories 1 size:" << this->getReferenceManager().getTargetTrajectories().stateTrajectory.size() << std::endl;
 
@@ -1909,7 +1909,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const
   //std::cout << "[GaussNewtonDDP::runImpl(4)] AFTER optimizedPrimalSolution_.controllerPtr_ size: " << optimizedPrimalSolution_.controllerPtr_->size() << std::endl;
 
   //std::cout << "[GaussNewtonDDP::runImpl(4)] targetTrajectories 5 size:" << this->getReferenceManager().getTargetTrajectories().stateTrajectory.size() << std::endl;
-  //std::cout << "[GaussNewtonDDP::runImpl(4)] END" << std::endl << std::endl;
+  std::cout << "[GaussNewtonDDP::runImpl(4)] END" << std::endl;// << std::endl;
 }
 
 }  // namespace ocs2

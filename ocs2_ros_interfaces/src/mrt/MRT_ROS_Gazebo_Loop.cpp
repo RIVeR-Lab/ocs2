@@ -2567,7 +2567,17 @@ bool MRT_ROS_Gazebo_Loop::checkRollover(bool enableShutDownFlag)
   double roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world;
   matrix_robot_wrt_world.getRPY(roll_robot_wrt_world, pitch_robot_wrt_world, yaw_robot_wrt_world);
 
-  if (roll_robot_wrt_world > rolloverRollThreshold_)
+  /*
+  if (roll_robot_wrt_world < 0 || pitch_robot_wrt_world < 0)
+  {
+    std::cout << "[MRT_ROS_Gazebo_Loop::checkRollover] roll_robot_wrt_world: " << roll_robot_wrt_world << std::endl;
+    std::cout << "[MRT_ROS_Gazebo_Loop::checkRollover] rolloverRollThreshold_: " << rolloverRollThreshold_ << std::endl;
+    std::cout << "[MRT_ROS_Gazebo_Loop::checkRollover] pitch_robot_wrt_world: " << pitch_robot_wrt_world << std::endl;
+    std::cout << "[MRT_ROS_Gazebo_Loop::checkRollover] rolloverPitchThreshold_: " << rolloverPitchThreshold_ << std::endl;
+  }
+  */
+  
+  if (abs(roll_robot_wrt_world) > rolloverRollThreshold_)
   {
     //drlActionResult_ = 2;
     shutDownFlag_ = enableShutDownFlag;
@@ -2575,7 +2585,7 @@ bool MRT_ROS_Gazebo_Loop::checkRollover(bool enableShutDownFlag)
     return true;
   }
 
-  if (pitch_robot_wrt_world > rolloverPitchThreshold_)
+  if (abs(pitch_robot_wrt_world) > rolloverPitchThreshold_)
   {
     //drlActionResult_ = 2;
     shutDownFlag_ = enableShutDownFlag;
@@ -2583,7 +2593,7 @@ bool MRT_ROS_Gazebo_Loop::checkRollover(bool enableShutDownFlag)
     return true;
   }
 
-  //std::cout << "[MRT_ROS_Gazebo_Loop::checkRollover] END" << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkRollover] END" << std::endl << std::endl;
 
   return false;
 }

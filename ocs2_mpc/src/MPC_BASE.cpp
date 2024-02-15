@@ -152,10 +152,10 @@ bool MPC_BASE::run(scalar_t currentTime, const vector_t& currentState, const vec
   }
 
   // calculate the MPC policy
-  //std::cout << "[MPC_BASE::run(3)] BEFORE calculateController" << std::endl;
+  std::cout << "[MPC_BASE::run(3)] BEFORE calculateController" << std::endl;
   internalShutDownFlag_ = calculateController(currentTime, currentState, currentFullState, finalTime);
-  //std::cout << "[MPC_BASE::run(3)] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
-  //std::cout << "[MPC_BASE::run(3)] AFTER calculateController" << std::endl;
+  std::cout << "[MPC_BASE::run(3)] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
+  std::cout << "[MPC_BASE::run(3)] AFTER calculateController" << std::endl;
 
   // set initRun flag to false
   initRun_ = false;

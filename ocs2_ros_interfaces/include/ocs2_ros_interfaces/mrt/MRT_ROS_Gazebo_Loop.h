@@ -446,8 +446,8 @@ class MRT_ROS_Gazebo_Loop
     double selfCollisionRangeMin_ = 0.02;
     double extCollisionRangeBaseMin_ = 0.01;
     double extCollisionRangeArmMin_ = 0.01;
-    double rolloverRollThreshold_ = 0.2;
-    double rolloverPitchThreshold_ = 0.2;
+    double rolloverRollThreshold_ = 0.25;
+    double rolloverPitchThreshold_ = 0.25;
 
     ocs2_msgs::collision_info selfCollisionInfoMsg_;
     ocs2_msgs::collision_info extCollisionInfoBaseMsg_;
