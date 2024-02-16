@@ -405,9 +405,9 @@ class MobileManipulatorInterface final : public RobotInterface
     size_t modelModeInt_;
 
     /// NUA TODO: SET IN CONFIG!
-    double err_threshold_pos_ = 0.1;
-    double err_threshold_ori_yaw_ = 0.1;
-    double err_threshold_ori_quat_ = 0.05;
+    double errThresholdPos_;
+    double errThresholdOriYaw_;
+    double errThresholdOriQuat_;
 
     int mpcIter_ = 0; 
     int mrtIter_ = 0; 

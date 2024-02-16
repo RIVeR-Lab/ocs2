@@ -49,10 +49,10 @@ SelfCollisionConstraintCppAd::SelfCollisionConstraintCppAd(PinocchioInterface pi
                                                            const PinocchioStateInputMapping<scalar_t>& mapping,
                                                            const PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
                                                            PinocchioGeometryInterface pinocchioGeometryInterface, 
-                                                           RobotModelInfo& robotModelInfo,
+                                                           RobotModelInfo robotModelInfo,
                                                            scalar_t minimumDistance,
-                                                           const std::string& modelName, 
-                                                           const std::string& modelFolder,
+                                                           const std::string modelName, 
+                                                           const std::string modelFolder,
                                                            bool recompileLibraries, 
                                                            bool verbose)
   : SelfCollisionConstraintCppAd(std::move(pinocchioInterface), 

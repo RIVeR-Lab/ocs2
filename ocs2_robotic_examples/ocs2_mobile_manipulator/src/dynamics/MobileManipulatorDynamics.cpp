@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.04.10
+// LAST UPDATE: 2024.02.15
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -22,12 +22,12 @@ MobileManipulatorDynamics::MobileManipulatorDynamics(RobotModelInfo info,
                                                      const std::string& modelFolder /*= "/tmp/ocs2"*/,
                                                      bool recompileLibraries /*= true*/, 
                                                      bool verbose /*= true*/)
-  : info_(std::move(info)) 
+  : info_(info) 
 {
   //std::cout << "[MobileManipulatorDynamics::MobileManipulatorDynamics] START" << std::endl;
 
-  auto stateDim = getStateDim(info);
-  auto inputDim = getInputDim(info);
+  auto stateDim = getStateDim(info_);
+  auto inputDim = getInputDim(info_);
 
   if(stateDim != 9 || inputDim != 8)
   {

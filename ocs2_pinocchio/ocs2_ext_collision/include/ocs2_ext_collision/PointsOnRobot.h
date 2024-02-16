@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.08.21
+// LAST UPDATE: 2024.02.15
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -47,7 +47,7 @@ class PointsOnRobot
     void initialize(ocs2::PinocchioInterface& pinocchioInterface,
                     const ocs2::PinocchioStateInputMapping<ocs2::scalar_t>& mapping,
                     const ocs2::PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
-                    const ocs2::RobotModelInfo& robotModelInfo,
+                    const ocs2::RobotModelInfo robotModelInfo,
                     const std::string& modelName, 
                     const std::string& modelFolder, 
                     bool recompileLibraries, 

@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.10.05
+// LAST UPDATE: 2024.02.15
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -27,10 +27,10 @@ namespace ocs2 {
 SelfCollisionCppAd::SelfCollisionCppAd(const PinocchioInterface& pinocchioInterface, 
                                        PinocchioGeometryInterface pinocchioGeometryInterface,
                                        const PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
-                                       RobotModelInfo& robotModelInfo,
+                                       RobotModelInfo robotModelInfo,
                                        scalar_t minimumDistance, 
-                                       const std::string& modelName, 
-                                       const std::string& modelFolder,
+                                       const std::string modelName, 
+                                       const std::string modelFolder,
                                        bool recompileLibraries, 
                                        bool verbose)
   : pinocchioGeometryInterface_(std::move(pinocchioGeometryInterface)), 

@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.02.12
+// LAST UPDATE: 2024.02.15
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -74,7 +74,7 @@ MobileManipulatorVisualization::MobileManipulatorVisualization(ros::NodeHandle& 
                                                                const std::string& baseFrameName,
                                                                const std::string& urdfFile,
                                                                const std::string& jointStateMsgName,
-                                                               const RobotModelInfo& robotModelInfo,
+                                                               const RobotModelInfo robotModelInfo,
                                                                const bool& selfCollisionFlag,
                                                                const bool& extCollisionFlag,
                                                                const std::vector<std::string>& removeJointNames,

@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.03.03
+// LAST UPDATE: 2024.02.15
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -22,7 +22,7 @@ RobotArmDynamics::RobotArmDynamics(RobotModelInfo info,
                                    const std::string& modelFolder, 
                                    bool recompileLibraries /*= true*/,
                                    bool verbose /*= true*/)
-  : info_(std::move(info))
+  : info_(info)
 {
   //std::cout << "[RobotArmDynamics::RobotArmDynamics] START" << std::endl;
 

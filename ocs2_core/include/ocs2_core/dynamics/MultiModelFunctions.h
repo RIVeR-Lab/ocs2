@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.27
+// LAST UPDATE: 2024.02.15
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -29,94 +29,94 @@ namespace ocs2 {
  * @param [in] eeFrame: Name of the end-effector frame.
  * @return RobotModelInfo
  */
-RobotModelInfo createRobotModelInfo(const std::string& robotName,
-                                    const RobotModelType& robotModelType,
-                                    const std::string& baseFrame, 
-                                    const std::string& armBaseFrame,
-                                    const std::string& eeFrame,
-                                    const std::vector<std::string>& jointFrameNames,
-                                    const std::vector<std::string>& jointNames);
+RobotModelInfo createRobotModelInfo(const std::string robotName,
+                                    const RobotModelType robotModelType,
+                                    const std::string baseFrame, 
+                                    const std::string armBaseFrame,
+                                    const std::string eeFrame,
+                                    const std::vector<std::string> jointFrameNames,
+                                    const std::vector<std::string> jointNames);
 
 /**
  * NUA TODO: UPDATE!
  */
-bool updateModelMode(RobotModelInfo& robotModelInfo, size_t& modelMode);
+bool updateModelMode(RobotModelInfo& robotModelInfo, size_t modelMode);
 
 /**
  * NUA TODO: UPDATE!
  */
-bool updateModelModeByState(RobotModelInfo& robotModelInfo, size_t& stateDim);
+bool updateModelModeByState(RobotModelInfo& robotModelInfo, size_t stateDim);
 
 /**
  * NUA TODO: UPDATE!
  */
-std::string getRobotName(RobotModelInfo& robotModelInfo);
+std::string getRobotName(RobotModelInfo robotModelInfo);
 
 /**
  * NUA TODO: UPDATE!
  */
-size_t getModelModeInt(RobotModelInfo& robotModelInfo);
+size_t getModelModeInt(RobotModelInfo robotModelInfo);
 
 /**
  * NUA TODO: UPDATE!
  */
-size_t getStateDimBase(RobotModelInfo& robotModelInfo);
+size_t getStateDimBase(RobotModelInfo robotModelInfo);
 
 /**
  * NUA TODO: UPDATE!
  */
-size_t getStateDimArm(RobotModelInfo& robotModelInfo);
+size_t getStateDimArm(RobotModelInfo robotModelInfo);
 
 /**
  * NUA TODO: UPDATE!
  */
-size_t getStateDim(RobotModelInfo& robotModelInfo);
+size_t getStateDim(RobotModelInfo robotModelInfo);
 
 /**
  * NUA TODO: UPDATE!
  */
-size_t getModeStateDim(RobotModelInfo& robotModelInfo);
+size_t getModeStateDim(RobotModelInfo robotModelInfo);
 
 /**
  * NUA TODO: UPDATE!
  */
-size_t getInputDimBase(RobotModelInfo& robotModelInfo);
+size_t getInputDimBase(RobotModelInfo robotModelInfo);
 
 /**
  * NUA TODO: UPDATE!
  */
-size_t getInputDimArm(RobotModelInfo& robotModelInfo);
+size_t getInputDimArm(RobotModelInfo robotModelInfo);
 
 /**
  * NUA TODO: UPDATE!
  */
-size_t getInputDim(RobotModelInfo& robotModelInfo);
+size_t getInputDim(RobotModelInfo robotModelInfo);
 
 /**
  * NUA TODO: UPDATE!
  */
-size_t getModeInputDim(RobotModelInfo& robotModelInfo);
+size_t getModeInputDim(RobotModelInfo robotModelInfo);
 
 /**
  * @brief Returns a string for a RobotModelType for retrieving data from a .info file
  * NUA TODO: UPDATE!
  */
-std::string getRobotModelTypeString(RobotModelInfo& robotModelInfo);
+std::string getRobotModelTypeString(RobotModelInfo robotModelInfo);
 
 /**
  * @brief Returns a string for a ModelMode
  * NUA TODO: UPDATE!
  */
-std::string getModelModeString(RobotModelInfo& robotModelInfo);
+std::string getModelModeString(RobotModelInfo robotModelInfo);
 
 /** Load ManipulatorModelType for a config file
  * NUA TODO: UPDATE!
  */
-RobotModelType loadRobotType(const std::string& configFilePath, const std::string& fieldName = "robotModelType");
+RobotModelType loadRobotType(const std::string configFilePath, const std::string fieldName = "robotModelType");
 
 /**
  * NUA TODO: UPDATE!
  */
-void printRobotModelInfo(RobotModelInfo& robotModelInfo);
+void printRobotModelInfo(RobotModelInfo robotModelInfo);
 
 }  // namespace ocs2

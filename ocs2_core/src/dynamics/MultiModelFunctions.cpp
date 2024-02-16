@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.07.27
+// LAST UPDATE: 2024.02.15
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -33,13 +33,13 @@ namespace ocs2 {
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-RobotModelInfo createRobotModelInfo(const std::string& robotName,
-                                    const RobotModelType& robotModelType,
-                                    const std::string& baseFrame, 
-                                    const std::string& armBaseFrame,
-                                    const std::string& eeFrame, 
-                                    const std::vector<std::string>& armJointFrameNames,
-                                    const std::vector<std::string>& armJointNames) 
+RobotModelInfo createRobotModelInfo(const std::string robotName,
+                                    const RobotModelType robotModelType,
+                                    const std::string baseFrame, 
+                                    const std::string armBaseFrame,
+                                    const std::string eeFrame, 
+                                    const std::vector<std::string> armJointFrameNames,
+                                    const std::vector<std::string> armJointNames) 
 {
   //const auto& model = interface.getModel();
   RobotModelInfo info;
@@ -116,7 +116,7 @@ RobotModelInfo createRobotModelInfo(const std::string& robotName,
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-std::string getRobotName(RobotModelInfo& robotModelInfo)
+std::string getRobotName(RobotModelInfo robotModelInfo)
 {
   return robotModelInfo.robotName;
 }
@@ -124,7 +124,7 @@ std::string getRobotName(RobotModelInfo& robotModelInfo)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-size_t getModelModeInt(RobotModelInfo& robotModelInfo)
+size_t getModelModeInt(RobotModelInfo robotModelInfo)
 {
   size_t modelModeInt;
 
@@ -152,7 +152,7 @@ size_t getModelModeInt(RobotModelInfo& robotModelInfo)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-size_t getStateDimBase(RobotModelInfo& robotModelInfo)
+size_t getStateDimBase(RobotModelInfo robotModelInfo)
 {
   return robotModelInfo.mobileBase.stateDim;
 }
@@ -160,7 +160,7 @@ size_t getStateDimBase(RobotModelInfo& robotModelInfo)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-size_t getStateDimArm(RobotModelInfo& robotModelInfo)
+size_t getStateDimArm(RobotModelInfo robotModelInfo)
 {
   return robotModelInfo.robotArm.stateDim;
 }
@@ -168,7 +168,7 @@ size_t getStateDimArm(RobotModelInfo& robotModelInfo)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-size_t getStateDim(RobotModelInfo& robotModelInfo)
+size_t getStateDim(RobotModelInfo robotModelInfo)
 {
   return robotModelInfo.mobileBase.stateDim + robotModelInfo.robotArm.stateDim;
 }
@@ -176,7 +176,7 @@ size_t getStateDim(RobotModelInfo& robotModelInfo)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-size_t getModeStateDim(RobotModelInfo& robotModelInfo)
+size_t getModeStateDim(RobotModelInfo robotModelInfo)
 {
   return robotModelInfo.modeStateDim;
 }
@@ -184,7 +184,7 @@ size_t getModeStateDim(RobotModelInfo& robotModelInfo)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-size_t getInputDimBase(RobotModelInfo& robotModelInfo)
+size_t getInputDimBase(RobotModelInfo robotModelInfo)
 {
   return robotModelInfo.mobileBase.inputDim;
 }
@@ -192,7 +192,7 @@ size_t getInputDimBase(RobotModelInfo& robotModelInfo)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-size_t getInputDimArm(RobotModelInfo& robotModelInfo)
+size_t getInputDimArm(RobotModelInfo robotModelInfo)
 {
   return robotModelInfo.robotArm.inputDim;
 }
@@ -200,7 +200,7 @@ size_t getInputDimArm(RobotModelInfo& robotModelInfo)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-size_t getInputDim(RobotModelInfo& robotModelInfo)
+size_t getInputDim(RobotModelInfo robotModelInfo)
 {
   return robotModelInfo.mobileBase.inputDim + robotModelInfo.robotArm.inputDim;
 }
@@ -208,7 +208,7 @@ size_t getInputDim(RobotModelInfo& robotModelInfo)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-size_t getModeInputDim(RobotModelInfo& robotModelInfo)
+size_t getModeInputDim(RobotModelInfo robotModelInfo)
 {
   return robotModelInfo.modeInputDim;
 }
@@ -216,7 +216,7 @@ size_t getModeInputDim(RobotModelInfo& robotModelInfo)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-bool updateModelMode(RobotModelInfo& robotModelInfo, size_t& modelMode)
+bool updateModelMode(RobotModelInfo& robotModelInfo, size_t modelMode)
 {
   bool result = false;
   if (robotModelInfo.robotModelType == RobotModelType::MobileManipulator)
@@ -255,7 +255,7 @@ bool updateModelMode(RobotModelInfo& robotModelInfo, size_t& modelMode)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-bool updateModelModeByState(RobotModelInfo& robotModelInfo, size_t& stateDim)
+bool updateModelModeByState(RobotModelInfo& robotModelInfo, size_t stateDim)
 {
   bool result = false;
 
@@ -293,7 +293,7 @@ bool updateModelModeByState(RobotModelInfo& robotModelInfo, size_t& stateDim)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-std::string getRobotModelTypeString(RobotModelInfo& robotModelInfo) 
+std::string getRobotModelTypeString(RobotModelInfo robotModelInfo) 
 {
   std::string robotModelTypeString;
 
@@ -322,7 +322,7 @@ std::string getRobotModelTypeString(RobotModelInfo& robotModelInfo)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-std::string getModelModeString(RobotModelInfo& robotModelInfo) 
+std::string getModelModeString(RobotModelInfo robotModelInfo) 
 {
   std::string modeModelString;
 
@@ -351,7 +351,7 @@ std::string getModelModeString(RobotModelInfo& robotModelInfo)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-RobotModelType loadRobotType(const std::string& configFilePath, const std::string& fieldName) 
+RobotModelType loadRobotType(const std::string configFilePath, const std::string fieldName) 
 {
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(configFilePath, pt);
@@ -362,7 +362,7 @@ RobotModelType loadRobotType(const std::string& configFilePath, const std::strin
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void printRobotModelInfo(RobotModelInfo& robotModelInfo)
+void printRobotModelInfo(RobotModelInfo robotModelInfo)
 {
     std::cout << "[MultiModelFunctions::printRobotModelInfo] =================================" << std::endl;
     std::cout << "robotName: " << robotModelInfo.robotName << std::endl;

@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.05.02
+// LAST UPDATE: 2024.02.15
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -40,10 +40,10 @@ class SelfCollisionCppAd
     SelfCollisionCppAd(const PinocchioInterface& pinocchioInterface, 
                       PinocchioGeometryInterface pinocchioGeometryInterface,
                       const PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
-                      ocs2::RobotModelInfo& robotModelInfo,
+                      ocs2::RobotModelInfo robotModelInfo,
                       scalar_t minimumDistance, 
-                      const std::string& modelName, 
-                      const std::string& modelFolder = "/tmp/ocs2",
+                      const std::string modelName, 
+                      const std::string modelFolder = "/tmp/ocs2",
                       bool recompileLibraries = true, 
                       bool verbose = true);
 

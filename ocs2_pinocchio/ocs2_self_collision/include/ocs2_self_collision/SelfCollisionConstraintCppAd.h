@@ -66,10 +66,10 @@ class SelfCollisionConstraintCppAd final : public StateConstraint
                                  const PinocchioStateInputMapping<scalar_t>& mapping,
                                  const PinocchioStateInputMapping<ad_scalar_t>& mappingCppAd,
                                  PinocchioGeometryInterface pinocchioGeometryInterface, 
-                                 RobotModelInfo& robotModelInfo,
+                                 RobotModelInfo robotModelInfo,
                                  scalar_t minimumDistance,
-                                 const std::string& modelName, 
-                                 const std::string& modelFolder = "/tmp/ocs2", 
+                                 const std::string modelName, 
+                                 const std::string modelFolder = "/tmp/ocs2", 
                                  bool recompileLibraries = true,
                                  bool verbose = true);
 

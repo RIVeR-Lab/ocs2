@@ -1,4 +1,4 @@
-// LAST UPDATE: 2022.03.03
+// LAST UPDATE: 2024.02.15
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -22,7 +22,7 @@ MobileBaseDynamics::MobileBaseDynamics(RobotModelInfo info,
                                        const std::string& modelFolder /*= "/tmp/ocs2"*/,
                                        bool recompileLibraries /*= true*/, 
                                        bool verbose /*= true*/)
-  : info_(std::move(info))
+  : info_(info)
 {
   if(info_.mobileBase.stateDim != 3 || info_.mobileBase.inputDim != 2)
   {
