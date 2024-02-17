@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.19
+// LAST UPDATE: 2024.02.15
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -16,8 +16,7 @@ namespace ocs2 {
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
-                                                   const std::string& ns,
+TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(const std::string& ns,
                                                    const std::string& topicPrefix,
                                                    const std::string& gazeboModelMsgName,
                                                    std::string robotName,
@@ -29,6 +28,8 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
     autoTargetServer_("auto_target_marker"), 
     dropTargetServer_("drop_target_marker"), 
     modelModeServer_("model_mode_marker", "", false), 
+    ns_(ns),
+    gazeboModelMsgName_(gazeboModelMsgName),
     robotName_(robotName), 
     targetNames_(targetNames), 
     dropTargetName_(dropTargetName),
@@ -56,12 +57,12 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
                                   0.0, 1.0, 0.0;
   //dropOrientationOffsetMatrix_ = graspOrientationOffsetMatrix_;
 
-  worldFrameName_ = "world";
-  robotFrameName_ = "base_link"; 
-  goalFrameName_ = "golazo"; 
-  graspFrameName_ = "grasp"; 
-  dropFrameName_ = "drop";
-  eeFrameName_ = "j2n6s300_end_effector";
+  //worldFrameName_ = "world";
+  //robotFrameName_ = "base_link"; 
+  //goalFrameName_ = "golazo"; 
+  //graspFrameName_ = "grasp"; 
+  //dropFrameName_ = "drop";
+  //eeFrameName_ = "j2n6s300_end_effector";
 
   modelModeMsgName_ = "model_mode";
   goalVisuMsgName_ = "goal_visu";
@@ -79,11 +80,11 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
 
   if (ns != "/")
   {
-    robotFrameName_ = ns + "/" + robotFrameName_;
-    goalFrameName_ = ns + "/" + goalFrameName_;
-    graspFrameName_ = ns + "/" + graspFrameName_;
-    dropFrameName_ = ns + "/" + dropFrameName_;
-    eeFrameName_ = ns + "/" + eeFrameName_;
+    //robotFrameName_ = ns + "/" + robotFrameName_;
+    //goalFrameName_ = ns + "/" + goalFrameName_;
+    //graspFrameName_ = ns + "/" + graspFrameName_;
+    //dropFrameName_ = ns + "/" + dropFrameName_;
+    //eeFrameName_ = ns + "/" + eeFrameName_;
 
     modelModeMsgName_ = ns + "/" + modelModeMsgName_;
     goalVisuMsgName_ = ns + "/" + goalVisuMsgName_;
@@ -113,51 +114,6 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
 
   //std::cout << "[TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] DEBUG_INF" << std::endl;
   //while(1);
-
-  /// Interactive Marker
-  // Create an interactive marker for user defined target
-  menuHandlerTarget_.insert("Manual target", boost::bind(&TargetTrajectoriesGazebo::processFeedbackTarget, this, _1));
-
-  // Create an interactive marker for auto target
-  menuHandlerAutoTarget_.insert("Auto target", boost::bind(&TargetTrajectoriesGazebo::processFeedbackAutoTarget, this, _1));
-
-  /// Subscribers
-  auto observationCallback = [this](const ocs2_msgs::mpc_observation::ConstPtr& msg) 
-  {
-    std::lock_guard<std::mutex> lock(latestObservationMutex_);
-    latestObservation_ = ros_msg_conversions::readObservationMsg(*msg);
-    policyReceivedFlag_ = true;
-  };
-  observationSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mpc_observation>(mpcObservationMsgName_, 1, observationCallback);
-
-  statusModelModeMPCSubscriber_ = nodeHandle.subscribe<std_msgs::Bool>(modelModeMPCStatusMsgName_, 5, &TargetTrajectoriesGazebo::statusModelModeMPCCallback, this);
-  statusModelModeMRTSubscriber_ = nodeHandle.subscribe<std_msgs::Bool>(modelModeMRTStatusMsgName_, 5, &TargetTrajectoriesGazebo::statusModelModeMRTCallback, this);
-
-  //std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] gazeboModelMsgName: " << gazeboModelMsgName << std::endl;
-  if (gazeboModelMsgName != "")
-  {
-    gazeboModelStatesSubscriber_ = nodeHandle.subscribe(gazeboModelMsgName, 5, &TargetTrajectoriesGazebo::gazeboModelStatesCallback, this);
-  }
-  tfSubscriber_ = nodeHandle.subscribe("/tf", 5, &TargetTrajectoriesGazebo::tfCallback, this);
-
-  /// Publishers
-  targetTrajectoriesPublisherPtr_.reset(new TargetTrajectoriesRosPublisher(nodeHandle, targetTrajectoriesMsgName_));
-  modelModePublisher_ = nodeHandle.advertise<std_msgs::UInt8>(modelModeMsgName_, 1, false);
-  goalMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(goalVisuMsgName_, 10);
-  targetMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(targetVisuMsgName_, 10);
-  //mobimanGoalObsPublisher_ = nodeHandle.advertise<ocs2_msgs::MobimanGoalObservation>(mobimanGoalObsMsgName_, 10);
-
-  /// Clients
-  //setTaskModeClient_ = nodeHandle.serviceClient<ocs2_msgs::setInt>("/set_task_mode");
-  setTaskClient_ = nodeHandle.serviceClient<ocs2_msgs::setTask>(setTaskSrvName_);
-
-  /// Services
-  //setTaskModeService_ = nodeHandle.advertiseService("set_task_mode", &TargetTrajectoriesGazebo::setTaskModeSrv, this);
-  setPickedFlagService_ = nodeHandle.advertiseService(setPickedFlagSrvName_, &TargetTrajectoriesGazebo::setPickedFlagSrv, this);
-  setSystemObservationService_ = nodeHandle.advertiseService(setSystemObservationSrvName_, &TargetTrajectoriesGazebo::setSystemObservationSrv, this);
-  setTargetDRLService_ = nodeHandle.advertiseService(setTargetDRLSrvName_, &TargetTrajectoriesGazebo::setTargetDRLSrv, this);
-
-  while(!initTFCallbackFlag_){ros::spinOnce();}
 }
 
 TargetTrajectoriesGazebo::~TargetTrajectoriesGazebo()
@@ -178,6 +134,10 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(const TargetTrajectoriesGazeb
   initCallbackFlag_ = ttg.initCallbackFlag_;
   worldFrameName_ = ttg.worldFrameName_;
   robotFrameName_ = ttg.robotFrameName_;
+  goalFrameName_ = ttg.goalFrameName_; 
+  graspFrameName_ = ttg.graspFrameName_; 
+  dropFrameName_ = ttg.dropFrameName_; 
+  eeFrameName_ = ttg.eeFrameName_;
 
   targetNames_ = ttg.targetNames_;
   robotName_ = ttg.robotName_;
@@ -220,8 +180,13 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(const TargetTrajectoriesGazeb
 TargetTrajectoriesGazebo& TargetTrajectoriesGazebo::operator=(const TargetTrajectoriesGazebo& ttg)
 {
   initCallbackFlag_ = ttg.initCallbackFlag_;
+  
   worldFrameName_ = ttg.worldFrameName_;
   robotFrameName_ = ttg.robotFrameName_;
+  goalFrameName_ = ttg.goalFrameName_; 
+  graspFrameName_ = ttg.graspFrameName_; 
+  dropFrameName_ = ttg.dropFrameName_; 
+  eeFrameName_ = ttg.eeFrameName_;
 
   targetNames_ = ttg.targetNames_;
   robotName_ = ttg.robotName_;
@@ -281,6 +246,176 @@ void TargetTrajectoriesGazebo::setGoalTrajectoryQueueDt(double goalTrajectoryQue
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::setWorldFrameName(std::string worldFrameName)
+{
+  worldFrameName_ = worldFrameName;
+  std::cout << "[TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] worldFrameName_: " << worldFrameName_ << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::setRobotFrameName(std::string robotFrameName)
+{
+  robotFrameName_ = robotFrameName;
+  if (ns_ != "/")
+  {
+    robotFrameName_ = ns_ + "/" + robotFrameName_;
+  }
+  std::cout << "[TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] robotFrameName_: " << robotFrameName_ << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::setGoalFrameName(std::string goalFrameName)
+{
+  goalFrameName_ = goalFrameName;
+  if (ns_ != "/")
+  {
+    goalFrameName_ = ns_ + "/" + goalFrameName_;
+  }
+  std::cout << "[TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] goalFrameName_: " << goalFrameName_ << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::setEEFrameName(std::string eeFrameName)
+{
+  eeFrameName_ = eeFrameName;
+  if (ns_ != "/")
+  {
+    eeFrameName_ = ns_ + "/" + eeFrameName_;
+  }
+  std::cout << "[TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] eeFrameName_: " << eeFrameName_ << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::setGraspFrameName(std::string graspFrameName)
+{
+  graspFrameName_ = graspFrameName;
+  if (ns_ != "/")
+  {
+    graspFrameName_ = ns_ + "/" + graspFrameName_;
+  }
+  std::cout << "[TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] graspFrameName_: " << graspFrameName_ << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::setDropFrameName(std::string dropFrameName)
+{
+  dropFrameName_ = dropFrameName;
+  if (ns_ != "/")
+  {
+    dropFrameName_ = ns_ + "/" + dropFrameName_;
+  }
+  std::cout << "[TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] dropFrameName_: " << dropFrameName_ << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::setTaskMode(int taskMode)
+{
+  //std::cout << "[TargetTrajectoriesGazebo::setTaskMode] START" << std::endl;
+  taskMode_ = taskMode;
+
+  if (taskMode == 1)
+  {
+    pickedFlag_ = false;
+  }
+  else if (taskMode == 2)
+  {
+    pickedFlag_ = true;
+  }
+
+  //std::cout << "[TargetTrajectoriesGazebo::setTaskMode] taskMode: " << taskMode << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::setTaskMode] pickedFlag_: " << pickedFlag_ << std::endl;
+
+  //std::cout << "[TargetTrajectoriesGazebo::setTaskMode] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::launchNode(ros::NodeHandle& nodeHandle)
+{
+  std::cout << "[TargetTrajectoriesGazebo::launchNode] START" << std::endl;
+
+  /// Interactive Marker
+  // Create an interactive marker for user defined target
+  menuHandlerTarget_.insert("Manual target", boost::bind(&TargetTrajectoriesGazebo::processFeedbackTarget, this, _1));
+
+  // Create an interactive marker for auto target
+  menuHandlerAutoTarget_.insert("Auto target", boost::bind(&TargetTrajectoriesGazebo::processFeedbackAutoTarget, this, _1));
+
+  /// Subscribers
+  auto observationCallback = [this](const ocs2_msgs::mpc_observation::ConstPtr& msg) 
+  {
+    std::lock_guard<std::mutex> lock(latestObservationMutex_);
+    latestObservation_ = ros_msg_conversions::readObservationMsg(*msg);
+    policyReceivedFlag_ = true;
+  };
+  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] mpcObservationMsgName_: " << mpcObservationMsgName_ << std::endl;
+  observationSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mpc_observation>(mpcObservationMsgName_, 1, observationCallback);
+
+  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] modelModeMPCStatusMsgName_: " << modelModeMPCStatusMsgName_ << std::endl;
+  statusModelModeMPCSubscriber_ = nodeHandle.subscribe<std_msgs::Bool>(modelModeMPCStatusMsgName_, 5, &TargetTrajectoriesGazebo::statusModelModeMPCCallback, this);
+  
+  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] modelModeMRTStatusMsgName_: " << modelModeMRTStatusMsgName_ << std::endl;
+  statusModelModeMRTSubscriber_ = nodeHandle.subscribe<std_msgs::Bool>(modelModeMRTStatusMsgName_, 5, &TargetTrajectoriesGazebo::statusModelModeMRTCallback, this);
+
+  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] gazeboModelMsgName_: " << gazeboModelMsgName_ << std::endl;
+  if (gazeboModelMsgName_ != "")
+  {
+    gazeboModelStatesSubscriber_ = nodeHandle.subscribe(gazeboModelMsgName_, 5, &TargetTrajectoriesGazebo::gazeboModelStatesCallback, this);
+  }
+  tfSubscriber_ = nodeHandle.subscribe("/tf", 5, &TargetTrajectoriesGazebo::tfCallback, this);
+
+  /// Publishers
+  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] targetTrajectoriesMsgName_: " << targetTrajectoriesMsgName_ << std::endl;
+  targetTrajectoriesPublisherPtr_.reset(new TargetTrajectoriesRosPublisher(nodeHandle, targetTrajectoriesMsgName_));
+
+  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] modelModeMsgName_: " << modelModeMsgName_ << std::endl;
+  modelModePublisher_ = nodeHandle.advertise<std_msgs::UInt8>(modelModeMsgName_, 1, false);
+
+  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] goalVisuMsgName_: " << goalVisuMsgName_ << std::endl;
+  goalMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(goalVisuMsgName_, 10);
+
+  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] targetVisuMsgName_: " << targetVisuMsgName_ << std::endl;
+  targetMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(targetVisuMsgName_, 10);
+  //mobimanGoalObsPublisher_ = nodeHandle.advertise<ocs2_msgs::MobimanGoalObservation>(mobimanGoalObsMsgName_, 10);
+
+  /// Clients
+  //setTaskModeClient_ = nodeHandle.serviceClient<ocs2_msgs::setInt>("/set_task_mode");
+
+  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] setTaskSrvName_: " << setTaskSrvName_ << std::endl;
+  setTaskClient_ = nodeHandle.serviceClient<ocs2_msgs::setTask>(setTaskSrvName_);
+
+  /// Services
+  //setTaskModeService_ = nodeHandle.advertiseService("set_task_mode", &TargetTrajectoriesGazebo::setTaskModeSrv, this);
+  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] setPickedFlagSrvName_: " << setPickedFlagSrvName_ << std::endl;
+  setPickedFlagService_ = nodeHandle.advertiseService(setPickedFlagSrvName_, &TargetTrajectoriesGazebo::setPickedFlagSrv, this);
+
+  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] setSystemObservationSrvName_: " << setSystemObservationSrvName_ << std::endl;
+  setSystemObservationService_ = nodeHandle.advertiseService(setSystemObservationSrvName_, &TargetTrajectoriesGazebo::setSystemObservationSrv, this);
+
+  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] setTargetDRLSrvName_: " << setTargetDRLSrvName_ << std::endl;
+  setTargetDRLService_ = nodeHandle.advertiseService(setTargetDRLSrvName_, &TargetTrajectoriesGazebo::setTargetDRLSrv, this);
+
+  while(!initTFCallbackFlag_){ros::spinOnce();}
+
+  std::cout << "[TargetTrajectoriesGazebo::launchNode] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::updateDummyGoal(double x, double y, double z, double roll, double pitch, double yaw)
 {
   //std::cout << "[TargetTrajectoriesGazebo::updateDummyGoal] START" << std::endl;
@@ -309,29 +444,6 @@ void TargetTrajectoriesGazebo::updateDummyGoal(double x, double y, double z, dou
   //while(1);
 
   //std::cout << "[TargetTrajectoriesGazebo::updateDummyGoal] END" << std::endl;
-}
-
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-void TargetTrajectoriesGazebo::setTaskMode(int taskMode)
-{
-  //std::cout << "[TargetTrajectoriesGazebo::setTaskMode] START" << std::endl;
-  taskMode_ = taskMode;
-
-  if (taskMode == 1)
-  {
-    pickedFlag_ = false;
-  }
-  else if (taskMode == 2)
-  {
-    pickedFlag_ = true;
-  }
-
-  //std::cout << "[TargetTrajectoriesGazebo::setTaskMode] taskMode: " << taskMode << std::endl;
-  //std::cout << "[TargetTrajectoriesGazebo::setTaskMode] pickedFlag_: " << pickedFlag_ << std::endl;
-
-  //std::cout << "[TargetTrajectoriesGazebo::setTaskMode] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1024,8 +1136,8 @@ void TargetTrajectoriesGazebo::updateGoal(const Eigen::Vector3d& goalPos, const 
 {
   std::cout << "[TargetTrajectoriesGazebo::updateGoal(2)] START" << std::endl;
 
-  std::cout << "[TargetTrajectoriesGazebo::updateGoal(2)] DEBUG INF" << std::endl;
-  while(1);
+  //std::cout << "[TargetTrajectoriesGazebo::updateGoal(2)] DEBUG INF" << std::endl;
+  //while(1);
 
   goalPosition_ = goalPos;
   goalOrientation_ = goalOri;

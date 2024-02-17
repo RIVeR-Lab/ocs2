@@ -52,7 +52,9 @@ int main(int argc, char* argv[])
   ros::NodeHandle pnh("~");
 
   // INITIALIZE AND SET PARAMETERS
-  std::string ns, topicPrefix, taskFile, world_frame_name, gz_model_msg_name, robot_name, drop_target_name;
+  std::string ns, topicPrefix, taskFile, 
+              world_frame_name, robot_frame_name, goal_frame_name, ee_frame_name, grasp_frame_name, drop_frame_name, 
+              gz_model_msg_name, robot_name, drop_target_name;
   std::vector<std::string> name_pkgs_ign, name_pkgs_man, scan_data_path_pkgs_ign, scan_data_path_pkgs_man, target_names;
   double map_resolution, dummy_goal_pos_x, dummy_goal_pos_y, dummy_goal_pos_z, dummy_goal_ori_r, dummy_goal_ori_p, dummy_goal_ori_y;
   bool drlFlag, printOutFlag = true;
@@ -71,6 +73,12 @@ int main(int argc, char* argv[])
   }
 
   pnh.param<std::string>("/taskFile", taskFile, "");
+  pnh.param<std::string>("/gs_world_frame_name", world_frame_name, "");
+  pnh.param<std::string>("/gs_robot_frame_name", robot_frame_name, "");
+  pnh.param<std::string>("/gs_goal_frame_name", goal_frame_name, "");
+  pnh.param<std::string>("/gs_ee_frame_name", ee_frame_name, "");
+  pnh.param<std::string>("/gs_grasp_frame_name", grasp_frame_name, "");
+  pnh.param<std::string>("/gs_drop_frame_name", drop_frame_name, "");
   pnh.param<double>("/dummy_goal_pos_x", dummy_goal_pos_x, 0.0);
   pnh.param<double>("/dummy_goal_pos_y", dummy_goal_pos_y, 0.0);
   pnh.param<double>("/dummy_goal_pos_z", dummy_goal_pos_z, 0.0);
@@ -82,12 +90,17 @@ int main(int argc, char* argv[])
   // read the task file
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(taskFile, pt);
-  loadData::loadPtreeValue(pt, world_frame_name, "model_information.worldFrame", printOutFlag);
+  //loadData::loadPtreeValue(pt, world_frame_name, "model_information.worldFrame", printOutFlag);
 
   if (printOutFlag)
   {
     cout << "[MobileManipulatorTarget::main] taskFile: " << taskFile << endl;
     cout << "[MobileManipulatorTarget::main] world_frame_name: " << world_frame_name << endl;
+    cout << "[MobileManipulatorTarget::main] robot_frame_name: " << robot_frame_name << endl;
+    cout << "[MobileManipulatorTarget::main] goal_frame_name: " << goal_frame_name << endl;
+    cout << "[MobileManipulatorTarget::main] ee_frame_name: " << ee_frame_name << endl;
+    cout << "[MobileManipulatorTarget::main] grasp_frame_name: " << grasp_frame_name << endl;
+    cout << "[MobileManipulatorTarget::main] drop_frame_name: " << drop_frame_name << endl;
     cout << "[MobileManipulatorTarget::main] dummy_goal_pos_x: " << dummy_goal_pos_x << endl;
     cout << "[MobileManipulatorTarget::main] dummy_goal_pos_y: " << dummy_goal_pos_y << endl;
     cout << "[MobileManipulatorTarget::main] dummy_goal_pos_z: " << dummy_goal_pos_z << endl;
@@ -113,9 +126,22 @@ int main(int argc, char* argv[])
   }
   cout << "[MobileManipulatorTarget::main] topicPrefix: " << topicPrefix << endl;
 
+  //cout << "[MobileManipulatorTarget::main] DEBUG INF" << endl;
+  //while(1);
+
   // Set TargetTrajectoriesGazebo
-  TargetTrajectoriesGazebo gu(nh, ns, topicPrefix, gz_model_msg_name, robot_name, target_names, drop_target_name, &goalPoseToTargetTrajectories, drlFlag);
+  TargetTrajectoriesGazebo gu(ns, topicPrefix, gz_model_msg_name, robot_name, target_names, drop_target_name, &goalPoseToTargetTrajectories, drlFlag);
+  gu.setWorldFrameName(world_frame_name);
+  gu.setRobotFrameName(robot_frame_name);
+  gu.setGoalFrameName(goal_frame_name);
+  gu.setEEFrameName(ee_frame_name);
+  gu.setGraspFrameName(grasp_frame_name);
+  gu.setDropFrameName(drop_frame_name);
   gu.updateDummyGoal(dummy_goal_pos_x, dummy_goal_pos_y, dummy_goal_pos_z, dummy_goal_ori_r, dummy_goal_ori_p, dummy_goal_ori_y);
+  gu.launchNode(nh);
+
+  //cout << "[MobileManipulatorTarget::main] DEBUG INF" << endl;
+  //while(1);
 
   if (drlFlag)
   {
@@ -132,23 +158,6 @@ int main(int argc, char* argv[])
   }
   
   gu.setTargetToEEPose();
-
-  /*
-  //ros::Rate r(100);
-  while(ros::ok)
-  {
-    //gu.updateObservationAndTarget();
-    gu.updateGoal(true);
-    gu.publishTargetTrajectories();
-    gu.publishGoalVisu();
-    gu.publishTargetVisu();
-    gu.publishGraspFrame();
-    gu.publishDropFrame();
-
-    //ros::spinOnce();
-    //r.sleep();
-  }
-  */
 
   double update_dt = 0.01;
   ros::Timer updateTimer = nh.createTimer(ros::Duration(update_dt), &TargetTrajectoriesGazebo::updateCallback, &gu);

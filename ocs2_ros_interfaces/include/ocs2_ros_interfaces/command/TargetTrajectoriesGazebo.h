@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.30
+// LAST UPDATE: 2024.02.15
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -52,8 +52,7 @@ class TargetTrajectoriesGazebo final
      * observation is be expected on "topicPrefix_mpc_observation" topic.
      * @param [in] goalPoseToTargetTrajectories: A function which transforms the commanded pose to TargetTrajectories.
      */
-    TargetTrajectoriesGazebo(ros::NodeHandle& nodeHandle,
-                             const std::string& ns,
+    TargetTrajectoriesGazebo(const std::string& ns,
                              const std::string& topicPrefix,
                              const std::string& gazeboModelMsgName,
                              std::string robotName,
@@ -78,10 +77,31 @@ class TargetTrajectoriesGazebo final
     //void setGoalTrajectoryQueueDt(double goalTrajectoryQueueDt);
 
     // DESCRIPTION: TODO...
-    void updateDummyGoal(double x, double y, double z, double roll, double pitch, double yaw);
+    void setWorldFrameName(std::string worldFrameName);
+
+    // DESCRIPTION: TODO...
+    void setRobotFrameName(std::string robotFrameName);
+
+    // DESCRIPTION: TODO...
+    void setGoalFrameName(std::string goalFrameName);
+
+    // DESCRIPTION: TODO...
+    void setEEFrameName(std::string eeFrameName);
+
+    // DESCRIPTION: TODO...
+    void setGraspFrameName(std::string graspFrameName);
+
+    // DESCRIPTION: TODO...
+    void setDropFrameName(std::string dropFrameName);
 
     // DESCRIPTION: TODO...
     void setTaskMode(int taskMode);
+
+    // DESCRIPTION: TODO...
+    void launchNode(ros::NodeHandle& nodeHandle);
+
+    // DESCRIPTION: TODO...
+    void updateDummyGoal(double x, double y, double z, double roll, double pitch, double yaw);
 
     // DESCRIPTION: TODO...
     void updateObservationAndTarget();
@@ -260,6 +280,8 @@ class TargetTrajectoriesGazebo final
     bool initTFCallbackFlag_ = false;
     bool initMenuModelModeFlag_ = false;
 
+    std::string ns_;
+
     bool drlFlag_;
 
     //bool graspFrameReadyFlag_ = false;
@@ -279,6 +301,7 @@ class TargetTrajectoriesGazebo final
     std::string dropFrameName_;
     std::string eeFrameName_;
 
+    std::string gazeboModelMsgName_;
     std::string modelModeMsgName_;
     std::string goalVisuMsgName_;
     std::string targetVisuMsgName_;

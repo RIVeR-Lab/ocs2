@@ -500,7 +500,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
 
   internalShutDownFlag_ = mpc_->getInternalShutDownFlag();
 
-  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
+  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
   //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE terminateThread_: " << terminateThread_ << std::endl;
   if (internalShutDownFlag_)
   {

@@ -266,8 +266,9 @@ void MobileManipulatorVisualization::launchVisualizerNode(ros::NodeHandle& nodeH
 
   //std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] jointStateMsgName_: " << jointStateMsgName_ << std::endl;
   std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] Waiting for initTFTransformFlag_ and initJointStateFlag_..." << std::endl;
-  while(!initTFTransformFlag_ || !initJointStateFlag_ || !goalTFInitFlag_ || !isTrue(occupancyInfoTFInitFlags_)){ros::spinOnce();}
-
+  //while(!initTFTransformFlag_ || !initJointStateFlag_ || !goalTFInitFlag_ || !isTrue(occupancyInfoTFInitFlags_)){ros::spinOnce();}
+  while(!initTFTransformFlag_ || !initJointStateFlag_){ros::spinOnce();}
+  
   std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] END" << std::endl;
 }
 
@@ -301,6 +302,7 @@ void MobileManipulatorVisualization::tfCallback(const tf2_msgs::TFMessage::Const
     initTFTransformFlag_ = true;
   }
 
+  /*
   tf::StampedTransform stf_goal;
   if (getTransform(goalTrajectoryFrameName_, goalFrameName_, stf_goal))
   {
@@ -324,6 +326,7 @@ void MobileManipulatorVisualization::tfCallback(const tf2_msgs::TFMessage::Const
       }
     }
   }
+  */
   
   /// NUA NOTE: BELOW DEPRECATED!
   /*

@@ -2627,6 +2627,11 @@ bool MRT_ROS_Gazebo_Loop::checkGoal(bool enableShutDownFlag)
   vector_t dist_quat = quaternionDistance(quat_ee, quat_goal);
   double err_ori = dist_quat.norm();
 
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkGoal] err_pos: " << err_pos << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkGoal] err_threshold_pos_: " << err_threshold_pos_ << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkGoal] err_threshold_ori_quat_: " << err_threshold_ori_quat_ << std::endl;
+  //std::cout << "[MRT_ROS_Gazebo_Loop::checkGoal] err_ori: " << err_ori << std::endl;
+
   if ((err_pos < err_threshold_pos_) && (err_ori < err_threshold_ori_quat_))
   {
     //drlActionResult_ = 3;
@@ -2835,31 +2840,31 @@ int MRT_ROS_Gazebo_Loop::checkTaskStatus(bool enableShutDownFlag)
 
     if (checkMapBoundary())
     {
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] OUT OF BOUNDARY!" << std::endl;
+      //std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] OUT OF BOUNDARY!" << std::endl;
       targetReceivedFlag_ = false;
       return 0;
     }
     else if (checkCollision(enableShutDownFlag))
     {
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] COLLISION!" << std::endl;
+      //std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] COLLISION!" << std::endl;
       targetReceivedFlag_ = false;
       return 1;
     }
     else if (checkRollover(enableShutDownFlag))
     {
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] ROLLOVER!" << std::endl;
+      //std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] ROLLOVER!" << std::endl;
       targetReceivedFlag_ = false;
       return 2;
     }
     else if (checkGoal(enableShutDownFlag))
     {
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] REACHED GOAL!" << std::endl;
+      //std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] REACHED GOAL!" << std::endl;
       targetReceivedFlag_ = false;
       return 3;
     }
     else if (checkTarget(enableShutDownFlag))
     {
-      std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] REACHED TARGET!" << std::endl;
+      //std::cout << "[MRT_ROS_Gazebo_Loop::checkTaskStatus] REACHED TARGET!" << std::endl;
       targetReceivedFlag_ = false;
       return 4;
     }
