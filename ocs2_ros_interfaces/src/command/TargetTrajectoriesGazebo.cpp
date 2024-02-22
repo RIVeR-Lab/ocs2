@@ -2623,9 +2623,13 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
 
   Eigen::Vector3d targetPos;
   Eigen::Quaterniond targetOri;
-  res.success = true;
+  Eigen::Vector3d graspPositionEstimated;
+  
+  int taskMode = taskMode_;
   std::string targetName = req.targetName;
   double timeHorizon = req.time_horizon;
+
+  res.success = true;
 
   if (targetName == "target")
   {
@@ -2654,9 +2658,9 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
 
     //updateTarget(targetPos, targetOri);
 
-    graspPositionEstimated_.x() = 0.0;
-    graspPositionEstimated_.y() = 0.0;
-    graspPositionEstimated_.z() = 0.0;
+    graspPositionEstimated.x() = 0.0;
+    graspPositionEstimated.y() = 0.0;
+    graspPositionEstimated.z() = 0.0;
   }
   else if (targetName == "goal")
   {
@@ -2677,13 +2681,13 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
 
     //updateTarget(targetPos, targetOri);
 
-    graspPositionEstimated_.x() = graspPoseEstimatedWrtWorld.position.x;
-    graspPositionEstimated_.y() = graspPoseEstimatedWrtWorld.position.y;
-    graspPositionEstimated_.z() = graspPoseEstimatedWrtWorld.position.z;
+    graspPositionEstimated.x() = graspPoseEstimatedWrtWorld.position.x;
+    graspPositionEstimated.y() = graspPoseEstimatedWrtWorld.position.y;
+    graspPositionEstimated.z() = graspPoseEstimatedWrtWorld.position.z;
 
-    //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] graspPositionEstimated_ x: " << graspPositionEstimated_.x() << std::endl;
-    //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] graspPositionEstimated_ y: " << graspPositionEstimated_.y() << std::endl;
-    //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] graspPositionEstimated_ z: " << graspPositionEstimated_.z() << std::endl;
+    //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] graspPositionEstimated x: " << graspPositionEstimated.x() << std::endl;
+    //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] graspPositionEstimated y: " << graspPositionEstimated.y() << std::endl;
+    //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] graspPositionEstimated z: " << graspPositionEstimated.z() << std::endl;
 
     targetIsGoalFlag_ = true;
   }
@@ -2694,12 +2698,14 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
     while(1);
   }
 
+  graspPositionEstimated_ = graspPositionEstimated;
+
   //Eigen::Vector3d targetPos(targetPose.position.x, targetPose.position.y, targetPose.position.z);
   //Eigen::Quaterniond targetOri(targetPose.orientation.w, targetPose.orientation.x, targetPose.orientation.y, targetPose.orientation.z);
 
-  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] x: " << targetPos[0] << std::endl;
-  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] y: " << targetPos[1] << std::endl;
-  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] z: " << targetPos[2] << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] x: " << targetPos.x() << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] y: " << targetPos.y() << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] z: " << targetPos.z() << std::endl;
 
   //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] qx: " << targetPos[1] << std::endl;
   //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] qy: " << targetPos[2] << std::endl;
@@ -2710,9 +2716,8 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
 
   if (targetPos.z() < -0.1)
   {
-    std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] x: " << targetPos[0] << std::endl;
-    std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] y: " << targetPos[1] << std::endl;
-    std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] z: " << targetPos[2] << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] WTF z: " << targetPos.z() << std::endl;
+    targetPos.z() = 0.0;
 
     //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] DEBUG_INF" << std::endl;
     //while(1);
@@ -2732,9 +2737,9 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
   target.orientation.z = targetOri.z();
   target.orientation.w = targetOri.w();
 
-  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] taskMode_: " << taskMode_ << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] taskMode: " << taskMode << std::endl;
   std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE setTask" << std::endl;
-  bool taskModeSuccess = setTask(taskMode_, target, timeHorizon);
+  bool taskModeSuccess = setTask(taskMode, target, timeHorizon);
   std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] AFTER setTask" << std::endl;
   
   std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] END" << std::endl;
@@ -2753,7 +2758,9 @@ bool TargetTrajectoriesGazebo::setTask(int taskMode, geometry_msgs::Pose targetP
 
   std::string currentTargetName = currentTargetName_;
 
+  std::cout << "[TargetTrajectoriesGazebo::setTask] currentTargetName: " << taskMode << std::endl;
   std::cout << "[TargetTrajectoriesGazebo::setTask] currentTargetName: " << currentTargetName << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::setTask] time_horizon: " << time_horizon << std::endl;
 
   bool success = false;
   ocs2_msgs::setTask srv;
@@ -2765,6 +2772,7 @@ bool TargetTrajectoriesGazebo::setTask(int taskMode, geometry_msgs::Pose targetP
   if (setTaskClient_.call(srv))
   {
     success = srv.response.success;
+    std::cout << "[TargetTrajectoriesGazebo::setTask] success: " << success << std::endl;
   }
   else
   {
@@ -2772,7 +2780,7 @@ bool TargetTrajectoriesGazebo::setTask(int taskMode, geometry_msgs::Pose targetP
     success = false;
   }
 
-  //std::cout << "[TargetTrajectoriesGazebo::setTask] END" << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::setTask] END" << std::endl;
   
   return success;
 }

@@ -1772,7 +1772,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const
   // DDP main loop
   while (true) 
   {
-    std::cout << "[GaussNewtonDDP::runImpl(4)] START DDP LOOP" << std::endl;
+    //std::cout << "[GaussNewtonDDP::runImpl(4)] START DDP LOOP" << std::endl;
 
     if (ddpSettings_.displayInfo_)
     {
@@ -1797,12 +1797,12 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const
 
     //std::cout << "[GaussNewtonDDP::runImpl(4)] targetTrajectories 0 size:" << this->getReferenceManager().getTargetTrajectories().stateTrajectory.size() << std::endl;
 
-    std::cout << "[GaussNewtonDDP::runImpl(4)] START calculateController" << std::endl;
+    //std::cout << "[GaussNewtonDDP::runImpl(4)] START calculateController" << std::endl;
     // calculate controller and store the result in unoptimizedController_
     computeControllerTimer_.startTimer();
     calculateController();
     computeControllerTimer_.endTimer();
-    std::cout << "[GaussNewtonDDP::runImpl(4)] END calculateController" << std::endl;
+    //std::cout << "[GaussNewtonDDP::runImpl(4)] END calculateController" << std::endl;
     
     //std::cout << "[GaussNewtonDDP::runImpl(4)] targetTrajectories 1 size:" << this->getReferenceManager().getTargetTrajectories().stateTrajectory.size() << std::endl;
 
