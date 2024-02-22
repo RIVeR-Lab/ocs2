@@ -695,7 +695,7 @@ void TargetTrajectoriesGazebo::print(geometry_msgs::Point po)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-int TargetTrajectoriesGazebo::isIn(std::vector<std::string>& vec, std::string& s)
+int TargetTrajectoriesGazebo::isIn(std::vector<std::string>& vec, std::string s)
 {
   //std::cout << "[TargetTrajectoriesGazebo::isIn] START" << std::endl;
   //std::cout << "[TargetTrajectoriesGazebo::isIn] vec.size(): " << vec.size() << std::endl;
@@ -2746,16 +2746,20 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
 //-------------------------------------------------------------------------------------------------------
 bool TargetTrajectoriesGazebo::setTask(int taskMode, geometry_msgs::Pose targetPose, double time_horizon)
 {
-  //std::cout << "[TargetTrajectoriesGazebo::setTask] START" << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::setTask] START" << std::endl;
 
   //std::cout << "[TargetTrajectoriesGazebo::setTask] DEBUG_INF" << std::endl;
   //while(1);
 
+  std::string currentTargetName = currentTargetName_;
+
+  std::cout << "[TargetTrajectoriesGazebo::setTask] currentTargetName: " << currentTargetName << std::endl;
+
   bool success = false;
   ocs2_msgs::setTask srv;
   srv.request.taskMode = taskMode;
-  srv.request.targetName = currentTargetName_;
-  srv.request.targetAttachLinkName = currentTargetName_ + "_base_link";
+  srv.request.targetName = currentTargetName;
+  srv.request.targetAttachLinkName = currentTargetName + "_base_link";
   srv.request.targetPose = targetPose;
   srv.request.time_horizon = time_horizon;
   if (setTaskClient_.call(srv))

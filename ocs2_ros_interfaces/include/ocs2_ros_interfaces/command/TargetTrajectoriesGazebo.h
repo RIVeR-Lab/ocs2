@@ -179,7 +179,7 @@ class TargetTrajectoriesGazebo final
     void print(geometry_msgs::Point po);
 
     // DESCRIPTION: TODO...
-    int isIn(std::vector<std::string>& vec, std::string& s);
+    int isIn(std::vector<std::string>& vec, std::string s);
 
     // DESCRIPTION: TODO...
     double calculateEuclideanDistance(Eigen::Vector3d& p1, geometry_msgs::Pose& p2);
