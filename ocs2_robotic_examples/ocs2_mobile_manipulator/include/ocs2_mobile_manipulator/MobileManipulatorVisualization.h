@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.02.15
+// LAST UPDATE: 2024.02.23
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -134,8 +134,6 @@ class MobileManipulatorVisualization final : public DummyObserver
                                vector<geometry_msgs::Point>& p0_vec, 
                                vector<geometry_msgs::Point>& p1_vec,
                                vector<double>& dist_threshold) const;
-
-    //void publishObservation(const ros::Time& timeStamp, const SystemObservation& observation);
     
     void publishTargetTrajectories(const ros::Time& timeStamp, const TargetTrajectories& targetTrajectories);
     

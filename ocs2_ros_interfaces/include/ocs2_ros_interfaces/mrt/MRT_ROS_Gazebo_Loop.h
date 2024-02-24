@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.20
+// LAST UPDATE: 2024.02.23
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -152,7 +152,7 @@ class MRT_ROS_Gazebo_Loop
     bool checkTimer(double& duration);
 
     /** NUA TODO: Add description */
-    void updateModelMode();
+    bool checkModelMode(ocs2::PrimalSolution currentPolicy);
 
     /** NUA TODO: Add description */
     bool isArmStateInitialized();
@@ -165,14 +165,10 @@ class MRT_ROS_Gazebo_Loop
        *
        * @param [in] initTargetTrajectories: The initial TargetTrajectories.
        */
-    //void run(const SystemObservation& initObservation, const TargetTrajectories& initTargetTrajectories);
-    //void run(const TargetTrajectories& initTargetTrajectories);
-    void run(vector_t initTarget);
-
-    bool run2(vector_t initTarget);
+    bool run2(vector_t initTarget, size_t modelModeInt);
 
     /** NUA TODO: Add decription. */
-    bool mrtLoop2();
+    bool mrtLoop2(size_t modelModeInt);
 
     /**
      * Subscribe a set of observers to the dummy loop. Observers are updated in the provided order at the end of each timestep.
@@ -186,9 +182,6 @@ class MRT_ROS_Gazebo_Loop
 
     void getCurrentState(vector_t& currentState);
 
-    /** NUA TODO: Add decription. */
-    void computeCommand(vector_t currentTarget, SystemObservation initObservation, double dt=0.0);
-
     // Filter
     double prev_lin_x = 0.0;
     double prev_ang_z = 0.0;
@@ -199,9 +192,6 @@ class MRT_ROS_Gazebo_Loop
 
     /** Forward simulates the system from current observation*/
     SystemObservation forwardSimulation(const SystemObservation& currentObservation);
-
-    /** NUA TODO: Add decription. */
-    void mrtLoop();
 
     /** NUA TODO: Add description */
     void updateStateIndexMap(bool updateStateIndexMapFlag);
@@ -271,9 +261,6 @@ class MRT_ROS_Gazebo_Loop
     bool setTaskSrv(ocs2_msgs::setTask::Request &req, 
                     ocs2_msgs::setTask::Response &res);
 
-    bool computeCommandSrv(ocs2_msgs::calculateMPCTrajectory::Request &req, 
-                           ocs2_msgs::calculateMPCTrajectory::Response &res);
-
     /** NUA TODO: Add description */
     //void publishCommand(const PrimalSolution& primalSolution);
     void publishCommand(const PrimalSolution& currentPolicy, 
@@ -306,6 +293,8 @@ class MRT_ROS_Gazebo_Loop
 
     /** NUA TODO: Add description */
     void writeData(bool endFlag=false);
+
+    bool printOutFlag_ = false;
 
     std::string dataPathReL_;
     std::vector<std::vector<double>> dataStatePosition_;
@@ -388,7 +377,7 @@ class MRT_ROS_Gazebo_Loop
     bool shutDownFlag_ = false;
     std::string mrtShutDownFlag_;
 
-    size_t currentStateDim_ = 0;
+    //size_t currentStateDim_ = 0;
 
     // 0: Go
     // 1: Go & Pick
@@ -471,7 +460,6 @@ class MRT_ROS_Gazebo_Loop
     std::string setSystemObservationSrvName_;
     std::string setMRTReadySrvName_;
     std::string setTaskSrvName_;
-    std::string computeCommandSrvName_;
     
     ros::Subscriber jointTrajectoryControllerStateSub_;
     ros::Subscriber targetTrajectoriesSubscriber_;

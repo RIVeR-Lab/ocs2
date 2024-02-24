@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.02.15
+// LAST UPDATE: 2024.02.23
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -234,7 +234,8 @@ bool MobileManipulatorVisualization::isTrue(std::vector<bool>& bvec)
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorVisualization::launchVisualizerNode(ros::NodeHandle& nodeHandle) 
 {
-  std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] START" << std::endl;
+  if (printOutFlag_)
+    std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] START" << std::endl;
 
   // Subscribers
   jointStatesSub_ = nodeHandle.subscribe(jointStateMsgName_, 5, &MobileManipulatorVisualization::jointStateCallback, this);
@@ -265,11 +266,13 @@ void MobileManipulatorVisualization::launchVisualizerNode(ros::NodeHandle& nodeH
   }
 
   //std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] jointStateMsgName_: " << jointStateMsgName_ << std::endl;
-  std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] Waiting for initTFTransformFlag_ and initJointStateFlag_..." << std::endl;
+  if (printOutFlag_)
+    std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] Waiting for initTFTransformFlag_ and initJointStateFlag_..." << std::endl;
   //while(!initTFTransformFlag_ || !initJointStateFlag_ || !goalTFInitFlag_ || !isTrue(occupancyInfoTFInitFlags_)){ros::spinOnce();}
   while(!initTFTransformFlag_ || !initJointStateFlag_){ros::spinOnce();}
   
-  std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] END" << std::endl;
+  if (printOutFlag_)
+    std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1589,41 +1592,6 @@ void MobileManipulatorVisualization::transformPointFromWorldtoBase(vector<geomet
   //std::cout << "[MobileManipulatorVisualization::transformPointFromWorldtoBase] DEBUG INF" << std::endl;
   //while(1);
 }
-
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-/*
-void MobileManipulatorVisualization::publishObservation(const ros::Time& timeStamp, const SystemObservation& observation) 
-{
-  // publish world -> base transform
-  const auto r_world_base = getBasePosition(observation.state, robotModelInfo_);
-  const Eigen::Quaternion<scalar_t> q_world_base = getBaseOrientation(observation.state, robotModelInfo_);
-
-  geometry_msgs::TransformStamped base_tf;
-  base_tf.header.stamp = timeStamp;
-  base_tf.header.frame_id = "world";
-  base_tf.child_frame_id = robotModelInfo_.mobileBase.baseFrame;
-  base_tf.transform.translation = ros_msg_helpers::getVectorMsg(r_world_base);
-  base_tf.transform.rotation = ros_msg_helpers::getOrientationMsg(q_world_base);
-  tfBroadcaster_.sendTransform(base_tf);      
-
-  // publish joints transforms
-  const auto j_arm = getArmJointAngles(observation.state, robotModelInfo_);
-  std::map<std::string, scalar_t> jointPositions;
-
-  for (size_t i = 0; i < robotModelInfo_.robotArm.jointFrameNames.size(); i++) 
-  {
-    jointPositions[robotModelInfo_.robotArm.jointFrameNames[i]] = j_arm(i);
-  }
-
-  for (const auto& name : removeJointNames_) 
-  {
-    jointPositions[name] = 0.0;
-  }
-  robotStatePublisherPtr_ -> publishTransforms(jointPositions, timeStamp);
-}
-*/
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.19
+// LAST UPDATE: 2024.02.23
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
               gz_model_msg_name, robot_name, drop_target_name;
   std::vector<std::string> name_pkgs_ign, name_pkgs_man, scan_data_path_pkgs_ign, scan_data_path_pkgs_man, target_names;
   double map_resolution, dummy_goal_pos_x, dummy_goal_pos_y, dummy_goal_pos_z, dummy_goal_ori_r, dummy_goal_ori_p, dummy_goal_ori_y;
-  bool drlFlag, printOutFlag = true;
+  bool drlFlag, printOutFlag = false;
 
   robot_name = "mobiman";
   target_names = {"red_cube"};

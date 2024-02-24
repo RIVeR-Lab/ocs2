@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.16
+// LAST UPDATE: 2024.02.23
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -19,9 +19,10 @@ using namespace mobile_manipulator;
 
 int main(int argc, char** argv) 
 {
-  std::cout << "[MobileManipulatorMRTNode::main] START" << std::endl;
-
   bool printOutFlag = false;
+
+  if (printOutFlag)
+    std::cout << "[MobileManipulatorMRTNode::main] START" << std::endl;
 
   // Initialize ros node
   ros::init(argc, argv, "mobile_manipulator_mrt_node");
@@ -46,19 +47,23 @@ int main(int argc, char** argv)
   // Robot interface
   int initModelModeInt = 2;
   std::string interfaceName = "MRT";
-  std::cout << "[MobileManipulatorMRTNode::main] START MobileManipulatorInterface" << std::endl;
+  if (printOutFlag)
+    std::cout << "[MobileManipulatorMRTNode::main] START MobileManipulatorInterface" << std::endl;
   MobileManipulatorInterface m4_interface(nh, taskFile, libFolder, urdfFile, initModelModeInt, interfaceName, printOutFlag);
 
-  std::cout << "[MobileManipulatorMRTNode::main] BEFORE initializeMRT" << std::endl;
+  if (printOutFlag)
+    std::cout << "[MobileManipulatorMRTNode::main] BEFORE initializeMRT" << std::endl;
   m4_interface.initializeMRT();
 
-  std::cout << "[MobileManipulatorMRTNode::main] BEFORE launchMRT" << std::endl;
+  if (printOutFlag)
+    std::cout << "[MobileManipulatorMRTNode::main] BEFORE launchMRT" << std::endl;
   //m4_interface.launchMRT();
 
   double mrt_dt = 0.05;
   ros::Timer mrtTimer = nh.createTimer(ros::Duration(mrt_dt), &MobileManipulatorInterface::mrtCallback, &m4_interface);
 
-  std::cout << "[MobileManipulatorMRTNode::main] END" << std::endl;
+  if (printOutFlag)
+    std::cout << "[MobileManipulatorMRTNode::main] END" << std::endl;
 
   spinner.spin(); // spin() will not return until the node has been shutdown
   //ros::spin();

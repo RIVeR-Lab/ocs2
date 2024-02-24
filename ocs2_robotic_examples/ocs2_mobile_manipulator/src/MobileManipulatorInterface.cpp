@@ -35,7 +35,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     interfaceName_(interfaceName),
     printOutFlag_(printOutFlag)
 {
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] START" << std::endl;
+  if (printOutFlag_)
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] START" << std::endl;
 
   mpcTimer0_.reset();
   mpcTimer1_.reset();
@@ -198,11 +199,11 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     std::cout << "#### =============================================================================" << std::endl;
   }
 
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] BEFORE getNamespace" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] BEFORE getNamespace" << std::endl;
   /// Add namespace
   ns_ = nodeHandle.getNamespace();
 
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] AFTER getNamespace" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] AFTER getNamespace" << std::endl;
 
   armJointFrameNames_withNS_ = armJointFrameNames;
   baseFrame_withNS_ = baseFrameName_;
@@ -606,7 +607,8 @@ void MobileManipulatorInterface::initializeMPC()
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::initializeMPC] DEBUG INF" << std::endl;
   //while(1);
 
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::initializeMPC] END" << std::endl;
+  if (printOutFlag_)
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::initializeMPC] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1090,7 +1092,7 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt,
   mpcTimer1_.endTimer();
 
   // Set MPC Problem Settings
-  modelModeInt_ = modelModeInt;
+  //modelModeInt_ = modelModeInt;
   activateSelfCollision_ = activateSelfCollision;
   activateExtCollision_ = activateExtCollision;
 
@@ -1327,9 +1329,12 @@ void MobileManipulatorInterface::launchNodes()
   odomSubscriber_ = nodeHandle_.subscribe(odomMsgName_, 5, &MobileManipulatorInterface::odomCallback, this);
   jointStateSub_ = nodeHandle_.subscribe(armStateMsg_, 5, &MobileManipulatorInterface::jointStateCallback, this);
 
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchNodes] Waiting " << odomMsgName_ << " and " << armStateMsg_ << "..." << std::endl;
+  if (printOutFlag_)
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchNodes] Waiting " << odomMsgName_ << " and " << armStateMsg_ << "..." << std::endl;
   while(!initFlagBaseState_ || !initFlagArmState_){ros::spinOnce();}
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchNodes] Received " << odomMsgName_ << " and " << armStateMsg_ << "!" << std::endl;
+  
+  if (printOutFlag_)
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchNodes] Received " << odomMsgName_ << " and " << armStateMsg_ << "!" << std::endl;
 
   updateStateIndexMap();
 }
@@ -1534,7 +1539,7 @@ bool MobileManipulatorInterface::setContinuousActionDRLMRTSrv(ocs2_msgs::setCont
   //drlActionLastStepDistanceThreshold_ = req.last_step_distance_threshold;
   res.success = true;
 
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionId_: " << drlActionId_ << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionId_: " << drlActionId_ << std::endl;
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionContinuous_:" << std::endl;
   /*
   for (size_t i = 0; i < drlActionContinuous_.size(); i++)
@@ -2498,7 +2503,7 @@ bool MobileManipulatorInterface::setStopMPCFlagSrv(ocs2_msgs::setBool::Request &
   
   if (!req.val)
   {
-    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlagSrv] SELF-COLLISION DEACTIVATED!" << stopMPCFlag_ << std::endl;
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlagSrv] SELF-COLLISION DEACTIVATED!" << std::endl;
     activateSelfCollision_ = false;
   }
   stopMPCFlag_ = true;
@@ -2657,11 +2662,16 @@ void MobileManipulatorInterface::launchMPC()
 
   while (ros::ok() && ros::master::check()) 
   {
-    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] IF stopMPCFlag_" << std::endl;
-    if (stopMPCFlag_)
+    bool stopMPCFlag = stopMPCFlag_;
+
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] IF stopMPCFlag" << std::endl;
+    if (stopMPCFlag)
     {
-      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] stopMPCFlag_ true" << std::endl;
-      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] modelModeInt_: " << modelModeInt_ << std::endl;
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] stopMPCFlag START" << std::endl;
+
+      size_t modelModeInt = modelModeInt_;
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] stopMPCFlag true" << std::endl;
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] modelModeInt: " << modelModeInt << std::endl;
 
       //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] BEFORE updateStatusModelModeMPC" << std::endl;
       mpcNode_->updateStatusModelModeMPC(false);
@@ -2676,7 +2686,7 @@ void MobileManipulatorInterface::launchMPC()
       setMPCWaitingFlag(true);
 
       //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] BEFORE setMPCProblem" << std::endl;
-      setMPCProblem(modelModeInt_, activateSelfCollision_, activateExtCollision_, true, false);
+      setMPCProblem(modelModeInt, activateSelfCollision_, activateExtCollision_, true, false);
       //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] AFTER setMPCProblem" << std::endl;
 
       //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] BEFORE setMPCReadyFlag" << std::endl;
@@ -2692,6 +2702,7 @@ void MobileManipulatorInterface::launchMPC()
       //while(1);
 
       mpcModeChangeCtr_++;
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] stopMPCFlag END" << std::endl << std::endl;
     }
 
     ros::getGlobalCallbackQueue()->callAvailable(ros::WallDuration(0.01));
@@ -2702,6 +2713,7 @@ void MobileManipulatorInterface::launchMPC()
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMPC] END" << std::endl;
 }
 
+/*
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -2721,7 +2733,7 @@ void MobileManipulatorInterface::launchMRT()
     if (mrtIter_ == 0)
     {
       std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMRT] FIRST TIMER mrt_loop_->run2..." << std::endl;
-      resetFlag_ = mrt_loop_->run2(currentTarget_);
+      resetFlag_ = mrt_loop_->run2(currentTarget_, );
     }
 
     std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMRT] BEFORE mrtLoop2" << std::endl;
@@ -2739,6 +2751,7 @@ void MobileManipulatorInterface::launchMRT()
 
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::launchMRT] END" << std::endl;
 }
+*/
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -2794,9 +2807,13 @@ void MobileManipulatorInterface::mrtCallback(const ros::TimerEvent& event)
     //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] currentTarget size: " << currentTarget.size() << std::endl;
     //std::cout << currentTarget << std::endl;
 
+    size_t modelModeInt = modelModeInt_;
+
     //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] IF newMPCProblemFlag_: " << newMPCProblemFlag_ << std::endl;
     if (newMPCProblemFlag_)
     {
+      modelModeInt = modelModeInt_;
+
       mrt_->updateStatusModelModeMRT(false);
       
       if (drlFlag_)
@@ -2831,7 +2848,7 @@ void MobileManipulatorInterface::mrtCallback(const ros::TimerEvent& event)
       
       //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] modelModeInt_: " << modelModeInt_ << std::endl;
       //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE setMPCProblem" << std::endl;
-      setMPCProblem(modelModeInt_, activateSelfCollision_, activateExtCollision_, false, true);
+      setMPCProblem(modelModeInt, activateSelfCollision_, activateExtCollision_, false, true);
       //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] AFTER setMPCProblem" << std::endl;
 
       //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] Waiting mpcReadyFlag_" << std::endl;
@@ -2840,7 +2857,7 @@ void MobileManipulatorInterface::mrtCallback(const ros::TimerEvent& event)
       mrt_->updateStatusModelModeMRT(true);
 
       //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE run2" << std::endl;
-      resetFlag_ = mrt_loop_->run2(currentTarget);
+      resetFlag_ = mrt_loop_->run2(currentTarget, modelModeInt);
 
       /*
       if (!resetFlag_ && drlFlag_)
@@ -2861,7 +2878,7 @@ void MobileManipulatorInterface::mrtCallback(const ros::TimerEvent& event)
     if (!resetFlag_)
     {
       //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE mrtLoop2" << std::endl;
-      resetFlag_ = mrt_loop_->mrtLoop2();
+      resetFlag_ = mrt_loop_->mrtLoop2(modelModeInt);
 
       if (drlFlag_)
       {
@@ -2875,7 +2892,7 @@ void MobileManipulatorInterface::mrtCallback(const ros::TimerEvent& event)
           //setMRTReadyFlag(true);
           mrt_loop_->setTimerStartedFlag(false);
 
-          std::cout << "[" << interfaceName_ << "][" << ns_ <<  "]----------------------------END OF MPC ACTION SEQUENCE----------------------------" << std::endl;
+          //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "]----------------------------END OF MPC ACTION SEQUENCE----------------------------" << std::endl;
           //std::cout << "" << std::endl;
           //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] DEBUG_INF" << std::endl;
           //while(1);
@@ -2915,8 +2932,8 @@ void MobileManipulatorInterface::mrtCallback(const ros::TimerEvent& event)
         //setMRTReadyFlag(true);
         mrt_loop_->setTimerStartedFlag(false);
 
-        std::cout << "[" << interfaceName_ << "][" << ns_ <<  "]----------------------------END OF MPC ACTION SEQUENCE----------------------------" << std::endl;
-        std::cout << "" << std::endl;
+        //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "]----------------------------END OF MPC ACTION SEQUENCE----------------------------" << std::endl;
+        //std::cout << "" << std::endl;
       }
     }
 

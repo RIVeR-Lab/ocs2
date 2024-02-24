@@ -63,7 +63,7 @@ int main(int argc, char** argv)
   bool recompileLibraries;
 
   /// NUA TODO: READ THIS IN CONFIG!
-  bool printOutFlag = true;
+  bool printOutFlag = false;
 
   // Read parameters from task file
   loadData::loadPtreeValue<std::string>(pt, sim, "model_information.sim", printOutFlag);
@@ -148,17 +148,20 @@ int main(int argc, char** argv)
   nodeHandle.getParam("/obj_octomap_names", obj_octomap_names);
   nodeHandle.getParam("/mobiman_occ_obs_names", mobiman_occ_obs_names);
 
-  std::cout << "[MobileManipulatorDistanceVisualization::main] goal_frame_name: " << goal_frame_name << std::endl;
-  std::cout << "[MobileManipulatorDistanceVisualization::main] obj_octomap_names size: " << obj_octomap_names.size() << std::endl;
-  for (size_t i = 0; i < obj_octomap_names.size(); i++)
+  if (printOutFlag)
   {
-    std::cout << i << " -> " << obj_octomap_names[i] << std::endl;
-  }
+    std::cout << "[MobileManipulatorDistanceVisualization::main] goal_frame_name: " << goal_frame_name << std::endl;
+    std::cout << "[MobileManipulatorDistanceVisualization::main] obj_octomap_names size: " << obj_octomap_names.size() << std::endl;
+    for (size_t i = 0; i < obj_octomap_names.size(); i++)
+    {
+      std::cout << i << " -> " << obj_octomap_names[i] << std::endl;
+    }
 
-  std::cout << "[MobileManipulatorDistanceVisualization::main] mobiman_occ_obs_names size: " << mobiman_occ_obs_names.size() << std::endl;
-  for (size_t i = 0; i < mobiman_occ_obs_names.size(); i++)
-  {
-    std::cout << i << " -> " << mobiman_occ_obs_names[i] << std::endl;
+    std::cout << "[MobileManipulatorDistanceVisualization::main] mobiman_occ_obs_names size: " << mobiman_occ_obs_names.size() << std::endl;
+    for (size_t i = 0; i < mobiman_occ_obs_names.size(); i++)
+    {
+      std::cout << i << " -> " << mobiman_occ_obs_names[i] << std::endl;
+    }
   }
   
   //std::cout << "[MobileManipulatorDistanceVisualization::main] DEBUG_VISU" << std::endl;

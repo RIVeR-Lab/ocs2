@@ -190,6 +190,8 @@ class MPC_ROS_Interface
     */
     std::shared_ptr<MPC_BASE> mpc_;
 
+    bool printOutFlag_ = false;
+
     int ctr_ = 0;
 
     TargetTrajectories currentTargetTrajectories_;

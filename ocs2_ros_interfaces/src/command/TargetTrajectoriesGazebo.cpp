@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.02.15
+// LAST UPDATE: 2024.02.23
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -345,7 +345,8 @@ void TargetTrajectoriesGazebo::setTaskMode(int taskMode)
 //-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::launchNode(ros::NodeHandle& nodeHandle)
 {
-  std::cout << "[TargetTrajectoriesGazebo::launchNode] START" << std::endl;
+  if (printOutFlag_)
+    std::cout << "[TargetTrajectoriesGazebo::launchNode] START" << std::endl;
 
   /// Interactive Marker
   // Create an interactive marker for user defined target
@@ -361,16 +362,20 @@ void TargetTrajectoriesGazebo::launchNode(ros::NodeHandle& nodeHandle)
     latestObservation_ = ros_msg_conversions::readObservationMsg(*msg);
     policyReceivedFlag_ = true;
   };
-  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] mpcObservationMsgName_: " << mpcObservationMsgName_ << std::endl;
+  if (printOutFlag_)
+    std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] mpcObservationMsgName_: " << mpcObservationMsgName_ << std::endl;
   observationSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mpc_observation>(mpcObservationMsgName_, 1, observationCallback);
 
-  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] modelModeMPCStatusMsgName_: " << modelModeMPCStatusMsgName_ << std::endl;
+  if (printOutFlag_)
+    std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] modelModeMPCStatusMsgName_: " << modelModeMPCStatusMsgName_ << std::endl;
   statusModelModeMPCSubscriber_ = nodeHandle.subscribe<std_msgs::Bool>(modelModeMPCStatusMsgName_, 5, &TargetTrajectoriesGazebo::statusModelModeMPCCallback, this);
   
-  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] modelModeMRTStatusMsgName_: " << modelModeMRTStatusMsgName_ << std::endl;
+  if (printOutFlag_)
+    std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] modelModeMRTStatusMsgName_: " << modelModeMRTStatusMsgName_ << std::endl;
   statusModelModeMRTSubscriber_ = nodeHandle.subscribe<std_msgs::Bool>(modelModeMRTStatusMsgName_, 5, &TargetTrajectoriesGazebo::statusModelModeMRTCallback, this);
 
-  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] gazeboModelMsgName_: " << gazeboModelMsgName_ << std::endl;
+  if (printOutFlag_)
+    std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] gazeboModelMsgName_: " << gazeboModelMsgName_ << std::endl;
   if (gazeboModelMsgName_ != "")
   {
     gazeboModelStatesSubscriber_ = nodeHandle.subscribe(gazeboModelMsgName_, 5, &TargetTrajectoriesGazebo::gazeboModelStatesCallback, this);
@@ -378,39 +383,48 @@ void TargetTrajectoriesGazebo::launchNode(ros::NodeHandle& nodeHandle)
   tfSubscriber_ = nodeHandle.subscribe("/tf", 5, &TargetTrajectoriesGazebo::tfCallback, this);
 
   /// Publishers
-  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] targetTrajectoriesMsgName_: " << targetTrajectoriesMsgName_ << std::endl;
+  if (printOutFlag_)
+    std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] targetTrajectoriesMsgName_: " << targetTrajectoriesMsgName_ << std::endl;
   targetTrajectoriesPublisherPtr_.reset(new TargetTrajectoriesRosPublisher(nodeHandle, targetTrajectoriesMsgName_));
 
-  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] modelModeMsgName_: " << modelModeMsgName_ << std::endl;
+  if (printOutFlag_)
+    std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] modelModeMsgName_: " << modelModeMsgName_ << std::endl;
   modelModePublisher_ = nodeHandle.advertise<std_msgs::UInt8>(modelModeMsgName_, 1, false);
 
-  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] goalVisuMsgName_: " << goalVisuMsgName_ << std::endl;
+  if (printOutFlag_)
+    std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] goalVisuMsgName_: " << goalVisuMsgName_ << std::endl;
   goalMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(goalVisuMsgName_, 10);
 
-  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] targetVisuMsgName_: " << targetVisuMsgName_ << std::endl;
+  if (printOutFlag_)
+    std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] targetVisuMsgName_: " << targetVisuMsgName_ << std::endl;
   targetMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(targetVisuMsgName_, 10);
   //mobimanGoalObsPublisher_ = nodeHandle.advertise<ocs2_msgs::MobimanGoalObservation>(mobimanGoalObsMsgName_, 10);
 
   /// Clients
   //setTaskModeClient_ = nodeHandle.serviceClient<ocs2_msgs::setInt>("/set_task_mode");
 
-  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] setTaskSrvName_: " << setTaskSrvName_ << std::endl;
+  if (printOutFlag_)
+    std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] setTaskSrvName_: " << setTaskSrvName_ << std::endl;
   setTaskClient_ = nodeHandle.serviceClient<ocs2_msgs::setTask>(setTaskSrvName_);
 
   /// Services
   //setTaskModeService_ = nodeHandle.advertiseService("set_task_mode", &TargetTrajectoriesGazebo::setTaskModeSrv, this);
-  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] setPickedFlagSrvName_: " << setPickedFlagSrvName_ << std::endl;
+  if (printOutFlag_)
+    std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] setPickedFlagSrvName_: " << setPickedFlagSrvName_ << std::endl;
   setPickedFlagService_ = nodeHandle.advertiseService(setPickedFlagSrvName_, &TargetTrajectoriesGazebo::setPickedFlagSrv, this);
 
-  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] setSystemObservationSrvName_: " << setSystemObservationSrvName_ << std::endl;
+  if (printOutFlag_)
+    std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] setSystemObservationSrvName_: " << setSystemObservationSrvName_ << std::endl;
   setSystemObservationService_ = nodeHandle.advertiseService(setSystemObservationSrvName_, &TargetTrajectoriesGazebo::setSystemObservationSrv, this);
 
-  std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] setTargetDRLSrvName_: " << setTargetDRLSrvName_ << std::endl;
+  if (printOutFlag_)
+    std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] setTargetDRLSrvName_: " << setTargetDRLSrvName_ << std::endl;
   setTargetDRLService_ = nodeHandle.advertiseService(setTargetDRLSrvName_, &TargetTrajectoriesGazebo::setTargetDRLSrv, this);
 
   while(!initTFCallbackFlag_){ros::spinOnce();}
 
-  std::cout << "[TargetTrajectoriesGazebo::launchNode] END" << std::endl;
+  if (printOutFlag_)
+    std::cout << "[TargetTrajectoriesGazebo::launchNode] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -432,13 +446,19 @@ void TargetTrajectoriesGazebo::updateDummyGoal(double x, double y, double z, dou
   dummyGoalOrientation_.z() = quat_tf.z();
   dummyGoalOrientation_.w() = quat_tf.w();
 
-  std::cout << "[TargetTrajectoriesGazebo::updateDummyGoal] x: " << x << std::endl;
-  std::cout << "[TargetTrajectoriesGazebo::updateDummyGoal] y: " << y << std::endl;
-  std::cout << "[TargetTrajectoriesGazebo::updateDummyGoal] z: " << z << std::endl;
+  goalPosition_ = dummyGoalPosition_;
+  goalOrientation_ = dummyGoalOrientation_;
 
-  std::cout << "[TargetTrajectoriesGazebo::updateDummyGoal] roll: " << roll << std::endl;
-  std::cout << "[TargetTrajectoriesGazebo::updateDummyGoal] pitch: " << pitch << std::endl;
-  std::cout << "[TargetTrajectoriesGazebo::updateDummyGoal] yaw: " << yaw << std::endl;
+  if (printOutFlag_)
+  {
+    std::cout << "[TargetTrajectoriesGazebo::updateDummyGoal] x: " << x << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::updateDummyGoal] y: " << y << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::updateDummyGoal] z: " << z << std::endl;
+
+    std::cout << "[TargetTrajectoriesGazebo::updateDummyGoal] roll: " << roll << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::updateDummyGoal] pitch: " << pitch << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::updateDummyGoal] yaw: " << yaw << std::endl;
+  }
 
   //std::cout << "[TargetTrajectoriesGazebo::updateDummyGoal] DEBUG_INF" << std::endl;
   //while(1);
@@ -1058,6 +1078,7 @@ void TargetTrajectoriesGazebo::updateGoal(bool autoFlag)
       //publishTargetVisu();
       //publishGraspFrame();
     }
+    /*
     else
     {
       //std::cout << "[TargetTrajectoriesGazebo::updateGoal] DUMMY GOAL" << std::endl;
@@ -1065,6 +1086,7 @@ void TargetTrajectoriesGazebo::updateGoal(bool autoFlag)
       goalPosition_ = dummyGoalPosition_;
       goalOrientation_ = dummyGoalOrientation_;
     }
+    */
   }
   else if (taskMode_ == 2)
   {
@@ -1113,6 +1135,7 @@ void TargetTrajectoriesGazebo::updateGoal(bool autoFlag)
     //publishTargetVisu();
     //publishDropFrame();
   }
+  /*
   else
   {
     //std::cout << "[TargetTrajectoriesGazebo::updateGoal] DUMMY GOAL DEFAULT" << std::endl;
@@ -1120,6 +1143,7 @@ void TargetTrajectoriesGazebo::updateGoal(bool autoFlag)
     goalPosition_ = dummyGoalPosition_;
     goalOrientation_ = dummyGoalOrientation_;
   }
+  */
 
   fillGoalVisu();
 
@@ -1134,7 +1158,8 @@ void TargetTrajectoriesGazebo::updateGoal(bool autoFlag)
 //-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::updateGoal(const Eigen::Vector3d& goalPos, const Eigen::Quaterniond& goalOri)
 {
-  std::cout << "[TargetTrajectoriesGazebo::updateGoal(2)] START" << std::endl;
+  if (printOutFlag_)
+    std::cout << "[TargetTrajectoriesGazebo::updateGoal(2)] START" << std::endl;
 
   //std::cout << "[TargetTrajectoriesGazebo::updateGoal(2)] DEBUG INF" << std::endl;
   //while(1);
@@ -1145,7 +1170,8 @@ void TargetTrajectoriesGazebo::updateGoal(const Eigen::Vector3d& goalPos, const 
   fillGoalVisu();
   //publishTargetVisu();
   
-  std::cout << "[TargetTrajectoriesGazebo::updateGoal(2)] END" << std::endl;
+  if (printOutFlag_)
+    std::cout << "[TargetTrajectoriesGazebo::updateGoal(2)] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1370,7 +1396,8 @@ void TargetTrajectoriesGazebo::updateGraspPose()
 
   if (targetIsGoalFlag_)
   {
-    //std::cout << "[TargetTrajectoriesGazebo::updateGraspPose] TARGET IS GOAL!" << std::endl;
+    if (printOutFlag_)
+      std::cout << "[TargetTrajectoriesGazebo::updateGraspPose] TARGET IS GOAL!" << std::endl;
     Eigen::Vector3d graspPositionEstimated = graspPositionEstimated_; 
     updateTarget(graspPositionEstimated, graspOri);
   }
@@ -2538,21 +2565,24 @@ void TargetTrajectoriesGazebo::processFeedbackModelMode(const visualization_msgs
   {
     case 1:
     {
-      std::cout << "[TargetTrajectoriesGazebo::processFeedbackModelMode] Switching to ModelMode::BaseMotion" << std::endl;
+      if (printOutFlag_)
+        std::cout << "[TargetTrajectoriesGazebo::processFeedbackModelMode] Switching to ModelMode::BaseMotion" << std::endl;
       model_mode_int.data = 0;
       break;
     }
     
     case 2:
     {
-      std::cout << "[TargetTrajectoriesGazebo::processFeedbackModelMode] Switching to ModelMode::ArmMotion" << std::endl;
+      if (printOutFlag_)
+        std::cout << "[TargetTrajectoriesGazebo::processFeedbackModelMode] Switching to ModelMode::ArmMotion" << std::endl;
       model_mode_int.data = 1;
       break;
     }
     
     case 3: 
     {
-      std::cout << "[TargetTrajectoriesGazebo::processFeedbackModelMode] Switching to ModelMode::WholeBodyMotion" << std::endl;
+      if (printOutFlag_)
+        std::cout << "[TargetTrajectoriesGazebo::processFeedbackModelMode] Switching to ModelMode::WholeBodyMotion" << std::endl;
       model_mode_int.data = 2;
       break;
     }
@@ -2617,7 +2647,7 @@ bool TargetTrajectoriesGazebo::setSystemObservationSrv(ocs2_msgs::setSystemObser
 bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req, 
                                                ocs2_msgs::setTask::Response &res)
 {
-  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] START" << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] START" << std::endl;
 
   //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] taskMode_: " << taskMode_ << std::endl;
 
@@ -2633,11 +2663,11 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
 
   if (targetName == "target")
   {
-    std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] TARGET IS TARGET" << std::endl;
+    //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] TARGET IS TARGET" << std::endl;
 
-    std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE target_x: " << req.targetPose.position.x << std::endl;
-    std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE target_y: " << req.targetPose.position.y << std::endl;
-    std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE target_z: " << req.targetPose.position.z << std::endl;
+    //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE target_x: " << req.targetPose.position.x << std::endl;
+    //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE target_y: " << req.targetPose.position.y << std::endl;
+    //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE target_z: " << req.targetPose.position.z << std::endl;
 
     targetIsGoalFlag_ = false; 
     //geometry_msgs::Pose targetPoseWrtRobot = req.targetPose;
@@ -2652,9 +2682,9 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
     targetOri.z() = targetPoseWrtWorld.orientation.z;
     targetOri.w() = targetPoseWrtWorld.orientation.w;
 
-    std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] AFTER target_x: " << targetPoseWrtWorld.position.x << std::endl;
-    std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] AFTER target_y: " << targetPoseWrtWorld.position.y << std::endl;
-    std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] AFTER target_z: " << targetPoseWrtWorld.position.z << std::endl;
+    //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] AFTER target_x: " << targetPoseWrtWorld.position.x << std::endl;
+    //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] AFTER target_y: " << targetPoseWrtWorld.position.y << std::endl;
+    //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] AFTER target_z: " << targetPoseWrtWorld.position.z << std::endl;
 
     //updateTarget(targetPos, targetOri);
 
@@ -2703,9 +2733,9 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
   //Eigen::Vector3d targetPos(targetPose.position.x, targetPose.position.y, targetPose.position.z);
   //Eigen::Quaterniond targetOri(targetPose.orientation.w, targetPose.orientation.x, targetPose.orientation.y, targetPose.orientation.z);
 
-  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] x: " << targetPos.x() << std::endl;
-  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] y: " << targetPos.y() << std::endl;
-  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] z: " << targetPos.z() << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] x: " << targetPos.x() << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] y: " << targetPos.y() << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] z: " << targetPos.z() << std::endl;
 
   //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] qx: " << targetPos[1] << std::endl;
   //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] qy: " << targetPos[2] << std::endl;
@@ -2716,16 +2746,16 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
 
   if (targetPos.z() < -0.1)
   {
-    std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] WTF z: " << targetPos.z() << std::endl;
+    //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] WTF z: " << targetPos.z() << std::endl;
     targetPos.z() = 0.0;
 
     //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] DEBUG_INF" << std::endl;
     //while(1);
   }
 
-  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE updateTarget" << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE updateTarget" << std::endl;
   updateTarget(targetPos, targetOri);
-  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] AFTER updateTarget" << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] AFTER updateTarget" << std::endl;
 
   // Run service client to set task
   geometry_msgs::Pose target;
@@ -2737,12 +2767,12 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
   target.orientation.z = targetOri.z();
   target.orientation.w = targetOri.w();
 
-  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] taskMode: " << taskMode << std::endl;
-  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE setTask" << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] taskMode: " << taskMode << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE setTask" << std::endl;
   bool taskModeSuccess = setTask(taskMode, target, timeHorizon);
-  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] AFTER setTask" << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] AFTER setTask" << std::endl;
   
-  std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] END" << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::setTargetDRLSrv] END" << std::endl;
   return res.success;
 }
 
@@ -2751,16 +2781,16 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
 //-------------------------------------------------------------------------------------------------------
 bool TargetTrajectoriesGazebo::setTask(int taskMode, geometry_msgs::Pose targetPose, double time_horizon)
 {
-  std::cout << "[TargetTrajectoriesGazebo::setTask] START" << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::setTask] START" << std::endl;
 
   //std::cout << "[TargetTrajectoriesGazebo::setTask] DEBUG_INF" << std::endl;
   //while(1);
 
   std::string currentTargetName = currentTargetName_;
 
-  std::cout << "[TargetTrajectoriesGazebo::setTask] currentTargetName: " << taskMode << std::endl;
-  std::cout << "[TargetTrajectoriesGazebo::setTask] currentTargetName: " << currentTargetName << std::endl;
-  std::cout << "[TargetTrajectoriesGazebo::setTask] time_horizon: " << time_horizon << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::setTask] currentTargetName: " << taskMode << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::setTask] currentTargetName: " << currentTargetName << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::setTask] time_horizon: " << time_horizon << std::endl;
 
   bool success = false;
   ocs2_msgs::setTask srv;
@@ -2772,7 +2802,7 @@ bool TargetTrajectoriesGazebo::setTask(int taskMode, geometry_msgs::Pose targetP
   if (setTaskClient_.call(srv))
   {
     success = srv.response.success;
-    std::cout << "[TargetTrajectoriesGazebo::setTask] success: " << success << std::endl;
+    //std::cout << "[TargetTrajectoriesGazebo::setTask] success: " << success << std::endl;
   }
   else
   {
@@ -2780,7 +2810,7 @@ bool TargetTrajectoriesGazebo::setTask(int taskMode, geometry_msgs::Pose targetP
     success = false;
   }
 
-  std::cout << "[TargetTrajectoriesGazebo::setTask] END" << std::endl;
+  //std::cout << "[TargetTrajectoriesGazebo::setTask] END" << std::endl;
   
   return success;
 }

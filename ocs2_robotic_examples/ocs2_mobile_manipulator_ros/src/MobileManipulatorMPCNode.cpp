@@ -1,4 +1,4 @@
-// LAST UPDATE: 2023.12.13
+// LAST UPDATE: 2024.02.23
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -19,9 +19,10 @@ using namespace mobile_manipulator;
 
 int main(int argc, char** argv) 
 {
-  std::cout << "[MobileManipulatorMPCNode::main] START" << std::endl;
-
   bool printOutFlag = false;
+
+  if (printOutFlag)
+    std::cout << "[MobileManipulatorMPCNode::main] START" << std::endl;
 
   // Initialize ros node
   ros::init(argc, argv, "mobile_manipulator_mpc_node");
@@ -46,19 +47,23 @@ int main(int argc, char** argv)
   // Robot interface
   int initModelModeInt = 2;
   std::string interfaceName = "MPC";
-  std::cout << "[MobileManipulatorMPCNode::main] BEFORE MobileManipulatorInterface" << std::endl;
+  if (printOutFlag)
+    std::cout << "[MobileManipulatorMPCNode::main] BEFORE MobileManipulatorInterface" << std::endl;
   MobileManipulatorInterface m4_interface(nh, taskFile, libFolder, urdfFile, initModelModeInt, interfaceName, printOutFlag);
   
-  std::cout << "[MobileManipulatorMPCNode::main] BEFORE initializeMPC" << std::endl;
+  if (printOutFlag)
+    std::cout << "[MobileManipulatorMPCNode::main] BEFORE initializeMPC" << std::endl;
   m4_interface.initializeMPC();
 
-  std::cout << "[MobileManipulatorMPCNode::main] BEFORE launchMPC" << std::endl;
+  if (printOutFlag)
+    std::cout << "[MobileManipulatorMPCNode::main] BEFORE launchMPC" << std::endl;
   m4_interface.launchMPC();
 
   //double mpc_dt = 0.01;
   //ros::Timer mpcTimer = nh_interface.createTimer(ros::Duration(mpc_dt), &MobileManipulatorInterface::mpcCallback, &m4_interface);
 
-  std::cout << "[MobileManipulatorMPCNode::main] END" << std::endl;
+  if (printOutFlag)
+    std::cout << "[MobileManipulatorMPCNode::main] END" << std::endl;
 
   spinner.spin(); // spin() will not return until the node has been shutdown
   //ros::spin();

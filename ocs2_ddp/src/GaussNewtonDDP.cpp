@@ -1682,7 +1682,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, scala
 /******************************************************************************************************/
 void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const vector_t& initFullState, scalar_t finalTime) 
 {
-  std::cout << "[GaussNewtonDDP::runImpl(4)] START" << std::endl;
+  //std::cout << "[GaussNewtonDDP::runImpl(4)] START" << std::endl;
 
   if (ddpSettings_.displayInfo_) 
   {
@@ -1909,7 +1909,7 @@ void GaussNewtonDDP::runImpl(scalar_t initTime, const vector_t& initState, const
   //std::cout << "[GaussNewtonDDP::runImpl(4)] AFTER optimizedPrimalSolution_.controllerPtr_ size: " << optimizedPrimalSolution_.controllerPtr_->size() << std::endl;
 
   //std::cout << "[GaussNewtonDDP::runImpl(4)] targetTrajectories 5 size:" << this->getReferenceManager().getTargetTrajectories().stateTrajectory.size() << std::endl;
-  std::cout << "[GaussNewtonDDP::runImpl(4)] END" << std::endl;// << std::endl;
+  //std::cout << "[GaussNewtonDDP::runImpl(4)] END" << std::endl;// << std::endl;
 }
 
 }  // namespace ocs2

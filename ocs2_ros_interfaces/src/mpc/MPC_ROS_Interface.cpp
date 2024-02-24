@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.12
+// LAST UPDATE: 2024.02.23
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -40,7 +40,8 @@ MPC_ROS_Interface::MPC_ROS_Interface(std::shared_ptr<MPC_BASE> mpc, std::string 
 //-------------------------------------------------------------------------------------------------------
 MPC_ROS_Interface::~MPC_ROS_Interface() 
 {
-  std::cout << "[MPC_ROS_Interface::~MPC_ROS_Interface] SHUTTING DOWN..." << std::endl;
+  if (printOutFlag_)
+    std::cout << "[MPC_ROS_Interface::~MPC_ROS_Interface] SHUTTING DOWN..." << std::endl;
   shutdownNode();
 }
 
@@ -87,8 +88,10 @@ void MPC_ROS_Interface::setSystemObservation(SystemObservation& so)
 void MPC_ROS_Interface::updateStatusModelModeMPC(bool statusModelModeMPC)
 {
   //std::cout << "[MPC_ROS_Interface::updateStatusModelModeMPC] START" << std::endl;
+  
   statusModelModeMPCMsg_.data = statusModelModeMPC;
   statusModelModeMPCPublisher_.publish(statusModelModeMPCMsg_);
+  
   //std::cout << "[MPC_ROS_Interface::updateStatusModelModeMPC] END" << std::endl;
 }
 
@@ -371,6 +374,9 @@ void MPC_ROS_Interface::computeTrajectory()
 {
   //std::cout << "[MPC_ROS_Interface::computeTrajectory] START" << std::endl;
 
+  std::cout << "[MPC_ROS_Interface::computeTraj2] DEBUG_INF" << std::endl;
+  while(1);
+
   //std::cout << "[MPC_ROS_Interface::computeTrajectory] BEFORE resetRequestedEver_: " < resetRequestedEver_ << std::endl;
 
   if (!resetRequestedEver_.load()) 
@@ -457,13 +463,22 @@ void MPC_ROS_Interface::computeTrajectory()
 //-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg) 
 {
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START" << std::endl;
+  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] START" << std::endl;
   //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] ctr_: " << ctr_ << std::endl;
 
-  // current time, state, input, and subsystem
-  auto currentObservation = ros_msg_conversions::readObservationMsg(*msg);
-  //setSystemObservation(currentObservation);
-
+  ocs2::SystemObservation currentObservation;
+  try
+  {
+    // current time, state, input, and subsystem
+    currentObservation = ros_msg_conversions::readObservationMsg(*msg);
+    //setSystemObservation(currentObservation);
+  }
+  catch (const std::exception& error)
+  {
+    const std::string msg = "[MPC_ROS_Interface::mpcObservationCallback] ERROR: CATCHUP readObservationMsg \n";
+    throw std::runtime_error(msg + error.what());
+  }
+  
   //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] state" << std::endl;
   //std::cout << currentObservation.state << std::endl;
 
@@ -494,13 +509,21 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
   // run MPC
   bool controllerIsUpdated;
   
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE mpc_->run" << std::endl;
-  controllerIsUpdated = mpc_->run(currentObservation.time, currentObservation.state, currentObservation.full_state);
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] AFTER mpc_->run" << std::endl;
+  try
+  {
+    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE mpc_->run" << std::endl;
+    controllerIsUpdated = mpc_->run(currentObservation.time, currentObservation.state, currentObservation.full_state);
+    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] AFTER mpc_->run" << std::endl;
 
-  internalShutDownFlag_ = mpc_->getInternalShutDownFlag();
-
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
+    internalShutDownFlag_ = mpc_->getInternalShutDownFlag();
+  }
+  catch (const std::exception& error)
+  {
+    const std::string msg = "[MPC_ROS_Interface::mpcObservationCallback] ERROR: CATCHUP mpc_->run \n";
+    throw std::runtime_error(msg + error.what());
+  }
+  
+  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
   //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE terminateThread_: " << terminateThread_ << std::endl;
   if (internalShutDownFlag_)
   {
@@ -554,7 +577,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
 
   mpcReadyFlag_ = true;
 
-  std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END" << std::endl << std::endl;
+  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END" << std::endl << std::endl;
 
   ctr_++;
 }
@@ -564,10 +587,12 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
 //-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::shutdownNode() 
 {
-  std::cout << "[MPC_ROS_Interface::shutdownNode] START" << std::endl;
+  if (printOutFlag_)
+    std::cout << "[MPC_ROS_Interface::shutdownNode] START" << std::endl;
 
 #ifdef PUBLISH_THREAD
-  std::cout << "[MPC_ROS_Interface::shutdownNode] Shutting down workers ..." << std::endl;
+  if (printOutFlag_)
+    std::cout << "[MPC_ROS_Interface::shutdownNode] Shutting down workers ..." << std::endl;
 
   std::unique_lock<std::mutex> lk(publisherMutex_);
   terminateThread_ = true;
@@ -579,7 +604,8 @@ void MPC_ROS_Interface::shutdownNode()
     publisherWorker_.join();
   }
 
-  std::cout << "[MPC_ROS_Interface::shutdownNode] All workers are shut down." << std::endl;
+  if (printOutFlag_)
+    std::cout << "[MPC_ROS_Interface::shutdownNode] All workers are shut down." << std::endl;
 #endif
 
   // shutdown publishers
@@ -588,7 +614,8 @@ void MPC_ROS_Interface::shutdownNode()
    //std::cout << "[MPC_ROS_Interface::shutdownNode] BEFORE mpcObservationSubscriber_" << std::endl;
   mpcObservationSubscriber_.shutdown();
 
-  std::cout << "[MPC_ROS_Interface::shutdownNode] END" << std::endl;
+  if (printOutFlag_)
+    std::cout << "[MPC_ROS_Interface::shutdownNode] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -628,9 +655,11 @@ void MPC_ROS_Interface::spin()
 //-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle) 
 {
-  std::cout << "[MPC_ROS_Interface::launchNodes] START" << std::endl;
+  if (printOutFlag_)
+    std::cout << "[MPC_ROS_Interface::launchNodes] START" << std::endl;
 
-  std::cout << "[MPC_ROS_Interface::launchNodes] MPC node is setting up..." << std::endl;
+  if (printOutFlag_)
+    std::cout << "[MPC_ROS_Interface::launchNodes] MPC node is setting up..." << std::endl;
 
   // Subscribe Observation 
   mpcObservationSubscriber_ = nodeHandle.subscribe(topicPrefix_ + "mpc_observation", 
@@ -653,7 +682,9 @@ void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
   statusModelModeMPCMsg_.data = true;
   statusModelModeMPCPublisher_.publish(statusModelModeMPCMsg_);
   */
-  std::cout << "[MPC_ROS_Interface::launchNodes] END" << std::endl;
+
+  if (printOutFlag_)
+    std::cout << "[MPC_ROS_Interface::launchNodes] END" << std::endl;
 }
 
 
