@@ -1981,21 +1981,31 @@ void TargetTrajectoriesGazebo::publishTargetTrajectories(Eigen::Vector3d& positi
 //-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::updateCallback(const ros::TimerEvent& event)
 {
-  //std::cout << "[TargetTrajectoriesGazebo::updateCallback] START" << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::updateCallback] START" << std::endl;
 
+  std::cout << "[TargetTrajectoriesGazebo::updateCallback] BEFORE updateGoal" << std::endl;
   updateGoal(true);
 
+  std::cout << "[TargetTrajectoriesGazebo::updateCallback] BEFORE publishTargetTrajectories" << std::endl;
   publishTargetTrajectories();
   //publishMobimanGoalObs();
 
+  std::cout << "[TargetTrajectoriesGazebo::updateCallback] BEFORE publishGoalVisu" << std::endl;
   publishGoalVisu();
+
+  std::cout << "[TargetTrajectoriesGazebo::updateCallback] BEFORE publishTargetVisu" << std::endl;
   publishTargetVisu();
 
+  std::cout << "[TargetTrajectoriesGazebo::updateCallback] BEFORE publishGoalFrame" << std::endl;
   publishGoalFrame();
+
+  std::cout << "[TargetTrajectoriesGazebo::updateCallback] BEFORE publishGraspFrame" << std::endl;
   publishGraspFrame();
+
+  std::cout << "[TargetTrajectoriesGazebo::updateCallback] BEFORE publishDropFrame" << std::endl;
   publishDropFrame();
 
-  //std::cout << "[TargetTrajectoriesGazebo::updateCallback] END" << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::updateCallback] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
