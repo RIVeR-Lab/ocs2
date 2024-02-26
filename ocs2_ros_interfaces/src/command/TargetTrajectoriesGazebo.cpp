@@ -361,21 +361,23 @@ void TargetTrajectoriesGazebo::launchNode(ros::NodeHandle& nodeHandle)
     std::lock_guard<std::mutex> lock(latestObservationMutex_);
     latestObservation_ = ros_msg_conversions::readObservationMsg(*msg);
     policyReceivedFlag_ = true;
+
+    std::cout << "[TargetTrajectoriesGazebo::launchNode::observationCallback] mpcObservationMsgName_: " << mpcObservationMsgName_ << std::endl;
   };
   if (printOutFlag_)
-    std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] mpcObservationMsgName_: " << mpcObservationMsgName_ << std::endl;
-  observationSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mpc_observation>(mpcObservationMsgName_, 1, observationCallback);
+    std::cout << "[TargetTrajectoriesGazebo::launchNode] mpcObservationMsgName_: " << mpcObservationMsgName_ << std::endl;
+  observationSubscriber_ = nodeHandle.subscribe<ocs2_msgs::mpc_observation>(mpcObservationMsgName_, 5, observationCallback);
 
   if (printOutFlag_)
-    std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] modelModeMPCStatusMsgName_: " << modelModeMPCStatusMsgName_ << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::launchNode] modelModeMPCStatusMsgName_: " << modelModeMPCStatusMsgName_ << std::endl;
   statusModelModeMPCSubscriber_ = nodeHandle.subscribe<std_msgs::Bool>(modelModeMPCStatusMsgName_, 5, &TargetTrajectoriesGazebo::statusModelModeMPCCallback, this);
   
   if (printOutFlag_)
-    std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] modelModeMRTStatusMsgName_: " << modelModeMRTStatusMsgName_ << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::launchNode] modelModeMRTStatusMsgName_: " << modelModeMRTStatusMsgName_ << std::endl;
   statusModelModeMRTSubscriber_ = nodeHandle.subscribe<std_msgs::Bool>(modelModeMRTStatusMsgName_, 5, &TargetTrajectoriesGazebo::statusModelModeMRTCallback, this);
 
   if (printOutFlag_)
-    std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] gazeboModelMsgName_: " << gazeboModelMsgName_ << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::launchNode] gazeboModelMsgName_: " << gazeboModelMsgName_ << std::endl;
   if (gazeboModelMsgName_ != "")
   {
     gazeboModelStatesSubscriber_ = nodeHandle.subscribe(gazeboModelMsgName_, 5, &TargetTrajectoriesGazebo::gazeboModelStatesCallback, this);
@@ -384,19 +386,19 @@ void TargetTrajectoriesGazebo::launchNode(ros::NodeHandle& nodeHandle)
 
   /// Publishers
   if (printOutFlag_)
-    std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] targetTrajectoriesMsgName_: " << targetTrajectoriesMsgName_ << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::launchNode] targetTrajectoriesMsgName_: " << targetTrajectoriesMsgName_ << std::endl;
   targetTrajectoriesPublisherPtr_.reset(new TargetTrajectoriesRosPublisher(nodeHandle, targetTrajectoriesMsgName_));
 
   if (printOutFlag_)
-    std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] modelModeMsgName_: " << modelModeMsgName_ << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::launchNode] modelModeMsgName_: " << modelModeMsgName_ << std::endl;
   modelModePublisher_ = nodeHandle.advertise<std_msgs::UInt8>(modelModeMsgName_, 1, false);
 
   if (printOutFlag_)
-    std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] goalVisuMsgName_: " << goalVisuMsgName_ << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::launchNode] goalVisuMsgName_: " << goalVisuMsgName_ << std::endl;
   goalMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(goalVisuMsgName_, 10);
 
   if (printOutFlag_)
-    std::cout << "[TargetTrajectoriesGazebo::statusModelModeMRTCallback] targetVisuMsgName_: " << targetVisuMsgName_ << std::endl;
+    std::cout << "[TargetTrajectoriesGazebo::launchNode] targetVisuMsgName_: " << targetVisuMsgName_ << std::endl;
   targetMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(targetVisuMsgName_, 10);
   //mobimanGoalObsPublisher_ = nodeHandle.advertise<ocs2_msgs::MobimanGoalObservation>(mobimanGoalObsMsgName_, 10);
 
@@ -1396,8 +1398,8 @@ void TargetTrajectoriesGazebo::updateGraspPose()
 
   if (targetIsGoalFlag_)
   {
-    if (printOutFlag_)
-      std::cout << "[TargetTrajectoriesGazebo::updateGraspPose] TARGET IS GOAL!" << std::endl;
+    //if (printOutFlag_)
+    //  std::cout << "[TargetTrajectoriesGazebo::updateGraspPose] TARGET IS GOAL!" << std::endl;
     Eigen::Vector3d graspPositionEstimated = graspPositionEstimated_; 
     updateTarget(graspPositionEstimated, graspOri);
   }
@@ -2631,13 +2633,13 @@ bool TargetTrajectoriesGazebo::setPickedFlagSrv(ocs2_msgs::setBool::Request &req
 bool TargetTrajectoriesGazebo::setSystemObservationSrv(ocs2_msgs::setSystemObservation::Request &req, 
                                                        ocs2_msgs::setSystemObservation::Response &res)
 {
-  //std::cout << "[TargetTrajectoriesGazebo::setSystemObservationSrv] START" << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::setSystemObservationSrv] START" << std::endl;
   latestObservation_ = ros_msg_conversions::readObservationMsg(req.obs);
   res.success = true;
 
   policyReceivedFlag_ = true;
   
-  //std::cout << "[TargetTrajectoriesGazebo::setSystemObservationSrv] END" << std::endl;
+  std::cout << "[TargetTrajectoriesGazebo::setSystemObservationSrv] END" << std::endl;
   return res.success;
 }
 
