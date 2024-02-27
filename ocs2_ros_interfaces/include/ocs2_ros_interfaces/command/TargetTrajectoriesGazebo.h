@@ -167,8 +167,8 @@ class TargetTrajectoriesGazebo final
     bool getTransform(std::string frame_from, std::string frame_to, tf::StampedTransform& stf);
 
     // DESCRIPTION: TODO...
-    void transformPose(std::string& frame_from,
-                       std::string& frame_to,
+    bool transformPose(std::string frame_from,
+                       std::string frame_to,
                        geometry_msgs::Pose& p_from,
                        geometry_msgs::Pose& p_to);
 
@@ -321,6 +321,7 @@ class TargetTrajectoriesGazebo final
     gazebo_msgs::ModelStates modelStatesMsg_;
 
     tf::StampedTransform tf_ee_wrt_world_;
+    //tf::StampedTransform tf_grasp_wrt_world_;
 
     std::vector<std::string> targetNames_;
     std::string dropTargetName_;
