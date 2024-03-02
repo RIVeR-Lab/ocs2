@@ -132,23 +132,31 @@ bool MPC_ROS_Interface::resetMpcCallback(ocs2_msgs::reset::Request& req, ocs2_ms
 
   if (static_cast<bool>(req.reset)) 
   {
-    //std::cout << "[MPC_ROS_Interface::resetMpcNode] BEFORE readTargetTrajectoriesMsg" << std::endl;
-    auto targetTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(req.targetTrajectories);
+    try
+    {
+      //std::cout << "[MPC_ROS_Interface::resetMpcNode] BEFORE readTargetTrajectoriesMsg" << std::endl;
+      auto targetTrajectories = ros_msg_conversions::readTargetTrajectoriesMsg(req.targetTrajectories);
 
-    //std::cout << "[MPC_ROS_Interface::resetMpcCallback] RECEIVED targetTrajectories size: " << targetTrajectories.size() << std::endl;
-    //std::cout << targetTrajectories << std::endl;
+      //std::cout << "[MPC_ROS_Interface::resetMpcCallback] RECEIVED targetTrajectories size: " << targetTrajectories.size() << std::endl;
+      //std::cout << targetTrajectories << std::endl;
 
-    resetMpcNode(std::move(targetTrajectories));
-    res.done = static_cast<uint8_t>(true);
+      resetMpcNode(std::move(targetTrajectories));
+      res.done = static_cast<uint8_t>(true);
 
-    /*
-    std::cout << "\n#####################################################"
-              << "\n#####################################################"
-              << "\n#################  MPC is reset.  ###################"
-              << "\n#####################################################"
-              << "\n#####################################################\n";
-    */
-    return true;
+      /*
+      std::cout << "\n#####################################################"
+                << "\n#####################################################"
+                << "\n#################  MPC is reset.  ###################"
+                << "\n#####################################################"
+                << "\n#####################################################\n";
+      */
+      return true;
+    }
+    catch (const std::exception& error)
+    {
+      const std::string msg = "[MPC_ROS_Interface::resetMpcCallback] ERROR: CATCHUP! \n";
+      throw std::runtime_error(msg + error.what());
+    }
   } 
   else 
   {
