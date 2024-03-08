@@ -1500,7 +1500,7 @@ bool MRT_ROS_Gazebo_Loop::setPickedFlag(bool val)
 //-------------------------------------------------------------------------------------------------------
 bool MRT_ROS_Gazebo_Loop::setSystemObservation(const SystemObservation& currentObservation)
 {
-  std::cout << "[" << ns_ <<  "][MRT_ROS_Gazebo_Loop::setSystemObservation] START" << std::endl;
+  //std::cout << "[" << ns_ <<  "][MRT_ROS_Gazebo_Loop::setSystemObservation] START" << std::endl;
 
   bool success = false;
   ocs2_msgs::setSystemObservation srv;
@@ -1515,11 +1515,11 @@ bool MRT_ROS_Gazebo_Loop::setSystemObservation(const SystemObservation& currentO
     std::cout << currentObservation << std::endl;
     
     std::cout << "[" << ns_ <<  "][MRT_ROS_Gazebo_Loop::setSystemObservation] ERROR: Failed to call service!" << std::endl;
-    //ROS_ERROR("[MRT_ROS_Gazebo_Loop::setSystemObservation] ERROR: Failed to call service!");
+    ROS_ERROR("[MRT_ROS_Gazebo_Loop::setSystemObservation] ERROR: Failed to call service!");
     success = false;
   }
 
-  std::cout << "[" << ns_ <<  "][MRT_ROS_Gazebo_Loop::setSystemObservation] END" << std::endl;
+  //std::cout << "[" << ns_ <<  "][MRT_ROS_Gazebo_Loop::setSystemObservation] END" << std::endl;
   
   return success;
 }
@@ -1610,7 +1610,7 @@ bool MRT_ROS_Gazebo_Loop::setTaskSrv(ocs2_msgs::setTask::Request &req,
 
   //std::cout << "[" << ns_ <<  "][MRT_ROS_Gazebo_Loop::setTaskSrv] taskMode_: " << taskMode_ << std::endl;
   //std::cout << "[" << ns_ <<  "][MRT_ROS_Gazebo_Loop::setTaskSrv] END" << std::endl;
-  return res.success;
+  return true;
 }
 
 //-------------------------------------------------------------------------------------------------------

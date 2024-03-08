@@ -249,7 +249,7 @@ void TargetTrajectoriesGazebo::setGoalTrajectoryQueueDt(double goalTrajectoryQue
 void TargetTrajectoriesGazebo::setWorldFrameName(std::string worldFrameName)
 {
   worldFrameName_ = worldFrameName;
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] worldFrameName_: " << worldFrameName_ << std::endl;
+  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setWorldFrameName] worldFrameName_: " << worldFrameName_ << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -262,7 +262,7 @@ void TargetTrajectoriesGazebo::setRobotFrameName(std::string robotFrameName)
   {
     robotFrameName_ = ns_ + "/" + robotFrameName_;
   }
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] robotFrameName_: " << robotFrameName_ << std::endl;
+  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setRobotFrameName] robotFrameName_: " << robotFrameName_ << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -275,7 +275,7 @@ void TargetTrajectoriesGazebo::setGoalFrameName(std::string goalFrameName)
   {
     goalFrameName_ = ns_ + "/" + goalFrameName_;
   }
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] goalFrameName_: " << goalFrameName_ << std::endl;
+  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] goalFrameName_: " << goalFrameName_ << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -288,7 +288,7 @@ void TargetTrajectoriesGazebo::setEEFrameName(std::string eeFrameName)
   {
     eeFrameName_ = ns_ + "/" + eeFrameName_;
   }
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] eeFrameName_: " << eeFrameName_ << std::endl;
+  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] eeFrameName_: " << eeFrameName_ << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -301,7 +301,7 @@ void TargetTrajectoriesGazebo::setGraspFrameName(std::string graspFrameName)
   {
     graspFrameName_ = ns_ + "/" + graspFrameName_;
   }
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] graspFrameName_: " << graspFrameName_ << std::endl;
+  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setGraspFrameName] graspFrameName_: " << graspFrameName_ << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -314,7 +314,7 @@ void TargetTrajectoriesGazebo::setDropFrameName(std::string dropFrameName)
   {
     dropFrameName_ = ns_ + "/" + dropFrameName_;
   }
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] dropFrameName_: " << dropFrameName_ << std::endl;
+  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setDropFrameName] dropFrameName_: " << dropFrameName_ << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1339,28 +1339,38 @@ void TargetTrajectoriesGazebo::updateTarget(bool autoFlag)
 //-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::updateTarget(const Eigen::Vector3d& targetPos, const Eigen::Quaterniond& targetOri)
 {
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateTarget(2)] START" << std::endl;
+  try
+  {
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateTarget(2)] START" << std::endl;
 
-  currentTargetPosition_ = targetPos;
-  currentTargetOrientation_ = targetOri;
+    currentTargetPosition_ = targetPos;
+    currentTargetOrientation_ = targetOri;
 
-  /*
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateTarget(2)] x: " << targetPos.x() << std::endl;
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateTarget(2)] y: " << targetPos.y() << std::endl;
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateTarget(2)] z: " << targetPos.z() << std::endl;
+    /*
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateTarget(2)] x: " << targetPos.x() << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateTarget(2)] y: " << targetPos.y() << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateTarget(2)] z: " << targetPos.z() << std::endl;
 
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateTarget(2)] qx: " << targetOri.x() << std::endl;
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateTarget(2)] qy: " << targetOri.y() << std::endl;
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateTarget(2)] qz: " << targetOri.z() << std::endl;
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateTarget(2)] qw: " << targetOri.w() << std::endl << std::endl;
-  */
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateTarget(2)] qx: " << targetOri.x() << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateTarget(2)] qy: " << targetOri.y() << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateTarget(2)] qz: " << targetOri.z() << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateTarget(2)] qw: " << targetOri.w() << std::endl << std::endl;
+    */
 
-  fillTargetVisu();
-  //publishTargetVisu();
+    fillTargetVisu();
+    //publishTargetVisu();
 
-  targetReadyFlag_ = true;
-  
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateTarget(2)] END" << std::endl;
+    targetReadyFlag_ = true;
+    
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateTarget(2)] END" << std::endl;
+  }
+  catch(const std::exception& e)
+  {
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateTarget] ERROR: CATCHUP! " << e.what() << std::endl;
+    //const std::string msg = "[TargetTrajectoriesGazebo::updateTarget] ERROR: CATCHUP! \n";
+    //throw std::runtime_error(msg + e.what());
+    //std::cerr << e.what() << '\n';
+  }
 }
 
 void TargetTrajectoriesGazebo::updateGraspPose()
@@ -1541,71 +1551,81 @@ void TargetTrajectoriesGazebo::updateEEPose(Eigen::Vector3d& eePos, Eigen::Quate
 //-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::fillGoalVisu()
 {
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillGoalVisu] START" << std::endl;
-
-  goalMarkerArray_.markers.clear();
-
-  /// NUA TODO: User should able to add more goal!
-  int n_goal = 1;
-
-  for(int i = 0; i < n_goal; i++)
+  try
   {
-    Eigen::Vector3d goalPosition = goalPosition_;
-    Eigen::Quaterniond goalOrientation = goalOrientation_;
-    geometry_msgs::Point goal_point;
-    geometry_msgs::Point grasp_or_drop_point;
-    goal_point.x = goalPosition.x();
-    goal_point.y = goalPosition.y();
-    goal_point.z = goalPosition.z();
-    grasp_or_drop_point = goal_point;
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillGoalVisu] START" << std::endl;
 
-    if (taskMode_ == 1)
+    goalMarkerArray_.markers.clear();
+
+    /// NUA TODO: User should able to add more goal!
+    int n_goal = 1;
+
+    for(int i = 0; i < n_goal; i++)
     {
-      Eigen::Vector3d currentGraspPosition = currentGraspPosition_;
-      grasp_or_drop_point.x = currentGraspPosition.x();
-      grasp_or_drop_point.y = currentGraspPosition.y();
-      grasp_or_drop_point.z = currentGraspPosition.z();
+      Eigen::Vector3d goalPosition = goalPosition_;
+      Eigen::Quaterniond goalOrientation = goalOrientation_;
+      geometry_msgs::Point goal_point;
+      geometry_msgs::Point grasp_or_drop_point;
+      goal_point.x = goalPosition.x();
+      goal_point.y = goalPosition.y();
+      goal_point.z = goalPosition.z();
+      grasp_or_drop_point = goal_point;
+
+      if (taskMode_ == 1)
+      {
+        Eigen::Vector3d currentGraspPosition = currentGraspPosition_;
+        grasp_or_drop_point.x = currentGraspPosition.x();
+        grasp_or_drop_point.y = currentGraspPosition.y();
+        grasp_or_drop_point.z = currentGraspPosition.z();
+      }
+      else if (taskMode_ == 2)
+      {
+        Eigen::Vector3d currentDropPosition = currentDropPosition_;
+        grasp_or_drop_point.x = currentDropPosition.x();
+        grasp_or_drop_point.y = currentDropPosition.y();
+        grasp_or_drop_point.z = currentDropPosition.z();
+
+        goal_point.z = grasp_or_drop_point.z;
+      }
+
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillGoalVisu] grasp_or_drop_point: " << std::endl;
+      //print(grasp_or_drop_point);
+
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillGoalVisu] goal_point: " << std::endl;
+      //print(goal_point);
+
+      visualization_msgs::Marker goal_visu;
+      goal_visu.ns = "goal_" + std::to_string(i+1);
+      goal_visu.id = i+1;
+      goal_visu.action = visualization_msgs::Marker::ADD;
+      goal_visu.type = visualization_msgs::Marker::ARROW;
+      goal_visu.points.push_back(grasp_or_drop_point);
+      goal_visu.points.push_back(goal_point);
+      goal_visu.pose.orientation.x = 0;
+      goal_visu.pose.orientation.y = 0;
+      goal_visu.pose.orientation.z = 0;
+      goal_visu.pose.orientation.w = 1;
+      goal_visu.scale.x = 0.04;
+      goal_visu.scale.y = 0.08;
+      goal_visu.scale.z = 0.08;
+      goal_visu.color.r = 0.5;
+      goal_visu.color.g = 0.0;
+      goal_visu.color.b = 0.5;
+      goal_visu.color.a = 0.5;
+      goal_visu.header.frame_id = worldFrameName_;
+
+      goalMarkerArray_.markers.push_back(goal_visu);
     }
-    else if (taskMode_ == 2)
-    {
-      Eigen::Vector3d currentDropPosition = currentDropPosition_;
-      grasp_or_drop_point.x = currentDropPosition.x();
-      grasp_or_drop_point.y = currentDropPosition.y();
-      grasp_or_drop_point.z = currentDropPosition.z();
 
-      goal_point.z = grasp_or_drop_point.z;
-    }
-
-    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillGoalVisu] grasp_or_drop_point: " << std::endl;
-    //print(grasp_or_drop_point);
-
-    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillGoalVisu] goal_point: " << std::endl;
-    //print(goal_point);
-
-    visualization_msgs::Marker goal_visu;
-    goal_visu.ns = "goal_" + std::to_string(i+1);
-    goal_visu.id = i+1;
-    goal_visu.action = visualization_msgs::Marker::ADD;
-    goal_visu.type = visualization_msgs::Marker::ARROW;
-    goal_visu.points.push_back(grasp_or_drop_point);
-    goal_visu.points.push_back(goal_point);
-    goal_visu.pose.orientation.x = 0;
-    goal_visu.pose.orientation.y = 0;
-    goal_visu.pose.orientation.z = 0;
-    goal_visu.pose.orientation.w = 1;
-    goal_visu.scale.x = 0.04;
-    goal_visu.scale.y = 0.08;
-    goal_visu.scale.z = 0.08;
-    goal_visu.color.r = 0.5;
-    goal_visu.color.g = 0.0;
-    goal_visu.color.b = 0.5;
-    goal_visu.color.a = 0.5;
-    goal_visu.header.frame_id = worldFrameName_;
-
-    goalMarkerArray_.markers.push_back(goal_visu);
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillGoalVisu] END" << std::endl;
   }
-
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillGoalVisu] END" << std::endl;
+  catch(const std::exception& e)
+  {
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillGoalVisu] ERROR: CATCHUP! " << e.what() << std::endl;
+    //const std::string msg = "[TargetTrajectoriesGazebo::fillGoalVisu] ERROR: CATCHUP! \n";
+    //throw std::runtime_error(msg + e.what());
+    //std::cerr << e.what() << '\n';
+  }
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1613,106 +1633,116 @@ void TargetTrajectoriesGazebo::fillGoalVisu()
 //-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::fillTargetVisu()
 {
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillTargetVisu] START" << std::endl;
-
-  targetMarkerArray_.markers.clear();
-
-  /// NUA TODO: User should able to add more target!
-  int target_size = 1;
-
-  for(int i = 0; i < 3; i++)
+  try
   {
-    Eigen::Vector3d currentTargetPosition = currentTargetPosition_;
-    Eigen::Quaterniond currentTargetOrientation = currentTargetOrientation_;
-    //geometry_msgs::Point target_point;
-    //geometry_msgs::Point grasp_or_drop_point;
-    //target_point.x = currentTargetPosition.x();
-    //target_point.y = currentTargetPosition.y();
-    //target_point.z = currentTargetPosition.z();
-    //grasp_or_drop_point = target_point;
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillTargetVisu] START" << std::endl;
 
-    /*
-    if (taskMode_ == 1)
+    targetMarkerArray_.markers.clear();
+
+    /// NUA TODO: User should able to add more target!
+    int target_size = 1;
+
+    for(int i = 0; i < 3; i++)
     {
-      Eigen::Vector3d currentGraspPosition = currentGraspPosition_;
-      grasp_or_drop_point.x = currentGraspPosition.x();
-      grasp_or_drop_point.y = currentGraspPosition.y();
-      grasp_or_drop_point.z = currentGraspPosition.z();
+      Eigen::Vector3d currentTargetPosition = currentTargetPosition_;
+      Eigen::Quaterniond currentTargetOrientation = currentTargetOrientation_;
+      //geometry_msgs::Point target_point;
+      //geometry_msgs::Point grasp_or_drop_point;
+      //target_point.x = currentTargetPosition.x();
+      //target_point.y = currentTargetPosition.y();
+      //target_point.z = currentTargetPosition.z();
+      //grasp_or_drop_point = target_point;
+
+      /*
+      if (taskMode_ == 1)
+      {
+        Eigen::Vector3d currentGraspPosition = currentGraspPosition_;
+        grasp_or_drop_point.x = currentGraspPosition.x();
+        grasp_or_drop_point.y = currentGraspPosition.y();
+        grasp_or_drop_point.z = currentGraspPosition.z();
+      }
+      else if (taskMode_ == 2)
+      {
+        Eigen::Vector3d currentDropPosition = currentDropPosition_;
+        grasp_or_drop_point.x = currentDropPosition.x();
+        grasp_or_drop_point.y = currentDropPosition.y();
+        grasp_or_drop_point.z = currentDropPosition.z();
+
+        target_point.z = grasp_or_drop_point.z;
+      }
+      */
+
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillTargetVisu] grasp_or_drop_point: " << std::endl;
+      //print(grasp_or_drop_point);
+
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillTargetVisu] target_point: " << std::endl;
+      //print(target_point);
+
+      visualization_msgs::Marker target_visu;
+      target_visu.ns = "target_" + std::to_string(i+1);
+      target_visu.id = i+1;
+      target_visu.action = visualization_msgs::Marker::ADD;
+      target_visu.type = visualization_msgs::Marker::CYLINDER;
+      //target_visu.type = visualization_msgs::Marker::ARROW;
+      //target_visu.points.push_back(grasp_or_drop_point);
+      //target_visu.points.push_back(target_point);
+      target_visu.pose.position.x = currentTargetPosition.x();
+      target_visu.pose.position.y = currentTargetPosition.y();
+      target_visu.pose.position.z = currentTargetPosition.z();
+      target_visu.pose.orientation.x = currentTargetOrientation.x();
+      target_visu.pose.orientation.y = currentTargetOrientation.y();
+      target_visu.pose.orientation.z = currentTargetOrientation.z();
+      target_visu.pose.orientation.w = currentTargetOrientation.w();
+      //target_visu.scale.x = 0.05;
+      //target_visu.scale.y = 0.05;
+      //target_visu.scale.z = 0.1;
+      
+      if (i == 0)
+      {
+        target_visu.scale.x = 0.2;
+        target_visu.scale.y = 0.02;
+        target_visu.scale.z = 0.02;
+
+        target_visu.color.r = 0.8;
+        target_visu.color.g = 0.0;
+        target_visu.color.b = 0.0;
+      }
+      if (i == 1)
+      {
+        target_visu.scale.x = 0.02;
+        target_visu.scale.y = 0.2;
+        target_visu.scale.z = 0.02;
+
+        target_visu.color.r = 0.0;
+        target_visu.color.g = 0.8;
+        target_visu.color.b = 0.0;
+      }
+      if (i == 2)
+      {
+        target_visu.scale.x = 0.02;
+        target_visu.scale.y = 0.02;
+        target_visu.scale.z = 0.2;
+
+        target_visu.color.r = 0.0;
+        target_visu.color.g = 0.0;
+        target_visu.color.b = 0.8;
+      }
+      
+      target_visu.color.a = 0.5;
+      target_visu.header.frame_id = worldFrameName_;
+
+      targetMarkerArray_.markers.push_back(target_visu);
     }
-    else if (taskMode_ == 2)
-    {
-      Eigen::Vector3d currentDropPosition = currentDropPosition_;
-      grasp_or_drop_point.x = currentDropPosition.x();
-      grasp_or_drop_point.y = currentDropPosition.y();
-      grasp_or_drop_point.z = currentDropPosition.z();
 
-      target_point.z = grasp_or_drop_point.z;
-    }
-    */
-
-    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillTargetVisu] grasp_or_drop_point: " << std::endl;
-    //print(grasp_or_drop_point);
-
-    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillTargetVisu] target_point: " << std::endl;
-    //print(target_point);
-
-    visualization_msgs::Marker target_visu;
-    target_visu.ns = "target_" + std::to_string(i+1);
-    target_visu.id = i+1;
-    target_visu.action = visualization_msgs::Marker::ADD;
-    target_visu.type = visualization_msgs::Marker::CYLINDER;
-    //target_visu.type = visualization_msgs::Marker::ARROW;
-    //target_visu.points.push_back(grasp_or_drop_point);
-    //target_visu.points.push_back(target_point);
-    target_visu.pose.position.x = currentTargetPosition.x();
-    target_visu.pose.position.y = currentTargetPosition.y();
-    target_visu.pose.position.z = currentTargetPosition.z();
-    target_visu.pose.orientation.x = currentTargetOrientation.x();
-    target_visu.pose.orientation.y = currentTargetOrientation.y();
-    target_visu.pose.orientation.z = currentTargetOrientation.z();
-    target_visu.pose.orientation.w = currentTargetOrientation.w();
-    //target_visu.scale.x = 0.05;
-    //target_visu.scale.y = 0.05;
-    //target_visu.scale.z = 0.1;
-    
-    if (i == 0)
-    {
-      target_visu.scale.x = 0.2;
-      target_visu.scale.y = 0.02;
-      target_visu.scale.z = 0.02;
-
-      target_visu.color.r = 0.8;
-      target_visu.color.g = 0.0;
-      target_visu.color.b = 0.0;
-    }
-    if (i == 1)
-    {
-      target_visu.scale.x = 0.02;
-      target_visu.scale.y = 0.2;
-      target_visu.scale.z = 0.02;
-
-      target_visu.color.r = 0.0;
-      target_visu.color.g = 0.8;
-      target_visu.color.b = 0.0;
-    }
-    if (i == 2)
-    {
-      target_visu.scale.x = 0.02;
-      target_visu.scale.y = 0.02;
-      target_visu.scale.z = 0.2;
-
-      target_visu.color.r = 0.0;
-      target_visu.color.g = 0.0;
-      target_visu.color.b = 0.8;
-    }
-    
-    target_visu.color.a = 0.5;
-    target_visu.header.frame_id = worldFrameName_;
-
-    targetMarkerArray_.markers.push_back(target_visu);
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillTargetVisu] END" << std::endl;
   }
-
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillTargetVisu] END" << std::endl;
+  catch(const std::exception& e)
+  {
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillTargetVisu] ERROR: CATCHUP! " << e.what() << std::endl;
+    //const std::string msg = "[TargetTrajectoriesGazebo::fillTargetVisu] ERROR: CATCHUP! \n";
+    //throw std::runtime_error(msg + e.what());
+    //std::cerr << e.what() << '\n';
+  }
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1730,7 +1760,7 @@ void TargetTrajectoriesGazebo::publishGoalVisu()
   {
     for(int i = 0; i < target_size; i++)
     {
-      goalMarkerArray.markers[i].header.seq++;
+      //goalMarkerArray.markers[i].header.seq++;
       goalMarkerArray.markers[i].header.stamp = ros::Time::now();
     }
     goalMarkerArrayPublisher_.publish(goalMarkerArray);
@@ -1748,28 +1778,39 @@ void TargetTrajectoriesGazebo::publishGoalVisu()
 //-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::publishTargetVisu()
 {
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::publishTargetVisu] START" << std::endl;
-
-  /// NUA TODO: User should able to add more target!
-  visualization_msgs::MarkerArray targetMarkerArray = targetMarkerArray_;
-  int target_size = targetMarkerArray.markers.size();
-
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::publishTargetVisu] target_size: " << target_size << std::endl;
-  if (target_size > 0)
+  try
   {
-    for(int i = 0; i < target_size; i++)
-    {
-      targetMarkerArray.markers[i].header.seq++;
-      targetMarkerArray.markers[i].header.stamp = ros::Time::now();
-    }
-    targetMarkerArrayPublisher_.publish(targetMarkerArray);
-  }
-  //else
-  //{
-  //  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::publishTargetVisu] NO TARGET!" << std::endl;
-  //}
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::publishTargetVisu] START" << std::endl;
 
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::publishTargetVisu] END" << std::endl;
+    /// NUA TODO: User should able to add more target!
+    visualization_msgs::MarkerArray targetMarkerArray = targetMarkerArray_;
+    int target_size = targetMarkerArray.markers.size();
+
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::publishTargetVisu] target_size: " << target_size << std::endl;
+    if (target_size > 0)
+    {
+      for(int i = 0; i < target_size; i++)
+      {
+        //targetMarkerArray.markers[i].header.seq++;
+        targetMarkerArray.markers[i].header.stamp = ros::Time::now();
+      }
+      targetMarkerArrayPublisher_.publish(targetMarkerArray);
+    }
+    //else
+    //{
+    //  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::publishTargetVisu] NO TARGET!" << std::endl;
+    //}
+
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::publishTargetVisu] END" << std::endl;
+  }
+  catch(const std::exception& e)
+  {
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::publishTargetVisu] ERROR: CATCHUP! " << e.what() << std::endl;
+    //throw std::runtime_error(msg + e.what());
+    //std::cerr << e.what() << '\n';
+  }
+  
+  
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1993,10 +2034,11 @@ void TargetTrajectoriesGazebo::updateCallback(const ros::TimerEvent& event)
     updateGoal(true);
     //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateCallback] AFTER updateGoal" << std::endl;
   }
-  catch (const std::exception& error)
+  catch (const std::exception& e)
   {
-    const std::string msg = "[TargetTrajectoriesGazebo::updateCallback] ERROR: updateGoal CATCHUP! \n";
-    throw std::runtime_error(msg + error.what());
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateCallback] ERROR: updateGoal CATCHUP! " << e.what() << std::endl;
+    //const std::string msg = "[TargetTrajectoriesGazebo::updateCallback] ERROR: updateGoal CATCHUP! \n";
+    //throw std::runtime_error(msg + e.what());
   }
 
   try
@@ -2005,10 +2047,11 @@ void TargetTrajectoriesGazebo::updateCallback(const ros::TimerEvent& event)
     publishTargetTrajectories();
     //publishMobimanGoalObs();
   }
-  catch (const std::exception& error)
+  catch (const std::exception& e)
   {
-    const std::string msg = "[TargetTrajectoriesGazebo::updateCallback] ERROR: publishTargetTrajectories CATCHUP! \n";
-    throw std::runtime_error(msg + error.what());
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateCallback] ERROR: publishTargetTrajectories CATCHUP! " << e.what() << std::endl;
+    //const std::string msg = "[TargetTrajectoriesGazebo::updateCallback] ERROR: publishTargetTrajectories CATCHUP! \n";
+    //throw std::runtime_error(msg + e.what());
   }
 
   try
@@ -2016,10 +2059,11 @@ void TargetTrajectoriesGazebo::updateCallback(const ros::TimerEvent& event)
     //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateCallback] BEFORE publishGoalVisu" << std::endl;
     publishGoalVisu();
   }
-  catch (const std::exception& error)
+  catch (const std::exception& e)
   {
-    const std::string msg = "[TargetTrajectoriesGazebo::updateCallback] ERROR: publishGoalVisu CATCHUP! \n";
-    throw std::runtime_error(msg + error.what());
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateCallback] ERROR: publishGoalVisu CATCHUP! " << e.what() << std::endl;
+    //const std::string msg = "[TargetTrajectoriesGazebo::updateCallback] ERROR: publishGoalVisu CATCHUP! \n";
+    //throw std::runtime_error(msg + e.what());
   }
 
   try
@@ -2027,10 +2071,11 @@ void TargetTrajectoriesGazebo::updateCallback(const ros::TimerEvent& event)
     //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateCallback] BEFORE publishTargetVisu" << std::endl;
     publishTargetVisu();
   }
-  catch (const std::exception& error)
+  catch (const std::exception& e)
   {
-    const std::string msg = "[TargetTrajectoriesGazebo::updateCallback] ERROR: publishTargetVisu CATCHUP! \n";
-    throw std::runtime_error(msg + error.what());
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateCallback] ERROR: publishTargetVisu CATCHUP! " << e.what() << std::endl;
+    //const std::string msg = "[TargetTrajectoriesGazebo::updateCallback] ERROR: publishTargetVisu CATCHUP! \n";
+    //throw std::runtime_error(msg + e.what());
   }
 
   try
@@ -2038,10 +2083,11 @@ void TargetTrajectoriesGazebo::updateCallback(const ros::TimerEvent& event)
     //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateCallback] BEFORE publishGoalFrame" << std::endl;
     publishGoalFrame();
   }
-  catch (const std::exception& error)
+  catch (const std::exception& e)
   {
-    const std::string msg = "[TargetTrajectoriesGazebo::updateCallback] ERROR: publishGoalFrame CATCHUP! \n";
-    throw std::runtime_error(msg + error.what());
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateCallback] ERROR: publishGoalFrame CATCHUP! " << e.what() << std::endl;
+    //const std::string msg = "[TargetTrajectoriesGazebo::updateCallback] ERROR: publishGoalFrame CATCHUP! \n";
+    //throw std::runtime_error(msg + e.what());
   }
 
   try
@@ -2050,12 +2096,15 @@ void TargetTrajectoriesGazebo::updateCallback(const ros::TimerEvent& event)
     publishGraspFrame();
     //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateCallback] AFTER publishGraspFrame" << std::endl;
   }
-  catch (const std::exception& error)
+  catch (const std::exception& e)
   {
-    const std::string msg = "[TargetTrajectoriesGazebo::updateCallback] ERROR: publishGraspFrame CATCHUP! \n";
-    throw std::runtime_error(msg + error.what());
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateCallback] ERROR: publishGraspFrame CATCHUP! " << e.what() << std::endl;
+    //const std::string msg = "[TargetTrajectoriesGazebo::updateCallback] ERROR: publishGraspFrame CATCHUP! \n";
+    //throw std::runtime_error(msg + e.what());
   }
 
+  /// NUA TODO: ADD THIS WHEN REQUIRED!
+  /*
   try
   {
     //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateCallback] BEFORE publishDropFrame" << std::endl;
@@ -2063,11 +2112,13 @@ void TargetTrajectoriesGazebo::updateCallback(const ros::TimerEvent& event)
 
     //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateCallback] END" << std::endl << std::endl;
   }
-  catch (const std::exception& error)
+  catch (const std::exception& e)
   {
-    const std::string msg = "[TargetTrajectoriesGazebo::updateCallback] ERROR: publishDropFrame CATCHUP! \n";
-    throw std::runtime_error(msg + error.what());
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateCallback] ERROR: publishDropFrame CATCHUP! " << e.what() << std::endl;
+    //const std::string msg = "[TargetTrajectoriesGazebo::updateCallback] ERROR: publishDropFrame CATCHUP! \n";
+    //throw std::runtime_error(msg + e.what());
   }
+  */
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2696,7 +2747,7 @@ bool TargetTrajectoriesGazebo::setPickedFlagSrv(ocs2_msgs::setBool::Request &req
 
   std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setPickedFlagSrv] pickedFlag_: " << pickedFlag_ << std::endl;
   //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setPickedFlagSrv] END" << std::endl;
-  return res.success;
+  return true;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2705,14 +2756,24 @@ bool TargetTrajectoriesGazebo::setPickedFlagSrv(ocs2_msgs::setBool::Request &req
 bool TargetTrajectoriesGazebo::setSystemObservationSrv(ocs2_msgs::setSystemObservation::Request &req, 
                                                        ocs2_msgs::setSystemObservation::Response &res)
 {
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setSystemObservationSrv] START" << std::endl;
-  latestObservation_ = ros_msg_conversions::readObservationMsg(req.obs);
-  res.success = true;
+  try
+  {
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setSystemObservationSrv] START" << std::endl;
+    latestObservation_ = ros_msg_conversions::readObservationMsg(req.obs);
+    res.success = true;
 
-  policyReceivedFlag_ = true;
-  
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setSystemObservationSrv] END" << std::endl;
-  return res.success;
+    policyReceivedFlag_ = true;
+    
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setSystemObservationSrv] END" << std::endl;
+    return true;
+  }
+  catch(const std::exception& e)
+  {
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setSystemObservationSrv] ERROR: CATCHUP! " << e.what() << std::endl;
+    //const std::string msg = "[TargetTrajectoriesGazebo::setSystemObservationSrv] ERROR: CATCHUP! \n";
+    //throw std::runtime_error(msg + e.what());
+    //return false;
+  }
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2721,137 +2782,193 @@ bool TargetTrajectoriesGazebo::setSystemObservationSrv(ocs2_msgs::setSystemObser
 bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req, 
                                                ocs2_msgs::setTask::Response &res)
 {
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] START" << std::endl;
-
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] taskMode_: " << taskMode_ << std::endl;
+  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] START" << std::endl;
 
   Eigen::Vector3d targetPos;
   Eigen::Quaterniond targetOri;
   Eigen::Vector3d graspPositionEstimated;
-  
+
+  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] taskMode_: " << taskMode_ << std::endl;
   int taskMode = taskMode_;
+
+  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] targetName: " << req.targetName << std::endl;
   std::string targetName = req.targetName;
+
+  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] timeHorizon: " << req.time_horizon << std::endl;
   double timeHorizon = req.time_horizon;
 
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] targetName: " << targetName << std::endl;
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] timeHorizon: " << timeHorizon << std::endl;
-
+  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE res.success" << std::endl;
   res.success = true;
+  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] AFTER res.success" << std::endl;
 
-  if (targetName == "target")
+  try
   {
-    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] TARGET IS TARGET" << std::endl;
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] START try 1" << std::endl;
 
-    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE target_x: " << req.targetPose.position.x << std::endl;
-    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE target_y: " << req.targetPose.position.y << std::endl;
-    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE target_z: " << req.targetPose.position.z << std::endl;
+    if (targetName == "target")
+    {
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] TARGET IS TARGET" << std::endl;
 
-    targetIsGoalFlag_ = false; 
-    //geometry_msgs::Pose targetPoseWrtRobot = req.targetPose;
-    geometry_msgs::Pose targetPoseWrtWorld = req.targetPose;
-    //transformPose(robotFrameName_, worldFrameName_, targetPoseWrtRobot, targetPoseWrtWorld);
-    targetPos.x() = targetPoseWrtWorld.position.x;
-    targetPos.y() = targetPoseWrtWorld.position.y;
-    targetPos.z() = targetPoseWrtWorld.position.z;
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE target_x: " << req.targetPose.position.x << std::endl;
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE target_y: " << req.targetPose.position.y << std::endl;
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE target_z: " << req.targetPose.position.z << std::endl;
 
-    targetOri.x() = targetPoseWrtWorld.orientation.x;
-    targetOri.y() = targetPoseWrtWorld.orientation.y;
-    targetOri.z() = targetPoseWrtWorld.orientation.z;
-    targetOri.w() = targetPoseWrtWorld.orientation.w;
+      targetIsGoalFlag_ = false; 
+      //geometry_msgs::Pose targetPoseWrtRobot = req.targetPose;
+      geometry_msgs::Pose targetPoseWrtWorld = req.targetPose;
+      //transformPose(robotFrameName_, worldFrameName_, targetPoseWrtRobot, targetPoseWrtWorld);
+      targetPos.x() = targetPoseWrtWorld.position.x;
+      targetPos.y() = targetPoseWrtWorld.position.y;
+      targetPos.z() = targetPoseWrtWorld.position.z;
 
-    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] AFTER target_x: " << targetPoseWrtWorld.position.x << std::endl;
-    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] AFTER target_y: " << targetPoseWrtWorld.position.y << std::endl;
-    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] AFTER target_z: " << targetPoseWrtWorld.position.z << std::endl;
+      targetOri.x() = targetPoseWrtWorld.orientation.x;
+      targetOri.y() = targetPoseWrtWorld.orientation.y;
+      targetOri.z() = targetPoseWrtWorld.orientation.z;
+      targetOri.w() = targetPoseWrtWorld.orientation.w;
 
-    //updateTarget(targetPos, targetOri);
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] AFTER target_x: " << targetPoseWrtWorld.position.x << std::endl;
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] AFTER target_y: " << targetPoseWrtWorld.position.y << std::endl;
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] AFTER target_z: " << targetPoseWrtWorld.position.z << std::endl;
 
-    graspPositionEstimated.x() = 0.0;
-    graspPositionEstimated.y() = 0.0;
-    graspPositionEstimated.z() = 0.0;
+      //updateTarget(targetPos, targetOri);
+
+      graspPositionEstimated.x() = 0.0;
+      graspPositionEstimated.y() = 0.0;
+      graspPositionEstimated.z() = 0.0;
+    }
+    else if (targetName == "goal")
+    {
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] TARGET IS GOAL" << std::endl;
+
+      geometry_msgs::Pose graspPoseEstimatedWrtGoal = req.targetPose;
+      geometry_msgs::Pose graspPoseEstimatedWrtWorld;
+      bool isSuccess = transformPose(graspFrameName_, worldFrameName_, graspPoseEstimatedWrtGoal, graspPoseEstimatedWrtWorld);
+
+      targetPos.x() = graspPoseEstimatedWrtWorld.position.x;
+      targetPos.y() = graspPoseEstimatedWrtWorld.position.y;
+      targetPos.z() = graspPoseEstimatedWrtWorld.position.z;
+
+      targetOri.x() = graspPoseEstimatedWrtWorld.orientation.x;
+      targetOri.y() = graspPoseEstimatedWrtWorld.orientation.y;
+      targetOri.z() = graspPoseEstimatedWrtWorld.orientation.z;
+      targetOri.w() = graspPoseEstimatedWrtWorld.orientation.w;
+
+      //updateTarget(targetPos, targetOri);
+
+      graspPositionEstimated.x() = graspPoseEstimatedWrtWorld.position.x;
+      graspPositionEstimated.y() = graspPoseEstimatedWrtWorld.position.y;
+      graspPositionEstimated.z() = graspPoseEstimatedWrtWorld.position.z;
+
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] isSuccess: " << isSuccess << std::endl;
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] graspPositionEstimated x: " << graspPositionEstimated.x() << std::endl;
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] graspPositionEstimated y: " << graspPositionEstimated.y() << std::endl;
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] graspPositionEstimated z: " << graspPositionEstimated.z() << std::endl;
+
+      targetIsGoalFlag_ = true;
+    }
+    else
+    {
+      std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] ERROR: Invalid target name!" << std::endl;
+      std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] DEBUG_INF" << std::endl;
+      while(1);
+    }
+
+    graspPositionEstimated_ = graspPositionEstimated;
+
+    //Eigen::Vector3d targetPos(targetPose.position.x, targetPose.position.y, targetPose.position.z);
+    //Eigen::Quaterniond targetOri(targetPose.orientation.w, targetPose.orientation.x, targetPose.orientation.y, targetPose.orientation.z);
+
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] x: " << targetPos.x() << std::endl;
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] y: " << targetPos.y() << std::endl;
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] z: " << targetPos.z() << std::endl;
+
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] qx: " << targetPos[1] << std::endl;
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] qy: " << targetPos[2] << std::endl;
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] qz: " << targetPos[3] << std::endl;
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] qw: " << targetPos[0] << std::endl;
+
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] time_horizon: " << req.time_horizon << std::endl;
+
+    if (targetPos.z() < -0.1)
+    {
+      std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] WTF z: " << targetPos.z() << std::endl;
+      targetPos.z() = 0.0;
+
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] DEBUG_INF" << std::endl;
+      //while(1);
+    }
+
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] END try 1" << std::endl;
   }
-  else if (targetName == "goal")
+  catch (const std::exception& e)
   {
-    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] TARGET IS GOAL" << std::endl;
-
-    geometry_msgs::Pose graspPoseEstimatedWrtGoal = req.targetPose;
-    geometry_msgs::Pose graspPoseEstimatedWrtWorld;
-    bool isSuccess = transformPose(graspFrameName_, worldFrameName_, graspPoseEstimatedWrtGoal, graspPoseEstimatedWrtWorld);
-
-    targetPos.x() = graspPoseEstimatedWrtWorld.position.x;
-    targetPos.y() = graspPoseEstimatedWrtWorld.position.y;
-    targetPos.z() = graspPoseEstimatedWrtWorld.position.z;
-
-    targetOri.x() = graspPoseEstimatedWrtWorld.orientation.x;
-    targetOri.y() = graspPoseEstimatedWrtWorld.orientation.y;
-    targetOri.z() = graspPoseEstimatedWrtWorld.orientation.z;
-    targetOri.w() = graspPoseEstimatedWrtWorld.orientation.w;
-
-    //updateTarget(targetPos, targetOri);
-
-    graspPositionEstimated.x() = graspPoseEstimatedWrtWorld.position.x;
-    graspPositionEstimated.y() = graspPoseEstimatedWrtWorld.position.y;
-    graspPositionEstimated.z() = graspPoseEstimatedWrtWorld.position.z;
-
-    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] isSuccess: " << isSuccess << std::endl;
-    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] graspPositionEstimated x: " << graspPositionEstimated.x() << std::endl;
-    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] graspPositionEstimated y: " << graspPositionEstimated.y() << std::endl;
-    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] graspPositionEstimated z: " << graspPositionEstimated.z() << std::endl;
-
-    targetIsGoalFlag_ = true;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillTargetVisu] ERROR: PART 1 CATCHUP! " << e.what() << std::endl;
+    //const std::string msg = "[TargetTrajectoriesGazebo::setTargetDRLSrv] ERROR: PART 1 CATCHUP! \n";
+    //throw std::runtime_error(msg + e.what());
+    //return false;
   }
-  else
+  
+  try
   {
-    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] ERROR: Invalid target name!" << std::endl;
-    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] DEBUG_INF" << std::endl;
-    while(1);
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] START try 2" << std::endl;
+
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE updateTarget" << std::endl;
+    updateTarget(targetPos, targetOri);
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] AFTER updateTarget" << std::endl;
+
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] END try 2" << std::endl;
   }
-
-  graspPositionEstimated_ = graspPositionEstimated;
-
-  //Eigen::Vector3d targetPos(targetPose.position.x, targetPose.position.y, targetPose.position.z);
-  //Eigen::Quaterniond targetOri(targetPose.orientation.w, targetPose.orientation.x, targetPose.orientation.y, targetPose.orientation.z);
-
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] x: " << targetPos.x() << std::endl;
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] y: " << targetPos.y() << std::endl;
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] z: " << targetPos.z() << std::endl;
-
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] qx: " << targetPos[1] << std::endl;
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] qy: " << targetPos[2] << std::endl;
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] qz: " << targetPos[3] << std::endl;
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] qw: " << targetPos[0] << std::endl;
-
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] time_horizon: " << req.time_horizon << std::endl;
-
-  if (targetPos.z() < -0.1)
+  catch(const std::exception& e)
   {
-    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] WTF z: " << targetPos.z() << std::endl;
-    targetPos.z() = 0.0;
-
-    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] DEBUG_INF" << std::endl;
-    //while(1);
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] ERROR: updateTarget CATCHUP! " << e.what() << std::endl;
+    //const std::string msg = "[TargetTrajectoriesGazebo::setTargetDRLSrv] ERROR: updateTarget CATCHUP! \n";
+    //throw std::runtime_error(msg + e.what());
+    //return false;
   }
+  
+  try
+  {
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] START try 3" << std::endl;
 
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE updateTarget" << std::endl;
-  updateTarget(targetPos, targetOri);
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] AFTER updateTarget" << std::endl;
+    // Run service client to set task
+    geometry_msgs::Pose target;
+    target.position.x = targetPos.x();
+    target.position.y = targetPos.y();
+    target.position.z = targetPos.z();
+    target.orientation.x = targetOri.x();
+    target.orientation.y = targetOri.y();
+    target.orientation.z = targetOri.z();
+    target.orientation.w = targetOri.w();
 
-  // Run service client to set task
-  geometry_msgs::Pose target;
-  target.position.x = targetPos.x();
-  target.position.y = targetPos.y();
-  target.position.z = targetPos.z();
-  target.orientation.x = targetOri.x();
-  target.orientation.y = targetOri.y();
-  target.orientation.z = targetOri.z();
-  target.orientation.w = targetOri.w();
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] taskMode: " << taskMode << std::endl;
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE setTask" << std::endl;
+    bool taskModeSuccess = setTask(taskMode, target, timeHorizon);
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] AFTER setTask" << std::endl;
 
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] taskMode: " << taskMode << std::endl;
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE setTask" << std::endl;
-  bool taskModeSuccess = setTask(taskMode, target, timeHorizon);
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] AFTER setTask" << std::endl;
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] END try 3" << std::endl;
+  }
+  catch(const std::exception& e)
+  {
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] taskMode: " << taskMode << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] target pos x: " << targetPos.x() << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] target pos y: " << targetPos.y() << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] target pos z: " << targetPos.z() << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] target ori x: " << targetOri.x() << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] target ori y: " << targetOri.y() << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] target ori z: " << targetOri.z() << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] target ori w: " << targetOri.w() << std::endl;
+    
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] timeHorizon" << timeHorizon << std::endl;
+
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] ERROR: setTask CATCHUP! " << e.what() << std::endl;
+    //const std::string msg = "[TargetTrajectoriesGazebo::setTargetDRLSrv] ERROR: setTask CATCHUP! \n";
+    //throw std::runtime_error(msg + e.what());
+    //std::cerr << e.what() << '\n';
+    //return false;
+  }
   
   //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] END" << std::endl;
-  return res.success;
+  return true;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2859,46 +2976,58 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
 //-------------------------------------------------------------------------------------------------------
 bool TargetTrajectoriesGazebo::setTask(int taskMode, geometry_msgs::Pose targetPose, double time_horizon)
 {
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] START" << std::endl;
-
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] DEBUG_INF" << std::endl;
-  //while(1);
-
-  std::string currentTargetName = currentTargetName_;
-
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] taskMode: " << taskMode << std::endl;
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] currentTargetName: " << currentTargetName << std::endl;
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] time_horizon: " << time_horizon << std::endl;
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] targetPose.position.x: " << targetPose.position.x << std::endl;
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] targetPose.position.y: " << targetPose.position.y << std::endl;
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] targetPose.position.z: " << targetPose.position.z << std::endl;
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] targetPose.orientation.x: " << targetPose.orientation.x << std::endl;
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] targetPose.orientation.y: " << targetPose.orientation.y << std::endl;
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] targetPose.orientation.z: " << targetPose.orientation.z << std::endl;
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] targetPose.orientation.w: " << targetPose.orientation.w << std::endl;
-
-  bool success = false;
-  ocs2_msgs::setTask srv;
-  srv.request.taskMode = taskMode;
-  srv.request.targetName = currentTargetName;
-  srv.request.targetAttachLinkName = currentTargetName + "_base_link";
-  srv.request.targetPose = targetPose;
-  srv.request.time_horizon = time_horizon;
-  if (setTaskClient_.call(srv))
+  try
   {
-    success = srv.response.success;
-    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] success: " << success << std::endl;
-  }
-  else
-  {
-    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] ERROR: Failed to call service!" << std::endl;
-    //ROS_ERROR("[TargetTrajectoriesGazebo::setTask] ERROR: Failed to call service!");
-    success = false;
-  }
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] START" << std::endl;
 
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] END" << std::endl;
-  
-  return success;
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] DEBUG_INF" << std::endl;
+    //while(1);
+
+    std::string currentTargetName = currentTargetName_;
+
+    /*
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] taskMode: " << taskMode << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] currentTargetName: " << currentTargetName << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] time_horizon: " << time_horizon << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] targetPose.position.x: " << targetPose.position.x << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] targetPose.position.y: " << targetPose.position.y << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] targetPose.position.z: " << targetPose.position.z << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] targetPose.orientation.x: " << targetPose.orientation.x << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] targetPose.orientation.y: " << targetPose.orientation.y << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] targetPose.orientation.z: " << targetPose.orientation.z << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] targetPose.orientation.w: " << targetPose.orientation.w << std::endl;
+    */
+
+    bool success = false;
+    ocs2_msgs::setTask srv;
+    srv.request.taskMode = taskMode;
+    srv.request.targetName = currentTargetName;
+    srv.request.targetAttachLinkName = currentTargetName + "_base_link";
+    srv.request.targetPose = targetPose;
+    srv.request.time_horizon = time_horizon;
+    if (setTaskClient_.call(srv))
+    {
+      success = srv.response.success;
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] success: " << success << std::endl;
+    }
+    else
+    {
+      std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] ERROR: Failed to call service!" << std::endl;
+      ROS_ERROR("[TargetTrajectoriesGazebo::setTask] ERROR: Failed to call service!");
+      success = false;
+    }
+
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] END" << std::endl;
+    
+    return success;
+  }
+  catch(const std::exception& e)
+  {
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTask] ERROR: CATCHUP! " << e.what() << std::endl;
+    //const std::string msg = "[TargetTrajectoriesGazebo::setTask] ERROR: CATCHUP! \n";
+    //throw std::runtime_error(msg + e.what());
+    //std::cerr << e.what() << '\n';
+  }
 }
 
 }  // namespace ocs2

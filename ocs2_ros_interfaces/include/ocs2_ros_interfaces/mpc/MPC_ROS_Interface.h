@@ -190,7 +190,7 @@ class MPC_ROS_Interface
     */
     std::shared_ptr<MPC_BASE> mpc_;
 
-    bool printOutFlag_ = true;
+    bool printOutFlag_ = false;
 
     int ctr_ = 0;
 

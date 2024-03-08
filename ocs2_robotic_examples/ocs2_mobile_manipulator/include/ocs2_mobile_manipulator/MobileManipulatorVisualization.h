@@ -83,6 +83,8 @@ class MobileManipulatorVisualization final : public DummyObserver
 
     void publishSelfCollisionDistances(const ocs2::vector_t& state, const ocs2::vector_t& fullState, const RobotModelInfo& robotModelInfo);
 
+    void publishCOM();
+
     void getPoint(std::string& baseFrameName, std::string& pointFrameName, geometry_msgs::Point p);
 
     void updateStateIndexMap();
@@ -244,7 +246,7 @@ class MobileManipulatorVisualization final : public DummyObserver
     tf::StampedTransform tf_robot_wrt_world_;
     sensor_msgs::JointState jointStateMsg_;
 
-    double selfCollisionRangeMin_ = 0.05;
+    double selfCollisionRangeMin_ = 0.02;
     vector<bool> self_col_status_;
     vector<double> self_col_dist_;
     vector<geometry_msgs::Point> self_p0_;
@@ -255,6 +257,8 @@ class MobileManipulatorVisualization final : public DummyObserver
 
     std::string optimizedStateTrajectoryMsgName_;
     std::string optimizedPoseTrajectoryMsgName_;
+
+    std::string comMsgName_;
 
     //std::unique_ptr<robot_state_publisher::RobotStatePublisher> robotStatePublisherPtr_;
     
@@ -282,6 +286,7 @@ class MobileManipulatorVisualization final : public DummyObserver
     ros::Publisher markerPublisher_;
     ros::Publisher stateOptimizedPublisher_;
     ros::Publisher stateOptimizedPosePublisher_;
+    ros::Publisher comPublisher_;
 };
 
 }  // namespace mobile_manipulator

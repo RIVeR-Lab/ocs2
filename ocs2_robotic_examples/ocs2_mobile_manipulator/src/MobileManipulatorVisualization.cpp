@@ -113,6 +113,7 @@ MobileManipulatorVisualization::MobileManipulatorVisualization(ros::NodeHandle& 
   mobimanGoalObsMsgName_ = "mobiman_goal_obs";
   mobimanOccupancyTrajMsgName_ = "mobiman_occupancy_traj";
   mobimanOccupancyObsMsgName_ = "mobiman_occupancy_obs";
+  comMsgName_ = "mobiman_com";
 
   //std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] ns: " << ns << std::endl;
   //std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] baseFrameName: " << baseFrameName << std::endl;
@@ -125,6 +126,7 @@ MobileManipulatorVisualization::MobileManipulatorVisualization(ros::NodeHandle& 
     mobimanGoalObsMsgName_ = ns_ + "/" + mobimanGoalObsMsgName_;
     mobimanOccupancyTrajMsgName_ = ns_ + "/" + mobimanOccupancyTrajMsgName_;
     mobimanOccupancyObsMsgName_ = ns_ + "/" + mobimanOccupancyObsMsgName_;
+    comMsgName_ = ns_ + "/" + comMsgName_;
   }
   //std::cout << "[MobileManipulatorVisualization::MobileManipulatorVisualization] baseFrameName_withNS_: " << baseFrameName_withNS_ << std::endl;
 
@@ -244,12 +246,13 @@ void MobileManipulatorVisualization::launchVisualizerNode(ros::NodeHandle& nodeH
   // Publishers
   stateOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(optimizedStateTrajectoryMsgName_, 1);
   stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>(optimizedPoseTrajectoryMsgName_, 1);
-  mobimanGoalObsTrajPublisher_ = nodeHandle.advertise<ocs2_msgs::MobimanObservationTraj>(mobimanGoalTrajMsgName_, 5);
-  mobimanGoalObsPublisher_ = nodeHandle.advertise<ocs2_msgs::MobimanGoalObservation>(mobimanGoalObsMsgName_, 5);
-  mobimanOccupancyObsTrajPublisher_ = nodeHandle.advertise<ocs2_msgs::MobimanObservationTraj>(mobimanOccupancyTrajMsgName_, 5);
-  mobimanOccupancyObsPublisher_ = nodeHandle.advertise<ocs2_msgs::MobimanOccupancyObservation>(mobimanOccupancyObsMsgName_, 5);
+  //mobimanGoalObsTrajPublisher_ = nodeHandle.advertise<ocs2_msgs::MobimanObservationTraj>(mobimanGoalTrajMsgName_, 5);
+  //mobimanGoalObsPublisher_ = nodeHandle.advertise<ocs2_msgs::MobimanGoalObservation>(mobimanGoalObsMsgName_, 5);
+  //mobimanOccupancyObsTrajPublisher_ = nodeHandle.advertise<ocs2_msgs::MobimanObservationTraj>(mobimanOccupancyTrajMsgName_, 5);
+  //mobimanOccupancyObsPublisher_ = nodeHandle.advertise<ocs2_msgs::MobimanOccupancyObservation>(mobimanOccupancyObsMsgName_, 5);
   pubSelfCollisionInfo_ = nodeHandle.advertise<ocs2_msgs::collision_info>(selfCollisionMsg_, 5, true);
   markerPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(selfCollisionMsg_ + "_visu", 5, true);
+  comPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(comMsgName_, 10, true);
 
   // Create pinocchio interface
   pinocchioInterfaceInternal_ = mobile_manipulator::createPinocchioInterface(urdfFile_, robotModelInfo_.robotModelType, removeJointNames_, worldFrameName_, baseFrameName_withNS_);
@@ -290,6 +293,185 @@ void MobileManipulatorVisualization::launchSubscriberMobimanOccupancyObsTraj(ros
 {
   mobimanOccupancyObsTrajSubscriber_ = nodeHandle.subscribe(mobimanOccupancyTrajMsgName_, 5, &MobileManipulatorVisualization::mobimanOccupancyTrajCallback, this);
 }
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::publishCOM()
+{
+  //std::cout << "[MobileManipulatorVisualization::publishCOM] START" << std::endl;
+
+  const auto& model = pinocchioInterface_.getModel();
+  auto& data = pinocchioInterface_.getData();
+
+  vector_t state = state_;
+  vector_t fullState = fullState_;
+
+  RobotModelInfo robotModelInfo = robotModelInfo_;
+  ocs2::mobile_manipulator::MobileManipulatorPinocchioMapping pinocchioMapping(robotModelInfo);
+  const vector_t q = pinocchioMapping.getPinocchioJointPosition(state, fullState);
+  pinocchio::forwardKinematics(model, data, q);
+
+  Eigen::Vector3d com = pinocchio::centerOfMass(model, data, true);
+  //std::cout << "[MobileManipulatorVisualization::publishCOM] com: " << com.x() << ", " << com.y() << ", " << com.z() << std::endl;
+
+  auto comPosFull = data.com;
+  auto comVeloFull = data.vcom;
+  auto mmm = data.mass;
+
+  /*
+  std::cout << "[MobileManipulatorVisualization::publishCOM] mass: " << std::endl;
+  for (size_t i = 0; i < mmm.size(); i++)
+  {
+    std::cout << i << " -> " << mmm[i] << std::endl;
+  }
+  */
+
+  std::string ns = ns_.substr(1);
+
+  visualization_msgs::MarkerArray com_visu_array;
+
+  for (size_t i = 0; i < comPosFull.size(); i++)
+  {
+    //std::string frame_id = ns + "/" + frame_ids[i];
+
+    std::string frame_id;
+    if (i == 0)
+    {
+      frame_id = worldFrameName_;
+    }
+    else if (i == 1)
+    {
+      frame_id = ns + "/" + baseFrameName_;
+    }
+    else
+    {
+      frame_id = ns + "/" + robotModelInfo.robotArm.jointFrameNames[i-2];
+    }
+
+    //std::cout << "frame_id: " << frame_id << std::endl;
+    //std::cout << frame_id << " pos " << i << " -> " << comPosFull[i].x() << ", " << comPosFull[i].y() << ", " << comPosFull[i].z() << std::endl;
+    //std::cout << frame_id << " velo " << i << " -> " << comVeloFull[i].x() << ", " << comVeloFull[i].y() << ", " << comVeloFull[i].z() << std::endl;
+  
+    visualization_msgs::Marker com_visu;
+
+    com_visu.ns = "com_" + to_string(i);
+    com_visu.id = i;
+    
+    com_visu.type = visualization_msgs::Marker::SPHERE;
+    com_visu.action = visualization_msgs::Marker::ADD;
+    
+    com_visu.scale.x = 0.05;
+    com_visu.scale.y = 0.05;
+    com_visu.scale.z = 0.05;
+    
+    if (i == 0)
+    {
+      com_visu.color.r = 1.0;
+      com_visu.color.g = 0.0;
+      com_visu.color.b = 0.0;
+      com_visu.color.a = 1.0;
+    }
+    else
+    {
+      com_visu.color.r = 0.0;
+      com_visu.color.g = 0.0;
+      com_visu.color.b = 1.0;
+      com_visu.color.a = 1.0;
+    }
+
+    com_visu.pose.position.x = comPosFull[i].x();
+    com_visu.pose.position.y = comPosFull[i].y();
+    com_visu.pose.position.z = comPosFull[i].z();
+
+    com_visu.pose.orientation.x = 0.0;
+    com_visu.pose.orientation.y = 0.0;
+    com_visu.pose.orientation.z = 0.0;
+    com_visu.pose.orientation.w = 1.0;
+
+    //com_visu.points.clear();
+    //com_visu.points.push_back(p0_vec[i]);
+    //com_visu.points.push_back(p1_vec[i]);
+
+    com_visu.header.frame_id = frame_id;
+    com_visu.header.seq++;
+    com_visu.header.stamp = ros::Time::now();
+
+    com_visu_array.markers.push_back(com_visu);
+  }
+  comPublisher_.publish(com_visu_array);
+
+  //std::cout << "[MobileManipulatorVisualization::publishCOM] END" << std::endl << std::endl;
+}
+
+
+/*
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+template <typename SCALAR_T>
+Eigen::Matrix<SCALAR_T, 3, 1> MobileManipulatorVisualization<SCALAR_T>::getZMPBaseFrame(const Eigen::Matrix<SCALAR_T, -1, 1>& state, 
+                                                                             const Eigen::Matrix<SCALAR_T, 7, 1>& eePoseReference,
+                                                                             const Eigen::Matrix<SCALAR_T, 6, 1>& wrenchReferenceEEFrame) const 
+{
+  std::cout << "[MobileManipulatorVisualization::launchVisualizerNode] END" << std::endl;
+
+  using vector3_t = Eigen::Matrix<SCALAR_T, 3, 1>;
+  using hom_transform_t = Eigen::Matrix<SCALAR_T, 4, 4>;
+  vector3_t rcog = getCOMBaseFrame(state);
+  double robotMass = config_.baseMass + getArmMass();
+
+  // convert reference force from fixed ee frame to base frame
+  hom_transform_t worldToEndeffectorReference = hom_transform_t::Zero();
+  worldToEndeffectorReference.template block<3, 3>(0, 0) =
+      Eigen::Quaternion<SCALAR_T>(eePoseReference.template head<4>()).toRotationMatrix();
+  worldToEndeffectorReference.template block<3, 1>(0, 3) = eePoseReference.template tail<3>();
+  worldToEndeffectorReference(3, 3) = 1;
+
+  hom_transform_t worldToBase = getWorldToBaseTransform(state);
+  hom_transform_t baseToWorld = worldToBase;
+  baseToWorld.template block<3, 3>(0, 0) = worldToBase.template block<3, 3>(0, 0).transpose();
+  baseToWorld.template block<3, 1>(0, 3) = -baseToWorld.template block<3, 3>(0, 0) * worldToBase.template block<3, 1>(0, 3);
+
+  hom_transform_t baseToEndeffectorReference = baseToWorld * worldToEndeffectorReference;
+  vector3_t forceBaseFrame = baseToEndeffectorReference.template block<3, 3>(0, 0) * wrenchReferenceEEFrame.template head<3>();
+  vector3_t torqueBaseFrame = baseToEndeffectorReference.template block<3, 3>(0, 0) * wrenchReferenceEEFrame.template tail<3>();
+
+  // compute a virtual mass for the acting end-effector force
+  const double g = 9.81;
+  vector3_t fg;
+  fg << (SCALAR_T)0, (SCALAR_T)0, (SCALAR_T)-robotMass * g;
+
+  // compute translation to the virtual mass in base frame
+  hom_transform_t base_X_Endeffector = computeBase2EndeffectorTransform(state.template tail<6>());
+  vector3_t ree = base_X_Endeffector.template block<3, 1>(0, 3);
+
+  vector3_t n;
+  n << (SCALAR_T)0, (SCALAR_T)0, (SCALAR_T)1;
+
+  return n.template cross(rcog.cross(fg) + ree.cross(forceBaseFrame) + torqueBaseFrame) / n.dot(fg + forceBaseFrame);
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorVisualization::computeMechanicalStability(ad_scalar_t time, 
+                                                                const ad_dynamic_vector_t& state, 
+                                                                const ad_dynamic_vector_t& input,
+                                                                const ad_dynamic_vector_t& parameters,
+                                                                ad_intermediate_cost_vector_t& costValues) const 
+{
+  using vector3_ad_t = Eigen::Matrix<ad_scalar_t, 3, 1>;
+  using vector6_ad_t = Eigen::Matrix<ad_scalar_t, 6, 1>;
+  using vector7_ad_t = Eigen::Matrix<ad_scalar_t, 7, 1>;
+
+  vector7_ad_t desiredPose = parameters.head<Definitions::POSE_DIM>();
+  vector6_ad_t desiredWrench = parameters.tail<Definitions::WRENCH_DIM>();
+  vector3_ad_t zmp = settings_.kinematics->getZMPBaseFrame(state, desiredPose, desiredWrench);
+
+  costValues[0] = settings_.supportCircleRadius * settings_.supportCircleRadius - zmp[0] * zmp[0] - zmp[1] * zmp[1];
+}
+*/
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -1380,6 +1562,9 @@ void MobileManipulatorVisualization::distanceVisualizationCallback(const ros::Ti
 
   //std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] BEFORE updateExtCollisionDistances" << std::endl;
   updateExtCollisionDistances(false);
+
+  //std::cout << "[MobileManipulatorVisualization::distanceVisualizationCallback] BEFORE publishSelfCollisionDistances" << std::endl;
+  publishCOM();
 
   /*
   std::cout << "### MPC_ROS Benchmarking timer1_ updateState:" << std::endl;

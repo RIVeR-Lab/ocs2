@@ -294,7 +294,8 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   /// Create pinocchio interface
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] START createPinocchioInterface" << std::endl;
   pinocchioInterfacePtr_.reset(new PinocchioInterface(createPinocchioInterface(urdfFile_, robotModelType, removeJointNames_, worldFrameName_, baseFrame_withNS_)));
-  //std::cout << *pinocchioInterfacePtr_;
+  if (printOutFlag_)
+    std::cout << *pinocchioInterfacePtr_;
 
   /// Set Robot Model Info
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] START createRobotModelInfo" << std::endl;
@@ -1427,7 +1428,7 @@ bool MobileManipulatorInterface::setDiscreteActionDRLMPCSrv(ocs2_msgs::setDiscre
   //mapDiscreteActionDRL(drlActionDiscrete_);
 
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] END" << std::endl;
-  return res.success;
+  return true;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1450,7 +1451,7 @@ bool MobileManipulatorInterface::setDiscreteActionDRLMRTSrv(ocs2_msgs::setDiscre
   setDiscreteActionDRLMPC(drlActionDiscrete_, drlActionTimeHorizon_);
 
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMRTSrv] END" << std::endl;
-  return res.success;
+  return true;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1503,7 +1504,7 @@ bool MobileManipulatorInterface::setContinuousActionDRLMPC(int drlActionId,
 bool MobileManipulatorInterface::setContinuousActionDRLMPCSrv(ocs2_msgs::setContinuousActionDRL::Request &req, 
                                                               ocs2_msgs::setContinuousActionDRL::Response &res)
 {
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] START" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] START" << std::endl;
 
   drlActionId_ = req.id;
   drlActionContinuous_ = req.action;
@@ -1531,8 +1532,8 @@ bool MobileManipulatorInterface::setContinuousActionDRLMPCSrv(ocs2_msgs::setCont
   newMPCProblemFlag_ = true;
   stopMPCFlag_ = true;
 
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] END" << std::endl;
-  return res.success;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] END" << std::endl;
+  return true;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1568,7 +1569,7 @@ bool MobileManipulatorInterface::setContinuousActionDRLMRTSrv(ocs2_msgs::setCont
   newMPCProblemFlag_ = true;
 
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] END" << std::endl;
-  return res.success;
+  return true;
 }
 
 /*
@@ -2248,17 +2249,18 @@ void MobileManipulatorInterface::mapDiscreteActionDRL(int action)
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::mapContinuousActionDRL(bool setTargetDRLFlag)
 {
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] START" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] START" << std::endl;
   
   std::vector<double> drlActionContinuous = drlActionContinuous_;
   double drlActionTimeHorizon = drlActionTimeHorizon_;
 
+  /*
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] drlActionContinuous" << std::endl;
   for (size_t i = 0; i < drlActionContinuous.size(); i++)
   {
     std::cout << i << " -> " << drlActionContinuous[i] << std::endl;
   }
-  
+  */
 
   // Set Model Mode
   double modelModeProb = drlActionContinuous[0];
@@ -2338,7 +2340,7 @@ void MobileManipulatorInterface::mapContinuousActionDRL(bool setTargetDRLFlag)
     double targetProb = drlActionContinuous[1];
     if (targetProb < 0.5)
     {
-      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] TARGET IS DRL TARGET!" << std::endl;
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] TARGET IS DRL TARGET!" << std::endl;
       
       target_name = "target";
       target_x = mapActionTarget(drlActionContinuous[2], drlTargetRangeMinX_, drlTargetRangeMaxX_);
@@ -2386,7 +2388,7 @@ void MobileManipulatorInterface::mapContinuousActionDRL(bool setTargetDRLFlag)
     }
     else
     {
-      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] TARGET IS GOAL!" << std::endl;
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] TARGET IS GOAL!" << std::endl;
       target_name = "goal";
       target_x = mapActionTarget(drlActionContinuous[2], drlGoalRangeMinX_, drlGoalRangeMaxX_);
       target_y = mapActionTarget(drlActionContinuous[3], drlGoalRangeMinY_, drlGoalRangeMaxY_);
@@ -2396,11 +2398,11 @@ void MobileManipulatorInterface::mapContinuousActionDRL(bool setTargetDRLFlag)
       target_yaw = drlActionContinuous[7];
     }
 
-    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] BEFORE setTargetDRL" << std::endl;
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] BEFORE setTargetDRL" << std::endl;
     setTargetDRL(target_name, target_x, target_y, target_z, target_roll, target_pitch, target_yaw, drlActionTimeHorizon);
   }
 
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] END" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2544,7 +2546,7 @@ bool MobileManipulatorInterface::setStopMPCFlagSrv(ocs2_msgs::setBool::Request &
   res.success = true;
 
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlagSrv] END" << std::endl;
-  return res.success;
+  return true;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2590,7 +2592,7 @@ bool MobileManipulatorInterface::setMPCWaitingFlagSrv(ocs2_msgs::setBool::Reques
   res.success = true;
 
   //std::cout << "[MobileManipulatorInterface::setMPCWaitingFlagSrv] END" << std::endl;
-  return res.success;
+  return true;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2635,7 +2637,7 @@ bool MobileManipulatorInterface::setMPCReadyFlagSrv(ocs2_msgs::setBool::Request 
   res.success = true;
 
   //std::cout << "[MobileManipulatorInterface::setMPCReadyFlagSrv] END" << std::endl;
-  return res.success;
+  return true;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2680,7 +2682,7 @@ bool MobileManipulatorInterface::setMRTReadyFlagSrv(ocs2_msgs::setBool::Request 
   res.success = true;
 
   //std::cout << "[MobileManipulatorInterface::setMRTReadyFlagSrv] END" << std::endl;
-  return res.success;
+  return true;
 }
 
 //-------------------------------------------------------------------------------------------------------

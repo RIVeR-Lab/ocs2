@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* Forward declaration of main pinocchio types */
 #include <ocs2_pinocchio_interface/pinocchio_forward_declaration.h>
+#include <pinocchio/algorithm/center-of-mass.hpp>
 
 #include <urdf_model/model.h>
 

@@ -111,7 +111,8 @@ int main(int argc, char* argv[])
   }
 
   ns = nh.getNamespace();
-  cout << "[MobileManipulatorTarget::main] ns: " << ns << endl;
+  if (printOutFlag)
+    cout << "[MobileManipulatorTarget::main] ns: " << ns << endl;
   topicPrefix = "/mobile_manipulator_";
   if (ns != "/")
   {
@@ -124,7 +125,8 @@ int main(int argc, char* argv[])
     }
     
   }
-  cout << "[MobileManipulatorTarget::main] topicPrefix: " << topicPrefix << endl;
+  if (printOutFlag)
+    cout << "[MobileManipulatorTarget::main] topicPrefix: " << topicPrefix << endl;
 
   //cout << "[MobileManipulatorTarget::main] DEBUG INF" << endl;
   //while(1);

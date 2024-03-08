@@ -41,7 +41,7 @@ TargetTrajectoriesRosPublisher::TargetTrajectoriesRosPublisher(::ros::NodeHandle
 {
   targetTrajectoriesPublisher_ = nodeHandle.advertise<ocs2_msgs::mpc_target_trajectories>(targetTrajectoriesMsgName, 1, false);
   ros::spinOnce();
-  ROS_INFO_STREAM("[TargetTrajectoriesRosPublisher::TargetTrajectoriesRosPublisher] The TargetTrajectories is publishing on " + targetTrajectoriesMsgName + " topic.");
+  //ROS_INFO_STREAM("[TargetTrajectoriesRosPublisher::TargetTrajectoriesRosPublisher] The TargetTrajectories is publishing on " + targetTrajectoriesMsgName + " topic.");
 }
 
 /******************************************************************************************************/

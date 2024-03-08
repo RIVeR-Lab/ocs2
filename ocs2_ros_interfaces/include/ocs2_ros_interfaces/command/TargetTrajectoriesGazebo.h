@@ -276,7 +276,7 @@ class TargetTrajectoriesGazebo final
                          ocs2_msgs::setTask::Response &res);
 
     /// VARIABLES:
-    bool printOutFlag_ = true;
+    bool printOutFlag_ = false;
 
     bool initCallbackFlag_ = false;
     bool initTFCallbackFlag_ = false;
