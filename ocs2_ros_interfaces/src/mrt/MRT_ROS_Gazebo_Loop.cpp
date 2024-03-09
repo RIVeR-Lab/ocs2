@@ -281,7 +281,10 @@ bool MRT_ROS_Gazebo_Loop::run2(vector_t initTarget, size_t modelModeInt)
   bool updateModelModeFlag = updateModelMode(robotModelInfo_, modelModeInt);
 
   SystemObservation initObservation = getCurrentObservation(true);
-  setSystemObservation(initObservation);
+  if (!setSystemObservation(initObservation))
+  {
+    return true;
+  }
 
   //std::cout << "[" << ns_ <<  "][MRT_ROS_Gazebo_Loop::run2] initObservation: " << std::endl;
   //std::cout << initObservation << std::endl;

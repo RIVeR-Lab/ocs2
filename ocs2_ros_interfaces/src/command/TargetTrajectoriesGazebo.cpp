@@ -399,7 +399,7 @@ void TargetTrajectoriesGazebo::launchNode(ros::NodeHandle& nodeHandle)
 
   if (printOutFlag_)
     std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::launchNode] targetVisuMsgName_: " << targetVisuMsgName_ << std::endl;
-  targetMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(targetVisuMsgName_, 10);
+  targetMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(targetVisuMsgName_, 20);
   //mobimanGoalObsPublisher_ = nodeHandle.advertise<ocs2_msgs::MobimanGoalObservation>(mobimanGoalObsMsgName_, 10);
 
   /// Clients
@@ -1555,7 +1555,8 @@ void TargetTrajectoriesGazebo::fillGoalVisu()
   {
     //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillGoalVisu] START" << std::endl;
 
-    goalMarkerArray_.markers.clear();
+    visualization_msgs::MarkerArray goalMarkerArray;
+    //goalMarkerArray_.markers.clear();
 
     /// NUA TODO: User should able to add more goal!
     int n_goal = 1;
@@ -1614,8 +1615,10 @@ void TargetTrajectoriesGazebo::fillGoalVisu()
       goal_visu.color.a = 0.5;
       goal_visu.header.frame_id = worldFrameName_;
 
-      goalMarkerArray_.markers.push_back(goal_visu);
+      goalMarkerArray.markers.push_back(goal_visu);
     }
+
+    goalMarkerArray_ = goalMarkerArray;
 
     //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillGoalVisu] END" << std::endl;
   }
@@ -1637,7 +1640,8 @@ void TargetTrajectoriesGazebo::fillTargetVisu()
   {
     //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillTargetVisu] START" << std::endl;
 
-    targetMarkerArray_.markers.clear();
+    visualization_msgs::MarkerArray targetMarkerArray;
+    //targetMarkerArray_.markers.clear();
 
     /// NUA TODO: User should able to add more target!
     int target_size = 1;
@@ -1731,8 +1735,10 @@ void TargetTrajectoriesGazebo::fillTargetVisu()
       target_visu.color.a = 0.5;
       target_visu.header.frame_id = worldFrameName_;
 
-      targetMarkerArray_.markers.push_back(target_visu);
+      targetMarkerArray.markers.push_back(target_visu);
     }
+
+    targetMarkerArray_ = targetMarkerArray;
 
     //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillTargetVisu] END" << std::endl;
   }
@@ -1753,6 +1759,7 @@ void TargetTrajectoriesGazebo::publishGoalVisu()
   //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::publishGoalVisu] START" << std::endl;
 
   /// NUA TODO: User should able to add more target!
+  std::lock_guard<std::mutex> lock(goalMarkerArrayMutex_);
   visualization_msgs::MarkerArray goalMarkerArray = goalMarkerArray_;
   int target_size = goalMarkerArray.markers.size();
 
@@ -1783,6 +1790,7 @@ void TargetTrajectoriesGazebo::publishTargetVisu()
     //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::publishTargetVisu] START" << std::endl;
 
     /// NUA TODO: User should able to add more target!
+    std::lock_guard<std::mutex> lock(targetMarkerArrayMutex_);
     visualization_msgs::MarkerArray targetMarkerArray = targetMarkerArray_;
     int target_size = targetMarkerArray.markers.size();
 
@@ -2902,7 +2910,7 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
   }
   catch (const std::exception& e)
   {
-    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillTargetVisu] ERROR: PART 1 CATCHUP! " << e.what() << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] ERROR: PART 1 CATCHUP! " << e.what() << std::endl;
     //const std::string msg = "[TargetTrajectoriesGazebo::setTargetDRLSrv] ERROR: PART 1 CATCHUP! \n";
     //throw std::runtime_error(msg + e.what());
     //return false;

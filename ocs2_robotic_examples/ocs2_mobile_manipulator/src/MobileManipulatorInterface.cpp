@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.02.05
+// LAST UPDATE: 2024.03.08
 //
 // AUTHOR: Neset Unver Akmandor  (NUA)
 //
@@ -147,8 +147,6 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   setContinuousActionDRLMPCServiceName_ = "/set_continuous_action_drl_mpc";
   setContinuousActionDRLMRTServiceName_ = "/set_continuous_action_drl_mrt";
   setTargetDRLServiceName_ = "/set_target_drl";
-  //calculateMPCTrajectoryServiceName_ = "/calculate_mpc_trajectory";
-  //computeCommandServiceName_ = "/compute_command";
   setMPCActionResultServiceName_ = "/set_mpc_action_result";
 
   setStopMPCFlagSrvName_ = "/set_stop_mpc_flag";
@@ -247,8 +245,6 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     setContinuousActionDRLMPCServiceName_ = ns_ + setContinuousActionDRLMPCServiceName_;
     setContinuousActionDRLMRTServiceName_ = ns_ + setContinuousActionDRLMRTServiceName_;
     setTargetDRLServiceName_ = ns_ + setTargetDRLServiceName_;
-    //calculateMPCTrajectoryServiceName_ = ns_ + calculateMPCTrajectoryServiceName_;
-    //computeCommandServiceName_ = ns_ + computeCommandServiceName_;
     setMPCActionResultServiceName_ = ns_ + setMPCActionResultServiceName_;
     setStopMPCFlagSrvName_ = ns_ + setStopMPCFlagSrvName_;
     setMPCWaitingFlagSrvName_ = ns_ + setMPCWaitingFlagSrvName_;
@@ -278,8 +274,6 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
       std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] setContinuousActionDRLMPCServiceName_: " << setContinuousActionDRLMPCServiceName_ << std::endl;
       std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] setContinuousActionDRLMRTServiceName_: " << setContinuousActionDRLMRTServiceName_ << std::endl;
       std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] setTargetDRLServiceName_: " << setTargetDRLServiceName_ << std::endl;
-      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] calculateMPCTrajectoryServiceName_: " << calculateMPCTrajectoryServiceName_ << std::endl;
-      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] computeCommandServiceName_: " << computeCommandServiceName_ << std::endl;
       std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] setMPCActionResultServiceName_: " << setMPCActionResultServiceName_ << std::endl;
       std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] setStopMPCFlagSrvName_: " << setStopMPCFlagSrvName_ << std::endl;
       std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] setMPCWaitingFlagSrvName_: " << setMPCWaitingFlagSrvName_ << std::endl;
@@ -313,8 +307,6 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     std::cout << "\n #### Model Settings:";
     std::cout << "\n #### =============================================================================\n";
   }
-  //loadData::loadPtreeValue(pt, drlFlag_, "model_settings.drlFlag", printOutFlag_);
-  //loadData::loadPtreeValue(pt, drlActionType_, "model_settings.drlActionType", printOutFlag_);
   loadData::loadPtreeValue(pt, usePreComputation_, "model_settings.usePreComputation", printOutFlag_);
   loadData::loadPtreeValue(pt, recompileLibraries_, "model_settings.recompileLibraries", printOutFlag_);
   loadData::loadPtreeValue(pt, activateSelfCollision_, "selfCollision.activate", printOutFlag_);

@@ -335,6 +335,7 @@ class TargetTrajectoriesGazebo final
     //Eigen::Quaterniond goalOrientationWrtRobot_;
     visualization_msgs::MarkerArray goalMarkerArray_;
     ros::Publisher goalMarkerArrayPublisher_;
+    mutable std::mutex goalMarkerArrayMutex_;
 
     Eigen::Vector3d dummyGoalPosition_;
     Eigen::Quaterniond dummyGoalOrientation_;
@@ -347,6 +348,7 @@ class TargetTrajectoriesGazebo final
     //Eigen::Quaterniond currentTargetOrientationWrtRobot_;
     visualization_msgs::MarkerArray targetMarkerArray_;
     ros::Publisher targetMarkerArrayPublisher_;
+    mutable std::mutex targetMarkerArrayMutex_;
     
     bool graspReadyFlag_ = false;
     Eigen::Vector3d graspPositionOffset_;
