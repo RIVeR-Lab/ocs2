@@ -105,81 +105,97 @@ class MobileManipulatorInterface final : public RobotInterface
                                std::string interfaceName="",
                                bool printOutFlag=false);
 
+    // DESCRIPTION: TODO...
     const std::string& getTaskFile() const
     { 
       return taskFile_;
     }
 
+    // DESCRIPTION: TODO...
     const std::string& getLibraryFolder() const 
     { 
       return libraryFolder_;
     }
 
+    // DESCRIPTION: TODO...
     const std::string& getUrdfFile() const
     { 
       return urdfFile_;
     }
 
+    // DESCRIPTION: TODO...
     ddp::Settings& ddpSettings() 
     { 
       return ddpSettings_; 
     }
 
+    // DESCRIPTION: TODO...
     mpc::Settings& mpcSettings() 
     {
       return mpcSettings_; 
     }
 
+    // DESCRIPTION: TODO...
     const OptimalControlProblem& getOptimalControlProblem() const override 
     { 
       return ocp_;
     }
 
+    // DESCRIPTION: TODO...
     std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override 
     {
       return referenceManagerPtr_; 
     }
 
+    // DESCRIPTION: TODO...
     const Initializer& getInitializer() const override 
     { 
       return *initializerPtr_; 
     }
 
+    // DESCRIPTION: TODO...
     const RolloutBase& getRollout() const 
     { 
       return *rolloutPtr_; 
     }
 
+    // DESCRIPTION: TODO...
     const PinocchioInterface& getPinocchioInterface() const 
     { 
       return *pinocchioInterfacePtr_; 
     }
 
+    // DESCRIPTION: TODO...
     const RobotModelInfo& getRobotModelInfo() const 
     { 
       return robotModelInfo_; 
     }
 
+    // DESCRIPTION: TODO...
     std::string getOdomMsgName() 
     { 
       return odomMsgName_;
     }
 
+    // DESCRIPTION: TODO...
     std::string getBaseStateMsg() 
     { 
       return baseStateMsg_;
     }
 
+    // DESCRIPTION: TODO...
     std::string getArmStateMsg() 
     { 
       return armStateMsg_;
     }
 
+    // DESCRIPTION: TODO...
     std::string getBaseControlMsg() 
     { 
       return baseControlMsg_;
     }
 
+    // DESCRIPTION: TODO...
     std::string getArmControlMsg() 
     { 
       return armControlMsg_;
@@ -199,22 +215,39 @@ class MobileManipulatorInterface final : public RobotInterface
     }
     */
 
+    // DESCRIPTION: TODO...
     void setNodeHandle(ros::NodeHandle& nodeHandle);
 
+    // DESCRIPTION: TODO...
     void setPrintOutFlag(bool printOutFlag);
 
+    // DESCRIPTION: TODO...
+    tf2::Quaternion getQuaternionFromRPY(double roll, double pitch, double yaw);
+
+    // DESCRIPTION: TODO...
+    void getRPYFromQuaternion(tf2::Quaternion quat, double& roll, double& pitch, double& yaw);
+
+    // DESCRIPTION: TODO...
+    void getEEPose(vector_t& eePose);
+
+    // DESCRIPTION: TODO...
     void initializeMPC();
 
+    // DESCRIPTION: TODO...
     void initializeMRT();
 
+    // DESCRIPTION: TODO...
     void initializePointsOnRobotPtr(std::string& collisionPointsName);
 
+    // DESCRIPTION: TODO...
     void updateFullModelState(std::vector<double>& statePositionBase, 
                               std::vector<double>& statePositionArm,
                               std::vector<double>& stateVelocityBase);
 
+    // DESCRIPTION: TODO...
     SystemObservation getCurrentObservation(vector_t& currentInput, scalar_t time=0.0);
 
+    // DESCRIPTION: TODO...
     void setMPCProblem(size_t modelModeInt=2, 
                        bool activateSelfCollision=false, 
                        bool activateExtCollision=false,
@@ -235,13 +268,13 @@ class MobileManipulatorInterface final : public RobotInterface
     }
     */
 
-    //void modelModeCallback(const std_msgs::UInt8::ConstPtr& msg);
-
+    // DESCRIPTION: TODO...
     void launchNodes();
 
-    void getEEPose(vector_t& eePose);
-
-    bool setDiscreteActionDRLMPC(int drlActionDiscrete, double drlActionTimeHorizon);
+    // DESCRIPTION: TODO...
+    bool setDiscreteActionDRLMPC(int drlActionId,
+                                 int drlActionDiscrete,
+                                 double drlActionTimeHorizon);
 
     bool setDiscreteActionDRLMPCSrv(ocs2_msgs::setDiscreteActionDRL::Request &req, 
                                     ocs2_msgs::setDiscreteActionDRL::Response &res);
@@ -303,20 +336,28 @@ class MobileManipulatorInterface final : public RobotInterface
     void mrtCallback(const ros::TimerEvent& event);
   
   private:
+    // DESCRIPTION: TODO...
     std::unique_ptr<StateInputCost> getQuadraticInputCost();
 
+    // DESCRIPTION: TODO...
     std::unique_ptr<StateInputCost> getJointLimitSoftConstraint();
     
+    // DESCRIPTION: TODO...
     std::unique_ptr<StateCost> getEndEffectorConstraint(const std::string& prefix);
     
+    // DESCRIPTION: TODO...
     std::unique_ptr<StateCost> getSelfCollisionConstraint(const std::string& prefix);
 
+    // DESCRIPTION: TODO...
     std::unique_ptr<StateCost> getExtCollisionConstraint(const std::string& prefix);
 
+    // DESCRIPTION: TODO...
     void updateStateIndexMap();
 
+    // DESCRIPTION: TODO...
     void odomCallback(const nav_msgs::Odometry::ConstPtr& msg);
 
+    // DESCRIPTION: TODO...
     void jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 
     /*
@@ -332,24 +373,23 @@ class MobileManipulatorInterface final : public RobotInterface
     */
     double mapActionTarget(double val, double minVal, double maxVal);
 
+    // DESCRIPTION: TODO...
     bool setTargetDRL(string targetName, double x, double y, double z, double roll, double pitch, double yaw, double time_horizon=0.0);
 
-    void mapDiscreteActionDRL(int action);
+    // DESCRIPTION: TODO...
+    void mapDiscreteActionDRL(bool setTargetDRLFlag=true);
 
+    // DESCRIPTION: TODO...
     void mapContinuousActionDRL(bool setTargetDRLFlag=true);
 
+    // DESCRIPTION: TODO...
     bool setMPCActionResult(int drlActionResult);
 
-    bool computeCommandClient(bool& use_current_policy_flag, 
-                              double& dt,
-                              double& time,
-                              std::vector<double>& state,
-                              std::vector<double>& full_state,
-                              std::vector<double>& input,
-                              vector_t& currentTarget,
-                              bool& setMPCProblemFlag,
-                              std::vector<double>& cmd);
+    // DESCRIPTION: TODO...
+    void readDiscreteTrajectoryData(vector<std::string> dataPath, vector<geometry_msgs::Pose>& discreteTrajectoryData);
 
+    /*
+    // DESCRIPTION: TODO...
     struct mpcProblemSettings
     {
       int modelMode;
@@ -359,6 +399,7 @@ class MobileManipulatorInterface final : public RobotInterface
       std::vector<std::string> binarySettingNames = {"selfCollisionConstraint"};
       std::vector<bool> binarySettingValues;
     };
+    */
 
     bool resetFlag_ = true;
 
@@ -430,12 +471,14 @@ class MobileManipulatorInterface final : public RobotInterface
     
     bool drlFlag_;
     int drlActionType_;
-
-    /// NUA NOTE: DEPRECATED? ----- START
-    int drlActionDiscrete_;
     int drlActionId_;
-    mpcProblemSettings mpcProblemSettings_;
-    /// NUA NOTE: DEPRECATED? ----- END
+
+    //mpcProblemSettings mpcProblemSettings_;
+    vector<int> drlActionDiscreteNum_;
+    int drlActionDiscrete_;
+    
+    std::vector<std::string> discreteTrajectoryDataPath_;
+    std::vector<geometry_msgs::Pose> discreteTrajectoryData_;
 
     std::vector<double> drlActionContinuous_;
     double drlActionTimeHorizon_;

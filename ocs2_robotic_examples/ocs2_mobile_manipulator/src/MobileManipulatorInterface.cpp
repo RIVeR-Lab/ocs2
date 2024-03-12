@@ -328,6 +328,7 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
   if (drlFlag_)
   {
     nodeHandle_.getParam("/action_type", drlActionType_);
+    nodeHandle_.getParam("/action_discrete_trajectory_data_path", discreteTrajectoryDataPath_);
 
     nodeHandle_.getParam("/err_threshold_pos", errThresholdPos_);
     nodeHandle_.getParam("/err_threshold_ori_yaw", errThresholdOriYaw_);
@@ -365,6 +366,26 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
       std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] drlTargetRangeMaxY_: " << drlTargetRangeMaxY_ << std::endl;
       std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] drlTargetRangeMinZ_: " << drlTargetRangeMinZ_ << std::endl;
       std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] drlTargetRangeMaxZ_: " << drlTargetRangeMaxZ_ << std::endl;
+    }
+  }
+
+  if (drlFlag_)
+  {
+    nodeHandle_.getParam("/action_type", drlActionType_);
+    if (drlActionType_ == 0)
+    {
+      /// Set Discrete Trajectory Data
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] BEFORE readDiscreteTrajectoryData" << std::endl;
+      
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] discreteTrajectoryDataPath_ size: " << discreteTrajectoryDataPath_.size() << std::endl;
+      for (size_t i = 0; i < discreteTrajectoryDataPath_.size(); i++)
+      {
+        std::cout << i << " -> " << discreteTrajectoryDataPath_[i] << std::endl;
+      }
+      
+      
+      readDiscreteTrajectoryData(discreteTrajectoryDataPath_, discreteTrajectoryData_);
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] AFTER readDiscreteTrajectoryData" << std::endl;
     }
   }
 
@@ -509,6 +530,65 @@ void MobileManipulatorInterface::setPrintOutFlag(bool printOutFlag)
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+tf2::Quaternion MobileManipulatorInterface::getQuaternionFromRPY(double roll, double pitch, double yaw)
+{
+  // Convert RPY to Quaternion
+  tf2::Quaternion quat;
+  quat.setRPY(roll, pitch, yaw);
+  return quat;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorInterface::getRPYFromQuaternion(tf2::Quaternion quat, double& roll, double& pitch, double& yaw)
+{
+  tf2::Matrix3x3 m(quat);
+  m.getRPY(roll, pitch, yaw);
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MobileManipulatorInterface::getEEPose(vector_t& eePose)
+{
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::getEEPose] START" << std::endl;
+
+  ocs2::RobotModelInfo robotModelInfo = robotModelInfo_;
+
+  std::string eeFrame = eeFrame_withNS_;
+  if (robotModelInfo.robotModelType == RobotModelType::MobileBase)
+  {
+    eeFrame = baseFrame_withNS_;
+  }
+
+  tf::StampedTransform tf_ee_wrt_world;
+  try
+  {
+    tfListener_.waitForTransform(worldFrameName_, eeFrame, ros::Time::now(), ros::Duration(1.0));
+    tfListener_.lookupTransform(worldFrameName_, eeFrame, ros::Time(0), tf_ee_wrt_world);
+  }
+  catch (tf::TransformException ex)
+  {
+    ROS_INFO("[MobileManipulatorInterface::getEEPose] ERROR: Couldn't get transform!");
+    ROS_ERROR("%s", ex.what());
+  }
+
+  eePose.resize(7);
+  eePose(0) = tf_ee_wrt_world.getOrigin().x();
+  eePose(1) = tf_ee_wrt_world.getOrigin().y();
+  eePose(2) = tf_ee_wrt_world.getOrigin().z();
+  eePose(3) = tf_ee_wrt_world.getRotation().x();
+  eePose(4) = tf_ee_wrt_world.getRotation().y();
+  eePose(5) = tf_ee_wrt_world.getRotation().z();
+  eePose(6) = tf_ee_wrt_world.getRotation().w();
+
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::getEEPose] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::initializeMPC()
 {
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::initializeMPC] START" << std::endl;
@@ -575,8 +655,8 @@ void MobileManipulatorInterface::initializeMPC()
   {
     if (drlActionType_ == 0)
     {
-      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::initializeMPC] DEBUG INF" << std::endl;
-      while(1);
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::initializeMPC] DEBUG INF" << std::endl;
+      //while(1);
 
       //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::initializeMPC] DISCRETE ACTION" << std::endl;
       //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::initializeMPC] setDiscreteActionDRLMPCServiceName_: " << setDiscreteActionDRLMPCServiceName_ << std::endl;
@@ -1335,59 +1415,20 @@ void MobileManipulatorInterface::launchNodes()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MobileManipulatorInterface::getEEPose(vector_t& eePose)
-{
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::getEEPose] START" << std::endl;
-
-  ocs2::RobotModelInfo robotModelInfo = robotModelInfo_;
-
-  std::string eeFrame = eeFrame_withNS_;
-  if (robotModelInfo.robotModelType == RobotModelType::MobileBase)
-  {
-    eeFrame = baseFrame_withNS_;
-  }
-
-  tf::StampedTransform tf_ee_wrt_world;
-  try
-  {
-    tfListener_.waitForTransform(worldFrameName_, eeFrame, ros::Time::now(), ros::Duration(1.0));
-    tfListener_.lookupTransform(worldFrameName_, eeFrame, ros::Time(0), tf_ee_wrt_world);
-  }
-  catch (tf::TransformException ex)
-  {
-    ROS_INFO("[MobileManipulatorInterface::getEEPose] ERROR: Couldn't get transform!");
-    ROS_ERROR("%s", ex.what());
-  }
-
-  eePose.resize(7);
-  eePose(0) = tf_ee_wrt_world.getOrigin().x();
-  eePose(1) = tf_ee_wrt_world.getOrigin().y();
-  eePose(2) = tf_ee_wrt_world.getOrigin().z();
-  eePose(3) = tf_ee_wrt_world.getRotation().x();
-  eePose(4) = tf_ee_wrt_world.getRotation().y();
-  eePose(5) = tf_ee_wrt_world.getRotation().z();
-  eePose(6) = tf_ee_wrt_world.getRotation().w();
-
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::getEEPose] END" << std::endl;
-}
-
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-bool MobileManipulatorInterface::setDiscreteActionDRLMPC(int drlActionDiscrete, double drlActionTimeHorizon)
+bool MobileManipulatorInterface::setDiscreteActionDRLMPC(int drlActionId,
+                                                         int drlActionDiscrete, 
+                                                         double drlActionTimeHorizon)
 {
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] START" << std::endl;
-  
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] DEBUG_INF" << std::endl;
-  while(1);
 
   bool success;
 
   ocs2_msgs::setDiscreteActionDRL srv;
+  srv.request.id = drlActionId;
   srv.request.action = drlActionDiscrete;
   srv.request.time_horizon = drlActionTimeHorizon;
 
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRL] Waiting for the service..." << std::endl;
+  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] Waiting for the service " << setDiscreteActionDRLMPCServiceName_ << "..." << std::endl;
   //ros::service::waitForService(setDiscreteActionDRLMPCServiceName_);
   if (setDiscreteActionDRLMPCClient_.call(srv))
   {
@@ -1395,10 +1436,16 @@ bool MobileManipulatorInterface::setDiscreteActionDRLMPC(int drlActionDiscrete, 
   }
   else
   {
-    ROS_ERROR("[MobileManipulatorInterface::setDiscreteActionDRLMPC] ERROR: Failed to call service!");
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] ERROR: Failed to call service!" << std::endl;
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] drlActionId: " << drlActionId << std::endl;
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] drlActionDiscrete: " << drlActionDiscrete << std::endl;    
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] drlActionTimeHorizon: " << drlActionTimeHorizon << std::endl;
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] ERROR: Failed to call service!" << std::endl;
+    //ROS_ERROR("[MobileManipulatorInterface::setDiscreteActionDRLMPC] ERROR: Failed to call service!");
     success = false;
   }
 
+  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] END" << std::endl;
   return success;
 }
 
@@ -1408,18 +1455,35 @@ bool MobileManipulatorInterface::setDiscreteActionDRLMPC(int drlActionDiscrete, 
 bool MobileManipulatorInterface::setDiscreteActionDRLMPCSrv(ocs2_msgs::setDiscreteActionDRL::Request &req, 
                                                             ocs2_msgs::setDiscreteActionDRL::Response &res)
 {
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] START" << std::endl;
+  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] START" << std::endl;
 
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] DEBUG_INF" << std::endl;
-  while(1);
-
+  drlActionId_ = req.id;
   drlActionDiscrete_ = req.action;
   drlActionTimeHorizon_ = req.time_horizon;
+  //drlActionLastStepFlag_ = req.last_step_flag;
+  //drlActionLastStepDistanceThreshold_ = req.last_step_distance_threshold;
   res.success = true;
 
-  //mapDiscreteActionDRL(drlActionDiscrete_);
+  /*
+  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] drlActionId_: " << drlActionId_ << std::endl;
+  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] drlActionContinuous_:" << std::endl;
+  for (size_t i = 0; i < drlActionContinuous_.size(); i++)
+  {
+    std::cout << drlActionContinuous_[i] << std::endl;
+  }
+  */
+  
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] drlActionTimeHorizon_: " << drlActionTimeHorizon_ << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] drlActionLastStepFlag_: " << drlActionLastStepFlag_ << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] drlActionLastStepDistanceThreshold_: " << drlActionLastStepDistanceThreshold_ << std::endl;
 
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] END" << std::endl;
+  mapDiscreteActionDRL(false);
+
+  mpcProblemReadyFlag_ = false;
+  newMPCProblemFlag_ = true;
+  stopMPCFlag_ = true;
+
+  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] END" << std::endl;
   return true;
 }
 
@@ -1429,20 +1493,24 @@ bool MobileManipulatorInterface::setDiscreteActionDRLMPCSrv(ocs2_msgs::setDiscre
 bool MobileManipulatorInterface::setDiscreteActionDRLMRTSrv(ocs2_msgs::setDiscreteActionDRL::Request &req, 
                                                             ocs2_msgs::setDiscreteActionDRL::Response &res)
 {
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMRTSrv] START" << std::endl;
+  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMRTSrv] START" << std::endl;
 
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMRTSrv] DEBUG_INF" << std::endl;
-  while(1);
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMRTSrv] DEBUG_INF" << std::endl;
+  //while(1);
 
+  drlActionId_ = req.id;
   drlActionDiscrete_ = req.action;
   drlActionTimeHorizon_ = req.time_horizon;
   res.success = true;
 
-  mapDiscreteActionDRL(drlActionDiscrete_);
+  mapDiscreteActionDRL(true);
 
-  setDiscreteActionDRLMPC(drlActionDiscrete_, drlActionTimeHorizon_);
+  mpcProblemReadyFlag_ = false;
+  newMPCProblemFlag_ = true;
 
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMRTSrv] END" << std::endl;
+  //setDiscreteActionDRLMPC(drlActionDiscrete_, drlActionTimeHorizon_);
+
+  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMRTSrv] END" << std::endl;
   return true;
 }
 
@@ -2199,41 +2267,129 @@ bool MobileManipulatorInterface::setTargetDRL(string targetName, double x, doubl
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-void MobileManipulatorInterface::mapDiscreteActionDRL(int action)
+void MobileManipulatorInterface::mapDiscreteActionDRL(bool setTargetDRLFlag)
 {
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] START" << std::endl;
-
-  /// NUA TODO: NEEDS DEBUGGING!
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] DEBUG_INF" << std::endl;
-  while(1);
-
-  // MPC Settings Variables -------
-  int n_mode = 3;
-  int n_bool_var = mpcProblemSettings_.binarySettingNames.size();
-  // ------------------------------
-
-  int n_settings_per_mode = pow(2, n_bool_var);
-
-  mpcProblemSettings_.modelMode = action / n_settings_per_mode;
+  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] START" << std::endl;
   
-  int dec = action % n_settings_per_mode;
-  while (dec >= 1)
-  {
-    mpcProblemSettings_.binarySettingValues.push_back(dec % 2);
-    dec = dec / 2;
-  }
-  mpcProblemSettings_.binarySettingValues.push_back(dec);
+  int drlActionDiscrete = drlActionDiscrete_;
+  double drlActionTimeHorizon = drlActionTimeHorizon_;
 
-  std::string tmp_name;
-  bool tmp_val;
-  for (size_t i = 0; i < mpcProblemSettings_.binarySettingNames.size(); i++)
+  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] drlActionDiscrete: " << drlActionDiscrete << std::endl;
+  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] drlActionDiscreteNum_[0]: " << drlActionDiscreteNum_[0] << std::endl;
+  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] drlActionDiscreteNum_[1]: " << drlActionDiscreteNum_[1] << std::endl;
+  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] drlActionDiscreteNum_[2]: " << drlActionDiscreteNum_[2] << std::endl;
+
+  int thresholdMode0 = drlActionDiscreteNum_[0];
+  int thresholdMode2 = drlActionDiscreteNum_[0] + drlActionDiscreteNum_[1];
+  int goalIndex = drlActionDiscreteNum_[0] + drlActionDiscreteNum_[1] + drlActionDiscreteNum_[2];
+
+  // Set Model Mode
+  int modelModeInt;
+  if (drlActionDiscrete < thresholdMode0)
   {
-    tmp_name = mpcProblemSettings_.binarySettingNames[i];
-    tmp_val = mpcProblemSettings_.binarySettingValues[i];
-    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] " << tmp_name << ": " << tmp_val << std::endl;
+    //if (setTargetDRLFlag)
+    
+    {
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] BASE MOTION" << std::endl;
+    }
+    modelModeInt = 0;
+  }
+  else if (drlActionDiscrete >= thresholdMode2)
+  {
+    //if (setTargetDRLFlag)
+    {
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] WHOLE-BODY MOTION" << std::endl;
+    }
+    
+    modelModeInt = 2;
+  }
+  else
+  {
+    //if (setTargetDRLFlag)
+    {
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] ARM MOTION" << std::endl;
+    }
+    
+    modelModeInt = 1;
+  }
+  modelModeInt_ = modelModeInt;
+
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] modelModeInt_: " << modelModeInt_ << std::endl;
+
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] DEBUG_INF" << std::endl;
+  //while(1);
+
+  /// NUA NOTE: CONSTRAINT FLAGS ARE NOT FUNCTIONAL!
+  /*
+  // Set Constraint Flags
+  double constraintProb = drlActionContinuous_[1];
+  if (constraintProb <= 0.5)
+  {
+    if (setTargetDRLFlag)
+    {
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] SELF-COLLISION DEACTIVATED!" << std::endl;
+    }
+    activateSelfCollision_ = false;
+  }
+  else
+  {
+    if (setTargetDRLFlag)
+    {
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] SELF-COLLISION ACTIVATED!" << std::endl;
+    }
+    activateSelfCollision_ = true;
+  }
+  */
+
+  // Set Target
+  if (setTargetDRLFlag)
+  {
+    string target_name;
+    double target_x;
+    double target_y;
+    double target_z;
+    double target_roll;
+    double target_pitch;
+    double target_yaw;
+
+    if (drlActionDiscrete == goalIndex)
+    {
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] TARGET IS GOAL!" << std::endl;
+      target_name = "goal";
+      target_x = 0.0;
+      target_y = 0.0;
+      target_z = 0.0;
+      target_roll = 0.0;
+      target_pitch = 0.0;
+      target_yaw = 0.0;
+    }
+    else
+    {
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] TARGET IS DRL TARGET!" << std::endl;
+      
+      target_name = "target";
+      target_x = discreteTrajectoryData_[drlActionDiscrete].position.x;
+      target_y = discreteTrajectoryData_[drlActionDiscrete].position.y;
+      target_z = discreteTrajectoryData_[drlActionDiscrete].position.z;
+
+      /// NUA NOTE: BE CAREFUL: INSTEAD OF CONVERTING BACK AND FORTH FROM QUATERNION TO RPY, KEEPING RPY INFO IN QUAT !!! CHECK readDiscreteTrajectoryData !!!
+      target_roll = discreteTrajectoryData_[drlActionDiscrete].orientation.x;
+      target_pitch = discreteTrajectoryData_[drlActionDiscrete].orientation.x;
+      target_yaw = discreteTrajectoryData_[drlActionDiscrete].orientation.x;
+
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] AFTER target_x: " << target_x << std::endl;
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] AFTER target_y: " << target_y << std::endl;
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] AFTER target_z: " << target_z << std::endl;
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] AFTER target_roll: " << target_roll << std::endl;
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] AFTER target_pitch: " << target_pitch << std::endl;
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] AFTER target_yaw: " << target_yaw << std::endl;
+    }
+    
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] BEFORE setTargetDRL" << std::endl;
+    setTargetDRL(target_name, target_x, target_y, target_z, target_roll, target_pitch, target_yaw, drlActionTimeHorizon);
   }
 
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] END" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2427,63 +2583,78 @@ bool MobileManipulatorInterface::setMPCActionResult(int drlActionResult)
   return success;
 }
 
-/*
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-bool MobileManipulatorInterface::computeCommandClient(bool& use_current_policy_flag, 
-                                                      double& dt,
-                                                      double& time,
-                                                      std::vector<double>& state,
-                                                      std::vector<double>& full_state,
-                                                      std::vector<double>& input,
-                                                      vector_t& currentTarget,
-                                                      bool& setMPCProblemFlag,
-                                                      std::vector<double>& cmd)
+void MobileManipulatorInterface::readDiscreteTrajectoryData(vector<std::string> dataPath, vector<geometry_msgs::Pose>& discreteTrajectoryData)
 {
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::computeCommandClient] START" << std::endl;
-  
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::computeCommandClient] DEBUG_INF" << std::endl;
-  while(1);
+  std::cout << "[MobileManipulatorInterface::readDiscreteTrajectoryData] START" << std::endl;
 
-  bool success = false;
+  discreteTrajectoryData.clear();
 
-  ocs2_msgs::calculateMPCTrajectory srv;
-  srv.request.use_current_policy_flag = use_current_policy_flag;
-  
-  srv.request.dt = dt;
-  srv.request.time = time;
+  std::string::size_type sz;
+  std::string line, spoint, sval;
 
-  srv.request.state = state;
-  srv.request.full_state = full_state;
-  srv.request.input = input;
-  
-  srv.request.target.resize(currentTarget.size());
-  for (size_t i = 0; i < currentTarget.size(); i++)
+  /// NUA TODO: GET THIS FROM CONFIG!
+  std::string pkgName = "mobiman_simulation";
+  std::string ws_path = ros::package::getPath(pkgName) + "/";
+
+  for (size_t i = 0; i < dataPath.size(); i++)
   {
-    srv.request.target[i] = currentTarget[i];
+    std::string file_path = ws_path + dataPath[i] + "sampling_data.csv";
+    std::cout << "[MobileManipulatorInterface::readDiscreteTrajectoryData] file_path: " << file_path << std::endl;
+    ifstream tdata_stream(file_path);
+
+    if (tdata_stream.is_open())
+    {
+      int c = 0;
+      while ( getline(tdata_stream, line) )
+      {
+        vector<geometry_msgs::Point> traj;
+        stringstream s_line(line);
+
+        getline(s_line, spoint, ',');
+        stringstream s_val(spoint);
+
+        vector<float> pv;
+        while( getline(s_val, sval, ' ') ) 
+        {
+          pv.push_back(stod(sval, &sz));    
+        }
+
+        geometry_msgs::Pose po;
+        po.position.x = pv[0];
+        po.position.y = pv[1];
+        po.position.z = pv[2];
+        
+        /// NUA NOTE: BE CAREFUL: INSTEAD OF CONVERTING BACK AND FORTH FROM QUATERNION TO RPY, LETS KEEP RPY INFO IN QUAT !!!
+        po.orientation.x = pv[3];
+        po.orientation.y = pv[4];
+        po.orientation.z = pv[5];
+
+        //tf2::Quaternion quat = getQuaternionFromRPY(pv[3], pv[4], pv[5]);
+        //po.orientation.x = quat.x();
+        //po.orientation.y = quat.y();
+        //po.orientation.z = quat.z();
+        //po.orientation.w = quat.w();
+
+        discreteTrajectoryData.push_back(po);
+
+        c++;
+      }
+      tdata_stream.close();
+
+      drlActionDiscreteNum_.push_back(c);
+    }
+    else 
+    {
+      std::cout << "[MobileManipulatorInterface::readDiscreteTrajectoryData] ERROR: Unable to open file " << file_path << "!" << std::endl;
+    }
   }
 
-  srv.request.mpc_problem_flag = setMPCProblemFlag;
-
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::computeCommandClient] Waiting for the service..." << std::endl;
-  //ros::service::waitForService(computeCommandServiceName_);
-  if (computeCommandClient_.call(srv))
-  {
-    success = srv.response.success;
-    cmd = srv.response.cmd;
-  }
-  else
-  {
-    ROS_ERROR("[MobileManipulatorInterface::computeCommandClient] ERROR: Failed to call service!");
-    success = false;
-  }
-
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::computeCommandClient] END" << std::endl;
-  
-  return success;
+  std::cout << "[MobileManipulatorInterface::readDiscreteTrajectoryData] discreteTrajectoryData size: " << discreteTrajectoryData.size() << std::endl;
+  std::cout << "[MobileManipulatorInterface::readDiscreteTrajectoryData] END" << std::endl;
 }
-*/
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -2853,11 +3024,26 @@ void MobileManipulatorInterface::mrtCallback(const ros::TimerEvent& event)
       
       if (drlFlag_)
       {
-        //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE setContinuousActionDRLMPC" << std::endl;
-        setContinuousActionDRLMPC(drlActionId_,
-                                  drlActionContinuous_, 
+        if (drlActionType_ == 0)
+        {
+          std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE setDiscreteActionDRLMPC" << std::endl;
+          setDiscreteActionDRLMPC(drlActionId_,
+                                  drlActionDiscrete_, 
                                   drlActionTimeHorizon_);
-        //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] AFTER setContinuousActionDRLMPC" << std::endl;
+          std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] AFTER setDiscreteActionDRLMPC" << std::endl;
+        }
+        else if (drlActionType_ == 1)
+        {
+          //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] BEFORE setContinuousActionDRLMPC" << std::endl;
+          setContinuousActionDRLMPC(drlActionId_,
+                                    drlActionContinuous_, 
+                                    drlActionTimeHorizon_);
+          //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] AFTER setContinuousActionDRLMPC" << std::endl;
+        }
+        else
+        {
+          std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mrtCallback] ERROR: Invalid drlActionType_!" << std::endl;
+        }
       }
       else
       {
