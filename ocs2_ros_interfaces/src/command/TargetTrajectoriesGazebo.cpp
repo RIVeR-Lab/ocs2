@@ -2822,9 +2822,9 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
       //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] BEFORE target_z: " << req.targetPose.position.z << std::endl;
 
       targetIsGoalFlag_ = false; 
-      //geometry_msgs::Pose targetPoseWrtRobot = req.targetPose;
-      geometry_msgs::Pose targetPoseWrtWorld = req.targetPose;
-      //transformPose(robotFrameName_, worldFrameName_, targetPoseWrtRobot, targetPoseWrtWorld);
+      geometry_msgs::Pose targetPoseWrtRobot = req.targetPose;
+      geometry_msgs::Pose targetPoseWrtWorld;
+      transformPose(robotFrameName_, worldFrameName_, targetPoseWrtRobot, targetPoseWrtWorld);
       targetPos.x() = targetPoseWrtWorld.position.x;
       targetPos.y() = targetPoseWrtWorld.position.y;
       targetPos.z() = targetPoseWrtWorld.position.z;
