@@ -375,17 +375,15 @@ MobileManipulatorInterface::MobileManipulatorInterface(ros::NodeHandle& nodeHand
     if (drlActionType_ == 0)
     {
       /// Set Discrete Trajectory Data
-      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] BEFORE readDiscreteTrajectoryData" << std::endl;
-      
+      /*
       std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] discreteTrajectoryDataPath_ size: " << discreteTrajectoryDataPath_.size() << std::endl;
       for (size_t i = 0; i < discreteTrajectoryDataPath_.size(); i++)
       {
         std::cout << i << " -> " << discreteTrajectoryDataPath_[i] << std::endl;
       }
-      
+      */
       
       readDiscreteTrajectoryData(discreteTrajectoryDataPath_, discreteTrajectoryData_);
-      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::MobileManipulatorInterface] AFTER readDiscreteTrajectoryData" << std::endl;
     }
   }
 
@@ -1419,34 +1417,46 @@ bool MobileManipulatorInterface::setDiscreteActionDRLMPC(int drlActionId,
                                                          int drlActionDiscrete, 
                                                          double drlActionTimeHorizon)
 {
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] START" << std::endl;
-
-  bool success;
-
-  ocs2_msgs::setDiscreteActionDRL srv;
-  srv.request.id = drlActionId;
-  srv.request.action = drlActionDiscrete;
-  srv.request.time_horizon = drlActionTimeHorizon;
-
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] Waiting for the service " << setDiscreteActionDRLMPCServiceName_ << "..." << std::endl;
-  //ros::service::waitForService(setDiscreteActionDRLMPCServiceName_);
-  if (setDiscreteActionDRLMPCClient_.call(srv))
+  try
   {
-    success = srv.response.success;
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] START" << std::endl;
+
+    bool success;
+
+    ocs2_msgs::setDiscreteActionDRL srv;
+    srv.request.id = drlActionId;
+    srv.request.action = drlActionDiscrete;
+    srv.request.time_horizon = drlActionTimeHorizon;
+
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] Waiting for the service " << setDiscreteActionDRLMPCServiceName_ << "..." << std::endl;
+    //ros::service::waitForService(setDiscreteActionDRLMPCServiceName_);
+    if (setDiscreteActionDRLMPCClient_.call(srv))
+    {
+      success = srv.response.success;
+    }
+    else
+    {
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] ERROR: Failed to call service!" << std::endl;
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] drlActionId: " << drlActionId << std::endl;
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] drlActionDiscrete: " << drlActionDiscrete << std::endl;    
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] drlActionTimeHorizon: " << drlActionTimeHorizon << std::endl;
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] ERROR: Failed to call service!" << std::endl;
+      //ROS_ERROR("[MobileManipulatorInterface::setDiscreteActionDRLMPC] ERROR: Failed to call service!");
+      success = false;
+    }
+
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] END" << std::endl;
+    return success;
   }
-  else
+  catch(const std::exception& e)
   {
-    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] ERROR: Failed to call service!" << std::endl;
     std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] drlActionId: " << drlActionId << std::endl;
     std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] drlActionDiscrete: " << drlActionDiscrete << std::endl;    
     std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] drlActionTimeHorizon: " << drlActionTimeHorizon << std::endl;
     std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] ERROR: Failed to call service!" << std::endl;
-    //ROS_ERROR("[MobileManipulatorInterface::setDiscreteActionDRLMPC] ERROR: Failed to call service!");
-    success = false;
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] ERROR: CATCHUP! " << e.what() << std::endl;
+    return false;
   }
-
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPC] END" << std::endl;
-  return success;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1457,34 +1467,48 @@ bool MobileManipulatorInterface::setDiscreteActionDRLMPCSrv(ocs2_msgs::setDiscre
 {
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] START" << std::endl;
 
-  drlActionId_ = req.id;
-  drlActionDiscrete_ = req.action;
-  drlActionTimeHorizon_ = req.time_horizon;
-  //drlActionLastStepFlag_ = req.last_step_flag;
-  //drlActionLastStepDistanceThreshold_ = req.last_step_distance_threshold;
-  res.success = true;
+  //drlActionId_ = req.id;
+  //drlActionDiscrete_ = req.action;
+  //drlActionTimeHorizon_ = req.time_horizon;
 
-  /*
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] drlActionId_: " << drlActionId_ << std::endl;
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] drlActionContinuous_:" << std::endl;
-  for (size_t i = 0; i < drlActionContinuous_.size(); i++)
+  try
   {
-    std::cout << drlActionContinuous_[i] << std::endl;
+    drlActionId_ = req.id;
+    drlActionDiscrete_ = req.action;
+    drlActionTimeHorizon_ = req.time_horizon;
+    res.success = true;
+
+    /*
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] drlActionId_: " << drlActionId_ << std::endl;
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] drlActionContinuous_:" << std::endl;
+    for (size_t i = 0; i < drlActionContinuous_.size(); i++)
+    {
+      std::cout << drlActionContinuous_[i] << std::endl;
+    }
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] drlActionTimeHorizon_: " << drlActionTimeHorizon_ << std::endl;
+    */
+
+    mapDiscreteActionDRL(false);
+
+    mpcProblemReadyFlag_ = false;
+    newMPCProblemFlag_ = true;
+    stopMPCFlag_ = true;
+
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] END" << std::endl;
+    return true;
   }
-  */
-  
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] drlActionTimeHorizon_: " << drlActionTimeHorizon_ << std::endl;
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] drlActionLastStepFlag_: " << drlActionLastStepFlag_ << std::endl;
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] drlActionLastStepDistanceThreshold_: " << drlActionLastStepDistanceThreshold_ << std::endl;
-
-  mapDiscreteActionDRL(false);
-
-  mpcProblemReadyFlag_ = false;
-  newMPCProblemFlag_ = true;
-  stopMPCFlag_ = true;
-
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] END" << std::endl;
-  return true;
+  catch(const std::exception& e)
+  {
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] drlActionId_: " << drlActionId_ << std::endl;
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] drlActionContinuous_:" << std::endl;
+    for (size_t i = 0; i < drlActionContinuous_.size(); i++)
+    {
+      std::cout << drlActionContinuous_[i] << std::endl;
+    }
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] drlActionTimeHorizon_: " << drlActionTimeHorizon_ << std::endl;
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMPCSrv] ERROR: CATCHUP! " << e.what() << std::endl;
+    return false;
+  }
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1493,25 +1517,33 @@ bool MobileManipulatorInterface::setDiscreteActionDRLMPCSrv(ocs2_msgs::setDiscre
 bool MobileManipulatorInterface::setDiscreteActionDRLMRTSrv(ocs2_msgs::setDiscreteActionDRL::Request &req, 
                                                             ocs2_msgs::setDiscreteActionDRL::Response &res)
 {
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMRTSrv] START" << std::endl;
+  try
+  {
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMRTSrv] START" << std::endl;
 
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMRTSrv] DEBUG_INF" << std::endl;
-  //while(1);
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMRTSrv] DEBUG_INF" << std::endl;
+    //while(1);
 
-  drlActionId_ = req.id;
-  drlActionDiscrete_ = req.action;
-  drlActionTimeHorizon_ = req.time_horizon;
-  res.success = true;
+    drlActionId_ = req.id;
+    drlActionDiscrete_ = req.action;
+    drlActionTimeHorizon_ = req.time_horizon;
+    res.success = true;
 
-  mapDiscreteActionDRL(true);
+    mapDiscreteActionDRL(true);
 
-  mpcProblemReadyFlag_ = false;
-  newMPCProblemFlag_ = true;
+    mpcProblemReadyFlag_ = false;
+    newMPCProblemFlag_ = true;
 
-  //setDiscreteActionDRLMPC(drlActionDiscrete_, drlActionTimeHorizon_);
+    //setDiscreteActionDRLMPC(drlActionDiscrete_, drlActionTimeHorizon_);
 
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMRTSrv] END" << std::endl;
-  return true;
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMRTSrv] END" << std::endl;
+    return true;
+  }
+  catch(const std::exception& e)
+  {
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setDiscreteActionDRLMRTSrv] ERROR: CATCHUP! " << e.what() << std::endl;
+    return false;
+  }
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1523,39 +1555,53 @@ bool MobileManipulatorInterface::setContinuousActionDRLMPC(int drlActionId,
 {
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPC] START" << std::endl;
 
-  bool success;
-
-  ocs2_msgs::setContinuousActionDRL srv;
-  srv.request.id = drlActionId;
-  srv.request.action = drlActionContinuous;
-  srv.request.time_horizon = drlActionTimeHorizon;
-  //srv.request.last_step_flag = drlActionLastStepFlag;
-  //srv.request.last_step_distance_threshold = drlActionLastStepDistanceThreshold;
-
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPC] Waiting for the service " << setContinuousActionDRLMPCServiceName_ << "..." << std::endl;
-  //ros::service::waitForService(setContinuousActionDRLMPCServiceName_);
-  if (setContinuousActionDRLMPCClient_.call(srv))
+  try
   {
-    success = srv.response.success;
+    bool success;
+
+    ocs2_msgs::setContinuousActionDRL srv;
+    srv.request.id = drlActionId;
+    srv.request.action = drlActionContinuous;
+    srv.request.time_horizon = drlActionTimeHorizon;
+    //srv.request.last_step_flag = drlActionLastStepFlag;
+    //srv.request.last_step_distance_threshold = drlActionLastStepDistanceThreshold;
+
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPC] Waiting for the service " << setContinuousActionDRLMPCServiceName_ << "..." << std::endl;
+    //ros::service::waitForService(setContinuousActionDRLMPCServiceName_);
+    if (setContinuousActionDRLMPCClient_.call(srv))
+    {
+      success = srv.response.success;
+    }
+    else
+    {
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPC] ERROR: Failed to call service!" << std::endl;
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPC] drlActionId: " << drlActionId << std::endl;
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPC] drlActionContinuous: " << std::endl;
+      for (size_t i = 0; i < drlActionContinuous.size(); i++)
+      {
+        std::cout << i << " -> " << drlActionContinuous[i] << std::endl;
+      }
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPC] drlActionTimeHorizon: " << drlActionTimeHorizon << std::endl;
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPC] ERROR: Failed to call service!" << std::endl;
+      //ROS_ERROR("[MobileManipulatorInterface::setContinuousActionDRLMPC] ERROR: Failed to call service!");
+      success = false;
+    }
+
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPC] END" << std::endl;
+    return success;
   }
-  else
+  catch(const std::exception& e)
   {
-    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPC] ERROR: Failed to call service!" << std::endl;
     std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPC] drlActionId: " << drlActionId << std::endl;
     std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPC] drlActionContinuous: " << std::endl;
     for (size_t i = 0; i < drlActionContinuous.size(); i++)
     {
       std::cout << i << " -> " << drlActionContinuous[i] << std::endl;
     }
-    
     std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPC] drlActionTimeHorizon: " << drlActionTimeHorizon << std::endl;
-    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPC] ERROR: Failed to call service!" << std::endl;
-    //ROS_ERROR("[MobileManipulatorInterface::setContinuousActionDRLMPC] ERROR: Failed to call service!");
-    success = false;
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPC] ERROR: CATCHUP! " << e.what() << std::endl;
+    return false;
   }
-
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPC] END" << std::endl;
-  return success;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1566,34 +1612,46 @@ bool MobileManipulatorInterface::setContinuousActionDRLMPCSrv(ocs2_msgs::setCont
 {
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] START" << std::endl;
 
-  drlActionId_ = req.id;
-  drlActionContinuous_ = req.action;
-  drlActionTimeHorizon_ = req.time_horizon;
-  //drlActionLastStepFlag_ = req.last_step_flag;
-  //drlActionLastStepDistanceThreshold_ = req.last_step_distance_threshold;
-  res.success = true;
-
-  /*
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionId_: " << drlActionId_ << std::endl;
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionContinuous_:" << std::endl;
-  for (size_t i = 0; i < drlActionContinuous_.size(); i++)
+  try
   {
-    std::cout << drlActionContinuous_[i] << std::endl;
+    drlActionId_ = req.id;
+    drlActionContinuous_ = req.action;
+    drlActionTimeHorizon_ = req.time_horizon;
+    //drlActionLastStepFlag_ = req.last_step_flag;
+    //drlActionLastStepDistanceThreshold_ = req.last_step_distance_threshold;
+    res.success = true;
+
+    /*
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionId_: " << drlActionId_ << std::endl;
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionContinuous_:" << std::endl;
+    for (size_t i = 0; i < drlActionContinuous_.size(); i++)
+    {
+      std::cout << drlActionContinuous_[i] << std::endl;
+    }
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionTimeHorizon_: " << drlActionTimeHorizon_ << std::endl;
+    */
+
+    mapContinuousActionDRL(false);
+
+    mpcProblemReadyFlag_ = false;
+    newMPCProblemFlag_ = true;
+    stopMPCFlag_ = true;
+
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] END" << std::endl;
+    return true;
   }
-  */
-  
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionTimeHorizon_: " << drlActionTimeHorizon_ << std::endl;
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionLastStepFlag_: " << drlActionLastStepFlag_ << std::endl;
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionLastStepDistanceThreshold_: " << drlActionLastStepDistanceThreshold_ << std::endl;
-
-  mapContinuousActionDRL(false);
-
-  mpcProblemReadyFlag_ = false;
-  newMPCProblemFlag_ = true;
-  stopMPCFlag_ = true;
-
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] END" << std::endl;
-  return true;
+  catch(const std::exception& e)
+  {
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionId_: " << drlActionId_ << std::endl;
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionContinuous_:" << std::endl;
+    for (size_t i = 0; i < drlActionContinuous_.size(); i++)
+    {
+      std::cout << drlActionContinuous_[i] << std::endl;
+    }
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] drlActionTimeHorizon_: " << drlActionTimeHorizon_ << std::endl;
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMPCSrv] ERROR: CATCHUP! " << e.what() << std::endl;
+    return false;
+  }
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1603,118 +1661,47 @@ bool MobileManipulatorInterface::setContinuousActionDRLMRTSrv(ocs2_msgs::setCont
                                                               ocs2_msgs::setContinuousActionDRL::Response &res)
 {
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] START" << std::endl;
-  drlActionId_ = req.id;
-  drlActionContinuous_ = req.action;
-  drlActionTimeHorizon_ = req.time_horizon;
-  //drlActionLastStepFlag_ = req.last_step_flag;
-  //drlActionLastStepDistanceThreshold_ = req.last_step_distance_threshold;
-  res.success = true;
 
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionId_: " << drlActionId_ << std::endl;
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionContinuous_:" << std::endl;
-  /*
-  for (size_t i = 0; i < drlActionContinuous_.size(); i++)
-  {
-    std::cout << drlActionContinuous_[i] << std::endl;
+  try
+  {  
+    drlActionId_ = req.id;
+    drlActionContinuous_ = req.action;
+    drlActionTimeHorizon_ = req.time_horizon;
+    //drlActionLastStepFlag_ = req.last_step_flag;
+    //drlActionLastStepDistanceThreshold_ = req.last_step_distance_threshold;
+    res.success = true;
+
+    /*
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionId_: " << drlActionId_ << std::endl;
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionContinuous_:" << std::endl;
+    for (size_t i = 0; i < drlActionContinuous_.size(); i++)
+    {
+      std::cout << drlActionContinuous_[i] << std::endl;
+    }
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionTimeHorizon_: " << drlActionTimeHorizon_ << std::endl;
+    */
+
+    mapContinuousActionDRL(true);
+
+    mpcProblemReadyFlag_ = false;
+    newMPCProblemFlag_ = true;
+
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] END" << std::endl;
+    return true;
   }
-  */
-  
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionTimeHorizon_: " << drlActionTimeHorizon_ << std::endl;
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionLastStepFlag_: " << drlActionLastStepFlag_ << std::endl;
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionLastStepDistanceThreshold_: " << drlActionLastStepDistanceThreshold_ << std::endl;
-
-  mapContinuousActionDRL(true);
-
-  mpcProblemReadyFlag_ = false;
-  newMPCProblemFlag_ = true;
-
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] END" << std::endl;
-  return true;
+  catch(const std::exception& e)
+  {
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionId_: " << drlActionId_ << std::endl;
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionContinuous_:" << std::endl;
+    for (size_t i = 0; i < drlActionContinuous_.size(); i++)
+    {
+      std::cout << drlActionContinuous_[i] << std::endl;
+    }
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] drlActionTimeHorizon_: " << drlActionTimeHorizon_ << std::endl;
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] ERROR: CATCHUP! " << e.what() << std::endl;
+    return false;
+  }
 }
-
-/*
-bool MobileManipulatorInterface::calculateMPCTrajectorySrv(ocs2_msgs::calculateMPCTrajectory::Request &req, 
-                                                           ocs2_msgs::calculateMPCTrajectory::Response &res)
-{
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectorySrv] START" << std::endl;
-
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectorySrv] DEBUG_INF" << std::endl;
-  while(1);
-
-  bool useCurrentPolicyFlag = req.use_current_policy_flag;
-
-  double dt = req.dt;
-  double time = req.time;
-  
-  std::vector<double> state = req.state;
-  std::vector<double> full_state = req.full_state;
-  std::vector<double> input = req.input;
-  
-  vector_t obs_input;
-  SystemObservation currentObservation;
-  currentObservation.time = time;
-
-  obs_input.resize(input.size());
-  for (size_t i = 0; i < input.size(); i++)
-  {
-    obs_input[i] = input[i];
-  }
-
-  currentObservation.state.resize(state.size());
-  for (size_t i = 0; i < state.size(); i++)
-  {
-    currentObservation.state[i] = state[i];
-  }
-
-  currentObservation.full_state.resize(full_state.size());
-  for (size_t i = 0; i < full_state.size(); i++)
-  {
-    currentObservation.full_state[i] = full_state[i];
-  }
-  
-  currentObservation.input.resize(input.size());
-  for (size_t i = 0; i < input.size(); i++)
-  {
-    currentObservation.input[i] = input[i];
-  }
-
-  tf2::Quaternion quat;
-  quat.setRPY(req.target[3], req.target[4], req.target[5]);
-
-  vector_t currentTarget(7);
-  //currentTarget << 2.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
-  currentTarget << req.target[0], req.target[1], req.target[2], quat.x(), quat.y(), quat.z(), quat.w();
-
-  const TargetTrajectories targetTrajectories({0}, {currentTarget}, {obs_input});
-  referenceManagerPtr_->setTargetTrajectories(std::move(targetTrajectories));
-
-  /// NUA TODO: SET THE PROBLEM IF NECESSARY!
-  bool setMPCProblemFlag = req.mpc_problem_flag;
-  
-  std::vector<double> cmd;
-  bool success = false;
-
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectorySrv] useCurrentPolicyFlag: " << useCurrentPolicyFlag << std::endl;
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectorySrv] time: " << currentObservation.time << std::endl;
-
-  // CALL THE MRT SERVICE
-  success = computeCommandClient(useCurrentPolicyFlag, 
-                                 dt,
-                                 time,
-                                 state,
-                                 full_state,
-                                 input,
-                                 currentTarget,
-                                 setMPCProblemFlag,
-                                 cmd);
-
-  res.cmd = cmd;
-  res.success = success;
-
-  std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::calculateMPCTrajectorySrv] END" << std::endl;
-  return res.success;
-}
-*/
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -2600,7 +2587,7 @@ bool MobileManipulatorInterface::setMPCActionResult(int drlActionResult)
 //-------------------------------------------------------------------------------------------------------
 void MobileManipulatorInterface::readDiscreteTrajectoryData(vector<std::string> dataPath, vector<geometry_msgs::Pose>& discreteTrajectoryData)
 {
-  std::cout << "[MobileManipulatorInterface::readDiscreteTrajectoryData] START" << std::endl;
+  //std::cout << "[MobileManipulatorInterface::readDiscreteTrajectoryData] START" << std::endl;
 
   discreteTrajectoryData.clear();
 
@@ -2614,7 +2601,7 @@ void MobileManipulatorInterface::readDiscreteTrajectoryData(vector<std::string> 
   for (size_t i = 0; i < dataPath.size(); i++)
   {
     std::string file_path = ws_path + dataPath[i] + "sampling_data.csv";
-    std::cout << "[MobileManipulatorInterface::readDiscreteTrajectoryData] file_path: " << file_path << std::endl;
+    //std::cout << "[MobileManipulatorInterface::readDiscreteTrajectoryData] file_path: " << file_path << std::endl;
     ifstream tdata_stream(file_path);
 
     if (tdata_stream.is_open())
@@ -2664,8 +2651,8 @@ void MobileManipulatorInterface::readDiscreteTrajectoryData(vector<std::string> 
     }
   }
 
-  std::cout << "[MobileManipulatorInterface::readDiscreteTrajectoryData] discreteTrajectoryData size: " << discreteTrajectoryData.size() << std::endl;
-  std::cout << "[MobileManipulatorInterface::readDiscreteTrajectoryData] END" << std::endl;
+  //std::cout << "[MobileManipulatorInterface::readDiscreteTrajectoryData] discreteTrajectoryData size: " << discreteTrajectoryData.size() << std::endl;
+  //std::cout << "[MobileManipulatorInterface::readDiscreteTrajectoryData] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
