@@ -2899,6 +2899,7 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
 
     if (targetPos.z() < -0.1)
     {
+      std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] targetName: " << targetName << std::endl;
       std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] WTF z: " << targetPos.z() << std::endl;
       targetPos.z() = 0.0;
 
