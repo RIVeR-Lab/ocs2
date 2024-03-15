@@ -2900,7 +2900,12 @@ bool TargetTrajectoriesGazebo::setTargetDRLSrv(ocs2_msgs::setTask::Request &req,
     if (targetPos.z() < -0.1)
     {
       std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] targetName: " << targetName << std::endl;
-      std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] WTF z: " << targetPos.z() << std::endl;
+      std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] req.targetPose x: " << req.targetPose.position.x << std::endl;
+      std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] req.targetPose y: " << req.targetPose.position.y << std::endl;
+      std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] req.targetPose z: " << req.targetPose.position.z << std::endl;
+      std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] WTF x wrt WORLD: " << targetPos.x() << std::endl << std::endl;
+      std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] WTF y wrt WORLD: " << targetPos.y() << std::endl << std::endl;
+      std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] WTF z wrt WORLD: " << targetPos.z() << std::endl << std::endl;
       targetPos.z() = 0.0;
 
       //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTargetDRLSrv] DEBUG_INF" << std::endl;

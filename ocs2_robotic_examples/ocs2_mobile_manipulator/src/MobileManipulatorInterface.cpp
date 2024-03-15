@@ -1663,7 +1663,7 @@ bool MobileManipulatorInterface::setContinuousActionDRLMRTSrv(ocs2_msgs::setCont
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setContinuousActionDRLMRTSrv] START" << std::endl;
 
   try
-  {  
+  {
     drlActionId_ = req.id;
     drlActionContinuous_ = req.action;
     drlActionTimeHorizon_ = req.time_horizon;
@@ -2484,7 +2484,7 @@ void MobileManipulatorInterface::mapContinuousActionDRL(bool setTargetDRLFlag)
     double target_yaw;
 
     double targetProb = drlActionContinuous[1];
-    if (targetProb < 0.5)
+    if (targetProb <= 0.5)
     {
       //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapContinuousActionDRL] TARGET IS DRL TARGET!" << std::endl;
       
