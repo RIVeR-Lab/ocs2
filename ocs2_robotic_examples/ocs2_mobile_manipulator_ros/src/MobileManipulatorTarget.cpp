@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.02.23
+// LAST UPDATE: 2024.03.15
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -54,10 +54,10 @@ int main(int argc, char* argv[])
   // INITIALIZE AND SET PARAMETERS
   std::string ns, topicPrefix, taskFile, 
               world_frame_name, robot_frame_name, goal_frame_name, ee_frame_name, grasp_frame_name, drop_frame_name, 
-              gz_model_msg_name, robot_name, drop_target_name;
+              gz_model_msg_name, robot_name, drop_target_name, drl_manual_target_msg_name;
   std::vector<std::string> name_pkgs_ign, name_pkgs_man, scan_data_path_pkgs_ign, scan_data_path_pkgs_man, target_names;
   double map_resolution, dummy_goal_pos_x, dummy_goal_pos_y, dummy_goal_pos_z, dummy_goal_ori_r, dummy_goal_ori_p, dummy_goal_ori_y;
-  bool drlFlag, printOutFlag = false;
+  bool drlFlag, drlManualTargetFlag, printOutFlag = false;
 
   robot_name = "mobiman";
   target_names = {"red_cube"};
@@ -86,6 +86,13 @@ int main(int argc, char* argv[])
   pnh.param<double>("/dummy_goal_ori_p", dummy_goal_ori_p, 0.0);
   pnh.param<double>("/dummy_goal_ori_y", dummy_goal_ori_y, 0.0);
   pnh.param<bool>("/flag_drl", drlFlag, false);
+  pnh.param<std::string>("/manual_target_msg_name", drl_manual_target_msg_name, "");
+
+  drlManualTargetFlag = false;
+  if (drl_manual_target_msg_name != "")
+  {
+    drlManualTargetFlag = true;
+  }
 
   // read the task file
   boost::property_tree::ptree pt;
@@ -149,6 +156,11 @@ int main(int argc, char* argv[])
   {
     cout << "[MobileManipulatorTarget::main] DRL MODE IS ON!" << endl;
     gu.setTaskMode(1);
+
+    if (drlManualTargetFlag)
+    {
+      gu.initializeInteractiveMarkerTargetDRL();
+    }
   }
   else
   {

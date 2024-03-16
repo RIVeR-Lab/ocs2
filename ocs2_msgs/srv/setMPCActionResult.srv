@@ -8,10 +8,15 @@
 # 5: Time-horizon reached
 int8 action_result
 
+int64 total_timestep
+
 # 0: baseMotion
 # 1: armMotion
 # 2: wholeBodyMotion
 int8 model_mode
+
+# Sum of norms of center-of-mass error vector
+float64 com_error_norm_total
 
 ---
 ## Response

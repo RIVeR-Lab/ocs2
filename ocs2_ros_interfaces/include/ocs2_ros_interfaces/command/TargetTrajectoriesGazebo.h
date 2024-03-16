@@ -101,6 +101,9 @@ class TargetTrajectoriesGazebo final
     void launchNode(ros::NodeHandle& nodeHandle);
 
     // DESCRIPTION: TODO...
+    void updateDummyGoal(const Eigen::Vector3d goalPos, const Eigen::Quaterniond goalOri);
+
+    // DESCRIPTION: TODO...
     void updateDummyGoal(double x, double y, double z, double roll, double pitch, double yaw);
 
     // DESCRIPTION: TODO...
@@ -131,6 +134,9 @@ class TargetTrajectoriesGazebo final
     void initializeInteractiveMarkerModelMode();
 
     // DESCRIPTION: TODO...
+    void initializeInteractiveMarkerTargetDRL();
+
+    // DESCRIPTION: TODO...
     void publishGoalVisu();
 
     // DESCRIPTION: TODO...
@@ -138,6 +144,9 @@ class TargetTrajectoriesGazebo final
 
     // DESCRIPTION: TODO...
     void publishTargetVisu();
+
+    // DESCRIPTION: TODO...
+    void publishDummyGoalVisu(std::string frame_name="");
 
     // DESCRIPTION: TODO...
     void publishGraspFrame();
@@ -227,7 +236,10 @@ class TargetTrajectoriesGazebo final
     void fillTargetVisu();
 
     // DESCRIPTION: TODO...
-    visualization_msgs::InteractiveMarker createInteractiveMarkerTarget() const;
+    void fillDummyGoalVisu(std::string frame_name="");
+
+    // DESCRIPTION: TODO...
+    visualization_msgs::InteractiveMarker createInteractiveMarkerTarget(std::string markerName="Target") const;
 
     // DESCRIPTION: TODO...
     visualization_msgs::InteractiveMarker createInteractiveMarkerAutoTarget() const;
@@ -243,6 +255,9 @@ class TargetTrajectoriesGazebo final
 
     // DESCRIPTION: TODO...
     void processFeedbackTarget(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
+
+    // DESCRIPTION: TODO...
+    void processFeedbackTargetDRL(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
 
     // DESCRIPTION: TODO...
     void processFeedbackAutoTarget(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
@@ -307,6 +322,7 @@ class TargetTrajectoriesGazebo final
     std::string modelModeMsgName_;
     std::string goalVisuMsgName_;
     std::string targetVisuMsgName_;
+    std::string dummyGoalVisuMsgName_;
     std::string setTaskSrvName_;
     std::string setPickedFlagSrvName_;
     std::string setSystemObservationSrvName_;
@@ -337,8 +353,12 @@ class TargetTrajectoriesGazebo final
     ros::Publisher goalMarkerArrayPublisher_;
     mutable std::mutex goalMarkerArrayMutex_;
 
+    bool flagDummyGoal = false;
     Eigen::Vector3d dummyGoalPosition_;
     Eigen::Quaterniond dummyGoalOrientation_;
+    visualization_msgs::MarkerArray dummyGoalMarkerArray_;
+    ros::Publisher dummyGoalMarkerArrayPublisher_;
+    mutable std::mutex dummyGoalMarkerArrayMutex_;
 
     bool targetReadyFlag_ = false;
     std::string currentTargetName_;
@@ -399,10 +419,13 @@ class TargetTrajectoriesGazebo final
     interactive_markers::MenuHandler menuHandlerAutoTarget_;
     interactive_markers::MenuHandler menuHandlerDropTarget_;
     interactive_markers::MenuHandler menuHandlerModelMode_;
+    interactive_markers::MenuHandler menuHandlerTargetDRL_;
+
     interactive_markers::InteractiveMarkerServer targetServer_;
     interactive_markers::InteractiveMarkerServer autoTargetServer_;
     interactive_markers::InteractiveMarkerServer dropTargetServer_;
     interactive_markers::InteractiveMarkerServer modelModeServer_;
+    interactive_markers::InteractiveMarkerServer targetDRLServer_;
 
     ros::Subscriber observationSubscriber_;
     ros::Subscriber gazeboModelStatesSubscriber_;

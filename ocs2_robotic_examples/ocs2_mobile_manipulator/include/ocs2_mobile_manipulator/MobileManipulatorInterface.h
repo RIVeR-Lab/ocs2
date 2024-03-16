@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.20
+// LAST UPDATE: 2024.03.15
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -383,7 +383,7 @@ class MobileManipulatorInterface final : public RobotInterface
     void mapContinuousActionDRL(bool setTargetDRLFlag=true);
 
     // DESCRIPTION: TODO...
-    bool setMPCActionResult(int drlActionResult);
+    bool setMPCActionResult(int drlActionResult, int timestep, double comErrorNormTotal);
 
     // DESCRIPTION: TODO...
     void readDiscreteTrajectoryData(vector<std::string> dataPath, vector<geometry_msgs::Pose>& discreteTrajectoryData);

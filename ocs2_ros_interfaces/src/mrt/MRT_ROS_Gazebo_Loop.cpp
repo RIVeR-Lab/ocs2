@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.02.23
+// LAST UPDATE: 2024.03.15
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -105,6 +105,7 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   setMRTReadySrvName_ = "set_mrt_ready";
   setTaskSrvName_ = "set_task";
   mpcDataMsgName_ = "mpc_data";
+  comMsgName_ = "mobiman_com";
 
   //currentStateDim_ = robotModelInfo_.modeStateDim;
 
@@ -121,6 +122,7 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
     setMRTReadySrvName_ = ns_ + "/" + setMRTReadySrvName_;
     setTaskSrvName_ = ns_ + "/" + setTaskSrvName_;
     mpcDataMsgName_ = ns_ + "/" + mpcDataMsgName_;
+    comMsgName_ = ns_ + "/" + comMsgName_;
   }
 
   dataCollectionFlag_ = (dataPathReL_ == "") ? false : true;
@@ -153,6 +155,7 @@ MRT_ROS_Gazebo_Loop::MRT_ROS_Gazebo_Loop(ros::NodeHandle& nh,
   extCollisionInfoBaseSub_ = nh.subscribe(extCollisionInfoBaseMsgName_, 5, &MRT_ROS_Gazebo_Loop::extCollisionInfoBaseCallback, this);
   extCollisionInfoArmSub_ = nh.subscribe(extCollisionInfoArmMsgName_, 5, &MRT_ROS_Gazebo_Loop::extCollisionInfoArmCallback, this);
   pointsOnRobotSub_ = nh.subscribe(pointsOnRobotMsgName_, 5, &MRT_ROS_Gazebo_Loop::pointsOnRobotCallback, this);
+  comSub_ = nh.subscribe(comMsgName_, 5, &MRT_ROS_Gazebo_Loop::comCallback, this);
   //goalSub_ = nh.subscribe(goalMsgName_, 5, &MRT_ROS_Gazebo_Loop::goalCallback, this);
 
   // Timers
@@ -613,11 +616,14 @@ bool MRT_ROS_Gazebo_Loop::mrtLoop2(size_t modelModeInt)
     {
       drlActionResult_ = checkTaskStatus(false);
     }
+
+    updateCOM();
     
     //std::cout << "[" << ns_ <<  "][MRT_ROS_Gazebo_Loop::mrtLoop2] BEFORE writeData" << std::endl;
     //writeData();
     
     time_ += dt_;
+    total_timestep_++;
 
     ros::spinOnce();
     //mrt_.spinMRT();
@@ -632,6 +638,14 @@ bool MRT_ROS_Gazebo_Loop::mrtLoop2(size_t modelModeInt)
     std::cout << "[" << ns_ <<  "][MRT_ROS_Gazebo_Loop::mrtLoop2] END true" << std::endl;
     return true;
   }
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+int MRT_ROS_Gazebo_Loop::getTotalTimestep()
+{
+  return total_timestep_;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -664,6 +678,22 @@ bool MRT_ROS_Gazebo_Loop::getTargetReceivedFlag()
 int MRT_ROS_Gazebo_Loop::getDRLActionResult()
 {
   return drlActionResult_;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+double MRT_ROS_Gazebo_Loop::getCOMErrorNormTotal()
+{
+  return comErrorNormTotal_;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::setTotalTimestep(int total_timestep)
+{
+  total_timestep_ = total_timestep;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -770,6 +800,14 @@ void MRT_ROS_Gazebo_Loop::setDRLActionLastStepDistanceThreshold(double drlAction
 void MRT_ROS_Gazebo_Loop::setTimerStartedFlag(bool timerStartedFlag)
 {
   timerStartedFlag_ = timerStartedFlag;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::setCOMErrorNormTotal(double comErrorNormTotal)
+{
+  comErrorNormTotal_ = comErrorNormTotal;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1037,7 +1075,7 @@ void MRT_ROS_Gazebo_Loop::extCollisionInfoBaseCallback(const ocs2_msgs::collisio
 void MRT_ROS_Gazebo_Loop::extCollisionInfoArmCallback(const ocs2_msgs::collision_info::ConstPtr& msg)
 {
   extCollisionInfoArmMsg_ = *msg;
-  initFlagExtCollisionArm_  = true;
+  initFlagExtCollisionArm_ = true;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1046,7 +1084,20 @@ void MRT_ROS_Gazebo_Loop::extCollisionInfoArmCallback(const ocs2_msgs::collision
 void MRT_ROS_Gazebo_Loop::pointsOnRobotCallback(const visualization_msgs::MarkerArray::ConstPtr& msg)
 {
   pointsOnRobotMsg_ = *msg;
-  initFlagPointsOnRobot_  = true;
+  initFlagPointsOnRobot_ = true;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::comCallback(const visualization_msgs::MarkerArray::ConstPtr& msg)
+{
+  //std::cout << "[" << ns_ <<  "][MRT_ROS_Gazebo_Loop::comCallback] START " << std::endl;
+
+  comMsg_ = *msg;
+  initFlagCOM_ = true;
+  
+  //std::cout << "[" << ns_ <<  "][MRT_ROS_Gazebo_Loop::comCallback] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2382,6 +2433,37 @@ int MRT_ROS_Gazebo_Loop::checkTaskStatus(bool enableShutDownFlag)
   }
 
   return -1;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void MRT_ROS_Gazebo_Loop::updateCOM()
+{
+  //std::cout << "[" << ns_ <<  "][MRT_ROS_Gazebo_Loop::updateCOM] START << std::endl;
+
+  visualization_msgs::MarkerArray comMsg = comMsg_;
+  double comErrorNorm = 0;
+
+  vector_t comTarget(3);
+  comTarget << 0.0, 0.0, 0.18;
+
+  if (comMsg.markers.size() > 0)
+  {
+    vector_t comError(3);
+    comError << abs(comTarget.x() - comMsg.markers[1].pose.position.x), 
+                abs(comTarget.y() - comMsg.markers[1].pose.position.y), 
+                abs(comTarget.z() - comMsg.markers[1].pose.position.z);
+
+    comErrorNorm = comError.norm();
+  }
+
+  comErrorNormTotal_ += comErrorNorm;
+
+  //std::cout << "[" << ns_ <<  "][MRT_ROS_Gazebo_Loop::updateCOM] comErrorNorm: " << comErrorNorm << std::endl;
+  //std::cout << "[" << ns_ <<  "][MRT_ROS_Gazebo_Loop::updateCOM] comErrorNormTotal_: " << comErrorNormTotal_ << std::endl;
+
+  //std::cout << "[" << ns_ <<  "][MRT_ROS_Gazebo_Loop::updateCOM] END << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------

@@ -27,7 +27,8 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(const std::string& ns,
   : targetServer_("target_marker"), 
     autoTargetServer_("auto_target_marker"), 
     dropTargetServer_("drop_target_marker"), 
-    modelModeServer_("model_mode_marker", "", false), 
+    modelModeServer_("model_mode_marker", "", false),
+    targetDRLServer_("target_drl_marker"),  
     ns_(ns),
     gazeboModelMsgName_(gazeboModelMsgName),
     robotName_(robotName), 
@@ -67,6 +68,7 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(const std::string& ns,
   modelModeMsgName_ = "model_mode";
   goalVisuMsgName_ = "goal_visu";
   targetVisuMsgName_ = "target_visu";
+  dummyGoalVisuMsgName_ = "dummy_goal_visu";
   setTaskSrvName_ = "set_task";
   setPickedFlagSrvName_ = "set_picked_flag";
   setSystemObservationSrvName_ = "set_system_observation";
@@ -89,6 +91,7 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(const std::string& ns,
     modelModeMsgName_ = ns + "/" + modelModeMsgName_;
     goalVisuMsgName_ = ns + "/" + goalVisuMsgName_;
     targetVisuMsgName_ = ns + "/" + targetVisuMsgName_;
+    dummyGoalVisuMsgName_ = ns + "/" + dummyGoalVisuMsgName_;
     setTaskSrvName_ = ns + "/" + setTaskSrvName_;
     setPickedFlagSrvName_ = ns + "/" + setPickedFlagSrvName_;
     setSystemObservationSrvName_ = ns + "/" + setSystemObservationSrvName_;
@@ -129,7 +132,8 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(const TargetTrajectoriesGazeb
   : targetServer_("target_marker"), 
     autoTargetServer_("auto_target_marker"), 
     dropTargetServer_("drop_target_marker"), 
-    modelModeServer_("model_mode_marker", "", false)
+    modelModeServer_("model_mode_marker", "", false),
+    targetDRLServer_("target_drl_marker")
 {
   initCallbackFlag_ = ttg.initCallbackFlag_;
   worldFrameName_ = ttg.worldFrameName_;
@@ -260,9 +264,9 @@ void TargetTrajectoriesGazebo::setRobotFrameName(std::string robotFrameName)
   robotFrameName_ = robotFrameName;
   if (ns_ != "/")
   {
-    robotFrameName_ = ns_ + "/" + robotFrameName_;
+    robotFrameName_ = ns_.substr(1) + "/" + robotFrameName_;
   }
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setRobotFrameName] robotFrameName_: " << robotFrameName_ << std::endl;
+  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setRobotFrameName] robotFrameName_: " << robotFrameName_ << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -273,9 +277,9 @@ void TargetTrajectoriesGazebo::setGoalFrameName(std::string goalFrameName)
   goalFrameName_ = goalFrameName;
   if (ns_ != "/")
   {
-    goalFrameName_ = ns_ + "/" + goalFrameName_;
+    goalFrameName_ = ns_.substr(1) + "/" + goalFrameName_;
   }
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] goalFrameName_: " << goalFrameName_ << std::endl;
+  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] goalFrameName_: " << goalFrameName_ << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -286,9 +290,9 @@ void TargetTrajectoriesGazebo::setEEFrameName(std::string eeFrameName)
   eeFrameName_ = eeFrameName;
   if (ns_ != "/")
   {
-    eeFrameName_ = ns_ + "/" + eeFrameName_;
+    eeFrameName_ = ns_.substr(1) + "/" + eeFrameName_;
   }
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] eeFrameName_: " << eeFrameName_ << std::endl;
+  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] eeFrameName_: " << eeFrameName_ << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -299,9 +303,9 @@ void TargetTrajectoriesGazebo::setGraspFrameName(std::string graspFrameName)
   graspFrameName_ = graspFrameName;
   if (ns_ != "/")
   {
-    graspFrameName_ = ns_ + "/" + graspFrameName_;
+    graspFrameName_ = ns_.substr(1) + "/" + graspFrameName_;
   }
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setGraspFrameName] graspFrameName_: " << graspFrameName_ << std::endl;
+  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setGraspFrameName] graspFrameName_: " << graspFrameName_ << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -312,9 +316,9 @@ void TargetTrajectoriesGazebo::setDropFrameName(std::string dropFrameName)
   dropFrameName_ = dropFrameName;
   if (ns_ != "/")
   {
-    dropFrameName_ = ns_ + "/" + dropFrameName_;
+    dropFrameName_ = ns_.substr(1) + "/" + dropFrameName_;
   }
-  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setDropFrameName] dropFrameName_: " << dropFrameName_ << std::endl;
+  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setDropFrameName] dropFrameName_: " << dropFrameName_ << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -350,10 +354,13 @@ void TargetTrajectoriesGazebo::launchNode(ros::NodeHandle& nodeHandle)
 
   /// Interactive Marker
   // Create an interactive marker for user defined target
-  menuHandlerTarget_.insert("Manual target", boost::bind(&TargetTrajectoriesGazebo::processFeedbackTarget, this, _1));
+  menuHandlerTarget_.insert("Manual Target", boost::bind(&TargetTrajectoriesGazebo::processFeedbackTarget, this, _1));
 
   // Create an interactive marker for auto target
-  menuHandlerAutoTarget_.insert("Auto target", boost::bind(&TargetTrajectoriesGazebo::processFeedbackAutoTarget, this, _1));
+  menuHandlerAutoTarget_.insert("Auto Target", boost::bind(&TargetTrajectoriesGazebo::processFeedbackAutoTarget, this, _1));
+
+  // Create an interactive marker for user defined target
+  menuHandlerTargetDRL_.insert("Manual DRL Target", boost::bind(&TargetTrajectoriesGazebo::processFeedbackTargetDRL, this, _1));
 
   /// Subscribers
   auto observationCallback = [this](const ocs2_msgs::mpc_observation::ConstPtr& msg) 
@@ -402,6 +409,10 @@ void TargetTrajectoriesGazebo::launchNode(ros::NodeHandle& nodeHandle)
   targetMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(targetVisuMsgName_, 20);
   //mobimanGoalObsPublisher_ = nodeHandle.advertise<ocs2_msgs::MobimanGoalObservation>(mobimanGoalObsMsgName_, 10);
 
+  if (printOutFlag_)
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::launchNode] dummyGoalVisuMsgName_: " << dummyGoalVisuMsgName_ << std::endl;
+  dummyGoalMarkerArrayPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>(dummyGoalVisuMsgName_, 10);
+
   /// Clients
   //setTaskModeClient_ = nodeHandle.serviceClient<ocs2_msgs::setInt>("/set_task_mode");
 
@@ -427,6 +438,28 @@ void TargetTrajectoriesGazebo::launchNode(ros::NodeHandle& nodeHandle)
 
   if (printOutFlag_)
     std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::launchNode] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::updateDummyGoal(const Eigen::Vector3d goalPos, const Eigen::Quaterniond goalOri)
+{
+  if (printOutFlag_)
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateDummyGoal(2)] START" << std::endl;
+
+  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateGoal(2)] DEBUG INF" << std::endl;
+  //while(1);
+
+  dummyGoalPosition_ = goalPos;
+  dummyGoalOrientation_ = goalOri;
+
+  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateDummyGoal(2)] robotFrameName_: " << robotFrameName_ << std::endl;
+  fillDummyGoalVisu(robotFrameName_);
+  //publishTargetVisu();
+  
+  if (printOutFlag_)
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateDummyGoal(2)] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -520,6 +553,32 @@ void TargetTrajectoriesGazebo::initializeInteractiveMarkerTarget()
 
   // 'commit' changes and send to all clients
   targetServer_.applyChanges();
+
+  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::initializeInteractiveMarkerTarget] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::initializeInteractiveMarkerTargetDRL()
+{
+  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::initializeInteractiveMarkerTarget] START" << std::endl;
+
+  flagDummyGoal = true;
+
+  //while (!initCallbackFlag_);
+  
+  // Create an interactive markers
+  auto targetInteractiveMarker = createInteractiveMarkerTarget();
+
+  // Add the interactive marker to our collection &
+  // Tell the server to call processFeedback() when feedback arrives for it
+  targetDRLServer_.clear();
+  targetDRLServer_.insert(targetInteractiveMarker);
+  menuHandlerTargetDRL_.apply(targetDRLServer_, targetInteractiveMarker.name);
+
+  // 'commit' changes and send to all clients
+  targetDRLServer_.applyChanges();
 
   //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::initializeInteractiveMarkerTarget] END" << std::endl;
 }
@@ -1754,6 +1813,83 @@ void TargetTrajectoriesGazebo::fillTargetVisu()
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::fillDummyGoalVisu(std::string frame_name)
+{
+  try
+  {
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillDummyGoalVisu] START" << std::endl;
+
+    visualization_msgs::MarkerArray goalMarkerArray;
+
+    std::string fn = worldFrameName_;
+    
+
+    /// NUA TODO: User should able to add more goal!
+    int n_goal = 1;
+
+    for(int i = 0; i < n_goal; i++)
+    {
+      Eigen::Vector3d goalPosition = dummyGoalPosition_;
+      Eigen::Quaterniond goalOrientation = dummyGoalOrientation_;
+      geometry_msgs::Pose p_from;
+      p_from.position.x = goalPosition.x();
+      p_from.position.y = goalPosition.y();
+      p_from.position.z = goalPosition.z();
+      p_from.orientation.x = goalOrientation.x();
+      p_from.orientation.y = goalOrientation.y();
+      p_from.orientation.z = goalOrientation.z();
+      p_from.orientation.w = goalOrientation.w();
+      geometry_msgs::Pose p_to = p_from;
+      if (frame_name != "")
+      {
+        fn = frame_name;
+        transformPose(worldFrameName_, fn, p_from, p_to);
+      }
+      
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillDummyGoalVisu] fn: " << fn << std::endl;
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillDummyGoalVisu] p_to x: " << p_to.position.x << std::endl;
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillDummyGoalVisu] p_to y: " << p_to.position.y << std::endl;
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillDummyGoalVisu] p_to z: " << p_to.position.z << std::endl;
+
+      geometry_msgs::Point goal_point = p_to.position;
+      geometry_msgs::Point grasp_or_drop_point = goal_point;
+
+      visualization_msgs::Marker goal_visu;
+      goal_visu.ns = "dummy_goal_" + std::to_string(i);
+      goal_visu.id = i;
+      goal_visu.action = visualization_msgs::Marker::ADD;
+      goal_visu.type = visualization_msgs::Marker::ARROW;
+      goal_visu.points.push_back(grasp_or_drop_point);
+      goal_visu.points.push_back(goal_point);
+      goal_visu.pose = p_to;
+      goal_visu.scale.x = 0.04;
+      goal_visu.scale.y = 0.08;
+      goal_visu.scale.z = 0.08;
+      goal_visu.color.r = 0.5;
+      goal_visu.color.g = 0.0;
+      goal_visu.color.b = 0.5;
+      goal_visu.color.a = 0.5;
+      goal_visu.header.frame_id = fn;
+
+      goalMarkerArray.markers.push_back(goal_visu);
+    }
+
+    dummyGoalMarkerArray_ = goalMarkerArray;
+
+    //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillDummyGoalVisu] END" << std::endl;
+  }
+  catch(const std::exception& e)
+  {
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::fillDummyGoalVisu] ERROR: CATCHUP! " << e.what() << std::endl;
+    //const std::string msg = "[TargetTrajectoriesGazebo::fillDummyGoalVisu] ERROR: CATCHUP! \n";
+    //throw std::runtime_error(msg + e.what());
+    //std::cerr << e.what() << '\n';
+  }
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::publishGoalVisu()
 {
   //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::publishGoalVisu] START" << std::endl;
@@ -1817,8 +1953,40 @@ void TargetTrajectoriesGazebo::publishTargetVisu()
     //throw std::runtime_error(msg + e.what());
     //std::cerr << e.what() << '\n';
   }
-  
-  
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::publishDummyGoalVisu(std::string frame_name)
+{
+  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::publishDummyGoalVisu] START" << std::endl;
+
+  if (frame_name != "")
+  {
+    fillDummyGoalVisu(frame_name);
+  }
+
+  /// NUA TODO: User should able to add more target!
+  std::lock_guard<std::mutex> lock(dummyGoalMarkerArrayMutex_);
+  visualization_msgs::MarkerArray dummyGoalMarkerArray = dummyGoalMarkerArray_;
+  int target_size = dummyGoalMarkerArray.markers.size();
+
+  if (target_size > 0)
+  {
+    for(int i = 0; i < target_size; i++)
+    {
+      //goalMarkerArray.markers[i].header.seq++;
+      dummyGoalMarkerArray.markers[i].header.stamp = ros::Time::now();
+    }
+    dummyGoalMarkerArrayPublisher_.publish(dummyGoalMarkerArray);
+  }
+  //else
+  //{
+  //  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::publishDummyGoalVisu] NO GOAL!" << std::endl;
+  //}
+
+  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::publishDummyGoalVisu] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2088,6 +2256,21 @@ void TargetTrajectoriesGazebo::updateCallback(const ros::TimerEvent& event)
 
   try
   {
+    if (flagDummyGoal)
+    {
+      //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateCallback] BEFORE publishDummyGoalVisu" << std::endl;
+      publishDummyGoalVisu(robotFrameName_);
+    }
+  }
+  catch (const std::exception& e)
+  {
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateCallback] ERROR: publishDummyGoalVisu CATCHUP! " << e.what() << std::endl;
+    //const std::string msg = "[TargetTrajectoriesGazebo::updateCallback] ERROR: publishDummyGoalVisu CATCHUP! \n";
+    //throw std::runtime_error(msg + e.what());
+  }
+
+  try
+  {
     //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::updateCallback] BEFORE publishGoalFrame" << std::endl;
     publishGoalFrame();
   }
@@ -2181,12 +2364,12 @@ void TargetTrajectoriesGazebo::goalTrajectoryTimerCallback(const ros::TimerEvent
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
-visualization_msgs::InteractiveMarker TargetTrajectoriesGazebo::createInteractiveMarkerTarget() const 
+visualization_msgs::InteractiveMarker TargetTrajectoriesGazebo::createInteractiveMarkerTarget(std::string markerName) const 
 {
   visualization_msgs::InteractiveMarker interactiveMarker;
   interactiveMarker.header.frame_id = worldFrameName_;
   interactiveMarker.header.stamp = ros::Time::now();
-  interactiveMarker.name = "Target";
+  interactiveMarker.name = markerName;
   interactiveMarker.scale = 0.2;
   interactiveMarker.description = "Right click to send command";
   interactiveMarker.pose.position.x = 0.0;
@@ -2563,6 +2746,77 @@ void TargetTrajectoriesGazebo::processFeedbackTarget(const visualization_msgs::I
   target.orientation.z = orientation.z();
   target.orientation.w = orientation.w();
   bool taskModeSuccess = setTask(taskMode_, target);
+  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::processFeedbackTarget] taskModeSuccess: " << taskModeSuccess << std::endl;
+
+  //targetReadyFlag_ = true;
+
+  //ros::Duration(5.0).sleep();
+
+  // Get target trajectories
+  //auto targetTrajectories2 = goalPoseToTargetTrajectories_(position, orientation, observation);
+  //targetTrajectories2.taskMode = taskMode_;
+  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::processFeedbackTarget] DUBLO" << std::endl;
+
+  // Publish target trajectories
+  //targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories2);
+
+  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::processFeedbackTarget] END" << std::endl << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::processFeedbackTargetDRL(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback)
+{
+  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::processFeedbackTarget] START" << std::endl;
+
+  // Set task mode
+  //taskMode_ = 0;
+
+  // Set desired state trajectory
+  const Eigen::Vector3d position(feedback->pose.position.x, 
+                                 feedback->pose.position.y, 
+                                 feedback->pose.position.z);
+  const Eigen::Quaterniond orientation(feedback->pose.orientation.w, 
+                                       feedback->pose.orientation.x, 
+                                       feedback->pose.orientation.y,
+                                       feedback->pose.orientation.z);
+
+  //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::processFeedbackTarget] Waiting a new policy..." << std::endl;
+  //while(!policyReceivedFlag_){ros::spinOnce();}
+  //policyReceivedFlag_ = false;
+
+  // Get the latest observation
+  //SystemObservation observation;
+  //{
+  //  std::lock_guard<std::mutex> lock(latestObservationMutex_);
+  //  observation = latestObservation_;
+  //}
+
+  // Update target
+  //updateGoal(position, orientation);
+  //updateTarget(position, orientation);
+  updateDummyGoal(position, orientation);
+
+  //publishTargetTrajectories();
+
+  // Get target trajectories
+  //auto targetTrajectories = goalPoseToTargetTrajectories_(position, orientation, observation);
+  //targetTrajectories.taskMode = taskMode_;
+
+  // Publish target trajectories
+  //targetTrajectoriesPublisherPtr_->publishTargetTrajectories(targetTrajectories);
+
+  // Run service client to set task
+  //geometry_msgs::Pose target;
+  //target.position.x = position.x();
+  //target.position.y = position.y();
+  //target.position.z = position.z();
+  //target.orientation.x = orientation.x();
+  //target.orientation.y = orientation.y();
+  //target.orientation.z = orientation.z();
+  //target.orientation.w = orientation.w();
+  //bool taskModeSuccess = setTask(taskMode_, target);
   //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::processFeedbackTarget] taskModeSuccess: " << taskModeSuccess << std::endl;
 
   //targetReadyFlag_ = true;

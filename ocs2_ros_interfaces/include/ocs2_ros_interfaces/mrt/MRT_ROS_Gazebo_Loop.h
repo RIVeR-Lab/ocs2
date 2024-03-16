@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.02.23
+// LAST UPDATE: 2024.03.15
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -95,6 +95,9 @@ class MRT_ROS_Gazebo_Loop
     }
 
     /** NUA TODO: Add description */
+    int getTotalTimestep();
+
+    /** NUA TODO: Add description */
     vector_t getCurrentTarget();
 
     /** NUA TODO: Add description */
@@ -105,6 +108,12 @@ class MRT_ROS_Gazebo_Loop
 
     /** NUA TODO: Add description */
     int getDRLActionResult();
+
+    /** NUA TODO: Add description */
+    double getCOMErrorNormTotal();
+
+    /** NUA TODO: Add description */
+    void setTotalTimestep(int total_timestep);
 
     /** NUA TODO: Add description */
     void setRobotModelInfo(RobotModelInfo robotModelInfo);
@@ -144,6 +153,9 @@ class MRT_ROS_Gazebo_Loop
 
     /** NUA TODO: Add description */
     void setTimerStartedFlag(bool timerStartedFlag);
+
+    /** NUA TODO: Add description */
+    void setCOMErrorNormTotal(double comErrorNormTotal);
 
     /** NUA TODO: Add description */
     void startTimer();
@@ -218,6 +230,9 @@ class MRT_ROS_Gazebo_Loop
     void pointsOnRobotCallback(const visualization_msgs::MarkerArray::ConstPtr& msg);
 
     /** NUA TODO: Add description */
+    void comCallback(const visualization_msgs::MarkerArray::ConstPtr& msg);
+
+    /** NUA TODO: Add description */
     //void goalCallback(const visualization_msgs::MarkerArray::ConstPtr& msg);
 
     /** NUA TODO: Add description */
@@ -289,6 +304,9 @@ class MRT_ROS_Gazebo_Loop
     int checkTaskStatus(bool enableShutDownFlag=false);
 
     /** NUA TODO: Add description */
+    void updateCOM();
+
+    /** NUA TODO: Add description */
     const std::string getDateTime();
 
     /** NUA TODO: Add description */
@@ -342,6 +360,7 @@ class MRT_ROS_Gazebo_Loop
     MRT_ROS_Interface& mrt_;
     scalar_t dt_;
     scalar_t time_ = 0.0;
+    int total_timestep_ = 0;
 
     std::string currentTargetName_;
     std::string currentTargetAttachLinkName_;
@@ -396,6 +415,8 @@ class MRT_ROS_Gazebo_Loop
     //bool drlActionLastStepFlag_;
     //double drlActionLastStepDistanceThreshold_;
 
+    double comErrorNormTotal_;
+
     // 0: MPC/MRT Failure
     // 1: Collision
     // 2: Rollover
@@ -425,11 +446,13 @@ class MRT_ROS_Gazebo_Loop
     bool initFlagExtCollisionBase_ = false;
     bool initFlagExtCollisionArm_ = false;
     bool initFlagPointsOnRobot_ = false;
+    bool initFlagCOM_ = false;
 
     std::string selfCollisionInfoMsgName_;
     std::string extCollisionInfoBaseMsgName_;
     std::string extCollisionInfoArmMsgName_;
     std::string pointsOnRobotMsgName_;
+    std::string comMsgName_;
     std::string targetMsgName_;
 
     double selfCollisionRangeMin_ = 0.02;
@@ -442,6 +465,7 @@ class MRT_ROS_Gazebo_Loop
     ocs2_msgs::collision_info extCollisionInfoBaseMsg_;
     ocs2_msgs::collision_info extCollisionInfoArmMsg_;
     visualization_msgs::MarkerArray pointsOnRobotMsg_;
+    visualization_msgs::MarkerArray comMsg_;
     //visualization_msgs::MarkerArray goalMsg_;
     
     int mpc_cmd_seq = 0;
@@ -450,6 +474,7 @@ class MRT_ROS_Gazebo_Loop
     ros::Subscriber extCollisionInfoBaseSub_;
     ros::Subscriber extCollisionInfoArmSub_;
     ros::Subscriber pointsOnRobotSub_;
+    ros::Subscriber comSub_;
     //ros::Subscriber goalSub_;
     
     std::string armControlVelocityMsgName_;
