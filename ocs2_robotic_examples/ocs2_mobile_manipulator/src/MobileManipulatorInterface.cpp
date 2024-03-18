@@ -2298,6 +2298,12 @@ void MobileManipulatorInterface::mapDiscreteActionDRL(bool setTargetDRLFlag)
     int goalIndexMode1 = goalIndexMode0 + 1;
     int goalIndexMode2 = goalIndexMode0 + 2;
 
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] thresholdMode0: " << thresholdMode0 << std::endl;
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] thresholdMode2: " << thresholdMode2 << std::endl;
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] goalIndexMode0: " << goalIndexMode0 << std::endl;
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] goalIndexMode1: " << goalIndexMode1 << std::endl;
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mapDiscreteActionDRL] goalIndexMode2: " << goalIndexMode2 << std::endl;
+
     // Set Model Mode
     int modelModeInt;
     if ( (drlActionDiscrete >= 0 && drlActionDiscrete < thresholdMode0) || drlActionDiscrete == goalIndexMode0)
