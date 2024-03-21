@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.02.23
+// LAST UPDATE: 2024.03.21
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -89,10 +89,17 @@ void MPC_ROS_Interface::updateStatusModelModeMPC(bool statusModelModeMPC)
 {
   //std::cout << "[MPC_ROS_Interface::updateStatusModelModeMPC] START" << std::endl;
   
-  statusModelModeMPCMsg_.data = statusModelModeMPC;
-  statusModelModeMPCPublisher_.publish(statusModelModeMPCMsg_);
+  try
+  {
+    statusModelModeMPCMsg_.data = statusModelModeMPC;
+    statusModelModeMPCPublisher_.publish(statusModelModeMPCMsg_);
   
   //std::cout << "[MPC_ROS_Interface::updateStatusModelModeMPC] END" << std::endl;
+  }
+  catch(const std::exception& e)
+  {
+    std::cout << "[MPC_ROS_Interface::updateStatusModelModeMPC] ERROR: CATCHUP! " << e.what() << std::endl;
+  }
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -102,25 +109,32 @@ void MPC_ROS_Interface::resetMpcNode(TargetTrajectories&& initTargetTrajectories
 {
   //std::cout << "[MPC_ROS_Interface::resetMpcNode] START" << std::endl;
 
-  std::lock_guard<std::mutex> resetLock(resetMutex_);
+  try
+  {
+    std::lock_guard<std::mutex> resetLock(resetMutex_);
 
-  //std::cout << "[MPC_ROS_Interface::resetMpcNode] initTargetTrajectories size: " << initTargetTrajectories.size() << std::endl;
-  //std::cout << initTargetTrajectories << std::endl;
+    //std::cout << "[MPC_ROS_Interface::resetMpcNode] initTargetTrajectories size: " << initTargetTrajectories.size() << std::endl;
+    //std::cout << initTargetTrajectories << std::endl;
 
-  internalShutDownFlag_ = false;
-  mpc_->setInternalShutDownFlag(false);
+    internalShutDownFlag_ = false;
+    mpc_->setInternalShutDownFlag(false);
 
-  mpc_->reset();
+    mpc_->reset();
 
-  mpc_->getSolverPtr()->getReferenceManager().setTargetTrajectories(std::move(initTargetTrajectories));
-  
-  mpcTimer_.reset();
-  resetRequestedEver_ = true;
-  terminateThread_ = false;
-  readyToPublish_ = false;
+    mpc_->getSolverPtr()->getReferenceManager().setTargetTrajectories(std::move(initTargetTrajectories));
+    
+    mpcTimer_.reset();
+    resetRequestedEver_ = true;
+    terminateThread_ = false;
+    readyToPublish_ = false;
 
-  //std::cout << "[MPC_ROS_Interface::resetMpcNode] terminateThread_: " << terminateThread_ << std::endl;
-  //std::cout << "[MPC_ROS_Interface::resetMpcNode] END" << std::endl;
+    //std::cout << "[MPC_ROS_Interface::resetMpcNode] terminateThread_: " << terminateThread_ << std::endl;
+    //std::cout << "[MPC_ROS_Interface::resetMpcNode] END" << std::endl;
+  }
+  catch(const std::exception& e)
+  {
+    std::cout << "[MPC_ROS_Interface::resetMpcNode] ERROR: CATCHUP! " << e.what() << std::endl;
+  }
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -174,112 +188,119 @@ ocs2_msgs::mpc_flattened_controller MPC_ROS_Interface::createMpcPolicyMsg(const 
 {
   //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] START" << std::endl;
 
-  ocs2_msgs::mpc_flattened_controller mpcPolicyMsg;
-
-  //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE initObservation" << std::endl;
-  mpcPolicyMsg.initObservation = ros_msg_conversions::createObservationMsg(commandData.mpcInitObservation_);
-
-  //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE planTargetTrajectories" << std::endl;
-  mpcPolicyMsg.planTargetTrajectories = ros_msg_conversions::createTargetTrajectoriesMsg(commandData.mpcTargetTrajectories_);
-  
-  //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE modeSchedule" << std::endl;
-  mpcPolicyMsg.modeSchedule = ros_msg_conversions::createModeScheduleMsg(primalSolution.modeSchedule_);
-
-  //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE performanceIndices" << std::endl;
-  mpcPolicyMsg.performanceIndices = ros_msg_conversions::createPerformanceIndicesMsg(commandData.mpcInitObservation_.time, performanceIndices);
-
-  //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE getType: " << std::endl;
-  switch (primalSolution.controllerPtr_->getType()) 
+  try
   {
-    case ControllerType::FEEDFORWARD:
-      //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE FEEDFORWARD: " << std::endl;
-      mpcPolicyMsg.controllerType = ocs2_msgs::mpc_flattened_controller::CONTROLLER_FEEDFORWARD;
-      break;
+    ocs2_msgs::mpc_flattened_controller mpcPolicyMsg;
+
+    //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE initObservation" << std::endl;
+    mpcPolicyMsg.initObservation = ros_msg_conversions::createObservationMsg(commandData.mpcInitObservation_);
+
+    //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE planTargetTrajectories" << std::endl;
+    mpcPolicyMsg.planTargetTrajectories = ros_msg_conversions::createTargetTrajectoriesMsg(commandData.mpcTargetTrajectories_);
     
-    case ControllerType::LINEAR:
-      //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE LINEAR: " << std::endl;
-      mpcPolicyMsg.controllerType = ocs2_msgs::mpc_flattened_controller::CONTROLLER_LINEAR;
-      break;
-    
-    default:
-      throw std::runtime_error("MPC_ROS_Interface::createMpcPolicyMsg: Unknown ControllerType");
-  }
+    //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE modeSchedule" << std::endl;
+    mpcPolicyMsg.modeSchedule = ros_msg_conversions::createModeScheduleMsg(primalSolution.modeSchedule_);
 
-  //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE timeTrajectory_" << std::endl;
-  // maximum length of the message
-  const size_t N = primalSolution.timeTrajectory_.size();
+    //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE performanceIndices" << std::endl;
+    mpcPolicyMsg.performanceIndices = ros_msg_conversions::createPerformanceIndicesMsg(commandData.mpcInitObservation_.time, performanceIndices);
 
-  mpcPolicyMsg.timeTrajectory.clear();
-  mpcPolicyMsg.timeTrajectory.reserve(N);
-  mpcPolicyMsg.stateTrajectory.clear();
-  mpcPolicyMsg.stateTrajectory.reserve(N);
-  mpcPolicyMsg.data.clear();
-  mpcPolicyMsg.data.reserve(N);
-  mpcPolicyMsg.postEventIndices.clear();
-  mpcPolicyMsg.postEventIndices.reserve(primalSolution.postEventIndices_.size());
-
-  //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE time" << std::endl;
-  // time
-  for (auto t : primalSolution.timeTrajectory_) 
-  {
-    mpcPolicyMsg.timeTrajectory.emplace_back(t);
-  }
-
-  //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE indices" << std::endl;
-  // post-event indices
-  for (auto ind : primalSolution.postEventIndices_) 
-  {
-    mpcPolicyMsg.postEventIndices.emplace_back(static_cast<uint16_t>(ind));
-  }
-
-  //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE state" << std::endl;
-  // state
-  for (size_t k = 0; k < N; k++) 
-  {
-    ocs2_msgs::mpc_state mpcState;
-    mpcState.value.resize(primalSolution.stateTrajectory_[k].rows());
-    
-    for (size_t j = 0; j < primalSolution.stateTrajectory_[k].rows(); j++) 
+    //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE getType: " << std::endl;
+    switch (primalSolution.controllerPtr_->getType()) 
     {
-      mpcState.value[j] = primalSolution.stateTrajectory_[k](j);
+      case ControllerType::FEEDFORWARD:
+        //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE FEEDFORWARD: " << std::endl;
+        mpcPolicyMsg.controllerType = ocs2_msgs::mpc_flattened_controller::CONTROLLER_FEEDFORWARD;
+        break;
+      
+      case ControllerType::LINEAR:
+        //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE LINEAR: " << std::endl;
+        mpcPolicyMsg.controllerType = ocs2_msgs::mpc_flattened_controller::CONTROLLER_LINEAR;
+        break;
+      
+      default:
+        throw std::runtime_error("MPC_ROS_Interface::createMpcPolicyMsg: Unknown ControllerType");
     }
-    mpcPolicyMsg.stateTrajectory.emplace_back(mpcState);
-  }  // end of k loop
 
-  //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE input" << std::endl;
-  // input
-  for (size_t k = 0; k < N; k++) 
-  {
-    ocs2_msgs::mpc_input mpcInput;
-    mpcInput.value.resize(primalSolution.inputTrajectory_[k].rows());
-    
-    for (size_t j = 0; j < primalSolution.inputTrajectory_[k].rows(); j++) 
+    //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE timeTrajectory_" << std::endl;
+    // maximum length of the message
+    const size_t N = primalSolution.timeTrajectory_.size();
+
+    mpcPolicyMsg.timeTrajectory.clear();
+    mpcPolicyMsg.timeTrajectory.reserve(N);
+    mpcPolicyMsg.stateTrajectory.clear();
+    mpcPolicyMsg.stateTrajectory.reserve(N);
+    mpcPolicyMsg.data.clear();
+    mpcPolicyMsg.data.reserve(N);
+    mpcPolicyMsg.postEventIndices.clear();
+    mpcPolicyMsg.postEventIndices.reserve(primalSolution.postEventIndices_.size());
+
+    //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE time" << std::endl;
+    // time
+    for (auto t : primalSolution.timeTrajectory_) 
     {
-      mpcInput.value[j] = primalSolution.inputTrajectory_[k](j);
+      mpcPolicyMsg.timeTrajectory.emplace_back(t);
     }
-    mpcPolicyMsg.inputTrajectory.emplace_back(mpcInput);
-  }  // end of k loop
 
-  //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE controller" << std::endl;
-  // controller
-  scalar_array_t timeTrajectoryTruncated;
-  std::vector<std::vector<float>*> policyMsgDataPointers;
-  policyMsgDataPointers.reserve(N);
-  
-  for (auto t : primalSolution.timeTrajectory_) 
+    //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE indices" << std::endl;
+    // post-event indices
+    for (auto ind : primalSolution.postEventIndices_) 
+    {
+      mpcPolicyMsg.postEventIndices.emplace_back(static_cast<uint16_t>(ind));
+    }
+
+    //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE state" << std::endl;
+    // state
+    for (size_t k = 0; k < N; k++) 
+    {
+      ocs2_msgs::mpc_state mpcState;
+      mpcState.value.resize(primalSolution.stateTrajectory_[k].rows());
+      
+      for (size_t j = 0; j < primalSolution.stateTrajectory_[k].rows(); j++) 
+      {
+        mpcState.value[j] = primalSolution.stateTrajectory_[k](j);
+      }
+      mpcPolicyMsg.stateTrajectory.emplace_back(mpcState);
+    }  // end of k loop
+
+    //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE input" << std::endl;
+    // input
+    for (size_t k = 0; k < N; k++) 
+    {
+      ocs2_msgs::mpc_input mpcInput;
+      mpcInput.value.resize(primalSolution.inputTrajectory_[k].rows());
+      
+      for (size_t j = 0; j < primalSolution.inputTrajectory_[k].rows(); j++) 
+      {
+        mpcInput.value[j] = primalSolution.inputTrajectory_[k](j);
+      }
+      mpcPolicyMsg.inputTrajectory.emplace_back(mpcInput);
+    }  // end of k loop
+
+    //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE controller" << std::endl;
+    // controller
+    scalar_array_t timeTrajectoryTruncated;
+    std::vector<std::vector<float>*> policyMsgDataPointers;
+    policyMsgDataPointers.reserve(N);
+    
+    for (auto t : primalSolution.timeTrajectory_) 
+    {
+      mpcPolicyMsg.data.emplace_back(ocs2_msgs::controller_data());
+      policyMsgDataPointers.push_back(&mpcPolicyMsg.data.back().data);    
+      timeTrajectoryTruncated.push_back(t);
+    }  // end of k loop
+
+    //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE flatten" << std::endl;
+    // serialize controller into data buffer
+    primalSolution.controllerPtr_->flatten(timeTrajectoryTruncated, policyMsgDataPointers);
+
+    //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] END" << std::endl;
+
+    return mpcPolicyMsg;
+  }
+  catch(const std::exception& e)
   {
-    mpcPolicyMsg.data.emplace_back(ocs2_msgs::controller_data());
-    policyMsgDataPointers.push_back(&mpcPolicyMsg.data.back().data);    
-    timeTrajectoryTruncated.push_back(t);
-  }  // end of k loop
-
-  //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] BEFORE flatten" << std::endl;
-  // serialize controller into data buffer
-  primalSolution.controllerPtr_->flatten(timeTrajectoryTruncated, policyMsgDataPointers);
-
-  //std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] END" << std::endl;
-
-  return mpcPolicyMsg;
+    std::cout << "[MPC_ROS_Interface::createMpcPolicyMsg] ERROR: CATCHUP! " << e.what() << std::endl;
+  }
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -295,47 +316,54 @@ void MPC_ROS_Interface::publisherWorker()
   {
     //std::cout << "[MPC_ROS_Interface::publisherWorker] START WHILE" << std::endl;
 
-    std::unique_lock<std::mutex> lk(publisherMutex_);
-
-    //std::cout << "[MPC_ROS_Interface::publisherWorker] BEFORE msgReady_" << std::endl;
-    //std::cout << "[MPC_ROS_Interface::publisherWorker] terminateThread_: " << terminateThread_ << std::endl;
-    //std::cout << "[MPC_ROS_Interface::publisherWorker] readyToPublish_: " << readyToPublish_ << std::endl;
-    msgReady_.wait(lk, [&] { return (readyToPublish_ || terminateThread_); });
-    //std::cout << "[MPC_ROS_Interface::publisherWorker] AFTER msgReady_" << std::endl;
-
-    if (!terminateThread_) 
+    try
     {
-      //std::cout << "[MPC_ROS_Interface::publisherWorker] BEFORE lock_guard" << std::endl;
-      {
-        std::lock_guard<std::mutex> policyBufferLock(bufferMutex_);
-        publisherCommandPtr_.swap(bufferCommandPtr_);
-        publisherPrimalSolutionPtr_.swap(bufferPrimalSolutionPtr_);
-        publisherPerformanceIndicesPtr_.swap(bufferPerformanceIndicesPtr_);
-      }
-      //std::cout << "[MPC_ROS_Interface::publisherWorker] AFTER lock_guard" << std::endl;
+      std::unique_lock<std::mutex> lk(publisherMutex_);
 
-      PrimalSolution currentPrimalSolution = *publisherPrimalSolutionPtr_;
-      CommandData currentCommandData = *publisherCommandPtr_;
-      PerformanceIndex currentPerformanceIndices = *publisherPerformanceIndicesPtr_;
-
-      //std::cout << "[MPC_ROS_Interface::publisherWorker] BEFORE createMpcPolicyMsg" << std::endl;
-      //std::cout << "[MPC_ROS_Interface::publisherWorker] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
+      //std::cout << "[MPC_ROS_Interface::publisherWorker] BEFORE msgReady_" << std::endl;
       //std::cout << "[MPC_ROS_Interface::publisherWorker] terminateThread_: " << terminateThread_ << std::endl;
-      ocs2_msgs::mpc_flattened_controller mpcPolicyMsg = createMpcPolicyMsg(currentPrimalSolution, currentCommandData, currentPerformanceIndices);
-      //std::cout << "[MPC_ROS_Interface::publisherWorker] AFTER createMpcPolicyMsg" << std::endl;
+      //std::cout << "[MPC_ROS_Interface::publisherWorker] readyToPublish_: " << readyToPublish_ << std::endl;
+      msgReady_.wait(lk, [&] { return (readyToPublish_ || terminateThread_); });
+      //std::cout << "[MPC_ROS_Interface::publisherWorker] AFTER msgReady_" << std::endl;
 
-      // publish the message
-      mpcPolicyPublisher_.publish(mpcPolicyMsg);
-      //std::cout << "[MPC_ROS_Interface::publisherWorker] AFTER mpcPolicyPublisher_" << std::endl;
+      if (!terminateThread_) 
+      {
+        //std::cout << "[MPC_ROS_Interface::publisherWorker] BEFORE lock_guard" << std::endl;
+        {
+          std::lock_guard<std::mutex> policyBufferLock(bufferMutex_);
+          publisherCommandPtr_.swap(bufferCommandPtr_);
+          publisherPrimalSolutionPtr_.swap(bufferPrimalSolutionPtr_);
+          publisherPerformanceIndicesPtr_.swap(bufferPerformanceIndicesPtr_);
+        }
+        //std::cout << "[MPC_ROS_Interface::publisherWorker] AFTER lock_guard" << std::endl;
 
-      readyToPublish_ = false;
-      lk.unlock();
-      msgReady_.notify_one();
+        PrimalSolution currentPrimalSolution = *publisherPrimalSolutionPtr_;
+        CommandData currentCommandData = *publisherCommandPtr_;
+        PerformanceIndex currentPerformanceIndices = *publisherPerformanceIndicesPtr_;
 
-      //break;
+        //std::cout << "[MPC_ROS_Interface::publisherWorker] BEFORE createMpcPolicyMsg" << std::endl;
+        //std::cout << "[MPC_ROS_Interface::publisherWorker] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
+        //std::cout << "[MPC_ROS_Interface::publisherWorker] terminateThread_: " << terminateThread_ << std::endl;
+        ocs2_msgs::mpc_flattened_controller mpcPolicyMsg = createMpcPolicyMsg(currentPrimalSolution, currentCommandData, currentPerformanceIndices);
+        //std::cout << "[MPC_ROS_Interface::publisherWorker] AFTER createMpcPolicyMsg" << std::endl;
+
+        // publish the message
+        mpcPolicyPublisher_.publish(mpcPolicyMsg);
+        //std::cout << "[MPC_ROS_Interface::publisherWorker] AFTER mpcPolicyPublisher_" << std::endl;
+
+        readyToPublish_ = false;
+        lk.unlock();
+        msgReady_.notify_one();
+
+        //break;
+      }
+
+      //std::cout << "[MPC_ROS_Interface::publisherWorker] END WHILE" << std::endl << std::endl;
     }
-
-    //std::cout << "[MPC_ROS_Interface::publisherWorker] END WHILE" << std::endl << std::endl;
+    catch(const std::exception& e)
+    {
+      std::cout << "[MPC_ROS_Interface::publisherWorker] ERROR: CATCHUP! " << e.what() << std::endl;
+    }
   }
 
   //std::cout << "[MPC_ROS_Interface::publisherWorker] END" << std::endl << std::endl;
@@ -346,35 +374,43 @@ void MPC_ROS_Interface::publisherWorker()
 //-------------------------------------------------------------------------------------------------------
 void MPC_ROS_Interface::copyToBuffer(const SystemObservation& mpcInitObservation) 
 {
-  //std::cout << "[MPC_ROS_Interface::copyToBuffer] START" << std::endl;
-
-  // buffer policy mutex
-  std::lock_guard<std::mutex> policyBufferLock(bufferMutex_);
-  scalar_t finalTime;
-
-  // Get solution
-  finalTime = mpcInitObservation.time + mpc_->settings().solutionTimeWindow_;
-  if (mpc_->settings().solutionTimeWindow_ < 0) 
+  try
   {
-    finalTime = mpc_->getSolverPtr()->getFinalTime();
+    //std::cout << "[MPC_ROS_Interface::copyToBuffer] START" << std::endl;
+
+    // buffer policy mutex
+    std::lock_guard<std::mutex> policyBufferLock(bufferMutex_);
+    scalar_t finalTime;
+
+    // Get solution
+    finalTime = mpcInitObservation.time + mpc_->settings().solutionTimeWindow_;
+    if (mpc_->settings().solutionTimeWindow_ < 0) 
+    {
+      finalTime = mpc_->getSolverPtr()->getFinalTime();
+    }
+    mpc_->getSolverPtr()->getPrimalSolution(finalTime, bufferPrimalSolutionPtr_.get());
+
+    //std::cout << "[MPC_ROS_Interface::copyToBuffer] bufferPrimalSolutionPtr_ controllerPtr_ size: " << bufferPrimalSolutionPtr_->controllerPtr_->size() << std::endl;
+
+    // Command
+    bufferCommandPtr_->mpcInitObservation_ = mpcInitObservation;
+
+    //std::cout << "[MPC_ROS_Interface::copyToBuffer] BEFORE getTargetTrajectories" << std::endl;
+    bufferCommandPtr_->mpcTargetTrajectories_ = mpc_->getSolverPtr()->getReferenceManager().getTargetTrajectories();
+    //std::cout << "[MPC_ROS_Interface::copyToBuffer] AFTER getTargetTrajectories" << std::endl;
+
+    // Performance indices
+    *bufferPerformanceIndicesPtr_ = mpc_->getSolverPtr()->getPerformanceIndeces();
+
+    //std::cout << "[MPC_ROS_Interface::copyToBuffer] END" << std::endl;
   }
-  mpc_->getSolverPtr()->getPrimalSolution(finalTime, bufferPrimalSolutionPtr_.get());
-
-  //std::cout << "[MPC_ROS_Interface::copyToBuffer] bufferPrimalSolutionPtr_ controllerPtr_ size: " << bufferPrimalSolutionPtr_->controllerPtr_->size() << std::endl;
-
-  // Command
-  bufferCommandPtr_->mpcInitObservation_ = mpcInitObservation;
-
-  //std::cout << "[MPC_ROS_Interface::copyToBuffer] BEFORE getTargetTrajectories" << std::endl;
-  bufferCommandPtr_->mpcTargetTrajectories_ = mpc_->getSolverPtr()->getReferenceManager().getTargetTrajectories();
-  //std::cout << "[MPC_ROS_Interface::copyToBuffer] AFTER getTargetTrajectories" << std::endl;
-
-  // Performance indices
-  *bufferPerformanceIndicesPtr_ = mpc_->getSolverPtr()->getPerformanceIndeces();
-
-  //std::cout << "[MPC_ROS_Interface::copyToBuffer] END" << std::endl;
+  catch(const std::exception& e)
+  {
+    std::cout << "[MPC_ROS_Interface::copyToBuffer] ERROR: CATCHUP! " << e.what() << std::endl;
+  }
 }
 
+/*
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -465,6 +501,7 @@ void MPC_ROS_Interface::computeTrajectory()
 
   //std::cout << "[MPC_ROS_Interface::computeTrajectory] END" << std::endl;
 }
+*/
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -524,70 +561,70 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
     //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] AFTER mpc_->run" << std::endl;
 
     internalShutDownFlag_ = mpc_->getInternalShutDownFlag();
+
+    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
+    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE terminateThread_: " << terminateThread_ << std::endl;
+    if (internalShutDownFlag_)
+    {
+      //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
+      terminateThread_ = true;
+    }
+    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] AFTER terminateThread_: " << terminateThread_ << std::endl;
+    
+    if (!controllerIsUpdated) 
+    {
+      return;
+    }
+    copyToBuffer(currentObservation);
+
+    // Measure the delay for sending ROS messages
+    mpcTimer_.endTimer();
+
+    // Check MPC delay and solution window compatibility
+    scalar_t timeWindow;
+    timeWindow = mpc_->settings().solutionTimeWindow_;
+    if (mpc_->settings().solutionTimeWindow_ < 0) 
+    {
+      timeWindow = mpc_->getSolverPtr()->getFinalTime() - currentObservation.time;
+    }
+
+    if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) 
+    {
+      //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] WARNING: The solution time window might be shorter than the MPC delay!" << std::endl;
+    }
+
+    // Display time benchmarks
+    if (mpc_->settings().debugPrint_) 
+    {
+      std::cout << '\n';
+      std::cout << "\n### MPC_ROS Benchmarking";
+      std::cout << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
+      std::cout << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].";
+      std::cout << "\n###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
+    }
+
+#ifdef PUBLISH_THREAD
+    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] IN PUBLISH_THREAD" << std::endl;
+    std::unique_lock<std::mutex> lk(publisherMutex_);
+    readyToPublish_ = true;
+    lk.unlock();
+    msgReady_.notify_one();
+#else
+    ocs2_msgs::mpc_flattened_controller mpcPolicyMsg = createMpcPolicyMsg(*bufferPrimalSolutionPtr_, *bufferCommandPtr_, *bufferPerformanceIndicesPtr_);
+    mpcPolicyPublisher_.publish(mpcPolicyMsg);
+#endif
+
+    mpcReadyFlag_ = true;
+
+    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END" << std::endl << std::endl;
+
+    ctr_++;
   }
   catch (const std::exception& error)
   {
     const std::string msg = "[MPC_ROS_Interface::mpcObservationCallback] ERROR: CATCHUP mpc_->run \n";
     throw std::runtime_error(msg + error.what());
   }
-  
-  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
-  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE terminateThread_: " << terminateThread_ << std::endl;
-  if (internalShutDownFlag_)
-  {
-    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] internalShutDownFlag_: " << internalShutDownFlag_ << std::endl;
-    terminateThread_ = true;
-  }
-  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] AFTER terminateThread_: " << terminateThread_ << std::endl;
-  
-  if (!controllerIsUpdated) 
-  {
-    return;
-  }
-  copyToBuffer(currentObservation);
-
-  // Measure the delay for sending ROS messages
-  mpcTimer_.endTimer();
-
-  // Check MPC delay and solution window compatibility
-  scalar_t timeWindow;
-  timeWindow = mpc_->settings().solutionTimeWindow_;
-  if (mpc_->settings().solutionTimeWindow_ < 0) 
-  {
-    timeWindow = mpc_->getSolverPtr()->getFinalTime() - currentObservation.time;
-  }
-
-  if (timeWindow < 2.0 * mpcTimer_.getAverageInMilliseconds() * 1e-3) 
-  {
-    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] WARNING: The solution time window might be shorter than the MPC delay!" << std::endl;
-  }
-
-  // Display time benchmarks
-  if (mpc_->settings().debugPrint_) 
-  {
-    std::cout << '\n';
-    std::cout << "\n### MPC_ROS Benchmarking";
-    std::cout << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
-    std::cout << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].";
-    std::cout << "\n###   Latest  : " << mpcTimer_.getLastIntervalInMilliseconds() << "[ms]." << std::endl;
-  }
-
-#ifdef PUBLISH_THREAD
-  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] IN PUBLISH_THREAD" << std::endl;
-  std::unique_lock<std::mutex> lk(publisherMutex_);
-  readyToPublish_ = true;
-  lk.unlock();
-  msgReady_.notify_one();
-#else
-  ocs2_msgs::mpc_flattened_controller mpcPolicyMsg = createMpcPolicyMsg(*bufferPrimalSolutionPtr_, *bufferCommandPtr_, *bufferPerformanceIndicesPtr_);
-  mpcPolicyPublisher_.publish(mpcPolicyMsg);
-#endif
-
-  mpcReadyFlag_ = true;
-
-  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] END" << std::endl << std::endl;
-
-  ctr_++;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -626,6 +663,7 @@ void MPC_ROS_Interface::shutdownNode()
     std::cout << "[MPC_ROS_Interface::shutdownNode] END" << std::endl;
 }
 
+/*
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -640,7 +678,9 @@ void MPC_ROS_Interface::singleSpin()
 
   //std::cout << "[MPC_ROS_Interface::singleSpin] END" << std::endl;
 }
+*/
 
+/*
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -657,6 +697,7 @@ void MPC_ROS_Interface::spin()
     ros::getGlobalCallbackQueue()->callAvailable(ros::WallDuration(0.1));
   }
 }
+*/
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -695,7 +736,7 @@ void MPC_ROS_Interface::launchNodes(ros::NodeHandle& nodeHandle)
     std::cout << "[MPC_ROS_Interface::launchNodes] END" << std::endl;
 }
 
-
+/*
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -744,7 +785,7 @@ void MPC_ROS_Interface::computeTraj2(TargetTrajectories tt, SystemObservation co
     std::cout << "[MPC_ROS_Interface::computeTraj2] DEBUG_INF" << std::endl;
     while(1);
   }
-  */
+  * /
 
   mpcTimer_.reset();
   mpcTimer_.startTimer();
@@ -797,7 +838,7 @@ void MPC_ROS_Interface::computeTraj2(TargetTrajectories tt, SystemObservation co
   std::cout << "***************************************************" << std::endl;
   std::cout << "***************************************************" << std::endl;
   std::cout << "***************************************************" << std::endl;
-  */
+  * /
 
   //writeData();
   //loadData();
@@ -845,7 +886,9 @@ void MPC_ROS_Interface::computeTraj2(TargetTrajectories tt, SystemObservation co
   
   ctr_++;
 }
+*/
 
+/*
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -857,7 +900,9 @@ PrimalSolution MPC_ROS_Interface::getPolicy()
   //PrimalSolution ops = mpc_->getSolverPtr()->getPrimalSolution();
   return mpc_->getSolverPtr()->getPrimalSolution();
 }
+*/
 
+/*
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -1005,7 +1050,7 @@ void MPC_ROS_Interface::writeData()
   std::cout << "[MPC_ROS_Interface::writeData] bufferPrimalSolution_controller_gain_array size: " << bufferPrimalSolution_controller_gain_array.size() << std::endl;
   std::cout << "[MPC_ROS_Interface::writeData] bufferPrimalSolution_controller_gain_array[0] size: " << bufferPrimalSolution_controller_gain_array[0].size() << std::endl;
   std::cout << "[MPC_ROS_Interface::writeData] bufferPrimalSolution_controller_gain_array[0][0] size: " << bufferPrimalSolution_controller_gain_array[0][0].size() << std::endl;
-  */
+  * /
 
   // Target Trajectories
   for (size_t i = 0; i < bufferCommandPtr_->mpcTargetTrajectories_.timeTrajectory.size(); i++)
@@ -1273,7 +1318,7 @@ void MPC_ROS_Interface::writeData()
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
-  */
+  * /
 
   optimalPrimalSolution_time.resize(ops.timeTrajectory_.size());
   for (size_t i = 0; i < ops.timeTrajectory_.size(); i++)
@@ -1394,7 +1439,7 @@ void MPC_ROS_Interface::writeData()
     std::cout << "[MPC_ROS_Interface::writeData] ControllerType::WTF?!" << std::endl;
   }
   //ops.controllerPtr_->display();
-  */
+  * /
 
   //std::cout << "[MPC_ROS_Interface::writeData] DEBUG_INF" << std::endl;
   //while(1);
@@ -1642,7 +1687,7 @@ void MPC_ROS_Interface::loadData()
   std::cout << "[MPC_ROS_Interface::loadData] bufferPrimalSolutionPtr_ getGainArray size: " << bufferPrimalSolutionPtr_->controllerPtr_->getGainArray().size() << std::endl;
   std::cout << "[MPC_ROS_Interface::loadData] bufferPrimalSolutionPtr_ getGainArray rows: " << bufferPrimalSolutionPtr_->controllerPtr_->getGainArray()[0].rows() << std::endl;
   std::cout << "[MPC_ROS_Interface::loadData] bufferPrimalSolutionPtr_ getGainArray cols: " << bufferPrimalSolutionPtr_->controllerPtr_->getGainArray()[0].cols() << std::endl;
-  */
+  * /
 
   // Target Trajectories
   bufferCommandPtr_->mpcTargetTrajectories_.timeTrajectory.clear();
@@ -2012,11 +2057,12 @@ void MPC_ROS_Interface::loadData()
   std::cout << "/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/" << std::endl;
   std::cout << "/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/" << std::endl;
   std::cout << "/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/" << std::endl;
-  */
+  * /
 
   mpc_->getSolverPtr()->setOptimizedPrimalSolution(ops);
 
   std::cout << "[MPC_ROS_Interface::loadData] END" << std::endl;
 }
+*/
 
 }  // namespace ocs2

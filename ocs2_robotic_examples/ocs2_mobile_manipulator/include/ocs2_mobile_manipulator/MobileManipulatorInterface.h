@@ -330,7 +330,7 @@ class MobileManipulatorInterface final : public RobotInterface
     void launchMRT();
 
     // DESCRIPTION: TODO...
-    void mpcCallback(const ros::TimerEvent& event);
+    //void mpcCallback(const ros::TimerEvent& event);
 
     // DESCRIPTION: TODO...
     void mrtCallback(const ros::TimerEvent& event);

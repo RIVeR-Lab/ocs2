@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.01.22
+// LAST UPDATE: 2024.03.21
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -111,12 +111,12 @@ class MPC_ROS_Interface
     /**
      * Spins ROS.
      */
-    void singleSpin();
+    //void singleSpin();
 
     /**
      * Spins ROS.
      */
-    void spin();
+    //void spin();
 
     /**
      * This is the main routine which launches all the nodes required for MPC to run which includes:
@@ -125,11 +125,11 @@ class MPC_ROS_Interface
      */
     void launchNodes(ros::NodeHandle& nodeHandle);
 
-    void computeTrajectory();
+    //void computeTrajectory();
 
-    void computeTraj2(TargetTrajectories targetTrajectories, SystemObservation currentObservation, bool flag_reset=true);
+    //void computeTraj2(TargetTrajectories targetTrajectories, SystemObservation currentObservation, bool flag_reset=true);
 
-    PrimalSolution getPolicy();
+    //PrimalSolution getPolicy();
 
   protected:
     /**
@@ -180,9 +180,9 @@ class MPC_ROS_Interface
      */
     void mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg);
 
-    void writeData();
+    //void writeData();
 
-    void loadData();
+    //void loadData();
 
   protected:
     /*

@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.03.15
+// LAST UPDATE: 2024.03.21
 //
 // AUTHOR: Neset Unver Akmandor  (NUA)
 //
@@ -2737,31 +2737,39 @@ void MobileManipulatorInterface::readDiscreteTrajectoryData(vector<std::string> 
 //-------------------------------------------------------------------------------------------------------
 bool MobileManipulatorInterface::setStopMPCFlag(bool val)
 {
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlag] DEBUG_INF" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlag] START" << std::endl;
 
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlag] DEBUG_INF" << std::endl;
-  //while(1);
-
-  bool success = false;
-  ocs2_msgs::setBool srv;
-  srv.request.val = val;
-
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlag] Waiting for the service..." << std::endl;
-  //ros::service::waitForService(setStopMPCFlagSrvName_);
-  if (setStopMPCFlagClient_.call(srv))
+  try
   {
-    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlag] DONE!" << std::endl;
-    success = srv.response.success;
-  }
-  else
-  {
-    ROS_ERROR("[MobileManipulatorInterface::setStopMPCFlag] ERROR: Failed to call service!");
-    success = false;
-  }
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlag] DEBUG_INF" << std::endl;
+    //while(1);
 
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlag] END" << std::endl;
-  
-  return success;
+    bool success = false;
+    ocs2_msgs::setBool srv;
+    srv.request.val = val;
+
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlag] Waiting for the service..." << std::endl;
+    //ros::service::waitForService(setStopMPCFlagSrvName_);
+    if (setStopMPCFlagClient_.call(srv))
+    {
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlag] DONE!" << std::endl;
+      success = srv.response.success;
+    }
+    else
+    {
+      ROS_ERROR("[MobileManipulatorInterface::setStopMPCFlag] ERROR: Failed to call service!");
+      success = false;
+    }
+
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlag] END" << std::endl;
+    
+    return success;
+  }
+  catch(const std::exception& e)
+  {
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlag] ERROR: CATCHUP! " << e.what() << std::endl;
+    return false;
+  }
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2770,22 +2778,29 @@ bool MobileManipulatorInterface::setStopMPCFlag(bool val)
 bool MobileManipulatorInterface::setStopMPCFlagSrv(ocs2_msgs::setBool::Request &req, 
                                                    ocs2_msgs::setBool::Response &res)
 {
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlagSrv] START" << std::endl;
+  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlagSrv] START" << std::endl; 
 
-  // std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlagSrv] DEBUG_INF" << std::endl;
-  // while(1);
-  
-  if (!req.val)
+  try
   {
-    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlagSrv] SELF-COLLISION DEACTIVATED!" << std::endl;
-    activateSelfCollision_ = false;
+    // std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlagSrv] DEBUG_INF" << std::endl;
+    // while(1);
+    
+    if (!req.val)
+    {
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlagSrv] SELF-COLLISION DEACTIVATED!" << std::endl;
+      activateSelfCollision_ = false;
+    }
+    stopMPCFlag_ = true;
+
+    res.success = true;
+
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlagSrv] END" << std::endl;
+    return true;
   }
-  stopMPCFlag_ = true;
-
-  res.success = true;
-
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlagSrv] END" << std::endl;
-  return true;
+  catch(const std::exception& e)
+  {
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setStopMPCFlagSrv] ERROR: CATCHUP! " << e.what() << std::endl;
+  }
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2795,26 +2810,33 @@ bool MobileManipulatorInterface::setMPCWaitingFlag(bool val)
 {
   //std::cout << "[MobileManipulatorInterface::setMPCWaitingFlag] START" << std::endl;
 
-  bool success = false;
-  ocs2_msgs::setBool srv;
-  srv.request.val = val;
-
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCWaitingFlag] Waiting for the service..." << std::endl;
-  ros::service::waitForService(setMPCWaitingFlagSrvName_);
-  if (setMPCWaitingFlagClient_.call(srv))
+  try
   {
-    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCWaitingFlag] DONE!" << std::endl;
-    success = srv.response.success;
-  }
-  else
-  {
-    ROS_ERROR("[MobileManipulatorInterface::setMPCWaitingFlag] ERROR: Failed to call service!");
-    success = false;
-  }
+    bool success = false;
+    ocs2_msgs::setBool srv;
+    srv.request.val = val;
 
-  //std::cout << "[MobileManipulatorInterface::setMPCWaitingFlag] END" << std::endl;
-  
-  return success;
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCWaitingFlag] Waiting for the service..." << std::endl;
+    ros::service::waitForService(setMPCWaitingFlagSrvName_);
+    if (setMPCWaitingFlagClient_.call(srv))
+    {
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCWaitingFlag] DONE!" << std::endl;
+      success = srv.response.success;
+    }
+    else
+    {
+      ROS_ERROR("[MobileManipulatorInterface::setMPCWaitingFlag] ERROR: Failed to call service!");
+      success = false;
+    }
+
+    //std::cout << "[MobileManipulatorInterface::setMPCWaitingFlag] END" << std::endl;
+    
+    return success;
+  }
+  catch(const std::exception& e)
+  {
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCWaitingFlag] ERROR: CATCHUP! " << e.what() << std::endl;
+  }
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2824,14 +2846,22 @@ bool MobileManipulatorInterface::setMPCWaitingFlagSrv(ocs2_msgs::setBool::Reques
                                                       ocs2_msgs::setBool::Response &res)
 {
   //std::cout << "[MobileManipulatorInterface::setMPCWaitingFlagSrv] START" << std::endl;
-  //std::cout << "[MobileManipulatorInterface::setMPCWaitingFlagSrv] BEFORE mpcWaitingFlag_: " << mpcWaitingFlag_ << std::endl;
-  mpcWaitingFlag_ = req.val;
-  //std::cout << "[MobileManipulatorInterface::setMPCWaitingFlagSrv] AFTER mpcWaitingFlag_: " << mpcWaitingFlag_ << std::endl;
 
-  res.success = true;
+  try
+  {
+    //std::cout << "[MobileManipulatorInterface::setMPCWaitingFlagSrv] BEFORE mpcWaitingFlag_: " << mpcWaitingFlag_ << std::endl;
+    mpcWaitingFlag_ = req.val;
+    //std::cout << "[MobileManipulatorInterface::setMPCWaitingFlagSrv] AFTER mpcWaitingFlag_: " << mpcWaitingFlag_ << std::endl;
 
-  //std::cout << "[MobileManipulatorInterface::setMPCWaitingFlagSrv] END" << std::endl;
-  return true;
+    res.success = true;
+
+    //std::cout << "[MobileManipulatorInterface::setMPCWaitingFlagSrv] END" << std::endl;
+    return true;
+  }
+  catch(const std::exception& e)
+  {
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCWaitingFlagSrv] ERROR: CATCHUP! " << e.what() << std::endl;
+  }
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2840,26 +2870,35 @@ bool MobileManipulatorInterface::setMPCWaitingFlagSrv(ocs2_msgs::setBool::Reques
 bool MobileManipulatorInterface::setMPCReadyFlag(bool val)
 {
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCReadyFlag] START" << std::endl;
-  bool success = false;
-  ocs2_msgs::setBool srv;
-  srv.request.val = val;
 
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCReadyFlag] Waiting for the service..." << std::endl;
-  ros::service::waitForService(setMPCReadyFlagSrvName_);
-  if (setMPCReadyFlagClient_.call(srv))
+  try
   {
-    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCReadyFlag] DONE!" << std::endl;
-    success = srv.response.success;
-  }
-  else
-  {
-    ROS_ERROR("[MobileManipulatorInterface::setMPCReadyFlag] ERROR: Failed to call service!");
-    success = false;
-  }
+    bool success = false;
+    ocs2_msgs::setBool srv;
+    srv.request.val = val;
 
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCReadyFlag] END" << std::endl;
-  
-  return success;
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCReadyFlag] Waiting for the service..." << std::endl;
+    ros::service::waitForService(setMPCReadyFlagSrvName_);
+    if (setMPCReadyFlagClient_.call(srv))
+    {
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCReadyFlag] DONE!" << std::endl;
+      success = srv.response.success;
+    }
+    else
+    {
+      ROS_ERROR("[MobileManipulatorInterface::setMPCReadyFlag] ERROR: Failed to call service!");
+      success = false;
+    }
+
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCReadyFlag] END" << std::endl;
+    
+    return success;
+  }
+  catch(const std::exception& e)
+  {
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCReadyFlag] ERROR: CATCHUP! " << e.what() << std::endl;
+    return false;
+  }
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2869,14 +2908,24 @@ bool MobileManipulatorInterface::setMPCReadyFlagSrv(ocs2_msgs::setBool::Request 
                                                     ocs2_msgs::setBool::Response &res)
 {
   //std::cout << "[MobileManipulatorInterface::setMPCReadyFlagSrv] START" << std::endl;
-  //std::cout << "[MobileManipulatorInterface::setMPCReadyFlagSrv] BEFORE mpcReadyFlag_: " << mpcReadyFlag_ << std::endl;
-  mpcReadyFlag_ = req.val;
-  //std::cout << "[MobileManipulatorInterface::setMPCReadyFlagSrv] AFTER mpcReadyFlag_: " << mpcReadyFlag_ << std::endl;
 
-  res.success = true;
+  try
+  {
+    
+    //std::cout << "[MobileManipulatorInterface::setMPCReadyFlagSrv] BEFORE mpcReadyFlag_: " << mpcReadyFlag_ << std::endl;
+    mpcReadyFlag_ = req.val;
+    //std::cout << "[MobileManipulatorInterface::setMPCReadyFlagSrv] AFTER mpcReadyFlag_: " << mpcReadyFlag_ << std::endl;
 
-  //std::cout << "[MobileManipulatorInterface::setMPCReadyFlagSrv] END" << std::endl;
-  return true;
+    res.success = true;
+
+    //std::cout << "[MobileManipulatorInterface::setMPCReadyFlagSrv] END" << std::endl;
+    return true;
+  }
+  catch(const std::exception& e)
+  {
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCReadyFlagSrv] ERROR: CATCHUP! " << e.what() << std::endl;
+    return false;
+  }
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2884,27 +2933,34 @@ bool MobileManipulatorInterface::setMPCReadyFlagSrv(ocs2_msgs::setBool::Request 
 //-------------------------------------------------------------------------------------------------------
 bool MobileManipulatorInterface::setMRTReadyFlag(bool val)
 {
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] START" << std::endl;
-  bool success = false;
-  ocs2_msgs::setBool srv;
-  srv.request.val = val;
-
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] Waiting for the service " << setMRTReadyFlagSrvName_ << "..." << std::endl;
-  ros::service::waitForService(setMRTReadyFlagSrvName_);
-  if (setMRTReadyFlagClient_.call(srv))
+  try
   {
-    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] DONE!" << std::endl;
-    success = srv.response.success;
-  }
-  else
-  {
-    ROS_ERROR("[MobileManipulatorInterface::setMRTReadyFlag] ERROR: Failed to call service!");
-    success = false;
-  }
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] START" << std::endl;
+    bool success = false;
+    ocs2_msgs::setBool srv;
+    srv.request.val = val;
 
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] END" << std::endl;
-  
-  return success;
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] Waiting for the service " << setMRTReadyFlagSrvName_ << "..." << std::endl;
+    ros::service::waitForService(setMRTReadyFlagSrvName_);
+    if (setMRTReadyFlagClient_.call(srv))
+    {
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] DONE!" << std::endl;
+      success = srv.response.success;
+    }
+    else
+    {
+      ROS_ERROR("[MobileManipulatorInterface::setMRTReadyFlag] ERROR: Failed to call service!");
+      success = false;
+    }
+
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] END" << std::endl;
+    
+    return success;
+  }
+  catch(const std::exception& e)
+  {
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlag] ERROR: CATCHUP! " << e.what() << std::endl;
+  }
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2914,14 +2970,22 @@ bool MobileManipulatorInterface::setMRTReadyFlagSrv(ocs2_msgs::setBool::Request 
                                                     ocs2_msgs::setBool::Response &res)
 {
   //std::cout << "[MobileManipulatorInterface::setMRTReadyFlagSrv] START" << std::endl;
-  //std::cout << "[MobileManipulatorInterface::setMRTReadyFlagSrv] BEFORE mrtReadyFlag_: " << mrtReadyFlag_ << std::endl;
-  mrtReadyFlag_ = req.val;
-  //std::cout << "[MobileManipulatorInterface::setMRTReadyFlagSrv] AFTER mrtReadyFlag_: " << mrtReadyFlag_ << std::endl;
 
-  res.success = true;
+  try
+  {
+    //std::cout << "[MobileManipulatorInterface::setMRTReadyFlagSrv] BEFORE mrtReadyFlag_: " << mrtReadyFlag_ << std::endl;
+    mrtReadyFlag_ = req.val;
+    //std::cout << "[MobileManipulatorInterface::setMRTReadyFlagSrv] AFTER mrtReadyFlag_: " << mrtReadyFlag_ << std::endl;
 
-  //std::cout << "[MobileManipulatorInterface::setMRTReadyFlagSrv] END" << std::endl;
-  return true;
+    res.success = true;
+
+    //std::cout << "[MobileManipulatorInterface::setMRTReadyFlagSrv] END" << std::endl;
+    return true;
+  }
+  catch(const std::exception& e)
+  {
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMRTReadyFlagSrv] ERROR: CATCHUP! " << e.what() << std::endl;
+  }
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -3036,6 +3100,7 @@ void MobileManipulatorInterface::launchMRT()
 }
 */
 
+/*
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -3073,6 +3138,7 @@ void MobileManipulatorInterface::mpcCallback(const ros::TimerEvent& event)
 
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::mpcCallback] END" << std::endl;
 }
+*/
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------

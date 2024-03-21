@@ -68,8 +68,8 @@ int main(int argc, char** argv)
   //ros::Timer mpcTimer = nh_interface.createTimer(ros::Duration(mpc_dt), &MobileManipulatorInterface::mpcMRTCallback, &m4_interface);
   //std::cout << "[MobileManipulatorNode::main] AFTER mpcTimer" << std::endl;
 
-  ros::Timer mpcTimer = nh_interface.createTimer(ros::Duration(mpc_dt), &MobileManipulatorInterface::mpcCallback, &m4_interface);
-  ros::Timer mrtTimer = nh_interface.createTimer(ros::Duration(mrt_dt), &MobileManipulatorInterface::mrtCallback, &m4_interface);
+  //ros::Timer mpcTimer = nh_interface.createTimer(ros::Duration(mpc_dt), &MobileManipulatorInterface::mpcCallback, &m4_interface);
+  //ros::Timer mrtTimer = nh_interface.createTimer(ros::Duration(mrt_dt), &MobileManipulatorInterface::mrtCallback, &m4_interface);
 
   //std::cout << "[MobileManipulatorNode::main] END" << std::endl;
 
