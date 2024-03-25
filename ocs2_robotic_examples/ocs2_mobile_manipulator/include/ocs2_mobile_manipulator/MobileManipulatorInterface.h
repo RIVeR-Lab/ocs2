@@ -245,7 +245,7 @@ class MobileManipulatorInterface final : public RobotInterface
                               std::vector<double>& stateVelocityBase);
 
     // DESCRIPTION: TODO...
-    SystemObservation getCurrentObservation(vector_t& currentInput, scalar_t time=0.0);
+    //SystemObservation getCurrentObservation(vector_t& currentInput, scalar_t time=0.0);
 
     // DESCRIPTION: TODO...
     void setMPCProblem(size_t modelModeInt=2, 

@@ -948,6 +948,7 @@ void MobileManipulatorInterface::updateFullModelState(std::vector<double>& state
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::updateFullModelState] END " << std::endl;
 }
 
+/*
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -1113,12 +1114,13 @@ SystemObservation MobileManipulatorInterface::getCurrentObservation(vector_t& cu
 
   std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::getCurrentObservation] currentObservation.full_state size: " << currentObservation.full_state.size() << std::endl;
   std::cout << currentObservation.full_state << std::endl << std::endl;
-  */
+  * /
 
   //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::getCurrentObservation] END" << std::endl;
 
   return currentObservation;
 }
+*/
 
 //-------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------
@@ -1129,227 +1131,234 @@ void MobileManipulatorInterface::setMPCProblem(size_t modelModeInt,
                                                bool updateMPCFlag,
                                                bool updateMRTFlag)
 {
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] START" << std::endl;
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] modelModeInt: " << modelModeInt << std::endl;
-
-  mpcTimer0_.startTimer();
-
-  mpcTimer1_.startTimer();
-
-  ocp_.costPtr->clear();
-  ocp_.stateCostPtr->clear();
-  ocp_.preJumpCostPtr->clear();
-  ocp_.finalCostPtr->clear();
-
-  ocp_.softConstraintPtr->clear();
-  ocp_.stateSoftConstraintPtr->clear();
-  ocp_.preJumpSoftConstraintPtr->clear();
-  ocp_.finalSoftConstraintPtr->clear();
-
-  ocp_.equalityConstraintPtr->clear();
-  ocp_.stateEqualityConstraintPtr->clear();
-  ocp_.preJumpEqualityConstraintPtr->clear();
-  ocp_.finalEqualityConstraintPtr->clear();
-
-  ocp_.equalityLagrangianPtr->clear();
-  ocp_.stateEqualityLagrangianPtr->clear();
-  ocp_.inequalityLagrangianPtr->clear();
-  ocp_.stateInequalityLagrangianPtr->clear();
-  ocp_.preJumpEqualityLagrangianPtr->clear();
-  ocp_.preJumpInequalityLagrangianPtr->clear();
-  ocp_.finalEqualityLagrangianPtr->clear();
-  ocp_.finalInequalityLagrangianPtr->clear();
-
-  mpcTimer1_.endTimer();
-
-  // Set MPC Problem Settings
-  //modelModeInt_ = modelModeInt;
-  activateSelfCollision_ = activateSelfCollision;
-  activateExtCollision_ = activateExtCollision;
-
-  mpcTimer2_.startTimer();
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] modelModeInt: " << modelModeInt << std::endl;
-  bool isModeUpdated = updateModelMode(robotModelInfo_, modelModeInt);
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] isModeUpdated: " << isModeUpdated << std::endl;
-  //printRobotModelInfo(robotModelInfo_);
-  mpcTimer2_.endTimer();
-
-  //// Optimal control problem
-  if (modelModeInt == 0)
+  try
   {
-    mpcTimer3_.startTimer();
-    ocp_.costPtr->add("inputCost", quadraticInputCostPtr_mode0_);
-    mpcTimer3_.endTimer();
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] START" << std::endl;
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] modelModeInt: " << modelModeInt << std::endl;
 
-    mpcTimer4_.startTimer();
-    ocp_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode0_);
-    mpcTimer4_.endTimer();
+    mpcTimer0_.startTimer();
 
-    mpcTimer5_.startTimer();
-    ocp_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode0_);
-    mpcTimer5_.endTimer();
-    
-    mpcTimer6_.startTimer();
-    ocp_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode0_);
-    mpcTimer6_.endTimer();
+    mpcTimer1_.startTimer();
 
-    mpcTimer7_.startTimer();
-    if (activateSelfCollision) 
+    ocp_.costPtr->clear();
+    ocp_.stateCostPtr->clear();
+    ocp_.preJumpCostPtr->clear();
+    ocp_.finalCostPtr->clear();
+
+    ocp_.softConstraintPtr->clear();
+    ocp_.stateSoftConstraintPtr->clear();
+    ocp_.preJumpSoftConstraintPtr->clear();
+    ocp_.finalSoftConstraintPtr->clear();
+
+    ocp_.equalityConstraintPtr->clear();
+    ocp_.stateEqualityConstraintPtr->clear();
+    ocp_.preJumpEqualityConstraintPtr->clear();
+    ocp_.finalEqualityConstraintPtr->clear();
+
+    ocp_.equalityLagrangianPtr->clear();
+    ocp_.stateEqualityLagrangianPtr->clear();
+    ocp_.inequalityLagrangianPtr->clear();
+    ocp_.stateInequalityLagrangianPtr->clear();
+    ocp_.preJumpEqualityLagrangianPtr->clear();
+    ocp_.preJumpInequalityLagrangianPtr->clear();
+    ocp_.finalEqualityLagrangianPtr->clear();
+    ocp_.finalInequalityLagrangianPtr->clear();
+
+    mpcTimer1_.endTimer();
+
+    // Set MPC Problem Settings
+    //modelModeInt_ = modelModeInt;
+    activateSelfCollision_ = activateSelfCollision;
+    activateExtCollision_ = activateExtCollision;
+
+    mpcTimer2_.startTimer();
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] modelModeInt: " << modelModeInt << std::endl;
+    bool isModeUpdated = updateModelMode(robotModelInfo_, modelModeInt);
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] isModeUpdated: " << isModeUpdated << std::endl;
+    //printRobotModelInfo(robotModelInfo_);
+    mpcTimer2_.endTimer();
+
+    //// Optimal control problem
+    if (modelModeInt == 0)
     {
-      //ocp_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode0_);
-    }
-    mpcTimer7_.endTimer();
+      mpcTimer3_.startTimer();
+      ocp_.costPtr->add("inputCost", quadraticInputCostPtr_mode0_);
+      mpcTimer3_.endTimer();
 
-    mpcTimer8_.startTimer();
-    if (activateExtCollision) 
+      mpcTimer4_.startTimer();
+      ocp_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode0_);
+      mpcTimer4_.endTimer();
+
+      mpcTimer5_.startTimer();
+      ocp_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode0_);
+      mpcTimer5_.endTimer();
+      
+      mpcTimer6_.startTimer();
+      ocp_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode0_);
+      mpcTimer6_.endTimer();
+
+      mpcTimer7_.startTimer();
+      if (activateSelfCollision) 
+      {
+        //ocp_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode0_);
+      }
+      mpcTimer7_.endTimer();
+
+      mpcTimer8_.startTimer();
+      if (activateExtCollision) 
+      {
+        std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] EXT-COLLISION CONSTRAINT IS ACTIVE!" << std::endl;
+        ocp_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode0_);
+      }
+      mpcTimer8_.endTimer();
+
+      mpcTimer9_.startTimer();
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] dynamicsPtr: MobileBaseDynamics" << std::endl;
+      ocp_.dynamicsPtr = dynamicsPtr_mode0_;
+      mpcTimer9_.endTimer();
+    }
+
+    else if (modelModeInt == 1)
     {
-      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] EXT-COLLISION CONSTRAINT IS ACTIVE!" << std::endl;
-      ocp_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode0_);
+      mpcTimer3_.startTimer();
+      ocp_.costPtr->add("inputCost", quadraticInputCostPtr_mode1_);
+      mpcTimer3_.endTimer();
+
+      mpcTimer4_.startTimer();
+      ocp_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode1_);
+      mpcTimer4_.endTimer();
+
+      mpcTimer5_.startTimer();
+      ocp_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode1_);
+      mpcTimer5_.endTimer();
+      
+      mpcTimer6_.startTimer();
+      ocp_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode1_);
+      mpcTimer6_.endTimer();
+
+      mpcTimer7_.startTimer();
+      if (activateSelfCollision) 
+      {
+        //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] SELF-COLLISION CONSTRAINT IS ACTIVE!" << std::endl;
+        ocp_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode1_);
+      }
+      mpcTimer7_.endTimer();
+
+      mpcTimer8_.startTimer();
+      if (activateExtCollision) 
+      {
+        //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] EXT-COLLISION CONSTRAINT IS ACTIVE!" << std::endl;
+        ocp_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode1_);
+      }
+      mpcTimer8_.endTimer();
+
+      mpcTimer9_.startTimer();
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] dynamicsPtr: RobotArmDynamics" << std::endl;
+      ocp_.dynamicsPtr = dynamicsPtr_mode1_;
+      mpcTimer9_.endTimer();
     }
-    mpcTimer8_.endTimer();
 
-    mpcTimer9_.startTimer();
-    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] dynamicsPtr: MobileBaseDynamics" << std::endl;
-    ocp_.dynamicsPtr = dynamicsPtr_mode0_;
-    mpcTimer9_.endTimer();
-  }
-
-  else if (modelModeInt == 1)
-  {
-    mpcTimer3_.startTimer();
-    ocp_.costPtr->add("inputCost", quadraticInputCostPtr_mode1_);
-    mpcTimer3_.endTimer();
-
-    mpcTimer4_.startTimer();
-    ocp_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode1_);
-    mpcTimer4_.endTimer();
-
-    mpcTimer5_.startTimer();
-    ocp_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode1_);
-    mpcTimer5_.endTimer();
-    
-    mpcTimer6_.startTimer();
-    ocp_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode1_);
-    mpcTimer6_.endTimer();
-
-    mpcTimer7_.startTimer();
-    if (activateSelfCollision) 
+    else if (modelModeInt == 2)
     {
-      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] SELF-COLLISION CONSTRAINT IS ACTIVE!" << std::endl;
-      ocp_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode1_);
-    }
-    mpcTimer7_.endTimer();
+      mpcTimer3_.startTimer();
+      ocp_.costPtr->add("inputCost", quadraticInputCostPtr_mode2_);
+      mpcTimer3_.endTimer();
 
-    mpcTimer8_.startTimer();
-    if (activateExtCollision) 
+      mpcTimer4_.startTimer();
+      ocp_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode2_);
+      mpcTimer4_.endTimer();
+
+      mpcTimer5_.startTimer();
+      ocp_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode2_);
+      mpcTimer5_.endTimer();
+      
+      mpcTimer6_.startTimer();
+      ocp_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode2_);
+      mpcTimer6_.endTimer();
+
+      mpcTimer7_.startTimer();
+      if (activateSelfCollision) 
+      {
+        //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] SELF-COLLISION CONSTRAINT IS ACTIVE!" << std::endl;
+        ocp_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode2_);
+      }
+      mpcTimer7_.endTimer();
+
+      mpcTimer8_.startTimer();
+      if (activateExtCollision) 
+      {
+        //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] EXT-COLLISION CONSTRAINT IS ACTIVE!" << std::endl;
+        ocp_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode2_);
+      }
+      mpcTimer8_.endTimer();
+
+      mpcTimer9_.startTimer();
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] dynamicsPtr: MobileManipulatorDynamics" << std::endl;
+      ocp_.dynamicsPtr = dynamicsPtr_mode2_;
+      mpcTimer9_.endTimer();
+    }
+
+    /*
+    * Pre-computation
+    */
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] BEFORE Pre-computation" << std::endl;
+    if (usePreComputation_) 
     {
-      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] EXT-COLLISION CONSTRAINT IS ACTIVE!" << std::endl;
-      ocp_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode1_);
+      std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] DEBUG INF" << std::endl;
+      while(1);
+      //ocp_.preComputationPtr.reset(new MobileManipulatorPreComputation(*pinocchioInterfacePtr_, robotModelInfo_));
     }
-    mpcTimer8_.endTimer();
 
-    mpcTimer9_.startTimer();
-    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] dynamicsPtr: RobotArmDynamics" << std::endl;
-    ocp_.dynamicsPtr = dynamicsPtr_mode1_;
-    mpcTimer9_.endTimer();
-  }
+    // Rollout
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] BEFORE Rollout" << std::endl;
+    mpcTimer10_.startTimer();
+    rolloutPtr_.reset(new TimeTriggeredRollout(*ocp_.dynamicsPtr, rolloutSettings_));
+    mpcTimer10_.endTimer();
 
-  else if (modelModeInt == 2)
-  {
-    mpcTimer3_.startTimer();
-    ocp_.costPtr->add("inputCost", quadraticInputCostPtr_mode2_);
-    mpcTimer3_.endTimer();
+    // Initialization
+    mpcTimer11_.startTimer();
+    auto modeInputDim = getModeInputDim(robotModelInfo_);
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] BEFORE Initialization" << std::endl;
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] modeInputDim: " << modeInputDim << std::endl;
+    initializerPtr_.reset(new DefaultInitializer(modeInputDim));
+    mpcTimer11_.endTimer();
 
-    mpcTimer4_.startTimer();
-    ocp_.softConstraintPtr->add("jointLimits", jointLimitSoftConstraintPtr_mode2_);
-    mpcTimer4_.endTimer();
-
-    mpcTimer5_.startTimer();
-    ocp_.stateSoftConstraintPtr->add("endEffector", endEffectorIntermediateConstraintPtr_mode2_);
-    mpcTimer5_.endTimer();
-    
-    mpcTimer6_.startTimer();
-    ocp_.finalSoftConstraintPtr->add("finalEndEffector", endEffectorFinalConstraintPtr_mode2_);
-    mpcTimer6_.endTimer();
-
-    mpcTimer7_.startTimer();
-    if (activateSelfCollision) 
-    {
-      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] SELF-COLLISION CONSTRAINT IS ACTIVE!" << std::endl;
-      ocp_.stateSoftConstraintPtr->add("selfCollision", selfCollisionConstraintPtr_mode2_);
-    }
-    mpcTimer7_.endTimer();
-
-    mpcTimer8_.startTimer();
-    if (activateExtCollision) 
-    {
-      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] EXT-COLLISION CONSTRAINT IS ACTIVE!" << std::endl;
-      ocp_.stateSoftConstraintPtr->add("extCollision", extCollisionConstraintPtr_mode2_);
-    }
-    mpcTimer8_.endTimer();
-
-    mpcTimer9_.startTimer();
-    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] dynamicsPtr: MobileManipulatorDynamics" << std::endl;
-    ocp_.dynamicsPtr = dynamicsPtr_mode2_;
-    mpcTimer9_.endTimer();
-  }
-
-  /*
-   * Pre-computation
-   */
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] BEFORE Pre-computation" << std::endl;
-  if (usePreComputation_) 
-  {
-    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] DEBUG INF" << std::endl;
-    while(1);
-    //ocp_.preComputationPtr.reset(new MobileManipulatorPreComputation(*pinocchioInterfacePtr_, robotModelInfo_));
-  }
-
-  // Rollout
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] BEFORE Rollout" << std::endl;
-  mpcTimer10_.startTimer();
-  rolloutPtr_.reset(new TimeTriggeredRollout(*ocp_.dynamicsPtr, rolloutSettings_));
-  mpcTimer10_.endTimer();
-
-  // Initialization
-  mpcTimer11_.startTimer();
-  auto modeInputDim = getModeInputDim(robotModelInfo_);
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] BEFORE Initialization" << std::endl;
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] modeInputDim: " << modeInputDim << std::endl;
-  initializerPtr_.reset(new DefaultInitializer(modeInputDim));
-  mpcTimer11_.endTimer();
-
-  // Update MPC
-  if (updateMPCFlag)
-  {
-    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] UPDATE MPC" << std::endl;
     // Update MPC
-    mpc_->initializeMPC(mpcSettings_, 
-                        ddpSettings_, 
-                        *rolloutPtr_, 
-                        ocp_, 
-                        *initializerPtr_);
-    mpc_->getSolverPtr()->setReferenceManager(rosReferenceManagerPtr_);
-    mpcNode_->setMPC(mpc_);
+    if (updateMPCFlag)
+    {
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] UPDATE MPC" << std::endl;
+      // Update MPC
+      mpc_->initializeMPC(mpcSettings_, 
+                          ddpSettings_, 
+                          *rolloutPtr_, 
+                          ocp_, 
+                          *initializerPtr_);
+      mpc_->getSolverPtr()->setReferenceManager(rosReferenceManagerPtr_);
+      mpcNode_->setMPC(mpc_);
+    }
+
+    // Update MRT
+    if (updateMRTFlag)
+    {
+      //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] UPDATE MRT" << std::endl;
+
+      mrt_loop_->setRobotModelInfo(robotModelInfo_);
+      mobileManipulatorVisu_->updateModelMode(getModelModeInt(robotModelInfo_));
+    } 
+
+    mpcProblemReadyFlag_ = true;
+
+    mpcTimer0_.endTimer();
+
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] DEBUG INF" << std::endl;
+    //while(1);
+
+    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] END" << std::endl;
   }
-
-  // Update MRT
-  if (updateMRTFlag)
+  catch(const std::exception& e)
   {
-    //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] UPDATE MRT" << std::endl;
-
-    mrt_loop_->setRobotModelInfo(robotModelInfo_);
-    mobileManipulatorVisu_->updateModelMode(getModelModeInt(robotModelInfo_));
-  } 
-
-  mpcProblemReadyFlag_ = true;
-
-  mpcTimer0_.endTimer();
-
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] DEBUG INF" << std::endl;
-  //while(1);
-
-  //std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] END" << std::endl;
+    std::cout << "[" << interfaceName_ << "][" << ns_ <<  "][MobileManipulatorInterface::setMPCProblem] ERROR: CATCHUP! " << e.what() << std::endl;
+  }
 }
 
 //-------------------------------------------------------------------------------------------------------

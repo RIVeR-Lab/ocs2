@@ -523,39 +523,39 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
     const std::string msg = "[MPC_ROS_Interface::mpcObservationCallback] ERROR: CATCHUP readObservationMsg \n";
     throw std::runtime_error(msg + error.what());
   }
-  
-  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] state" << std::endl;
-  //std::cout << currentObservation.state << std::endl;
 
-  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] input" << std::endl;
-  //std::cout << currentObservation.input << std::endl;
-
-  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE resetLock" << std::endl;
-  std::lock_guard<std::mutex> resetLock(resetMutex_);
-  //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] AFTER resetLock" << std::endl;
-
-  if (!resetRequestedEver_.load()) 
-  {
-    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] MPC should be reset first. Either call MPC_ROS_Interface::reset() or use the reset service." << std::endl;
-    return;
-  }
-
-  if (internalShutDownFlag_) 
-  {
-    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] internalShutDownFlag_ is ON! MPC should be reset first!" << std::endl;
-    return;
-  }
-
-  mpcReadyFlag_ = false;
-
-  // measure the delay in running MPC
-  mpcTimer_.startTimer();
-
-  // run MPC
-  bool controllerIsUpdated;
-  
   try
   {
+    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] state" << std::endl;
+    //std::cout << currentObservation.state << std::endl;
+
+    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] input" << std::endl;
+    //std::cout << currentObservation.input << std::endl;
+
+    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE resetLock" << std::endl;
+    std::lock_guard<std::mutex> resetLock(resetMutex_);
+    //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] AFTER resetLock" << std::endl;
+
+    if (!resetRequestedEver_.load()) 
+    {
+      //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] MPC should be reset first. Either call MPC_ROS_Interface::reset() or use the reset service." << std::endl;
+      return;
+    }
+
+    if (internalShutDownFlag_) 
+    {
+      //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] internalShutDownFlag_ is ON! MPC should be reset first!" << std::endl;
+      return;
+    }
+
+    mpcReadyFlag_ = false;
+
+    // measure the delay in running MPC
+    mpcTimer_.startTimer();
+
+    // run MPC
+    bool controllerIsUpdated;
+  
     //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] BEFORE mpc_->run" << std::endl;
     controllerIsUpdated = mpc_->run(currentObservation.time, currentObservation.state, currentObservation.full_state);
     //std::cout << "[MPC_ROS_Interface::mpcObservationCallback] AFTER mpc_->run" << std::endl;
@@ -656,8 +656,8 @@ void MPC_ROS_Interface::shutdownNode()
   // shutdown publishers
   mpcPolicyPublisher_.shutdown();
 
-   //std::cout << "[MPC_ROS_Interface::shutdownNode] BEFORE mpcObservationSubscriber_" << std::endl;
-  mpcObservationSubscriber_.shutdown();
+  //std::cout << "[MPC_ROS_Interface::shutdownNode] BEFORE mpcObservationSubscriber_" << std::endl;
+  //mpcObservationSubscriber_.shutdown();
 
   if (printOutFlag_)
     std::cout << "[MPC_ROS_Interface::shutdownNode] END" << std::endl;
