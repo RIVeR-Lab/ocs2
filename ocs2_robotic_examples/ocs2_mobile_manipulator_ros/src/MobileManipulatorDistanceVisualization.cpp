@@ -140,13 +140,31 @@ int main(int argc, char** argv)
 
   // Set object names
   std::string goal_frame_name;
-  std::vector<std::string> obj_octomap_names;
+  std::vector<std::string> occupancy_frame_names, obj_octomap_names;
   std::vector<std::string> mobiman_occ_obs_names;
   
   //nodeHandle.param<std::vector<std::string>>("/obj_octomap_names", obj_octomap_names, "");
   nodeHandle.getParam("/goal_frame_name", goal_frame_name);
-  nodeHandle.getParam("/obj_octomap_names", obj_octomap_names);
+  nodeHandle.getParam("/occupancy_frame_names", occupancy_frame_names);
   nodeHandle.getParam("/mobiman_occ_obs_names", mobiman_occ_obs_names);
+
+  /// NUA TODO: GET RID OF THIS MAPPING ASAP!
+  for (size_t i = 0; i < occupancy_frame_names.size(); i++)
+  {
+    /// NUA TODO: GET RID OF THIS MAPPING ASAP!
+    if (occupancy_frame_names[i] == "conveyor_belt")
+    {
+      obj_octomap_names.push_back("oct_conveyor");
+    }
+    else if (occupancy_frame_names[i] == "actor_0")
+    {
+      obj_octomap_names.push_back("oct_actor0");
+    }
+    else if (occupancy_frame_names[i] == "actor_1")
+    {
+      obj_octomap_names.push_back("oct_actor1");
+    }
+  }
 
   if (printOutFlag)
   {
