@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.02.15
+// LAST UPDATE: 2024.06.30
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -96,6 +96,12 @@ class TargetTrajectoriesGazebo final
 
     // DESCRIPTION: TODO...
     void setTaskMode(int taskMode);
+
+    // DESCRIPTION: TODO...
+    void setGraspPositionOffset(std::vector<double>& grasp_offset_pos);
+
+    // DESCRIPTION: TODO...
+    void setGraspOrientationOffset(std::vector<double>& grasp_offset_ori);
 
     // DESCRIPTION: TODO...
     void launchNode(ros::NodeHandle& nodeHandle);

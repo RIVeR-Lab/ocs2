@@ -461,7 +461,7 @@ class MobileManipulatorInterface final : public RobotInterface
     //int mrtExitEnvStatus_ = setenv("mrtExitFlag", "true", 1);
 
     std::string interfaceName_;
-    bool printOutFlag_ = false;
+    bool printOutFlag_ = true;
     bool usePreComputation_;
     bool recompileLibraries_;
     bool activateSelfCollision_;

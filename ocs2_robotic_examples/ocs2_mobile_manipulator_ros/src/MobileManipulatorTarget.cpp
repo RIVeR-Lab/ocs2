@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.03.15
+// LAST UPDATE: 2024.06.30
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -58,9 +58,10 @@ int main(int argc, char* argv[])
   std::vector<std::string> name_pkgs_ign, name_pkgs_man, scan_data_path_pkgs_ign, scan_data_path_pkgs_man, target_names;
   double map_resolution, dummy_goal_pos_x, dummy_goal_pos_y, dummy_goal_pos_z, dummy_goal_ori_r, dummy_goal_ori_p, dummy_goal_ori_y;
   bool drlFlag, drlManualTargetFlag, printOutFlag = false;
+  std::vector<double> grasp_offset_pos, grasp_offset_ori;
 
   robot_name = "mobiman";
-  target_names = {"red_cube"};
+  //target_names = {"red_cube"};
   drop_target_name = "bin_4_dropping_task";
   //target_names = {"normal_pkg","long_pkg","longwide_pkg","red_cube","green_cube","blue_cube"};
 
@@ -79,6 +80,11 @@ int main(int argc, char* argv[])
   pnh.param<std::string>("/gs_ee_frame_name", ee_frame_name, "");
   pnh.param<std::string>("/gs_grasp_frame_name", grasp_frame_name, "");
   pnh.param<std::string>("/gs_drop_frame_name", drop_frame_name, "");
+  
+  pnh.getParam("/target_names", target_names);
+  pnh.getParam("/grasp_offset_pos", grasp_offset_pos);
+  pnh.getParam("/grasp_offset_ori", grasp_offset_ori);
+
   pnh.param<double>("/dummy_goal_pos_x", dummy_goal_pos_x, 0.0);
   pnh.param<double>("/dummy_goal_pos_y", dummy_goal_pos_y, 0.0);
   pnh.param<double>("/dummy_goal_pos_z", dummy_goal_pos_z, 0.0);
@@ -147,6 +153,8 @@ int main(int argc, char* argv[])
   gu.setGraspFrameName(grasp_frame_name);
   gu.setDropFrameName(drop_frame_name);
   gu.updateDummyGoal(dummy_goal_pos_x, dummy_goal_pos_y, dummy_goal_pos_z, dummy_goal_ori_r, dummy_goal_ori_p, dummy_goal_ori_y);
+  gu.setGraspPositionOffset(grasp_offset_pos);
+  gu.setGraspOrientationOffset(grasp_offset_ori);
   gu.launchNode(nh);
 
   //cout << "[MobileManipulatorTarget::main] DEBUG INF" << endl;

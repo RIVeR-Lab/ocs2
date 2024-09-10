@@ -19,7 +19,7 @@ using namespace mobile_manipulator;
 
 int main(int argc, char** argv) 
 {
-  bool printOutFlag = false;
+  bool printOutFlag = true;
 
   if (printOutFlag)
     std::cout << "[MobileManipulatorMPCNode::main] START" << std::endl;

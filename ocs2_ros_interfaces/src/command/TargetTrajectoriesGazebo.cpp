@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.02.23
+// LAST UPDATE: 2024.06.30
 //
 // AUTHOR: Neset Unver Akmandor
 //
@@ -40,16 +40,6 @@ TargetTrajectoriesGazebo::TargetTrajectoriesGazebo(const std::string& ns,
   tflistenerPtr_ = new tf::TransformListener;
 
   /// NUA TODO: SET BELOW IN CONFIG!
-  graspPositionOffset_.x() = 0;
-  graspPositionOffset_.y() = -0.2;
-  graspPositionOffset_.z() = 0;
-  graspOrientationOffsetMatrix_ <<  1.0, 0.0, 0.0,
-                                    0.0, 0.0, 1.0,
-                                    0.0, -1.0, 0.0;
-  //graspOrientationOffsetMatrix_ <<  1.0, 0.0, 0.0,
-  //                                  0.0, 1.0, 0.0,
-  //                                  0.0, 0.0, 1.0;
-
   dropPositionOffset_.x() = 0;
   dropPositionOffset_.y() = 0.2;
   dropPositionOffset_.z() = 1.0;
@@ -342,6 +332,42 @@ void TargetTrajectoriesGazebo::setTaskMode(int taskMode)
   //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTaskMode] pickedFlag_: " << pickedFlag_ << std::endl;
 
   //std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setTaskMode] END" << std::endl;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::setGraspPositionOffset(std::vector<double>& grasp_offset_pos)
+{
+  graspPositionOffset_.x() = grasp_offset_pos[0];
+  graspPositionOffset_.y() = grasp_offset_pos[1];
+  graspPositionOffset_.z() = grasp_offset_pos[2];
+}
+
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
+void TargetTrajectoriesGazebo::setGraspOrientationOffset(std::vector<double>& grasp_offset_ori)
+{
+  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setGraspOrientationOffset] START" << std::endl;
+  
+  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setGraspOrientationOffset] grasp_offset_ori:" << std::endl;
+  for (auto d : grasp_offset_ori)
+  {
+    std::cout << d << " ";
+  }
+  std::cout << "" << std::endl;
+
+  Eigen::Matrix3d tmp(grasp_offset_ori.data());
+  graspOrientationOffsetMatrix_ = tmp;
+
+  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setGraspOrientationOffset] tmp:" << std::endl;
+  std::cout << tmp << std::endl;
+
+  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setGraspOrientationOffset] graspOrientationOffsetMatrix_:" << std::endl;
+  std::cout << graspOrientationOffsetMatrix_ << std::endl;
+
+  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setGraspOrientationOffset] END" << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
