@@ -256,7 +256,9 @@ void TargetTrajectoriesGazebo::setRobotFrameName(std::string robotFrameName)
   {
     robotFrameName_ = ns_.substr(1) + "/" + robotFrameName_;
   }
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setRobotFrameName] robotFrameName_: " << robotFrameName_ << std::endl;
+
+  if (printOutFlag_)
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setRobotFrameName] robotFrameName_: " << robotFrameName_ << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -269,7 +271,9 @@ void TargetTrajectoriesGazebo::setGoalFrameName(std::string goalFrameName)
   {
     goalFrameName_ = ns_.substr(1) + "/" + goalFrameName_;
   }
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] goalFrameName_: " << goalFrameName_ << std::endl;
+
+  if (printOutFlag_)
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] goalFrameName_: " << goalFrameName_ << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -282,7 +286,9 @@ void TargetTrajectoriesGazebo::setEEFrameName(std::string eeFrameName)
   {
     eeFrameName_ = ns_.substr(1) + "/" + eeFrameName_;
   }
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] eeFrameName_: " << eeFrameName_ << std::endl;
+
+  if (printOutFlag_)
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::TargetTrajectoriesGazebo] eeFrameName_: " << eeFrameName_ << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -295,7 +301,9 @@ void TargetTrajectoriesGazebo::setGraspFrameName(std::string graspFrameName)
   {
     graspFrameName_ = ns_.substr(1) + "/" + graspFrameName_;
   }
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setGraspFrameName] graspFrameName_: " << graspFrameName_ << std::endl;
+
+  if (printOutFlag_)
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setGraspFrameName] graspFrameName_: " << graspFrameName_ << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -308,7 +316,8 @@ void TargetTrajectoriesGazebo::setDropFrameName(std::string dropFrameName)
   {
     dropFrameName_ = ns_.substr(1) + "/" + dropFrameName_;
   }
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setDropFrameName] dropFrameName_: " << dropFrameName_ << std::endl;
+  if (printOutFlag_)
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setDropFrameName] dropFrameName_: " << dropFrameName_ << std::endl;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -349,25 +358,32 @@ void TargetTrajectoriesGazebo::setGraspPositionOffset(std::vector<double>& grasp
 //-------------------------------------------------------------------------------------------------------
 void TargetTrajectoriesGazebo::setGraspOrientationOffset(std::vector<double>& grasp_offset_ori)
 {
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setGraspOrientationOffset] START" << std::endl;
-  
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setGraspOrientationOffset] grasp_offset_ori:" << std::endl;
-  for (auto d : grasp_offset_ori)
+  if (printOutFlag_)
   {
-    std::cout << d << " ";
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setGraspOrientationOffset] START" << std::endl;
+  
+  
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setGraspOrientationOffset] grasp_offset_ori:" << std::endl;
+    for (auto d : grasp_offset_ori)
+    {
+      std::cout << d << " ";
+    }
+    std::cout << "" << std::endl;
   }
-  std::cout << "" << std::endl;
 
   Eigen::Matrix3d tmp(grasp_offset_ori.data());
   graspOrientationOffsetMatrix_ = tmp;
 
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setGraspOrientationOffset] tmp:" << std::endl;
-  std::cout << tmp << std::endl;
+  if (printOutFlag_)
+  {
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setGraspOrientationOffset] tmp:" << std::endl;
+    std::cout << tmp << std::endl;
 
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setGraspOrientationOffset] graspOrientationOffsetMatrix_:" << std::endl;
-  std::cout << graspOrientationOffsetMatrix_ << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setGraspOrientationOffset] graspOrientationOffsetMatrix_:" << std::endl;
+    std::cout << graspOrientationOffsetMatrix_ << std::endl;
 
-  std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setGraspOrientationOffset] END" << std::endl;
+    std::cout << "[" << ns_ <<  "][TargetTrajectoriesGazebo::setGraspOrientationOffset] END" << std::endl;
+  }
 }
 
 //-------------------------------------------------------------------------------------------------------
