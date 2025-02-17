@@ -594,7 +594,7 @@ void MPC_ROS_Interface::mpcObservationCallback(const ocs2_msgs::mpc_observation:
     }
 
     // Display time benchmarks
-    if (mpc_->settings().debugPrint_) 
+    // if (mpc_->settings().debugPrint_) 
     {
       std::cout << '\n';
       std::cout << "\n### MPC_ROS Benchmarking";
