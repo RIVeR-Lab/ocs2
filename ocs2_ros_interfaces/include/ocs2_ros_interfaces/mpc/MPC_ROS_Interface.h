@@ -1,4 +1,4 @@
-// LAST UPDATE: 2024.03.21
+// LAST UPDATE: 2025.02.20
 //
 // AUTHOR: Neset Unver Akmandor (NUA)
 //
@@ -109,27 +109,11 @@ class MPC_ROS_Interface
     void shutdownNode();
 
     /**
-     * Spins ROS.
-     */
-    //void singleSpin();
-
-    /**
-     * Spins ROS.
-     */
-    //void spin();
-
-    /**
      * This is the main routine which launches all the nodes required for MPC to run which includes:
      * (1) The MPC policy publisher (either feedback or feedforward policy).
      * (2) The observation subscriber which gets the current measured state to invoke the MPC run routine.
      */
     void launchNodes(ros::NodeHandle& nodeHandle);
-
-    //void computeTrajectory();
-
-    //void computeTraj2(TargetTrajectories targetTrajectories, SystemObservation currentObservation, bool flag_reset=true);
-
-    //PrimalSolution getPolicy();
 
   protected:
     /**
@@ -180,9 +164,11 @@ class MPC_ROS_Interface
      */
     void mpcObservationCallback(const ocs2_msgs::mpc_observation::ConstPtr& msg);
 
-    //void writeData();
+    /// NUA TODO: ADD DESCRIPTION!
+    void writeData();
 
-    //void loadData();
+    /// NUA TODO: ADD DESCRIPTION!
+    const std::string getDateTime();
 
   protected:
     /*
@@ -191,8 +177,22 @@ class MPC_ROS_Interface
     std::shared_ptr<MPC_BASE> mpc_;
 
     bool printOutFlag_ = false;
+    bool writeDataFlag_ = true;
 
-    int ctr_ = 0;
+    std::string filename_;
+    int state_size_ = 0;
+    int ctr_base_ = 0;
+    int ctr_arm_ = 0;
+    int ctr_wb_ = 0;
+    int ctr_err_base_ = 0;
+    int ctr_err_arm_ = 0;
+    int ctr_err_wb_ = 0;
+    double ctime_avg_base_ = 0.0;
+    double ctime_avg_arm_ = 0.0;
+    double ctime_avg_wb_ = 0.0;
+    double ctime_max_base_ = 0.0;
+    double ctime_max_arm_ = 0.0;
+    double ctime_max_wb_ = 0.0;
 
     TargetTrajectories currentTargetTrajectories_;
     ocs2::SystemObservation currentObservation_;
@@ -244,7 +244,9 @@ class MPC_ROS_Interface
     std::mutex publisherMutex_;
     std::condition_variable msgReady_;
 
-    benchmark::RepeatedTimer mpcTimer_;
+    benchmark::RepeatedTimer mpcTimer_base_;
+    benchmark::RepeatedTimer mpcTimer_arm_;
+    benchmark::RepeatedTimer mpcTimer_wb_;
 
     // MPC reset
     std::mutex resetMutex_;

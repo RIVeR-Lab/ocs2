@@ -50,7 +50,7 @@ struct Settings {
   scalar_t solutionTimeWindow_ = -1;
 
   /** This value determines to display the log output of MPC. */
-  bool debugPrint_ = true;
+  bool debugPrint_ = false;
 
   /** This value determines to initialize the SLQ with the controller from previous call (warm start)
    * or the given operating trajectories (cold start). */
